@@ -1,0 +1,27 @@
+connection:
+  url: localhost
+  user: root
+  pass: '' #Master0fLobby
+  dbname: ats_parkour #mclobbyuserinfo
+door:
+  name: 'Exit!'
+  lore: 'Click it/nto exit.'
+lobby:
+  world: -1
+  x: -1
+  y: -1
+  z: -1
+  yaw: -1
+  pitch: -1
+recordSign:
+  line1: '&2&lREKORD'
+  line2: '%MINUTES%:%SECONDS%.%MILISECONDS%'
+  line3: '%NICK%'
+  line4: ''
+last-checkpoint-info: false
+medal:
+  platinium: 'platinium'
+  gold: 'gold'
+  silver: 'silver'
+  bronze: 'bronze'
+  none: 'none'
