@@ -1,8 +1,8 @@
 package eu.andret.parkour.tasks;
 
-import eu.andret.parkour.Parkour;
-import eu.andret.parkour.data.Data;
+import eu.andret.parkour.ParkourPlugin;
 import eu.andret.parkour.parkour.ParkourGame;
+import eu.andret.parkour.util.Data;
 import org.bukkit.entity.Player;
 
 import java.sql.Connection;
@@ -12,7 +12,7 @@ import java.util.function.Consumer;
 
 public class ParkourDataOperations implements Runnable {
     private ParkourGame parkour;
-    private Connection sql = Parkour.getInstance().getConnection();
+    private Connection sql = ParkourPlugin.getInstance().getConnection();
     private float time, bestTime;
     private Consumer<ParkourDataOperations> callback;
     private Player player;
@@ -28,13 +28,13 @@ public class ParkourDataOperations implements Runnable {
     public void run() {
         try {
             PreparedStatement stat = sql.prepareStatement(String.format("SELECT time FROM %s "
-                    + "WHERE parkour=? ORDER BY time LIMIT 1", Data.recordstable));
+                    + "WHERE parkour=? ORDER BY time LIMIT 1", Data.TABLE_RECORDS));
             stat.setString(1, parkour.getName());
             ResultSet rs = stat.executeQuery();
             time = rs.next() ? rs.getFloat("time") : 0;
 
             stat = sql.prepareStatement(String.format("SELECT * FROM %s "
-                    + "WHERE parkour=? AND nick=?", Data.recordstable));
+                    + "WHERE parkour=? AND nick=?", Data.TABLE_RECORDS));
             stat.setString(1, parkour.getName());
             stat.setString(2, player.getName());
             rs = stat.executeQuery();

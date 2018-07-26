@@ -1,16 +1,19 @@
-package eu.andret.parkour.event;
+package eu.andret.parkour.event.player;
 
 import eu.andret.parkour.parkour.ParkourGame;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
 @Value
 @EqualsAndHashCode(callSuper = true)
-public final class GameStopEvent extends Event {
+public final class PlayerEnterEffectRegionEvent extends Event {
     private static final HandlerList handlers = new HandlerList();
-    private ParkourGame parkour;
+    private Player player;
+    private ParkourGame game;
+    private int regionId;
 
     @Override
     public HandlerList getHandlers() {

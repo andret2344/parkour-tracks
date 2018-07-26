@@ -1,0 +1,30 @@
+package eu.andret.parkour.event.game;
+
+import eu.andret.parkour.parkour.ParkourGame;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.bukkit.event.Event;
+import org.bukkit.event.HandlerList;
+
+/**
+ * Aggregation class.
+ */
+@Data
+@EqualsAndHashCode(callSuper = true)
+@AllArgsConstructor
+public class AbstractGameEvent extends Event {
+    /**
+     * List of all Handlers.
+     */
+    private static final HandlerList HANDLERS = new HandlerList();
+    /**
+     * The Parkour that has been started.
+     */
+    private ParkourGame parkour;
+
+    @Override
+    public final HandlerList getHandlers() {
+        return HANDLERS;
+    }
+}

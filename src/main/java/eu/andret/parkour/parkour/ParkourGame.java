@@ -1,12 +1,11 @@
 package eu.andret.parkour.parkour;
 
 import com.sk89q.worldedit.regions.CuboidRegion;
-import eu.andret.parkour.Parkour;
-import eu.andret.parkour.data.Medal;
-import eu.andret.parkour.event.GameStartEvent;
-import eu.andret.parkour.event.GameStopEvent;
-import eu.andret.parkour.event.PlayerJoinGameEvent;
-import eu.andret.parkour.event.PlayerQuitGameEvent;
+import eu.andret.parkour.YmlSerializable;
+import eu.andret.parkour.event.game.GameStartEvent;
+import eu.andret.parkour.event.game.GameStopEvent;
+import eu.andret.parkour.event.player.PlayerJoinGameEvent;
+import eu.andret.parkour.event.player.PlayerQuitGameEvent;
 import eu.andret.parkour.player.ParkourPlayer;
 import eu.andret.parkour.player.PlayerManager;
 import eu.andret.parkour.region.AbstractRegion;
@@ -14,6 +13,10 @@ import eu.andret.parkour.region.Checkpoint;
 import eu.andret.parkour.region.EffectRegion;
 import eu.andret.parkour.region.GameRegion;
 import eu.andret.parkour.region.Wall;
+import eu.andret.parkour.util.Medal;
+import lombok.AccessLevel;
+import lombok.Data;
+import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
@@ -22,7 +25,7 @@ import org.bukkit.configuration.MemorySection;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
 
-import java.io.File;
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,20 +33,26 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
-public abstract class ParkourGame implements Comparable<ParkourGame> {
-    private boolean run = false, hasspawn = false;
+@Data
+public abstract class ParkourGame implements Comparable<ParkourGame>, YmlSerializable {
+    private boolean running = false;
     private String name;
     private World world;
-    private GameRegion gameregion;
-    private ParkourOptions options;
+    private GameRegion gameRegion;
     private Location bestRecord;
     private Location teleportBlock;
-    private final List<Checkpoint> checkpoints = new ArrayList<>();
-    private final List<Wall> walls = new ArrayList<>();
-    private final List<EffectRegion> effects = new ArrayList<>();
-    private final List<String> authors = new ArrayList<>();
-    private final List<ParkourPlayer> players = new ArrayList<>();
+    private ParkourOptions options = new ParkourOptions();
 
+    @Getter(AccessLevel.NONE)
+    private final List<Checkpoint> checkpoints = new ArrayList<>();
+    @Getter(AccessLevel.NONE)
+    private final List<Wall> walls = new ArrayList<>();
+    @Getter(AccessLevel.NONE)
+    private final List<EffectRegion> effects = new ArrayList<>();
+    @Getter(AccessLevel.NONE)
+    private final List<String> authors = new ArrayList<>();
+    @Getter(AccessLevel.NONE)
+    private final List<ParkourPlayer> players = new ArrayList<>();
 
     public enum ParkourType {
         SERVER,
@@ -51,171 +60,30 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
         PLAYERS
     }
 
-    public class ParkourOptions implements Cloneable {
-        private boolean proceedable = true, forceSprint = false, alwaysspawn = false, countrecords = true, damage = false, boats = false, modifyeq = true, available = false, vip = false;
-        private int price = 0, bronze = 0, silver = 0, gold = 0, platinum = 0, difficulty = 1, xp = 0;
-        private float fair = 0.0F;
+    @Data
+    public class ParkourOptions implements Cloneable, YmlSerializable {
+        private boolean enabled = true;
+        private boolean forcingSprint = false;
+        private boolean alwaysSpawn = false;
+        private boolean countingRecords = true;
+        private boolean allowingDamage = false;
+        private boolean boat = false;
+        private boolean modifyInventory = true;
+        private boolean available = false;
+        private boolean vip = false;
+        private int price = 0;
+        private int bronze = 0;
+        private int silver = 0;
+        private int gold = 0;
+        private int platinum = 0;
+        private int difficulty = 1;
+        private int xp = 0;
+        private float fair = 0F;
+        @Getter(AccessLevel.NONE)
         private final Map<PotionEffectType, Integer> effects = new HashMap<>();
         private DyeColor color = DyeColor.WHITE;
         private ParkourType type = ParkourType.SERVER;
         private String displayName;
-
-        public void setVip(boolean vip) {
-            this.vip = vip;
-        }
-
-        public void setDisplayName(String displayName) {
-            this.displayName = displayName;
-        }
-
-        public void setType(ParkourType type) {
-            this.type = type;
-        }
-
-        public void setAvailable(boolean available) {
-            this.available = available;
-        }
-
-        public void setDifficulty(int difficulty) {
-            this.difficulty = difficulty;
-            ParkourManager.sortGames();
-        }
-
-        public void setColor(DyeColor color) {
-            this.color = color;
-        }
-
-        public void setCountRecords(boolean countrecords) {
-            this.countrecords = countrecords;
-        }
-
-        public void setDamage(boolean damage) {
-            this.damage = damage;
-        }
-
-        public void setAlwaysTpToSpawn(boolean alwaysspawn) {
-            this.alwaysspawn = alwaysspawn;
-        }
-
-        public void mustSprint(boolean sprint) {
-            forceSprint = sprint;
-        }
-
-        public void setRewardPrice(int price) {
-            this.price = price;
-        }
-
-        public boolean isVip() {
-            return vip;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
-
-        public ParkourType getType() {
-            return type;
-        }
-
-        public boolean isAvailable() {
-            return available;
-        }
-
-        public int getDifficulty() {
-            return difficulty;
-        }
-
-        public boolean countRecords() {
-            return countrecords;
-        }
-
-        public boolean alwaysTpToSpawn() {
-            return alwaysspawn;
-        }
-
-        public boolean mustSprint() {
-            return forceSprint;
-        }
-
-        public DyeColor getColor() {
-            return color;
-        }
-
-        public int getRewardPrice() {
-            return price;
-        }
-
-        public boolean isDamage() {
-            return damage;
-        }
-
-        public boolean isBoats() {
-            return boats;
-        }
-
-        public void setBoats(boolean boats) {
-            this.boats = boats;
-        }
-
-        public int getBronze() {
-            return bronze;
-        }
-
-        public void setBronze(int bronze) {
-            this.bronze = bronze;
-        }
-
-        public int getSilver() {
-            return silver;
-        }
-
-        public void setSilver(int silver) {
-            this.silver = silver;
-        }
-
-        public int getGold() {
-            return gold;
-        }
-
-        public void setGold(int gold) {
-            this.gold = gold;
-        }
-
-        public int getPlatinum() {
-            return platinum;
-        }
-
-        public boolean isProceedable() {
-            return proceedable;
-        }
-
-        public float getFair() {
-            return fair;
-        }
-
-        public int getXp() {
-            return xp;
-        }
-
-        public void setXp(int xp) {
-            this.xp = xp;
-        }
-
-        public void setFair(float fair) {
-            this.fair = fair;
-        }
-
-        public void setProceedable(boolean proceedable) {
-            this.proceedable = proceedable;
-        }
-
-        public void setPlatnum(int platinum) {
-            this.platinum = platinum;
-        }
-
-        public int getEffectAmplifier(PotionEffectType effect) {
-            return effects.getOrDefault(effect, 0);
-        }
 
         public Medal getMedalByTime(float time) {
             if (platinum >= time) {
@@ -241,155 +109,52 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
             return effects.remove(effect);
         }
 
-        public boolean isModifyeq() {
-            return modifyeq;
-        }
-
-        public void setModifyeq(boolean modifyeq) {
-            this.modifyeq = modifyeq;
-        }
-
         public Map<PotionEffectType, Integer> getEffects() {
             return new HashMap<>(effects);
         }
 
         @Override
-        public String toString() {
-            StringBuilder result = new StringBuilder(getClass().getSimpleName() +
-                    "{displayname=" + displayName +
-                    "§r, forceSprint=" + forceSprint +
-                    ", alwaysspawn=" + alwaysspawn +
-                    ", price=" + price +
-                    ", damage=" + damage +
-                    ", boats=" + boats +
-                    ", modifyeq=" + modifyeq +
-                    ", countrecords=" + countrecords +
-                    ", difficulty=" + difficulty +
-                    ", bronze=" + bronze +
-                    ", silver=" + silver +
-                    ", gold=" + gold +
-                    ", platinum=" + platinum +
-                    ", color=" + color +
-                    ", available=" + available +
-                    ", type=" + type +
-                    ", vip=" + vip +
-                    ", proceedable=" + proceedable +
-                    ", fair=" + fair +
-                    ", xp=" + xp +
-                    ", effects=[");
-            for (Entry<PotionEffectType, Integer> entry : effects.entrySet()) {
-                result.append(entry.getKey().getName()).append("=").append(entry.getValue()).append(", ");
-            }
-            result = new StringBuilder(result.substring(0, result.length() - (effects.size() == 0 ? 0 : 2)));
-            result.append("]}");
-            return result.toString();
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (o == null) {
-                return false;
-            }
-            if (!(o instanceof ParkourOptions)) {
-                return false;
-            }
-            if (o == this) {
-                return true;
-            }
-            ParkourOptions po = (ParkourOptions) o;
-            return
-                    po.alwaysspawn == alwaysspawn &&
-                            po.displayName.equals(displayName) &&
-                            po.forceSprint == forceSprint &&
-                            po.price == price &&
-                            po.countrecords == countrecords &&
-                            po.damage == damage &&
-                            po.boats == boats &&
-                            po.modifyeq == modifyeq &&
-                            po.bronze == bronze &&
-                            po.silver == silver &&
-                            po.gold == gold &&
-                            po.platinum == platinum &&
-                            po.difficulty == difficulty &&
-                            po.available == available &&
-                            po.vip == vip &&
-                            po.proceedable == proceedable &&
-                            po.fair == fair &&
-                            po.xp == xp &&
-                            po.type.equals(type) &&
-                            po.color.equals(color) &&
-                            po.effects.equals(effects);
-        }
-
-        @Override
-        public ParkourOptions clone() throws CloneNotSupportedException {
-            ParkourOptions o = (ParkourOptions) super.clone();
-            o.alwaysspawn = alwaysspawn;
-            o.boats = boats;
-            o.countrecords = countrecords;
-            o.damage = damage;
-            o.forceSprint = forceSprint;
-            o.price = price;
-            o.modifyeq = modifyeq;
-            o.bronze = bronze;
-            o.silver = silver;
-            o.gold = gold;
-            o.platinum = platinum;
-            o.color = color;
-            o.available = available;
-            o.difficulty = difficulty;
-            o.displayName = displayName;
-            o.type = type;
-            o.vip = vip;
-            o.proceedable = proceedable;
-            o.fair = fair;
-            o.xp = xp;
-            for (Entry<PotionEffectType, Integer> entry : effects.entrySet()) {
-                o.effects.put(entry.getKey(), entry.getValue());
-            }
-            return o;
-        }
-
-        public Map<String, Object> toYamlStructure() {
-            Map<String, Object> options = new HashMap<>();
-            options.put("alwaysspawn", alwaysspawn);
-            options.put("boats", boats);
-            options.put("countrecords", countrecords);
-            options.put("damage", damage);
-            options.put("forceSprint", forceSprint);
-            options.put("price", price);
-            options.put("modifyeq", modifyeq);
-            options.put("bronze", bronze);
-            options.put("silver", silver);
-            options.put("gold", gold);
-            options.put("platinum", platinum);
-            options.put("available", available);
-            options.put("color", color.name());
-            options.put("difficulty", difficulty);
-            options.put("displayname", displayName);
-            options.put("vip", vip);
-            options.put("proceedable", proceedable);
-            options.put("fair", fair);
-            options.put("xp", xp);
-            options.put("type", type.toString());
+        public Map<String, Object> toYmlStructure() {
+            Map<String, Object> result = new HashMap<>();
+            result.put("alwaysSpawn", alwaysSpawn);
+            result.put("boat", boat);
+            result.put("countingRecords", countingRecords);
+            result.put("allowingDamage", allowingDamage);
+            result.put("forcingSprint", forcingSprint);
+            result.put("price", price);
+            result.put("modifyInventory", modifyInventory);
+            result.put("bronze", bronze);
+            result.put("silver", silver);
+            result.put("gold", gold);
+            result.put("platinum", platinum);
+            result.put("available", available);
+            result.put("color", color.name());
+            result.put("difficulty", difficulty);
+            result.put("displayname", displayName);
+            result.put("vip", vip);
+            result.put("enabled", enabled);
+            result.put("fair", fair);
+            result.put("xp", xp);
+            result.put("type", type.toString());
             Map<String, Integer> localEffects = new HashMap<>();
             for (Entry<PotionEffectType, Integer> entry : effects.entrySet()) {
                 localEffects.put(entry.getKey().getName(), entry.getValue());
             }
             if (localEffects.size() > 0) {
-                options.put("effects", localEffects);
+                result.put("effects", localEffects);
             }
-            return options;
+            return result;
         }
 
-        public void fromYamlStructure(Map<String, Object> options) {
-            alwaysspawn = (boolean) options.get("alwaysspawn");
-            boats = (boolean) options.get("boats");
-            countrecords = (boolean) options.get("countrecords");
-            damage = (boolean) options.get("damage");
-            forceSprint = (boolean) options.get("forceSprint");
+        @Override
+        public void fromYmlStructure(Map<String, Object> options) {
+            alwaysSpawn = (boolean) options.get("alwaysSpawn");
+            boat = (boolean) options.get("boat");
+            countingRecords = (boolean) options.get("countingRecords");
+            allowingDamage = (boolean) options.get("allowingDamage");
+            forcingSprint = (boolean) options.get("forcingSprint");
             price = (int) options.get("price");
-            modifyeq = (boolean) options.get("modifyeq");
+            modifyInventory = (boolean) options.get("modifyInventory");
             bronze = (int) options.get("bronze");
             silver = (int) options.get("silver");
             gold = (int) options.get("gold");
@@ -412,9 +177,9 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
             }
 
             try {
-                proceedable = (boolean) options.get("proceedable");
+                enabled = (boolean) options.get("enabled");
             } catch (Exception ex) {
-                proceedable = true;
+                enabled = true;
             }
 
             try {
@@ -429,20 +194,40 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
                 xp = 0;
             }
         }
+
+        @Override
+        protected Object clone() {
+            ParkourOptions parkourOptions = new ParkourOptions();
+            parkourOptions.enabled = enabled;
+            parkourOptions.forcingSprint = forcingSprint;
+            parkourOptions.alwaysSpawn = alwaysSpawn;
+            parkourOptions.countingRecords = countingRecords;
+            parkourOptions.allowingDamage = allowingDamage;
+            parkourOptions.boat = boat;
+            parkourOptions.modifyInventory = modifyInventory;
+            parkourOptions.available = available;
+            parkourOptions.vip = vip;
+            parkourOptions.bronze = bronze;
+            parkourOptions.silver = silver;
+            parkourOptions.gold = gold;
+            parkourOptions.platinum = platinum;
+            parkourOptions.difficulty = difficulty;
+            parkourOptions.xp = xp;
+            parkourOptions.fair = fair;
+            parkourOptions.effects.putAll(effects);
+            parkourOptions.color = color;
+            parkourOptions.type = type;
+            parkourOptions.displayName = displayName;
+            return parkourOptions;
+        }
     }
 
-
-    public ParkourGame(String name, GameRegion gameregion, World world) {
+    public ParkourGame(String name, GameRegion gameRegion, World world) {
         this.name = name;
-        this.gameregion = gameregion;
+        this.gameRegion = gameRegion;
         this.world = world;
-        options = new ParkourOptions();
         options.displayName = name;
         ParkourManager.addParkour(this);
-    }
-
-    public void setOptions(ParkourOptions options) {
-        this.options = options;
     }
 
     public void setName(String newName) {
@@ -458,7 +243,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
         if (id == 0) {
             throw new ArrayIndexOutOfBoundsException();
         }
-        checkpoints.get(id).updateRegion(checkpoint);
+        checkpoints.get(id).setRegion(checkpoint);
     }
 
     public void setCheckpoint(int id, Checkpoint checkpoint) {
@@ -477,7 +262,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
     }
 
     public void setWall(int id, CuboidRegion wall) {
-        walls.get(id).updateRegion(wall);
+        walls.get(id).setRegion(wall);
     }
 
     public void setWall(int id, Wall wall) {
@@ -493,27 +278,13 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
     }
 
     public void setSpawn(Checkpoint newSpawnLocation) {
-        if (checkpoints.size() == 0) {
+        if (checkpoints.isEmpty()) {
             checkpoints.add(newSpawnLocation);
         } else {
             checkpoints.set(0, newSpawnLocation);
         }
-        hasspawn = true;
     }
 
-    void destroy() {
-        new File(Parkour.getInstance().getDataFolder().getAbsolutePath() + "/games/" + name + ".yml").delete();
-        run = hasspawn = false;
-        name = null;
-        world = null;
-        gameregion = null;
-        options = null;
-        checkpoints.clear();
-        walls.clear();
-        effects.clear();
-        authors.clear();
-        players.clear();
-    }
 
     public abstract void addPlayer(Player player);
 
@@ -522,7 +293,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
             players.add(pl);
             pl.reset();
             Bukkit.getPluginManager().callEvent(new PlayerJoinGameEvent(pl.getPlayer(), this));
-            pl.setLastVisitedChecpoint(0);
+            pl.setLastVisitedCheckpoint(0);
         }
     }
 
@@ -534,43 +305,15 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
     }
 
     public void start() {
-        run = true;
+        running = true;
         Bukkit.getServer().getPluginManager().callEvent(new GameStartEvent(this));
         ParkourManager.sortGames();
     }
 
     public void stop() {
-        run = false;
+        running = false;
         Bukkit.getServer().getPluginManager().callEvent(new GameStopEvent(this));
         ParkourManager.sortGames();
-    }
-
-    public boolean isRunning() {
-        return run;
-    }
-
-    public World getWorld() {
-        return world;
-    }
-
-    public void setWorld(World world) {
-        this.world = world;
-    }
-
-    public void updateRegion(GameRegion gr) {
-        gameregion = gr;
-    }
-
-    public void setBestRecordLocation(Location bestRecord) {
-        this.bestRecord = bestRecord;
-    }
-
-    public void setTeleportBlockLocation(Location teleportBlock) {
-        this.teleportBlock = teleportBlock;
-    }
-
-    public Location getBestRecordLocation() {
-        return bestRecord;
     }
 
     public boolean inAnyRegion(Location loc) {
@@ -579,7 +322,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
         }
         for (AbstractRegion r : getAllRegions()) {
             if (r == null) {
-                System.out.print("[Parkour] Debug: Region " + r + " is null!");
+                System.err.print("[ParkourPlugin] Debug: Region is null!");
             } else if (r.contains(loc)) {
                 return true;
             }
@@ -589,61 +332,24 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 
     public List<AbstractRegion> getAllRegions() {
         List<AbstractRegion> arr = new ArrayList<>();
-        arr.add(gameregion);
+        arr.add(gameRegion);
         arr.addAll(walls);
         arr.addAll(checkpoints);
         arr.addAll(effects);
         return arr;
     }
 
-    @Override
-    public String toString() {
-        StringBuilder check = new StringBuilder("[");
-        StringBuilder w = new StringBuilder("[");
-        StringBuilder e = new StringBuilder("[");
-        for (Checkpoint checkpoint : checkpoints) {
-            check.append(checkpoint).append(", ");
-        }
-        check = new StringBuilder(check.substring(0, check.length() - 1) + "]");
-        for (Wall wall : walls) {
-            w.append(wall).append(", ");
-        }
-        w = new StringBuilder(w.substring(0, w.length() - 1) + "]");
-        for (EffectRegion effect : effects) {
-            e.append(effect).append(", ");
-        }
-        e = new StringBuilder(e.substring(0, e.length() - 1) + "]");
-        return getClass().getSimpleName() + "{name=" + name + ", world= " + world.getName() + (walls.size() != 0 ? ", walls=" + w : "") +
-                (checkpoints.size() != 0 ? ", checkpoints=" + check : "") + (effects.size() != 0 ? ", effectregions=" + e : "") +
-                ", options=" + options + "}";
-    }
 
     public Checkpoint getFinish() {
         return checkpoints.get(checkpoints.size() - 1);
     }
 
-    public ParkourOptions getOptions() {
-        return options;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public List<? extends ParkourPlayer> getPlayers() {
+    public List<ParkourPlayer> getPlayers() {
         return players;
-    }
-
-    public GameRegion getGameRegion() {
-        return gameregion;
     }
 
     public int getLastCheckpointId() {
         return checkpoints.size() - 1;
-    }
-
-    public boolean hasSpawn() {
-        return hasspawn;
     }
 
     public Checkpoint getCheckpoint(int id) {
@@ -671,37 +377,34 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
     }
 
     public Checkpoint getSpawn() {
-        if (checkpoints.size() == 0) {
+        if (checkpoints.isEmpty()) {
             return null;
         }
         return checkpoints.get(0);
-    }
-
-    public Location getTeleportBlockLocation() {
-        return teleportBlock;
     }
 
     public List<String> getAuthors() {
         return new ArrayList<>(authors);
     }
 
-    public Map<String, Map<String, Object>> toYamlStructure() {
-        Map<String, Map<String, Object>> map = new TreeMap<>();
-        if (gameregion != null) {
-            map.put("region", gameregion.toYamlStructure());
+    @Override
+    public Map<String, Object> toYmlStructure() {
+        Map<String, Object> map = new TreeMap<>();
+        if (gameRegion != null) {
+            map.put("region", gameRegion.toYmlStructure());
             if (getSpawn() != null) {
-                map.put("spawn", getSpawn().toYamlStructure());
+                map.put("spawn", getSpawn().toYmlStructure());
             }
-            for (AbstractRegion r : checkpoints) {
+            for (Checkpoint r : checkpoints) {
                 if (checkpoints.indexOf(r) != 0) {
-                    map.put("checkpoint_" + checkpoints.indexOf(r), r.toYamlStructure());
+                    map.put("checkpoint_" + checkpoints.indexOf(r), r.toYmlStructure());
                 }
             }
-            for (AbstractRegion r : walls) {
-                map.put("wall_" + walls.indexOf(r), r.toYamlStructure());
+            for (Wall r : walls) {
+                map.put("wall_" + walls.indexOf(r), r.toYmlStructure());
             }
-            for (AbstractRegion r : effects) {
-                map.put("effect_" + effects.indexOf(r), r.toYamlStructure());
+            for (EffectRegion r : effects) {
+                map.put("effect_" + effects.indexOf(r), r.toYmlStructure());
             }
             if (bestRecord != null) {
                 Map<String, Object> tmp = new HashMap<>();
@@ -723,21 +426,30 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
         return map;
     }
 
-    public void fromYamlStructure(Map<String, Map<String, Object>> map) {
-        updateRegion(new GameRegion(world, map.get("region")));
-        setSpawn(new Checkpoint(world, map.get("spawn")));
-        for (Entry<String, Map<String, Object>> entry : map.entrySet()) {
+    @Override
+    public void fromYmlStructure(Map<String, Object> structure) {
+        gameRegion = new GameRegion(world);
+        gameRegion.fromYmlStructure((Map<String, Object>) structure.get("region"));
+        setSpawn(new Checkpoint(world));
+        getSpawn().fromYmlStructure((Map<String, Object>) structure.get("spawn"));
+        for (Entry<String, Object> entry : structure.entrySet()) {
             switch (entry.getKey().split("_")[0]) {
                 case "checkpoint":
-                    addCheckpoint(new Checkpoint(world, entry.getValue()));
+                    Checkpoint checkpoint = new Checkpoint(world);
+                    checkpoint.fromYmlStructure((Map<String, Object>) entry.getValue());
+                    addCheckpoint(checkpoint);
                     break;
                 case "wall":
-                    addWall(new Wall(world, entry.getValue()));
+                    Wall wall = new Wall(world);
+                    wall.fromYmlStructure((Map<String, Object>) entry.getValue());
+                    addWall(wall);
                     break;
                 case "effect":
-                    addEffectRegion(new EffectRegion(world, entry.getValue()));
+                    EffectRegion effectRegion = new EffectRegion(world);
+                    effectRegion.fromYmlStructure((Map<String, Object>) entry.getValue());
+                    addEffectRegion(effectRegion);
                     break;
-                case "recordssign":
+                /*case "recordssign":
                     Object o = entry.getValue().get("world");
                     bestRecord = new Location(o == null ? world : Bukkit.getWorld((String) o),
                             (double) entry.getValue().get("x"),
@@ -749,7 +461,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
                             (double) entry.getValue().get("x"),
                             (double) entry.getValue().get("y"),
                             (double) entry.getValue().get("z"));
-                    break;
+                    break;*/
                 default:
                     break;
             }
@@ -757,26 +469,11 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (o == null) {
-            return false;
-        }
-        if (o == this) {
-            return true;
-        }
-        if (!(o instanceof ParkourGame)) {
-            return false;
-        }
-        return ((ParkourGame) o).name.equals(name);
-    }
-
-
-    @Override
-    public int compareTo(ParkourGame parkour) {
-        if (run && !parkour.run) {
+    public int compareTo(@Nonnull ParkourGame parkour) {
+        if (running && !parkour.running) {
             return 1;
         }
-        if (!run && parkour.run) {
+        if (!running && parkour.running) {
             return -1;
         }
         if (options.difficulty != parkour.options.difficulty) {

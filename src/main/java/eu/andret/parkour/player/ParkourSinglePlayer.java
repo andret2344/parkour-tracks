@@ -1,45 +1,27 @@
 package eu.andret.parkour.player;
 
-import eu.andret.parkour.Parkour;
+import eu.andret.parkour.ParkourPlugin;
 import eu.andret.parkour.parkour.ParkourGame;
 import eu.andret.parkour.parkour.ParkourManager;
 import eu.andret.parkour.region.Checkpoint;
+import lombok.AccessLevel;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 
+@Data
+@EqualsAndHashCode(callSuper = true)
 public class ParkourSinglePlayer extends ParkourPlayer implements Runnable {
     private float time = 0;
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
     private int i = 0;
 
     ParkourSinglePlayer(Player player) {
         super(player);
-    }
-
-    public float getTime() {
-        return time;
-    }
-
-    public void setTime(float time) {
-        this.time = time;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (!super.equals(o)) {
-            return false;
-        }
-        if (o == this) {
-            return true;
-        }
-        if (!(o instanceof ParkourSinglePlayer)) {
-            return false;
-        }
-        return player.equals(((ParkourSinglePlayer) o).player);
-    }
-
-    @Override
-    public String toString() {
-        return getClass().getSimpleName() + "{name=" + player.getName() + ", time=" + time + ", lastCheckpoint=" + lastCheckpoint + ", ignoring=" + ignoring + ", spectating=" + spectating + "}";
     }
 
     @Override
@@ -49,14 +31,14 @@ public class ParkourSinglePlayer extends ParkourPlayer implements Runnable {
             return;
         }
         for (Checkpoint c : p.getCheckpointList()) {
-            if (c.contains(player)) {
+            if (c.contains(player.getLocation())) {
                 return;
             }
         }
-        if (p.getSpawn().contains(player)) {
+        if (p.getSpawn().contains(player.getLocation())) {
             i = 0;
         }
-        if (!Parkour.getInstance().getListeners().getTeleportCounts().containsKey(player.getUniqueId())) {
+        if (!ParkourPlugin.getInstance().getListeners().getTeleportCounts().containsKey(player.getUniqueId())) {
             time = (i++) / 20F;
         }
         if (i == 1 && !spectating) {

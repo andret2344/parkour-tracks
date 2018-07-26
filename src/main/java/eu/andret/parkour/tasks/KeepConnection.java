@@ -1,14 +1,14 @@
 package eu.andret.parkour.tasks;
 
-import eu.andret.parkour.Parkour;
-import eu.andret.parkour.data.Data;
+import eu.andret.parkour.ParkourPlugin;
+import eu.andret.parkour.util.Data;
 
 public class KeepConnection implements Runnable {
 
     @Override
     public void run() {
         try {
-            Parkour.getInstance().getConnection().prepareStatement("SELECT id FROM " + Data.recordstable + " WHERE id<0").executeQuery();
+            ParkourPlugin.getInstance().getConnection().prepareStatement("SELECT id FROM " + Data.TABLE_RECORDS + " WHERE id<0").executeQuery();
         } catch (Exception ignored) {
         }
     }

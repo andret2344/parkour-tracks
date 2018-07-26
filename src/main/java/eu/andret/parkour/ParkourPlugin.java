@@ -1,10 +1,11 @@
 package eu.andret.parkour;
 
-import eu.andret.parkour.data.Data;
+import eu.andret.parkour.parkour.Parkour;
 import eu.andret.parkour.parkour.ParkourGame;
 import eu.andret.parkour.parkour.ParkourManager;
 import eu.andret.parkour.region.AbstractRegion;
 import eu.andret.parkour.tasks.KeepConnection;
+import eu.andret.parkour.util.Data;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -34,28 +35,33 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
-public class Parkour extends JavaPlugin {
+public class ParkourPlugin extends JavaPlugin {
     private FileConfiguration games;
     private Connection conn;
     private ItemStack exit;
     private ParkourListeners listeners;
-    private boolean LobbyCoins = true, GlobalPermissions = true, betaVersion = true;
+    private boolean LobbyCoins = true;
+    private boolean GlobalPermissions = true;
     private final Map<String, String> messages = new LinkedHashMap<>();
     private final YamlConfiguration msgs = new YamlConfiguration();
+    public final String URL = getConfig().getString("connection.url");
+    public final String USER = getConfig().getString("connection.user");
+    public final String PASS = getConfig().getString("connection.pass");
+    public final String DATABASE = getConfig().getString("connection.database");
 
     @Override
     public void onEnable() {
         if (getServer().getPluginManager().getPlugin("WorldEdit") == null) {
-            System.out.print("[Parkour] Could not find WorldEdit plugin. Disabling.");
+            System.out.print("[ParkourPlugin] Could not find WorldEdit plugin. Disabling.");
             setEnabled(false);
             return;
         }
         if (getServer().getPluginManager().getPlugin("LobbyCoins") == null) {
-            System.out.print("[Parkour] Could not find LobbyCoins plugin. I will not administrate payments.");
+            System.out.print("[ParkourPlugin] Could not find LobbyCoins plugin. I will not administrate payments.");
             LobbyCoins = false;
         }
         if (getServer().getPluginManager().getPlugin("GlobalPermissions") == null) {
-            System.out.print("[Parkour] Could not find GlobalPermissions plugin. Every vip-only parkours are unavailable.");
+            System.out.print("[ParkourPlugin] Could not find GlobalPermissions plugin. Every vip-only parkours are unavailable.");
             for (ParkourGame p : ParkourManager.getAllGames()) {
                 if (p.getOptions().isVip()) {
                     p.getOptions().setAvailable(false);
@@ -84,7 +90,7 @@ public class Parkour extends JavaPlugin {
         for (ParkourGame p : ParkourManager.getAllGames()) {
             for (Player pl : Bukkit.getServer().getOnlinePlayers()) {
                 for (AbstractRegion r : p.getAllRegions()) {
-                    if (r.contains(pl)) {
+                    if (r.contains(pl.getLocation())) {
                         p.addPlayer(pl);
                     }
                 }
@@ -123,11 +129,11 @@ public class Parkour extends JavaPlugin {
     }
 
     private void connect() throws SQLException {
-        conn = DriverManager.getConnection("jdbc:mysql://" + Data.url, Data.user, Data.pass);
+        conn = DriverManager.getConnection("jdbc:mysql://" + URL, USER, PASS);
         Statement stat = conn.createStatement();
-        stat.execute("CREATE DATABASE IF NOT EXISTS `" + Data.dbname + "`;");
-        stat.execute("USE " + Data.dbname + ";");
-        stat.execute("CREATE TABLE IF NOT EXISTS " + Data.recordstable + "(id INT PRIMARY KEY AUTO_INCREMENT, date DATETIME, nick VARCHAR(64), " + "parkour VARCHAR(64), time FLOAT, count INT, earned INT, xp INT);");
+        stat.execute("CREATE DATABASE IF NOT EXISTS `" + DATABASE + "`;");
+        stat.execute("USE " + DATABASE + ";");
+        stat.execute("CREATE TABLE IF NOT EXISTS " + Data.TABLE_RECORDS + "(id INT PRIMARY KEY AUTO_INCREMENT, date DATETIME, nick VARCHAR(64), " + "parkour VARCHAR(64), time FLOAT, count INT, earned INT, xp INT);");
     }
 
     public String msg(String path, boolean err) {
@@ -146,32 +152,38 @@ public class Parkour extends JavaPlugin {
         return (result + msgs.getString(here + path)).replace('&', '§');
     }
 
-    private void save() {
+    private boolean save() {
         try {
             for (ParkourGame pk : ParkourManager.getAllGames()) {
                 File path = new File(getDataFolder().getAbsolutePath() + "/games");
                 File file = new File(path.getAbsolutePath() + "/" + pk.getName() + ".yml");
                 if (!path.exists()) {
-                    path.mkdirs();
+                    if (!path.mkdirs()) {
+                        return false;
+                    }
                 }
                 if (!file.exists()) {
-                    file.createNewFile();
+                    if (!file.createNewFile()) {
+                        return false;
+                    }
                 }
                 games = new YamlConfiguration();
                 games.set("world", pk.getWorld().getName());
-                for (Entry<String, Map<String, Object>> entry : pk.toYamlStructure().entrySet()) {
-                    for (Entry<String, Object> e : entry.getValue().entrySet()) {
+                for (Entry<String, Object> entry : pk.toYmlStructure().entrySet()) {
+                    for (Entry<String, Object> e : ((Map<String, Object>) entry.getValue()).entrySet()) {
                         games.set("regions." + entry.getKey() + "." + e.getKey(), e.getValue());
                     }
                 }
                 games.set("started", pk.isRunning());
                 games.set("authors", pk.getAuthors());
-                games.set("options", pk.getOptions().toYamlStructure());
+                games.set("options", pk.getOptions().toYmlStructure());
                 games.save(file);
             }
         } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
+        return true;
     }
 
     public void saveLobbyLoc(Location l) {
@@ -201,13 +213,13 @@ public class Parkour extends JavaPlugin {
             return;
         }
         for (File file : folder.listFiles()) {
-            Map<String, Map<String, Object>> map = new TreeMap<>();
+            Map<String, Object> map = new TreeMap<>();
             if (file.isFile() && file.getName().endsWith("yml")) {
                 games = new YamlConfiguration();
                 games.load(file);
                 World world = new WorldCreator(games.getString("world")).createWorld();
-                eu.andret.parkour.parkour.Parkour pk = new eu.andret.parkour.parkour.Parkour(file.getName().substring(0, file.getName().lastIndexOf('.')), null, world);
-                System.out.print("[Parkour] Trying to load parkour \"" + pk.getName() + "\"");
+                Parkour pk = new Parkour(file.getName().substring(0, file.getName().lastIndexOf('.')), null, world);
+                System.out.print("[ParkourPlugin] Trying to load parkour \"" + pk.getName() + "\"");
                 ConfigurationSection cs = games.getConfigurationSection("regions");
                 if (cs != null) {
                     for (String key : cs.getKeys(false)) {
@@ -218,9 +230,9 @@ public class Parkour extends JavaPlugin {
                         map.put(key, tmp);
                     }
                     try {
-                        pk.fromYamlStructure(map);
+                        pk.fromYmlStructure(map);
                     } catch (Exception ex) {
-                        System.out.print("[Parkour] Unable to load \"" + pk.getName() + "\" parkour.");
+                        System.out.print("[ParkourPlugin] Unable to load \"" + pk.getName() + "\" parkour.");
                         ex.printStackTrace();
                     }
                 }
@@ -233,7 +245,7 @@ public class Parkour extends JavaPlugin {
                     for (String s : cs.getKeys(false)) {
                         options.put(s, cs.get(s));
                     }
-                    pk.getOptions().fromYamlStructure(options);
+                    pk.getOptions().fromYmlStructure(options);
                 }
                 // cs = games.getConfigurationSection("authors");
                 // //cs.getStringList("authors");
@@ -242,10 +254,10 @@ public class Parkour extends JavaPlugin {
                 // pk.addAuthor(s);
                 // }
                 // }
-                System.out.print("[Parkour] Loaded parkour \"" + pk.getName() + "\" in world \"" + world.getName() + "\"");
+                System.out.print("[ParkourPlugin] Loaded parkour \"" + pk.getName() + "\" in world \"" + world.getName() + "\"");
             }
         }
-        System.out.print("[Parkour] Successfully loaded all parkours.");
+        System.out.print("[ParkourPlugin] Successfully loaded all parkours.");
     }
 
     public Connection getConnection() {
@@ -270,15 +282,15 @@ public class Parkour extends JavaPlugin {
         messages.put("ignore|i", msg("cmdIgnore", false));
         messages.put("reload|rl", msg("cmdReload", false));
         messages.put("sprint|sp", msg("cmdSprint", false));
-        messages.put("alwaysspawn|as", msg("cmdAlwaysspawn", false));
+        messages.put("alwaysSpawn|as", msg("cmdAlwaysspawn", false));
         messages.put("price|p", msg("cmdPrice", false));
-        messages.put("countrecords|cr", msg("cmdPrice", false));
-        messages.put("damage|dmg", msg("cmdDamage", false));
+        messages.put("countingRecords|cr", msg("cmdPrice", false));
+        messages.put("allowingDamage|dmg", msg("cmdDamage", false));
         messages.put("effect|e", msg("cmdEffect", false));
-        messages.put("boats|b", msg("cmdBoats", false));
+        messages.put("boat|b", msg("cmdBoats", false));
         messages.put("fair", msg("cmdFair", false));
-        messages.put("proceedable", msg("cmdProceedable", false));
-        messages.put("modifyeq|eq", msg("cmdModifyeq", false));
+        messages.put("enabled", msg("cmdProceedable", false));
+        messages.put("modifyInventory|eq", msg("cmdModifyeq", false));
         messages.put("bestrecord|br", msg("cmdBestrecord", false));
         messages.put("teleportblock|tb", msg("cmdTeleportblock", false));
         messages.put("teleport|tp", msg("cmdTeleport", false));
@@ -321,9 +333,5 @@ public class Parkour extends JavaPlugin {
 
     public boolean isGlobalPermissions() {
         return GlobalPermissions;
-    }
-
-    public boolean isBetaVersion() {
-        return betaVersion;
     }
 }

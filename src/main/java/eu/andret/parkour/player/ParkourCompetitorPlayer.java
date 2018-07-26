@@ -1,20 +1,21 @@
 package eu.andret.parkour.player;
 
+import lombok.AccessLevel;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Setter;
 import org.bukkit.entity.Player;
 
+@Data
+@EqualsAndHashCode(callSuper = true)
 public class ParkourCompetitorPlayer extends ParkourPlayer {
-    private int falls = 0, completes = 0;
+    @Setter(AccessLevel.NONE)
+    private int falls = 0;
+    @Setter(AccessLevel.NONE)
+    private int completes = 0;
 
     ParkourCompetitorPlayer(Player player) {
         super(player);
-    }
-
-    public int getFalls() {
-        return falls;
-    }
-
-    public int getCompletes() {
-        return completes;
     }
 
     public void addFall() {
@@ -23,31 +24,6 @@ public class ParkourCompetitorPlayer extends ParkourPlayer {
 
     public void addComplete() {
         completes++;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (!super.equals(o)) {
-            return false;
-        }
-        if (o == this) {
-            return true;
-        }
-        if (!(o instanceof ParkourCompetitorPlayer)) {
-            return false;
-        }
-        return player.equals(((ParkourCompetitorPlayer) o).player);
-    }
-
-    @Override
-    public String toString() {
-        return getClass().getSimpleName() +
-                "{name=" + player.getName() +
-                ", lastCheckpoint=" + lastCheckpoint +
-                ", ignoring=" + ignoring +
-                ", completes=" + completes +
-                ", falls=" + falls +
-                ", spectating=" + spectating + "}";
     }
 
     @Override

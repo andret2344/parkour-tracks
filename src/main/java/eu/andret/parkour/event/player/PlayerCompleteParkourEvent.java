@@ -1,4 +1,4 @@
-package eu.andret.parkour.event;
+package eu.andret.parkour.event.player;
 
 import eu.andret.parkour.parkour.ParkourGame;
 import lombok.EqualsAndHashCode;
@@ -9,11 +9,10 @@ import org.bukkit.event.HandlerList;
 
 @Value
 @EqualsAndHashCode(callSuper = true)
-public final class PlayerHitWallEvent extends Event {
+public final class PlayerCompleteParkourEvent extends Event {
     private static final HandlerList handlers = new HandlerList();
     private Player player;
     private ParkourGame game;
-    private int checkpointId;
 
     @Override
     public HandlerList getHandlers() {

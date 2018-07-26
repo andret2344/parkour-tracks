@@ -1,6 +1,5 @@
 package eu.andret.parkour.parkour;
 
-import eu.andret.parkour.Parkour;
 import eu.andret.parkour.player.ParkourPlayer;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -15,7 +14,6 @@ public final class ParkourManager {
 
     public static void addParkour(ParkourGame parkour) {
         games.add(parkour);
-        sortGames();
     }
 
     public static void sortGames() {
@@ -28,7 +26,6 @@ public final class ParkourManager {
 
     public static void setLobbyLocation(Location lobby) {
         ParkourManager.lobby = lobby;
-        Parkour.getInstance().saveLobbyLoc(lobby);
     }
 
     public static List<ParkourGame> getAllGames() {
@@ -61,7 +58,5 @@ public final class ParkourManager {
 
     public static void removeParkour(ParkourGame parkour) {
         games.remove(parkour);
-        parkour.destroy();
-        ParkourManager.sortGames();
     }
 }

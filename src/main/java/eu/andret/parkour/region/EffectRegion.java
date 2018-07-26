@@ -1,64 +1,84 @@
 package eu.andret.parkour.region;
 
 import com.sk89q.worldedit.regions.CuboidRegion;
-import com.sk89q.worldedit.world.AbstractWorld;
-import lombok.Value;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.bukkit.World;
 import org.bukkit.potion.PotionEffectType;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@Value
+@Data
+@EqualsAndHashCode(callSuper = true)
 public class EffectRegion extends AbstractRegion {
+    private static final String KEY_EFFECTS_TO_ADD = "effectsToAdd";
+    private static final String KEY_EFFECTS_TO_DEL = "effectsToDel";
+
     private final List<PotionEffectType> effectsToAdd = new ArrayList<>();
-    private final List<PotionEffectType> effectsToRemove = new ArrayList<>();
+    private final List<PotionEffectType> effectsToDel = new ArrayList<>();
 
-    public EffectRegion(CuboidRegion cuboidregion, List<PotionEffectType> effectsToAdd, List<PotionEffectType> effectsToRemove) {
-        super(cuboidregion);
+    public EffectRegion(CuboidRegion cuboidregion, List<PotionEffectType> effectsToAdd, List<PotionEffectType> effectsToDel) {
+        this(cuboidregion);
         this.effectsToAdd.addAll(effectsToAdd);
-        this.effectsToRemove.addAll(effectsToRemove);
+        this.effectsToDel.addAll(effectsToDel);
     }
 
-    public EffectRegion(AbstractWorld l, Map<String, Object> m) {
-        super(l, m);
-        for (String s : (List<String>) m.get("effectsToAdd")) {
-            effectsToAdd.add(PotionEffectType.getByName(s));
-        }
-        for (String s : (List<String>) m.get("effectsToRemove")) {
-            effectsToRemove.add(PotionEffectType.getByName(s));
-        }
+    public EffectRegion(World world, List<PotionEffectType> effectsToAdd, List<PotionEffectType> effectsToDel) {
+        super(world);
+        this.effectsToAdd.addAll(effectsToAdd);
+        this.effectsToDel.addAll(effectsToDel);
     }
 
-    public void addAdditableEffect(PotionEffectType effect) {
+    public EffectRegion(CuboidRegion cuboidregion) {
+        super(cuboidregion);
+    }
+
+    public EffectRegion(World world) {
+        super(world);
+    }
+
+    public void addEffectToAdd(PotionEffectType effect) {
         effectsToAdd.add(effect);
     }
 
-    public boolean removeAdditableEffect(PotionEffectType effect) {
+    public boolean delEffectToAdd(PotionEffectType effect) {
         return effectsToAdd.remove(effect);
     }
 
-    public void addRemovableEffect(PotionEffectType effect) {
-        effectsToRemove.add(effect);
+    public void addEffectToDel(PotionEffectType effect) {
+        effectsToDel.add(effect);
     }
 
-    public boolean removeRemovableEffects(PotionEffectType effect) {
-        return effectsToRemove.remove(effect);
+    public boolean delEffectToDel(PotionEffectType effect) {
+        return effectsToDel.remove(effect);
     }
 
     @Override
-    public Map<String, Object> toYamlStructure() {
-        Map<String, Object> map = super.toYamlStructure();
+    public Map<String, Object> toYmlStructure() {
+        Map<String, Object> map = super.toYmlStructure();
         List<String> s = new ArrayList<>();
         for (PotionEffectType p : effectsToAdd) {
             s.add(p.getName());
         }
-        map.put("effectsToAdd", s);
+        map.put(KEY_EFFECTS_TO_ADD, s);
         s = new ArrayList<>();
-        for (PotionEffectType p : effectsToRemove) {
+        for (PotionEffectType p : effectsToDel) {
             s.add(p.getName());
         }
-        map.put("effectsToRemove", s);
+        map.put(KEY_EFFECTS_TO_DEL, s);
         return map;
+    }
+
+    @Override
+    public void fromYmlStructure(Map<String, Object> structure) {
+        super.fromYmlStructure(structure);
+        for (String s : (List<String>) structure.get(KEY_EFFECTS_TO_ADD)) {
+            effectsToAdd.add(PotionEffectType.getByName(s));
+        }
+        for (String s : (List<String>) structure.get(KEY_EFFECTS_TO_DEL)) {
+            effectsToDel.add(PotionEffectType.getByName(s));
+        }
     }
 }

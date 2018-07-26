@@ -1,4 +1,4 @@
-package eu.andret.parkour.event;
+package eu.andret.parkour.event.player;
 
 import eu.andret.parkour.parkour.ParkourGame;
 import lombok.EqualsAndHashCode;

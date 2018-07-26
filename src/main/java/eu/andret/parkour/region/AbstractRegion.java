@@ -1,14 +1,15 @@
 package eu.andret.parkour.region;
 
 import com.sk89q.worldedit.Vector;
+import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.regions.CuboidRegion;
-import com.sk89q.worldedit.world.AbstractWorld;
+import com.sk89q.worldedit.world.World;
+import eu.andret.parkour.YmlSerializable;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.entity.Player;
 
 import java.util.Map;
 import java.util.Objects;
@@ -16,37 +17,15 @@ import java.util.TreeMap;
 
 @Data
 @AllArgsConstructor
-public abstract class AbstractRegion {
+public abstract class AbstractRegion implements YmlSerializable {
     private CuboidRegion region;
 
-    public AbstractRegion(AbstractWorld l, Map<String, Object> m) {
-        this(new CuboidRegion(l,
-                        new Vector(
-                                (double) m.get("x1"),
-                                (double) m.get("y1"),
-                                (double) m.get("z1")),
-                        new Vector(
-                                (double) m.get("x2"),
-                                (double) m.get("y2"),
-                                (double) m.get("z2"))
-                )
-        );
-    }
-
-    public CuboidRegion getRegion() {
-        return region;
+    public AbstractRegion(org.bukkit.World world) {
+        this(new CuboidRegion((World) new BukkitWorld(world), Vector.ZERO, Vector.ZERO));
     }
 
     public boolean contains(Location loc) {
         return region.contains(new Vector(loc.getX(), loc.getY(), loc.getZ()));
-    }
-
-    public boolean contains(Player player) {
-        return contains(player.getLocation());
-    }
-
-    public void updateRegion(CuboidRegion cuboidregion) {
-        region = cuboidregion;
     }
 
     @Deprecated
@@ -62,7 +41,8 @@ public abstract class AbstractRegion {
         }
     }
 
-    public Map<String, Object> toYamlStructure() {
+    @Override
+    public Map<String, Object> toYmlStructure() {
         Map<String, Object> map = new TreeMap<>();
         map.put("x1", region.getPos1().getX());
         map.put("y1", region.getPos1().getY());
@@ -71,5 +51,17 @@ public abstract class AbstractRegion {
         map.put("y2", region.getPos2().getY());
         map.put("z2", region.getPos2().getZ());
         return map;
+    }
+
+    @Override
+    public void fromYmlStructure(Map<String, Object> structure) {
+        region.setPos1(new Vector(
+                (double) structure.get("x1"),
+                (double) structure.get("y1"),
+                (double) structure.get("z1")));
+        region.setPos2(new Vector(
+                (double) structure.get("x2"),
+                (double) structure.get("y2"),
+                (double) structure.get("z2")));
     }
 }

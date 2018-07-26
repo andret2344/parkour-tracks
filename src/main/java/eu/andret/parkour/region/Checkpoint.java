@@ -1,45 +1,62 @@
 package eu.andret.parkour.region;
 
 import com.sk89q.worldedit.regions.CuboidRegion;
-import com.sk89q.worldedit.world.AbstractWorld;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Value;
+import lombok.experimental.NonFinal;
+import org.bukkit.World;
 
 import java.util.Map;
 
-@Value
+@Data
 @EqualsAndHashCode(callSuper = true)
 public class Checkpoint extends AbstractRegion {
+    @NonFinal
     private float yaw, pitch;
 
-    public Checkpoint(CuboidRegion cuboidregion, float yaw, float pitch) {
-        super(cuboidregion);
+    public Checkpoint(CuboidRegion region, float yaw, float pitch) {
+        super(region);
         this.yaw = yaw;
         this.pitch = pitch;
     }
 
-    public Checkpoint(AbstractWorld l, Map<String, Object> m) {
-        super(l, m);
+    public Checkpoint(World world, float yaw, float pitch) {
+        super(world);
+        this.yaw = yaw;
+        this.pitch = pitch;
+    }
+
+    public Checkpoint(CuboidRegion region) {
+        this(region, 0, 0);
+    }
+
+    public Checkpoint(World world) {
+        this(world, 0, 0);
+    }
+
+    @Override
+    public Map<String, Object> toYmlStructure() {
+        Map<String, Object> map = super.toYmlStructure();
+        map.put("yaw", yaw);
+        map.put("pitch", pitch);
+        return map;
+    }
+
+    @Override
+    public void fromYmlStructure(Map<String, Object> structure) {
+        super.fromYmlStructure(structure);
         float yaw, pitch;
         try {
-            yaw = Float.valueOf("" + m.get("yaw"));
+            yaw = Float.valueOf("" + structure.get("yaw"));
         } catch (Exception ex) {
             yaw = 0;
         }
         try {
-            pitch = Float.valueOf("" + m.get("pitch"));
+            pitch = Float.valueOf("" + structure.get("pitch"));
         } catch (Exception ex) {
             pitch = 0;
         }
         this.yaw = yaw;
         this.pitch = pitch;
-    }
-
-    @Override
-    public Map<String, Object> toYamlStructure() {
-        Map<String, Object> map = super.toYamlStructure();
-        map.put("yaw", yaw);
-        map.put("pitch", pitch);
-        return map;
     }
 }

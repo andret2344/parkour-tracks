@@ -1,6 +1,6 @@
 package eu.andret.parkour.tasks;
 
-import eu.andret.parkour.Parkour;
+import eu.andret.parkour.ParkourPlugin;
 import org.bukkit.entity.Player;
 
 public class TeleportCount implements Runnable {
@@ -14,10 +14,10 @@ public class TeleportCount implements Runnable {
     @Override
     public void run() {
         if (i == 5) {
-            pl.sendMessage(Parkour.msg("10sek", false));
+            pl.sendMessage(ParkourPlugin.msg("10sek", false));
         }
         if (i == 0) {
-            Parkour.getInstance().getListeners().stopScheduling(pl);
+            ParkourPlugin.getInstance().getListeners().stopScheduling(pl);
         }
         i--;
     }
