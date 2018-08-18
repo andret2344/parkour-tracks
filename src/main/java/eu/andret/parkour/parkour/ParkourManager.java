@@ -12,6 +12,9 @@ public final class ParkourManager {
     private static final List<ParkourGame> games = new ArrayList<>();
     private static Location lobby;
 
+    private ParkourManager() {
+    }
+
     public static void addParkour(ParkourGame parkour) {
         games.add(parkour);
     }

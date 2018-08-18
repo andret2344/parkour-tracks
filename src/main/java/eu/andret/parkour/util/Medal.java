@@ -1,6 +1,5 @@
 package eu.andret.parkour.util;
 
-import eu.andret.parkour.ParkourPlugin;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -13,43 +12,26 @@ public enum Medal {
     /**
      * The best medal.
      */
-    PLATINUM(100, ParkourPlugin.getInstance().getConfig().getString("medal.platinium")),
+    PLATINUM(100),
     /**
      * Second one.
      */
-    GOLD(80, ParkourPlugin.getInstance().getConfig().getString("medal.gold")),
+    GOLD(80),
     /**
      * Third...
      */
-    SILVER(50, ParkourPlugin.getInstance().getConfig().getString("medal.silver")),
+    SILVER(50),
     /**
      * Worst one.
      */
-    BRONZE(20, ParkourPlugin.getInstance().getConfig().getString("medal.bronze")),
+    BRONZE(20),
     /**
      * No medal.
      */
-    NONE(ParkourPlugin.getInstance().getConfig().getString("medal.none"));
+    NONE(0);
 
     /**
      * The price for getting exact medal.
      */
     private final int price;
-    /**
-     * The displayed name of medal.
-     */
-    private final String name;
-
-    /**
-     * @param id number of medal.
-     * @return the medal if found, <code>null</code> otherwise.
-     */
-    public static Medal valueOf(int id) {
-        for (Medal m : values()) {
-            if (m.ordinal() == id) {
-                return m;
-            }
-        }
-        return Medal.NONE;
-    }
 }

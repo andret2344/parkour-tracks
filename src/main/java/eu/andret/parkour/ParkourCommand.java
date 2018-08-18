@@ -203,7 +203,7 @@ public class ParkourCommand implements CommandExecutor {
                         } else {
                             ParkourGame pk = ParkourManager.getParkour(args[1]);
                             if (pk != null) {
-                                if (pk.hasSpawn()) {
+                                if (pk.getSpawn() != null) {
                                     ParkourOptions o = pk.getOptions();
                                     if (o.getBronze() != 0 && o.getSilver() != 0 && o.getGold() != 0 && o.getPlatinum() != 0) {
                                         if (!pk.isRunning()) {
@@ -236,7 +236,7 @@ public class ParkourCommand implements CommandExecutor {
                                 if (sel != null) {
                                     AbstractWorld lw = new BukkitWorld(((Player) sender).getWorld());
                                     CuboidRegion cr = new CuboidRegion(lw, sel.getNativeMaximumPoint(), sel.getNativeMinimumPoint());
-                                    pk.getGameRegion().updateRegion(cr);
+                                    pk.getGameRegion().setRegion(cr);
                                     sender.sendMessage(msg("gameRecreated", false));
                                 } else {
                                     sender.sendMessage(msg("wrongSel", true));
@@ -251,7 +251,7 @@ public class ParkourCommand implements CommandExecutor {
                 } else if (args[0].equalsIgnoreCase("fix")) {
                     if (sender instanceof Player && sender.hasPermission("ats.parkour.fix")) {
                         for (ParkourGame p : ParkourManager.getAllGames()) {
-                            Bukkit.getScheduler().runTaskAsynchronously(plugin, new RepairSignTask(p));
+                            Bukkit.getScheduler().runTaskAsynchronously(plugin, new RepairSignTask(plugin, p));
                         }
                         sender.sendMessage(msg("successFix", false));
                     } else {
@@ -294,7 +294,7 @@ public class ParkourCommand implements CommandExecutor {
                             }
                             ParkourGame pk = ParkourManager.getParkour(args[1]);
                             if (pk != null) {
-                                Bukkit.getScheduler().runTaskAsynchronously(plugin, new TopPlayersDataOperations(pk, i, result -> {
+                                Bukkit.getScheduler().runTaskAsynchronously(plugin, new TopPlayersDataOperations(plugin, pk, i, result -> {
                                     int j = 1;
                                     for (Entry<String, Float> entry : result.getResult().entrySet()) {
                                         sender.sendMessage(msg("topRecord", false).replace("%NUMBER%", "" + j++).replace("%PLAYER%", entry.getKey()).replace("%TIME%", "" + entry.getValue()));
@@ -445,14 +445,14 @@ public class ParkourCommand implements CommandExecutor {
                         } else if (args.length == 2) {
                             ParkourGame parkour = ParkourManager.getParkour(args[1]);
                             if (parkour != null) {
-                                sender.sendMessage(msg("currentSprint", false).replace("%SPRINT%", String.valueOf(parkour.getOptions().mustSprint())));
+                                sender.sendMessage(msg("currentSprint", false).replace("%SPRINT%", String.valueOf(parkour.getOptions().isForcingSprint())));
                             } else {
                                 sender.sendMessage(msg("noGame", true));
                             }
                         } else {
                             ParkourGame parkour = ParkourManager.getParkour(args[1]);
                             if (parkour != null) {
-                                parkour.getOptions().mustSprint(Boolean.valueOf(args[2]));
+                                parkour.getOptions().setForcingSprint(Boolean.valueOf(args[2]));
                                 sender.sendMessage(msg("setSprint", false).replace("%SPRINT%", String.valueOf(Boolean.valueOf(args[2]))));
                             } else {
                                 sender.sendMessage(msg("noGame", true));
@@ -468,14 +468,14 @@ public class ParkourCommand implements CommandExecutor {
                         } else if (args.length == 2) {
                             ParkourGame parkour = ParkourManager.getParkour(args[1]);
                             if (parkour != null) {
-                                sender.sendMessage(msg("currentAlwaysspawn", false).replace("%ALWAYSSPAWN%", String.valueOf(parkour.getOptions().alwaysTpToSpawn())));
+                                sender.sendMessage(msg("currentAlwaysspawn", false).replace("%ALWAYSSPAWN%", String.valueOf(parkour.getOptions().isAlwaysSpawn())));
                             } else {
                                 sender.sendMessage(msg("noGame", true));
                             }
                         } else {
                             ParkourGame parkour = ParkourManager.getParkour(args[1]);
                             if (parkour != null) {
-                                parkour.getOptions().setAlwaysTpToSpawn(Boolean.valueOf(args[2]));
+                                parkour.getOptions().setAlwaysSpawn(Boolean.valueOf(args[2]));
                                 sender.sendMessage(msg("setAlwaysSpawn", false).replace("%ALWAYSSPAWN%", String.valueOf(Boolean.valueOf(args[2]))));
                             } else {
                                 sender.sendMessage(msg("noGame", true));
@@ -491,14 +491,14 @@ public class ParkourCommand implements CommandExecutor {
                         } else if (args.length == 2) {
                             ParkourGame parkour = ParkourManager.getParkour(args[1]);
                             if (parkour != null) {
-                                sender.sendMessage(msg("currentPrice", false).replace("%PRICE%", String.valueOf(parkour.getOptions().getRewardPrice())));
+                                sender.sendMessage(msg("currentPrice", false).replace("%PRICE%", String.valueOf(parkour.getOptions().getPrice())));
                             } else {
                                 sender.sendMessage(msg("noGame", true));
                             }
                         } else {
                             ParkourGame parkour = ParkourManager.getParkour(args[1]);
                             if (parkour != null) {
-                                parkour.getOptions().setRewardPrice(Integer.valueOf(args[2]));
+                                parkour.getOptions().setPrice(Integer.valueOf(args[2]));
                                 sender.sendMessage(msg("setPrice", false).replace("%PRICE%", String.valueOf(Integer.valueOf(args[2]))));
                             } else {
                                 sender.sendMessage(msg("noGame", true));
@@ -538,11 +538,7 @@ public class ParkourCommand implements CommandExecutor {
                             ParkourGame parkour1 = ParkourManager.getParkour(args[1]);
                             ParkourGame parkour2 = ParkourManager.getParkour(args[2]);
                             if (parkour1 != null && parkour2 != null) {
-                                try {
-                                    parkour2.setOptions(parkour1.getOptions().clone());
-                                } catch (CloneNotSupportedException e) {
-                                    e.printStackTrace();
-                                }
+                                parkour2.setOptions(parkour2.new ParkourOptions(parkour1.getOptions()));
                                 sender.sendMessage(msg("successClone", false).replace("%PARKOURFROM%", args[1]).replace("%PARKOURTO%", args[2]));
                             } else {
                                 sender.sendMessage(msg("noGame", true));
@@ -558,14 +554,14 @@ public class ParkourCommand implements CommandExecutor {
                         } else if (args.length == 2) {
                             ParkourGame parkour = ParkourManager.getParkour(args[1]);
                             if (parkour != null) {
-                                sender.sendMessage(msg("currentCountrecords", false).replace("%COUNTRECORDS%", String.valueOf(parkour.getOptions().countRecords())));
+                                sender.sendMessage(msg("currentCountrecords", false).replace("%COUNTRECORDS%", String.valueOf(parkour.getOptions().isCountingRecords())));
                             } else {
                                 sender.sendMessage(msg("noGame", true));
                             }
                         } else {
                             ParkourGame parkour = ParkourManager.getParkour(args[1]);
                             if (parkour != null) {
-                                parkour.getOptions().setCountRecords(Boolean.valueOf(args[2]));
+                                parkour.getOptions().setCountingRecords(Boolean.valueOf(args[2]));
                                 sender.sendMessage(msg("setCountingRecords", false).replace("%COUNTRECORDS%", String.valueOf(Boolean.valueOf(args[2]))));
                             } else {
                                 sender.sendMessage(msg("noGame", true));
@@ -706,7 +702,7 @@ public class ParkourCommand implements CommandExecutor {
                                     if (p != null) {
                                         if (Data.ALLOWED_EFFECTS.contains(p)) {
                                             if (args.length == 3) {
-                                                sender.sendMessage(msg("currentEffect", false).replace("%EFFECT%", p.getName()).replace("%AMPLIFIER%", "" + o.getEffectAmplifier(p)));
+                                                sender.sendMessage(msg("currentEffect", false).replace("%EFFECT%", p.getName()).replace("%AMPLIFIER%", "" + o.getEffects().get(p)));
                                             } else {
                                                 try {
                                                     int a = Integer.parseInt(args[3]);
@@ -811,8 +807,8 @@ public class ParkourCommand implements CommandExecutor {
                             ParkourGame parkour = ParkourManager.getParkour(args[1]);
                             if (parkour != null) {
                                 String tmp = msg("currentDisplayname", false).split("%")[0];
-                                String color = "§" + tmp.charAt(tmp.lastIndexOf('§') + 1);
-                                sender.sendMessage(msg("currentDisplayname", false).replace("%DISPLAYNAME%", "§r" + parkour.getOptions().getDisplayName().replace('&', '§') + color));
+                                String color = "\u00A7" + tmp.charAt(tmp.lastIndexOf('\u00A7') + 1);
+                                sender.sendMessage(msg("currentDisplayname", false).replace("%DISPLAYNAME%", "\u00A7r" + parkour.getOptions().getDisplayName().replace('&', '\u00A7') + color));
                             } else {
                                 sender.sendMessage(msg("noGame", true));
                             }
@@ -824,9 +820,9 @@ public class ParkourCommand implements CommandExecutor {
                                     nameBuilder.append(" ").append(args[i]);
                                 }
                                 String name = nameBuilder.substring(1);
-                                name = name.replace('&', '§');
+                                name = name.replace('&', '\u00A7');
                                 String tmp = msg("setDisplayname", false).split("%")[0];
-                                String color = "§" + tmp.charAt(tmp.lastIndexOf('§') + 1);
+                                String color = "\u00A7" + tmp.charAt(tmp.lastIndexOf('\u00A7') + 1);
                                 parkour.getOptions().setDisplayName(name);
                                 sender.sendMessage(msg("setDisplayname", false).replace("%DISPLAYNAME%", name + color));
                             } else {
@@ -959,7 +955,7 @@ public class ParkourCommand implements CommandExecutor {
                             try {
                                 ParkourGame parkour = ParkourManager.getParkour(args[1]);
                                 if (parkour != null) {
-                                    parkour.getOptions().setPlatnum(Integer.valueOf(args[2]));
+                                    parkour.getOptions().setPlatinum(Integer.valueOf(args[2]));
                                     sender.sendMessage(msg("setPlatnum", false).replace("%PLATINUM%", String.valueOf(Integer.valueOf(args[2]))));
                                 } else {
                                     sender.sendMessage(msg("noGame", true));
@@ -1079,7 +1075,9 @@ public class ParkourCommand implements CommandExecutor {
                             }
                         }
                         Map<String, String> list = plugin.getMessages();
-                        int max = i + 5, value = list.size() / 5 + 1, p = i / 5 + 1;
+                        int max = i + 5;
+                        int value = list.size() / 5 + 1;
+                        int p = i / 5 + 1;
                         if (p <= value) {
                             sender.sendMessage(msg("currentPage", false).replace("%PAGE%", String.valueOf(p)).replace("%MAXPAGES%", String.valueOf(value)));
                             List<?> l = new ArrayList<>(list.entrySet());
@@ -1132,7 +1130,7 @@ public class ParkourCommand implements CommandExecutor {
                         if (args.length == 2) {
                             ParkourGame parkour = ParkourManager.getParkour(args[1]);
                             if (parkour != null) {
-                                parkour.setTeleportBlockLocation(((Player) sender).getTargetBlock((Set<Material>) null, 5).getLocation());
+                                parkour.setTeleportBlock(((Player) sender).getTargetBlock((Set<Material>) null, 5).getLocation());
                                 sender.sendMessage(msg("setTeleportblock", false).replace("%PARKOUR%", args[1]));
                             } else {
                                 sender.sendMessage(msg("noGame", true));
@@ -1147,7 +1145,7 @@ public class ParkourCommand implements CommandExecutor {
                     if ((sender instanceof Player) && sender.hasPermission("ats.parkour.check")) {
                         for (ParkourGame p : ParkourManager.getAllGames()) {
                             for (AbstractRegion r : p.getAllRegions()) {
-                                if (r.contains((Player) sender) && p.getWorld().equals(((Player) sender).getWorld())) {
+                                if (r.contains(((Player) sender).getLocation()) && p.getWorld().equals(((Player) sender).getWorld())) {
                                     sender.sendMessage(msg("currentParkour", false).replace("%PARKOUR%", p.getName()));
                                     break;
                                 }
@@ -1192,19 +1190,19 @@ public class ParkourCommand implements CommandExecutor {
                                 Location loc = ((Player) sender).getTargetBlock((Set<Material>) null, 5).getLocation();
                                 Material m = loc.getBlock().getType();
                                 if (m.equals(Material.SIGN) || m.equals(Material.WALL_SIGN) || m.equals(Material.SIGN_POST)) {
-                                    parkour.setBestRecordLocation(loc);
+                                    parkour.setBestRecord(loc);
                                     sender.sendMessage(msg("setBestrecord", false).replace("%COORDX%", "" + loc.getX()).replace("%COORDY%", "" + loc.getY()).replace("%COORDZ%", "" + loc.getZ()));
                                     try {
                                         PreparedStatement stat = plugin.getConnection().prepareStatement(String.format("SELECT time, nick FROM %s WHERE parkour=? ORDER BY time LIMIT 1", Data.TABLE_RECORDS));
                                         stat.setString(1, args[1]);
                                         ResultSet rs = stat.executeQuery();
                                         if (rs.next()) {
-                                            DataBaseOperations.updateSign(rs.getString("nick"), rs.getDouble("time"), parkour);
+                                            DataBaseOperations.updateSign(plugin, rs.getString("nick"), rs.getDouble("time"), parkour);
                                         } else {
-                                            DataBaseOperations.updateSign("========", 0.00, parkour);
+                                            DataBaseOperations.updateSign(plugin, "========", 0.00, parkour);
                                         }
-                                    } catch (Exception e) {
-                                        e.printStackTrace();
+                                    } catch (Exception ex) {
+                                        Bukkit.getServer().getLogger().throwing(getClass().getName(), "onCommand", ex);
                                     }
                                 } else {
                                     sender.sendMessage(msg("noSign", true));

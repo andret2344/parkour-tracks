@@ -20,7 +20,7 @@ public final class Data {
     /**
      * List of potion effects that can be applied to a region.
      */
-    protected static final List<PotionEffectType> ALLOWED_EFFECTS = new ArrayList<>();
+    public static final List<PotionEffectType> ALLOWED_EFFECTS = new ArrayList<>();
 
     /**
      * Private constructor.

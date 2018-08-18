@@ -1,6 +1,7 @@
-package eu.andret.parkour.event.game;
+package eu.andret.parkour.event.player;
 
 import eu.andret.parkour.parkour.ParkourGame;
+import eu.andret.parkour.player.ParkourPlayer;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -13,7 +14,7 @@ import org.bukkit.event.HandlerList;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
-public class AbstractGameEvent extends Event {
+public class AbstractParkourPlayerEvent extends Event {
     /**
      * List of all Handlers.
      */
@@ -22,6 +23,11 @@ public class AbstractGameEvent extends Event {
      * The Parkour that has been started.
      */
     private ParkourGame parkour;
+
+    /**
+     * The player that triggered the event.
+     */
+    private ParkourPlayer player;
 
     @Override
     public final HandlerList getHandlers() {

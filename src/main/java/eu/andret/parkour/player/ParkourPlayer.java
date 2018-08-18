@@ -15,7 +15,7 @@ import org.bukkit.inventory.ItemStack;
 @Data
 public abstract class ParkourPlayer {
     protected final Player player;
-    protected int lastVisitedCheckpoint = 0;
+    protected int lastVisitedCheckpointId = 0;
     protected boolean ignoring = false;
     protected boolean spectating = false;
 
@@ -34,7 +34,7 @@ public abstract class ParkourPlayer {
             Checkpoint cp = pk.getCheckpoint(id);
             Vector v = cp.getRegion().getCenter();
             player.teleport(new Location(pk.getWorld(), v.getX() + 0.5, v.getY(), v.getZ() + 0.5, cp.getYaw(), cp.getPitch()));
-            Bukkit.getPluginManager().callEvent(new PlayerTeleportBackEvent(player, pk, id));
+            Bukkit.getPluginManager().callEvent(new PlayerTeleportBackEvent(pk, this, cp));
         }
     }
 
@@ -60,7 +60,7 @@ public abstract class ParkourPlayer {
     }
 
     public void reset() {
-        lastVisitedCheckpoint = 0;
+        lastVisitedCheckpointId = 0;
         player.setExp(0);
         player.setLevel(0);
     }

@@ -1,26 +1,31 @@
 package eu.andret.parkour.event.player;
 
 import eu.andret.parkour.parkour.ParkourGame;
+import eu.andret.parkour.player.ParkourPlayer;
+import eu.andret.parkour.region.Wall;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
-import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
-import org.bukkit.event.HandlerList;
 
+/**
+ * The event that is called when player hits the wall
+ */
 @Value
 @EqualsAndHashCode(callSuper = true)
-public final class PlayerHitWallEvent extends Event {
-    private static final HandlerList handlers = new HandlerList();
-    private Player player;
-    private ParkourGame game;
-    private int checkpointId;
+public final class PlayerHitWallEvent extends AbstractParkourPlayerEvent {
+    /**
+     * The wall the player hit.
+     */
+    private Wall wall;
 
-    @Override
-    public HandlerList getHandlers() {
-        return handlers;
-    }
-
-    public static HandlerList getHandlerList() {
-        return handlers;
+    /**
+     * Constructor.
+     *
+     * @param parkour The game that player is in.
+     * @param player  The player that triggers the event.
+     * @param wall    The wall the player hit.
+     */
+    public PlayerHitWallEvent(ParkourGame parkour, ParkourPlayer player, Wall wall) {
+        super(parkour, player);
+        this.wall = wall;
     }
 }

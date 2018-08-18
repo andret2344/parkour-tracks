@@ -1,26 +1,31 @@
 package eu.andret.parkour.event.player;
 
 import eu.andret.parkour.parkour.ParkourGame;
+import eu.andret.parkour.player.ParkourPlayer;
+import eu.andret.parkour.region.Checkpoint;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
-import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
-import org.bukkit.event.HandlerList;
 
+/**
+ * The event that is called when player is being teleported back.
+ */
 @Value
 @EqualsAndHashCode(callSuper = true)
-public final class PlayerTeleportBackEvent extends Event {
-    private static final HandlerList handlers = new HandlerList();
-    private Player player;
-    private ParkourGame game;
-    private int checkpointId;
+public final class PlayerTeleportBackEvent extends AbstractParkourPlayerEvent {
+    /**
+     * The checkpoint the player was teleported to.
+     */
+    private Checkpoint checkpoint;
 
-    @Override
-    public HandlerList getHandlers() {
-        return handlers;
-    }
-
-    public static HandlerList getHandlerList() {
-        return handlers;
+    /**
+     * Constructor.
+     *
+     * @param parkour    The game that player is in.
+     * @param player     The player that triggers the event.
+     * @param checkpoint The checkpoint the player is teleported to.
+     */
+    public PlayerTeleportBackEvent(ParkourGame parkour, ParkourPlayer player, Checkpoint checkpoint) {
+        super(parkour, player);
+        this.checkpoint = checkpoint;
     }
 }

@@ -1,9 +1,9 @@
 package eu.andret.parkour.player;
 
-import eu.andret.parkour.ParkourPlugin;
 import eu.andret.parkour.parkour.ParkourGame;
 import eu.andret.parkour.parkour.ParkourManager;
 import eu.andret.parkour.region.Checkpoint;
+import eu.andret.parkour.util.SchedulerManager;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -26,8 +26,9 @@ public class ParkourSinglePlayer extends ParkourPlayer implements Runnable {
 
     @Override
     public void run() {
+        //FIXME: Remove thread thing from here
         ParkourGame p = ParkourManager.getParkour(player);
-        if (ignoring || !PlayerManager.playerExists(player) || p == null || !p.isRunning() || spectating) {
+        if (ignoring || PlayerManager.getParkourPlayer(player) == null || p == null || !p.isRunning() || spectating) {
             return;
         }
         for (Checkpoint c : p.getCheckpointList()) {
@@ -38,7 +39,7 @@ public class ParkourSinglePlayer extends ParkourPlayer implements Runnable {
         if (p.getSpawn().contains(player.getLocation())) {
             i = 0;
         }
-        if (!ParkourPlugin.getInstance().getListeners().getTeleportCounts().containsKey(player.getUniqueId())) {
+        if (!SchedulerManager.TELEPORT_COUNT.containsKey(player.getUniqueId())) {
             time = (i++) / 20F;
         }
         if (i == 1 && !spectating) {

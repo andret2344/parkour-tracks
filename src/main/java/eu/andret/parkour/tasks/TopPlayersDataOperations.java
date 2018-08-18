@@ -3,31 +3,27 @@ package eu.andret.parkour.tasks;
 import eu.andret.parkour.ParkourPlugin;
 import eu.andret.parkour.parkour.ParkourGame;
 import eu.andret.parkour.util.Data;
+import lombok.AllArgsConstructor;
+import org.bukkit.Bukkit;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
+@AllArgsConstructor
 public class TopPlayersDataOperations implements Runnable {
-    private ParkourGame parkour;
-    private Connection sql = ParkourPlugin.getInstance().getConnection();
-    private int count;
+    private final ParkourPlugin plugin;
+    private final ParkourGame parkour;
+    private final int count;
+    private final Consumer<TopPlayersDataOperations> callback;
     private final Map<String, Float> result = new HashMap<>();
-    private Consumer<TopPlayersDataOperations> callback;
-
-    public TopPlayersDataOperations(ParkourGame parkour, int count, Consumer<TopPlayersDataOperations> callback) {
-        this.parkour = parkour;
-        this.count = count;
-        this.callback = callback;
-    }
 
     @Override
     public void run() {
         try {
-            PreparedStatement stat = sql.prepareStatement(String.format("SELECT nick, time FROM %s "
+            PreparedStatement stat = plugin.getConnection().prepareStatement(String.format("SELECT nick, time FROM %s "
                     + "WHERE parkour=? ORDER BY time LIMIT 10", Data.TABLE_RECORDS));
             stat.setString(1, parkour.getName());
             ResultSet rs = stat.executeQuery();
@@ -36,7 +32,7 @@ public class TopPlayersDataOperations implements Runnable {
             }
             callback.accept(this);
         } catch (Exception ex) {
-            ex.printStackTrace();
+            Bukkit.getServer().getLogger().throwing(getClass().getName(), "run", ex);
         }
     }
 

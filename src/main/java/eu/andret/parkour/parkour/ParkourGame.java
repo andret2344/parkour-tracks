@@ -17,6 +17,7 @@ import eu.andret.parkour.util.Medal;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
@@ -32,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.logging.Level;
 
 @Data
 public abstract class ParkourGame implements Comparable<ParkourGame>, YmlSerializable {
@@ -61,7 +63,8 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, YmlSeriali
     }
 
     @Data
-    public class ParkourOptions implements Cloneable, YmlSerializable {
+    @NoArgsConstructor
+    public class ParkourOptions implements YmlSerializable {
         private boolean enabled = true;
         private boolean forcingSprint = false;
         private boolean alwaysSpawn = false;
@@ -84,6 +87,30 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, YmlSeriali
         private DyeColor color = DyeColor.WHITE;
         private ParkourType type = ParkourType.SERVER;
         private String displayName;
+
+        public ParkourOptions(ParkourOptions options) {
+            enabled = options.enabled;
+            forcingSprint = options.forcingSprint;
+            alwaysSpawn = options.alwaysSpawn;
+            countingRecords = options.countingRecords;
+            allowingDamage = options.allowingDamage;
+            boat = options.boat;
+            modifyInventory = options.modifyInventory;
+            available = options.available;
+            vip = options.vip;
+            bronze = options.bronze;
+            silver = options.silver;
+            gold = options.gold;
+            platinum = options.platinum;
+            difficulty = options.difficulty;
+            xp = options.xp;
+            fair = options.fair;
+            effects.putAll(options.effects);
+            color = options.color;
+            type = options.type;
+            price = options.price;
+            displayName = options.displayName;
+        }
 
         public Medal getMedalByTime(float time) {
             if (platinum >= time) {
@@ -194,32 +221,6 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, YmlSeriali
                 xp = 0;
             }
         }
-
-        @Override
-        protected Object clone() {
-            ParkourOptions parkourOptions = new ParkourOptions();
-            parkourOptions.enabled = enabled;
-            parkourOptions.forcingSprint = forcingSprint;
-            parkourOptions.alwaysSpawn = alwaysSpawn;
-            parkourOptions.countingRecords = countingRecords;
-            parkourOptions.allowingDamage = allowingDamage;
-            parkourOptions.boat = boat;
-            parkourOptions.modifyInventory = modifyInventory;
-            parkourOptions.available = available;
-            parkourOptions.vip = vip;
-            parkourOptions.bronze = bronze;
-            parkourOptions.silver = silver;
-            parkourOptions.gold = gold;
-            parkourOptions.platinum = platinum;
-            parkourOptions.difficulty = difficulty;
-            parkourOptions.xp = xp;
-            parkourOptions.fair = fair;
-            parkourOptions.effects.putAll(effects);
-            parkourOptions.color = color;
-            parkourOptions.type = type;
-            parkourOptions.displayName = displayName;
-            return parkourOptions;
-        }
     }
 
     public ParkourGame(String name, GameRegion gameRegion, World world) {
@@ -292,14 +293,14 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, YmlSeriali
         if (!players.contains(pl) && !pl.inAnyParkour()) {
             players.add(pl);
             pl.reset();
-            Bukkit.getPluginManager().callEvent(new PlayerJoinGameEvent(pl.getPlayer(), this));
-            pl.setLastVisitedCheckpoint(0);
+            Bukkit.getPluginManager().callEvent(new PlayerJoinGameEvent(this, pl));
+            pl.setLastVisitedCheckpointId(0);
         }
     }
 
     public boolean removePlayer(Player player) {
         ParkourPlayer p = PlayerManager.getParkourSinglePlayer(player);
-        Bukkit.getServer().getPluginManager().callEvent(new PlayerQuitGameEvent(player, this));
+        Bukkit.getServer().getPluginManager().callEvent(new PlayerQuitGameEvent(this, p));
         p.reset();
         return players.remove(p);
     }
@@ -322,7 +323,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, YmlSeriali
         }
         for (AbstractRegion r : getAllRegions()) {
             if (r == null) {
-                System.err.print("[ParkourPlugin] Debug: Region is null!");
+                Bukkit.getServer().getLogger().log(Level.INFO, "[ParkourPlugin] Debug: Region is null!");
             } else if (r.contains(loc)) {
                 return true;
             }
@@ -390,38 +391,39 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, YmlSeriali
     @Override
     public Map<String, Object> toYmlStructure() {
         Map<String, Object> map = new TreeMap<>();
-        if (gameRegion != null) {
-            map.put("region", gameRegion.toYmlStructure());
-            if (getSpawn() != null) {
-                map.put("spawn", getSpawn().toYmlStructure());
+        if (gameRegion == null) {
+            return map;
+        }
+        map.put("region", gameRegion.toYmlStructure());
+        if (getSpawn() != null) {
+            map.put("spawn", getSpawn().toYmlStructure());
+        }
+        for (Checkpoint r : checkpoints) {
+            if (checkpoints.indexOf(r) != 0) {
+                map.put("checkpoint_" + checkpoints.indexOf(r), r.toYmlStructure());
             }
-            for (Checkpoint r : checkpoints) {
-                if (checkpoints.indexOf(r) != 0) {
-                    map.put("checkpoint_" + checkpoints.indexOf(r), r.toYmlStructure());
-                }
-            }
-            for (Wall r : walls) {
-                map.put("wall_" + walls.indexOf(r), r.toYmlStructure());
-            }
-            for (EffectRegion r : effects) {
-                map.put("effect_" + effects.indexOf(r), r.toYmlStructure());
-            }
-            if (bestRecord != null) {
-                Map<String, Object> tmp = new HashMap<>();
-                tmp.put("x", bestRecord.getX());
-                tmp.put("y", bestRecord.getY());
-                tmp.put("z", bestRecord.getZ());
-                tmp.put("world", bestRecord.getWorld().getName());
-                map.put("recordssign", tmp);
-            }
-            if (teleportBlock != null) {
-                Map<String, Object> tmp = new HashMap<>();
-                tmp.put("x", teleportBlock.getX());
-                tmp.put("y", teleportBlock.getY());
-                tmp.put("z", teleportBlock.getZ());
-                tmp.put("world", teleportBlock.getWorld().getName());
-                map.put("teleportBlock", tmp);
-            }
+        }
+        for (Wall r : walls) {
+            map.put("wall_" + walls.indexOf(r), r.toYmlStructure());
+        }
+        for (EffectRegion r : effects) {
+            map.put("effect_" + effects.indexOf(r), r.toYmlStructure());
+        }
+        if (bestRecord != null) {
+            Map<String, Object> tmp = new HashMap<>();
+            tmp.put("x", bestRecord.getX());
+            tmp.put("y", bestRecord.getY());
+            tmp.put("z", bestRecord.getZ());
+            tmp.put("world", bestRecord.getWorld().getName());
+            map.put("recordssign", tmp);
+        }
+        if (teleportBlock != null) {
+            Map<String, Object> tmp = new HashMap<>();
+            tmp.put("x", teleportBlock.getX());
+            tmp.put("y", teleportBlock.getY());
+            tmp.put("z", teleportBlock.getZ());
+            tmp.put("world", teleportBlock.getWorld().getName());
+            map.put("teleportBlock", tmp);
         }
         return map;
     }

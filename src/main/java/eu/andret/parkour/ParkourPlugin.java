@@ -10,10 +10,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -22,6 +22,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.sql.Connection;
@@ -34,40 +35,26 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.logging.Level;
 
 public class ParkourPlugin extends JavaPlugin {
     private FileConfiguration games;
     private Connection conn;
     private ItemStack exit;
     private ParkourListeners listeners;
-    private boolean LobbyCoins = true;
-    private boolean GlobalPermissions = true;
     private final Map<String, String> messages = new LinkedHashMap<>();
     private final YamlConfiguration msgs = new YamlConfiguration();
-    public final String URL = getConfig().getString("connection.url");
-    public final String USER = getConfig().getString("connection.user");
-    public final String PASS = getConfig().getString("connection.pass");
-    public final String DATABASE = getConfig().getString("connection.database");
+    public final String url = getConfig().getString("connection.url");
+    public final String user = getConfig().getString("connection.user");
+    public final String pass = getConfig().getString("connection.pass");
+    public final String database = getConfig().getString("connection.database");
 
     @Override
     public void onEnable() {
         if (getServer().getPluginManager().getPlugin("WorldEdit") == null) {
-            System.out.print("[ParkourPlugin] Could not find WorldEdit plugin. Disabling.");
+            getServer().getLogger().log(Level.SEVERE, "Could not find WorldEdit plugin. Disabling.");
             setEnabled(false);
             return;
-        }
-        if (getServer().getPluginManager().getPlugin("LobbyCoins") == null) {
-            System.out.print("[ParkourPlugin] Could not find LobbyCoins plugin. I will not administrate payments.");
-            LobbyCoins = false;
-        }
-        if (getServer().getPluginManager().getPlugin("GlobalPermissions") == null) {
-            System.out.print("[ParkourPlugin] Could not find GlobalPermissions plugin. Every vip-only parkours are unavailable.");
-            for (ParkourGame p : ParkourManager.getAllGames()) {
-                if (p.getOptions().isVip()) {
-                    p.getOptions().setAvailable(false);
-                }
-            }
-            GlobalPermissions = false;
         }
         listeners = new ParkourListeners(this);
         getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
@@ -84,7 +71,7 @@ public class ParkourPlugin extends JavaPlugin {
             load();
             connect();
         } catch (Exception ex) {
-            ex.printStackTrace();
+            getServer().getLogger().throwing(getClass().getName(), "onEnable", ex);
         }
         generate();
         for (ParkourGame p : ParkourManager.getAllGames()) {
@@ -96,7 +83,7 @@ public class ParkourPlugin extends JavaPlugin {
                 }
             }
         }
-        getServer().getScheduler().scheduleSyncRepeatingTask(this, new KeepConnection(), 36_000, 36_000);
+        getServer().getScheduler().scheduleSyncRepeatingTask(this, new KeepConnection(this), 36_000, 36_000);
     }
 
     @Override
@@ -115,8 +102,8 @@ public class ParkourPlugin extends JavaPlugin {
             if (conn != null) {
                 conn.close();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception ex) {
+            getServer().getLogger().throwing(getClass().getName(), "onDisable", ex);
         }
         Bukkit.getScheduler().cancelAllTasks();
     }
@@ -129,11 +116,11 @@ public class ParkourPlugin extends JavaPlugin {
     }
 
     private void connect() throws SQLException {
-        conn = DriverManager.getConnection("jdbc:mysql://" + URL, USER, PASS);
+        conn = DriverManager.getConnection("jdbc:mysql://" + url, user, pass);
         Statement stat = conn.createStatement();
-        stat.execute("CREATE DATABASE IF NOT EXISTS `" + DATABASE + "`;");
-        stat.execute("USE " + DATABASE + ";");
-        stat.execute("CREATE TABLE IF NOT EXISTS " + Data.TABLE_RECORDS + "(id INT PRIMARY KEY AUTO_INCREMENT, date DATETIME, nick VARCHAR(64), " + "parkour VARCHAR(64), time FLOAT, count INT, earned INT, xp INT);");
+        stat.execute("CREATE DATABASE IF NOT EXISTS `" + database + "`;");
+        stat.execute("USE " + database + ";");
+        stat.execute(String.format("CREATE TABLE IF NOT EXISTS %s(id INT PRIMARY KEY AUTO_INCREMENT, date DATETIME, nick VARCHAR(64), parkour VARCHAR(64), time FLOAT, count INT, earned INT, xp INT);", Data.TABLE_RECORDS));
     }
 
     public String msg(String path, boolean err) {
@@ -149,23 +136,16 @@ public class ParkourPlugin extends JavaPlugin {
         if (err) {
             result += msgs.getString(here + "errorMsg");
         }
-        return (result + msgs.getString(here + path)).replace('&', '§');
+        return (result + msgs.getString(here + path)).replace('&', '\u00A7');
     }
 
     private boolean save() {
         try {
             for (ParkourGame pk : ParkourManager.getAllGames()) {
                 File path = new File(getDataFolder().getAbsolutePath() + "/games");
-                File file = new File(path.getAbsolutePath() + "/" + pk.getName() + ".yml");
-                if (!path.exists()) {
-                    if (!path.mkdirs()) {
-                        return false;
-                    }
-                }
-                if (!file.exists()) {
-                    if (!file.createNewFile()) {
-                        return false;
-                    }
+                File file = new File(path.getAbsolutePath(), pk.getName() + ".yml");
+                if ((!path.exists() && !path.mkdirs()) || (!file.exists() && !file.createNewFile())) {
+                    return false;
                 }
                 games = new YamlConfiguration();
                 games.set("world", pk.getWorld().getName());
@@ -179,8 +159,8 @@ public class ParkourPlugin extends JavaPlugin {
                 games.set("options", pk.getOptions().toYmlStructure());
                 games.save(file);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception ex) {
+            getServer().getLogger().throwing(getClass().getName(), "save", ex);
             return false;
         }
         return true;
@@ -196,7 +176,7 @@ public class ParkourPlugin extends JavaPlugin {
         saveConfig();
     }
 
-    private void load() throws Exception {
+    private void load() throws IOException, InvalidConfigurationException {
         String w = getConfig().getString("lobby.world");
         if (!w.equals("-1")) {
             World world = Bukkit.getWorld(w);
@@ -219,7 +199,7 @@ public class ParkourPlugin extends JavaPlugin {
                 games.load(file);
                 World world = new WorldCreator(games.getString("world")).createWorld();
                 Parkour pk = new Parkour(file.getName().substring(0, file.getName().lastIndexOf('.')), null, world);
-                System.out.print("[ParkourPlugin] Trying to load parkour \"" + pk.getName() + "\"");
+                getServer().getLogger().log(Level.INFO, "[ParkourPlugin] Trying to load parkour \"{0}\"", pk.getName());
                 ConfigurationSection cs = games.getConfigurationSection("regions");
                 if (cs != null) {
                     for (String key : cs.getKeys(false)) {
@@ -232,8 +212,8 @@ public class ParkourPlugin extends JavaPlugin {
                     try {
                         pk.fromYmlStructure(map);
                     } catch (Exception ex) {
-                        System.out.print("[ParkourPlugin] Unable to load \"" + pk.getName() + "\" parkour.");
-                        ex.printStackTrace();
+                        getServer().getLogger().log(Level.SEVERE, "Unable to load \\\"\" + pk.getName() + \"\\\" parkour.");
+                        getServer().getLogger().throwing(getClass().getName(), "load", ex);
                     }
                 }
                 if (games.getBoolean("started")) {
@@ -247,17 +227,10 @@ public class ParkourPlugin extends JavaPlugin {
                     }
                     pk.getOptions().fromYmlStructure(options);
                 }
-                // cs = games.getConfigurationSection("authors");
-                // //cs.getStringList("authors");
-                // if (cs!=null) {
-                // for (String s:cs.getKeys(false)) {
-                // pk.addAuthor(s);
-                // }
-                // }
-                System.out.print("[ParkourPlugin] Loaded parkour \"" + pk.getName() + "\" in world \"" + world.getName() + "\"");
+                getServer().getLogger().log(Level.INFO, "Loaded parkour \"{0}\" in world \"{1}\"", new String[]{pk.getName(), world.getName()});
             }
         }
-        System.out.print("[ParkourPlugin] Successfully loaded all parkours.");
+        getServer().getLogger().log(Level.INFO, "Successfully loaded all parkours.");
     }
 
     public Connection getConnection() {
@@ -318,20 +291,5 @@ public class ParkourPlugin extends JavaPlugin {
 
     public ParkourListeners getListeners() {
         return listeners;
-    }
-
-    public boolean isLobbyCoins() {
-        return LobbyCoins;
-    }
-
-    public boolean isVip(OfflinePlayer player) {
-        // String rank =
-        // pl.mclobby.global.permissions.GlobalPermissions.getInstance().getPlayerGroup(player);
-        // return rank!=null && !rank.equalsIgnoreCase("gracz");
-        return true;
-    }
-
-    public boolean isGlobalPermissions() {
-        return GlobalPermissions;
     }
 }

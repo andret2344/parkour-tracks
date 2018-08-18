@@ -3,37 +3,46 @@ package eu.andret.parkour.tasks;
 import eu.andret.parkour.ParkourPlugin;
 import eu.andret.parkour.parkour.ParkourGame;
 import eu.andret.parkour.util.Data;
+import lombok.Getter;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.function.Consumer;
 
 public class ParkourDataOperations implements Runnable {
-    private ParkourGame parkour;
-    private Connection sql = ParkourPlugin.getInstance().getConnection();
-    private float time, bestTime;
-    private Consumer<ParkourDataOperations> callback;
-    private Player player;
-    private int count, earned = 0;
+    private final Consumer<ParkourDataOperations> callback;
+    private final ParkourGame parkour;
+    private final Player player;
+    private final ParkourPlugin plugin;
+    @Getter
+    private float time;
+    @Getter
+    private float bestTime;
+    @Getter
+    private int count;
+    @Getter
+    private int earned;
 
-    public ParkourDataOperations(ParkourGame parkour, Player player, Consumer<ParkourDataOperations> callback) {
+    public ParkourDataOperations(ParkourPlugin plugin, ParkourGame parkour, Player player, Consumer<ParkourDataOperations> callback) {
         this.parkour = parkour;
         this.player = player;
         this.callback = callback;
+        this.plugin = plugin;
     }
 
     @Override
     public void run() {
+        ResultSet rs;
         try {
-            PreparedStatement stat = sql.prepareStatement(String.format("SELECT time FROM %s "
+            PreparedStatement stat = plugin.getConnection().prepareStatement(String.format("SELECT time FROM %s "
                     + "WHERE parkour=? ORDER BY time LIMIT 1", Data.TABLE_RECORDS));
             stat.setString(1, parkour.getName());
-            ResultSet rs = stat.executeQuery();
+            rs = stat.executeQuery();
             time = rs.next() ? rs.getFloat("time") : 0;
 
-            stat = sql.prepareStatement(String.format("SELECT * FROM %s "
+            stat = plugin.getConnection().prepareStatement(String.format("SELECT * FROM %s "
                     + "WHERE parkour=? AND nick=?", Data.TABLE_RECORDS));
             stat.setString(1, parkour.getName());
             stat.setString(2, player.getName());
@@ -48,24 +57,9 @@ public class ParkourDataOperations implements Runnable {
                 earned = 0;
             }
             callback.accept(this);
+            rs.close();
         } catch (Exception ex) {
-            ex.printStackTrace();
+            Bukkit.getLogger().throwing(getClass().getName(), "run", ex);
         }
-    }
-
-    public float getTime() {
-        return time;
-    }
-
-    public float getBestTime() {
-        return bestTime;
-    }
-
-    public int getCount() {
-        return count;
-    }
-
-    public int getEarned() {
-        return earned;
     }
 }

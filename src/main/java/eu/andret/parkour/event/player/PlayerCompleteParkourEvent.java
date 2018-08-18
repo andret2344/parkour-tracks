@@ -1,25 +1,23 @@
 package eu.andret.parkour.event.player;
 
 import eu.andret.parkour.parkour.ParkourGame;
+import eu.andret.parkour.player.ParkourPlayer;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
-import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
-import org.bukkit.event.HandlerList;
 
+/**
+ * The event that triggers when player achieves last checkpoint
+ */
 @Value
 @EqualsAndHashCode(callSuper = true)
-public final class PlayerCompleteParkourEvent extends Event {
-    private static final HandlerList handlers = new HandlerList();
-    private Player player;
-    private ParkourGame game;
-
-    @Override
-    public HandlerList getHandlers() {
-        return handlers;
-    }
-
-    public static HandlerList getHandlerList() {
-        return handlers;
+public final class PlayerCompleteParkourEvent extends AbstractParkourPlayerEvent {
+    /**
+     * Constructor.
+     *
+     * @param parkour The game that player is in.
+     * @param player  The player that triggers the event.
+     */
+    public PlayerCompleteParkourEvent(ParkourGame parkour, ParkourPlayer player) {
+        super(parkour, player);
     }
 }

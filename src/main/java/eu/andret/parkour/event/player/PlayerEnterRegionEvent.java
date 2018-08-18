@@ -5,23 +5,27 @@ import eu.andret.parkour.region.AbstractRegion;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
-import org.bukkit.event.HandlerList;
 
+/**
+ * The event that is called when player enters the region.
+ */
 @Value
 @EqualsAndHashCode(callSuper = true)
-public final class PlayerEnterRegionEvent extends Event {
-    private static final HandlerList handlers = new HandlerList();
-    private Player player;
-    private ParkourGame parkour;
+public final class PlayerEnterRegionEvent extends AbstractPlayerEvent {
+    /**
+     * The region that player entered.
+     */
     private AbstractRegion region;
 
-    @Override
-    public HandlerList getHandlers() {
-        return handlers;
-    }
-
-    public static HandlerList getHandlerList() {
-        return handlers;
+    /**
+     * Constructor.
+     *
+     * @param parkour The game that player is in.
+     * @param player  The player that triggers the event.
+     * @param region  The regoin that player came in.
+     */
+    public PlayerEnterRegionEvent(ParkourGame parkour, Player player, AbstractRegion region) {
+        super(parkour, player);
+        this.region = region;
     }
 }

@@ -9,6 +9,9 @@ public final class PlayerManager {
     private static final Map<Player, ParkourSinglePlayer> singlePlayers = new HashMap<>();
     private static final Map<Player, ParkourCompetitorPlayer> competitorPlayers = new HashMap<>();
 
+    private PlayerManager() {
+    }
+
     public static ParkourSinglePlayer getParkourSinglePlayer(Player player) {
         if (singlePlayers.containsKey(player)) {
             return singlePlayers.get(player);
@@ -19,7 +22,6 @@ public final class PlayerManager {
     }
 
     public static ParkourCompetitorPlayer getParkourCompetitorPlayer(Player player) {
-        System.out.print("dodal competitora");
         if (competitorPlayers.containsKey(player)) {
             return competitorPlayers.get(player);
         }
@@ -28,15 +30,21 @@ public final class PlayerManager {
         return p;
     }
 
+    public static ParkourPlayer getParkourPlayer(Player player) {
+        if (singlePlayers.containsKey(player)) {
+            return singlePlayers.get(player);
+        }
+        if (competitorPlayers.containsKey(player)) {
+            return competitorPlayers.get(player);
+        }
+        return null;
+    }
+
     public static ParkourPlayer remove(Player player) {
         ParkourPlayer pp = singlePlayers.remove(player);
         if (pp != null) {
             return pp;
         }
         return competitorPlayers.remove(player);
-    }
-
-    public static boolean playerExists(Player player) {
-        return singlePlayers.containsKey(player) || competitorPlayers.containsKey(player);
     }
 }

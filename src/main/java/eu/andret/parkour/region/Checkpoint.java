@@ -1,5 +1,7 @@
 package eu.andret.parkour.region;
 
+import com.sk89q.worldedit.Vector;
+import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -12,7 +14,9 @@ import java.util.Map;
 @EqualsAndHashCode(callSuper = true)
 public class Checkpoint extends AbstractRegion {
     @NonFinal
-    private float yaw, pitch;
+    private float yaw;
+    @NonFinal
+    private float pitch;
 
     public Checkpoint(CuboidRegion region, float yaw, float pitch) {
         super(region);
@@ -21,9 +25,7 @@ public class Checkpoint extends AbstractRegion {
     }
 
     public Checkpoint(World world, float yaw, float pitch) {
-        super(world);
-        this.yaw = yaw;
-        this.pitch = pitch;
+        this(new CuboidRegion((com.sk89q.worldedit.world.World) new BukkitWorld(world), Vector.ZERO, Vector.ZERO), yaw, pitch);
     }
 
     public Checkpoint(CuboidRegion region) {
@@ -45,18 +47,13 @@ public class Checkpoint extends AbstractRegion {
     @Override
     public void fromYmlStructure(Map<String, Object> structure) {
         super.fromYmlStructure(structure);
-        float yaw, pitch;
-        try {
-            yaw = Float.valueOf("" + structure.get("yaw"));
-        } catch (Exception ex) {
-            yaw = 0;
+        String yawString = String.valueOf(structure.get("yaw"));
+        String pitchString = String.valueOf(structure.get("pitch"));
+        if (yawString.matches("[0-9]+(\\.[0-9]+)?")) {
+            yaw = Float.valueOf(yawString);
         }
-        try {
-            pitch = Float.valueOf("" + structure.get("pitch"));
-        } catch (Exception ex) {
-            pitch = 0;
+        if (pitchString.matches("[0-9]+(\\.[0-9]+)?")) {
+            pitch = Float.valueOf(pitchString);
         }
-        this.yaw = yaw;
-        this.pitch = pitch;
     }
 }
