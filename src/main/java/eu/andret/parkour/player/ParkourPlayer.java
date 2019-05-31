@@ -1,3 +1,6 @@
+/*
+ * Copyright Andret (c) 2019. Copying and modifying allowed only keeping git link reference.
+ */
 package eu.andret.parkour.player;
 
 import com.sk89q.worldedit.Vector;
@@ -14,59 +17,59 @@ import org.bukkit.inventory.ItemStack;
 
 @Data
 public abstract class ParkourPlayer {
-    protected final Player player;
-    protected int lastVisitedCheckpointId = 0;
-    protected boolean ignoring = false;
-    protected boolean spectating = false;
+	protected final Player player;
+	protected int lastVisitedCheckpointId = 0;
+	protected boolean ignoring = false;
+	protected boolean spectating = false;
 
-    ParkourPlayer(Player player) {
-        this.player = player;
-    }
+	ParkourPlayer(Player player) {
+		this.player = player;
+	}
 
-    public void teleportToSpawn() {
-        reset();
-        teleportToCheckpoint(0);
-    }
+	public void teleportToSpawn() {
+		reset();
+		teleportToCheckpoint(0);
+	}
 
-    public void teleportToCheckpoint(int id) {
-        if (inAnyParkour()) {
-            ParkourGame pk = ParkourManager.getParkour(player);
-            Checkpoint cp = pk.getCheckpoint(id);
-            Vector v = cp.getRegion().getCenter();
-            player.teleport(new Location(pk.getWorld(), v.getX() + 0.5, v.getY(), v.getZ() + 0.5, cp.getYaw(), cp.getPitch()));
-            Bukkit.getPluginManager().callEvent(new PlayerTeleportBackEvent(pk, this, cp));
-        }
-    }
+	public void teleportToCheckpoint(int id) {
+		if (inAnyParkour()) {
+			ParkourGame pk = ParkourManager.getParkour(player);
+			Checkpoint cp = pk.getCheckpoint(id);
+			Vector v = cp.getRegion().getCenter();
+			player.teleport(new Location(pk.getWorld(), v.getX() + 0.5, v.getY(), v.getZ() + 0.5, cp.getYaw(), cp.getPitch()));
+			Bukkit.getPluginManager().callEvent(new PlayerTeleportBackEvent(pk, this, cp));
+		}
+	}
 
-    public final void destroy() {
-        PlayerManager.remove(player);
-    }
+	public final void destroy() {
+		PlayerManager.remove(player);
+	}
 
-    public void setSpectating(boolean spectating) {
-        this.spectating = spectating;
-        if (spectating) {
-            for (Player pl : Bukkit.getOnlinePlayers()) {
-                pl.hidePlayer(player);
-            }
-        } else {
-            for (Player pl : Bukkit.getOnlinePlayers()) {
-                pl.showPlayer(player);
-            }
-        }
-    }
+	public void setSpectating(boolean spectating) {
+		this.spectating = spectating;
+		if (spectating) {
+			for (Player pl : Bukkit.getOnlinePlayers()) {
+				pl.hidePlayer(player);
+			}
+		} else {
+			for (Player pl : Bukkit.getOnlinePlayers()) {
+				pl.showPlayer(player);
+			}
+		}
+	}
 
-    public boolean inAnyParkour() {
-        return ParkourManager.getParkour(player) != null;
-    }
+	public boolean inAnyParkour() {
+		return ParkourManager.getParkour(player) != null;
+	}
 
-    public void reset() {
-        lastVisitedCheckpointId = 0;
-        player.setExp(0);
-        player.setLevel(0);
-    }
+	public void reset() {
+		lastVisitedCheckpointId = 0;
+		player.setExp(0);
+		player.setLevel(0);
+	}
 
-    public void teleportToLobby() {
-        player.getInventory().setItem(7, new ItemStack(Material.AIR));
-        player.teleport(ParkourManager.getLobbyLocation() == null ? Bukkit.getWorlds().get(0).getSpawnLocation() : ParkourManager.getLobbyLocation());
-    }
+	public void teleportToLobby() {
+		player.getInventory().setItem(7, new ItemStack(Material.AIR));
+		player.teleport(ParkourManager.getLobbyLocation() == null ? Bukkit.getWorlds().get(0).getSpawnLocation() : ParkourManager.getLobbyLocation());
+	}
 }

@@ -20,7 +20,6 @@ admin:
   cmdFair: '&eShow or set fair time border.'
   cmdFix: '&eFixes parkours.'
   cmdGold: '&eShow or set gold medal time.'
-  cmdHelp: '&eShow help message.'
   cmdIgnore: '&eTurn on or off ParkourPlugin games interaction.'
   cmdInfo: '&eShows informations about specific parkour game.'
   cmdHelp: '&eShow info about ParkourPlugin game.'

@@ -1,3 +1,6 @@
+/*
+ * Copyright Andret (c) 2019. Copying and modifying allowed only keeping git link reference.
+ */
 package eu.andret.parkour.parkour;
 
 import eu.andret.parkour.player.PlayerManager;
@@ -11,12 +14,12 @@ import org.bukkit.entity.Player;
 @EqualsAndHashCode(callSuper = true)
 public class Parkour extends ParkourGame {
 
-    public Parkour(String name, GameRegion gameRegion, World world) {
-        super(name, gameRegion, world);
-    }
+	public Parkour(String name, GameRegion gameRegion, World world) {
+		super(name, gameRegion, world);
+	}
 
-    @Override
-    public void addPlayer(Player player) {
-        super.addPlayer(PlayerManager.getParkourSinglePlayer(player));
-    }
+	@Override
+	public void addPlayer(Player player) {
+		super.addPlayer(PlayerManager.getParkourSinglePlayer(player));
+	}
 }

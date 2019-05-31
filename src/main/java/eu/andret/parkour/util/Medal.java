@@ -1,3 +1,6 @@
+/*
+ * Copyright Andret (c) 2019. Copying and modifying allowed only keeping git link reference.
+ */
 package eu.andret.parkour.util;
 
 import lombok.AllArgsConstructor;
@@ -9,29 +12,29 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public enum Medal {
-    /**
-     * The best medal.
-     */
-    PLATINUM(100),
-    /**
-     * Second one.
-     */
-    GOLD(80),
-    /**
-     * Third...
-     */
-    SILVER(50),
-    /**
-     * Worst one.
-     */
-    BRONZE(20),
-    /**
-     * No medal.
-     */
-    NONE(0);
+	/**
+	 * The best medal.
+	 */
+	PLATINUM(100),
+	/**
+	 * Second one.
+	 */
+	GOLD(80),
+	/**
+	 * Third...
+	 */
+	SILVER(50),
+	/**
+	 * Worst one.
+	 */
+	BRONZE(20),
+	/**
+	 * No medal.
+	 */
+	NONE(0);
 
-    /**
-     * The price for getting exact medal.
-     */
-    private final int price;
+	/**
+	 * The price for getting exact medal.
+	 */
+	private final int price;
 }

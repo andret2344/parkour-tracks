@@ -28,7 +28,6 @@ permissions:
       ats.parkour.list: true
       ats.parkour.addwall: true
       ats.parkour.setwall: true
-      ats.parkour.setwall: true
       ats.parkour.sprint: true
       ats.parkour.price: true
       ats.parkour.alwaysspawn: true

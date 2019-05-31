@@ -1,3 +1,6 @@
+/*
+ * Copyright Andret (c) 2019. Copying and modifying allowed only keeping git link reference.
+ */
 package eu.andret.parkour.event.player;
 
 import eu.andret.parkour.parkour.ParkourGame;
@@ -12,20 +15,20 @@ import lombok.Value;
 @Value
 @EqualsAndHashCode(callSuper = true)
 public final class PlayerAchieveCheckpointEvent extends AbstractParkourPlayerEvent {
-    /**
-     * The checkpoint achieved by the player.
-     */
-    private Checkpoint checkpoint;
+	/**
+	 * The checkpoint achieved by the player.
+	 */
+	private Checkpoint checkpoint;
 
-    /**
-     * Constructor.
-     *
-     * @param parkour    The game that player is in.
-     * @param player     The player that triggers the event.
-     * @param checkpoint The achieved checkpoint.
-     */
-    public PlayerAchieveCheckpointEvent(ParkourGame parkour, ParkourPlayer player, Checkpoint checkpoint) {
-        super(parkour, player);
-        this.checkpoint = checkpoint;
-    }
+	/**
+	 * Constructor.
+	 *
+	 * @param parkour The game that player is in.
+	 * @param player The player that triggers the event.
+	 * @param checkpoint The achieved checkpoint.
+	 */
+	public PlayerAchieveCheckpointEvent(ParkourGame parkour, ParkourPlayer player, Checkpoint checkpoint) {
+		super(parkour, player);
+		this.checkpoint = checkpoint;
+	}
 }

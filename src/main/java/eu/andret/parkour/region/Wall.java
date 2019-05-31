@@ -1,3 +1,6 @@
+/*
+ * Copyright Andret (c) 2019. Copying and modifying allowed only keeping git link reference.
+ */
 package eu.andret.parkour.region;
 
 
@@ -11,11 +14,11 @@ import org.bukkit.World;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class Wall extends AbstractRegion {
-    public Wall(CuboidRegion region) {
-        super(region);
-    }
+	public Wall(CuboidRegion region) {
+		super(region);
+	}
 
-    public Wall(World world) {
-        this(new CuboidRegion((com.sk89q.worldedit.world.World) new BukkitWorld(world), Vector.ZERO, Vector.ZERO));
-    }
+	public Wall(World world) {
+		this(new CuboidRegion((com.sk89q.worldedit.world.World) new BukkitWorld(world), Vector.ZERO, Vector.ZERO));
+	}
 }

@@ -1,3 +1,6 @@
+/*
+ * Copyright Andret (c) 2019. Copying and modifying allowed only keeping git link reference.
+ */
 package eu.andret.parkour.player;
 
 import org.bukkit.entity.Player;
@@ -6,45 +9,45 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class PlayerManager {
-    private static final Map<Player, ParkourSinglePlayer> singlePlayers = new HashMap<>();
-    private static final Map<Player, ParkourCompetitorPlayer> competitorPlayers = new HashMap<>();
+	private static final Map<Player, ParkourSinglePlayer> singlePlayers = new HashMap<>();
+	private static final Map<Player, ParkourCompetitorPlayer> competitorPlayers = new HashMap<>();
 
-    private PlayerManager() {
-    }
+	private PlayerManager() {
+	}
 
-    public static ParkourSinglePlayer getParkourSinglePlayer(Player player) {
-        if (singlePlayers.containsKey(player)) {
-            return singlePlayers.get(player);
-        }
-        ParkourSinglePlayer p = new ParkourSinglePlayer(player);
-        singlePlayers.put(player, p);
-        return p;
-    }
+	public static ParkourSinglePlayer getParkourSinglePlayer(Player player) {
+		if (singlePlayers.containsKey(player)) {
+			return singlePlayers.get(player);
+		}
+		ParkourSinglePlayer p = new ParkourSinglePlayer(player);
+		singlePlayers.put(player, p);
+		return p;
+	}
 
-    public static ParkourCompetitorPlayer getParkourCompetitorPlayer(Player player) {
-        if (competitorPlayers.containsKey(player)) {
-            return competitorPlayers.get(player);
-        }
-        ParkourCompetitorPlayer p = new ParkourCompetitorPlayer(player);
-        competitorPlayers.put(player, p);
-        return p;
-    }
+	public static ParkourCompetitorPlayer getParkourCompetitorPlayer(Player player) {
+		if (competitorPlayers.containsKey(player)) {
+			return competitorPlayers.get(player);
+		}
+		ParkourCompetitorPlayer p = new ParkourCompetitorPlayer(player);
+		competitorPlayers.put(player, p);
+		return p;
+	}
 
-    public static ParkourPlayer getParkourPlayer(Player player) {
-        if (singlePlayers.containsKey(player)) {
-            return singlePlayers.get(player);
-        }
-        if (competitorPlayers.containsKey(player)) {
-            return competitorPlayers.get(player);
-        }
-        return null;
-    }
+	public static ParkourPlayer getParkourPlayer(Player player) {
+		if (singlePlayers.containsKey(player)) {
+			return singlePlayers.get(player);
+		}
+		if (competitorPlayers.containsKey(player)) {
+			return competitorPlayers.get(player);
+		}
+		return null;
+	}
 
-    public static ParkourPlayer remove(Player player) {
-        ParkourPlayer pp = singlePlayers.remove(player);
-        if (pp != null) {
-            return pp;
-        }
-        return competitorPlayers.remove(player);
-    }
+	public static ParkourPlayer remove(Player player) {
+		ParkourPlayer pp = singlePlayers.remove(player);
+		if (pp != null) {
+			return pp;
+		}
+		return competitorPlayers.remove(player);
+	}
 }

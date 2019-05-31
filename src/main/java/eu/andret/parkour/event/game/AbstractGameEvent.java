@@ -1,3 +1,6 @@
+/*
+ * Copyright Andret (c) 2019. Copying and modifying allowed only keeping git link reference.
+ */
 package eu.andret.parkour.event.game;
 
 import eu.andret.parkour.parkour.ParkourGame;
@@ -14,17 +17,17 @@ import org.bukkit.event.HandlerList;
 @EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 public class AbstractGameEvent extends Event {
-    /**
-     * List of all Handlers.
-     */
-    private static final HandlerList HANDLERS = new HandlerList();
-    /**
-     * The Parkour that has been started.
-     */
-    private ParkourGame parkour;
+	/**
+	 * List of all Handlers.
+	 */
+	private static final HandlerList HANDLERS = new HandlerList();
+	/**
+	 * The Parkour that has been started.
+	 */
+	private ParkourGame parkour;
 
-    @Override
-    public final HandlerList getHandlers() {
-        return HANDLERS;
-    }
+	@Override
+	public final HandlerList getHandlers() {
+		return HANDLERS;
+	}
 }

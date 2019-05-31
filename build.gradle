@@ -1,26 +1,29 @@
+/*
+ * Copyright Andret (c) 2019. Copying and modifying allowed only keeping git link reference.
+ */
 apply plugin: "java"
 apply plugin: "idea"
 
 jar {
-    baseName = "atsStoneGenerator"
-    version = "2.0"
+	baseName = "atsStoneGenerator"
+	version = "2.0"
 }
 
 tasks.withType(JavaCompile) {
-    options.compilerArgs << '-Xlint:unchecked'
-    options.deprecation = true
+	options.compilerArgs << '-Xlint:unchecked'
+	options.deprecation = true
 }
 
 repositories {
-    mavenCentral()
-    maven { url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
-    maven { url = 'https://oss.sonatype.org/content/repositories/snapshots' }
-    maven { url "http://maven.sk89q.com/artifactory/repo" }
+	mavenCentral()
+	maven { url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+	maven { url = 'https://oss.sonatype.org/content/repositories/snapshots' }
+	maven { url "http://maven.sk89q.com/artifactory/repo" }
 }
 
 dependencies {
-    compile group: 'com.sk89q.worldedit', name: 'worldedit-bukkit', version: '6.1.4-SNAPSHOT'
-    compile group: 'com.sk89q.worldedit', name: 'worldedit-core', version: '6.1.4-SNAPSHOT'
-    compileOnly 'org.spigotmc:spigot-api:1.12.2-R0.1-SNAPSHOT'
-    compileOnly group: "org.projectlombok", name: "lombok", version: "1.16.20"
+	compile group: 'com.sk89q.worldedit', name: 'worldedit-bukkit', version: '6.1.4-SNAPSHOT'
+	compile group: 'com.sk89q.worldedit', name: 'worldedit-core', version: '6.1.4-SNAPSHOT'
+	compileOnly 'org.spigotmc:spigot-api:1.12.2-R0.1-SNAPSHOT'
+	compileOnly group: "org.projectlombok", name: "lombok", version: "1.16.20"
 }
