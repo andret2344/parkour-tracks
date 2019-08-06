@@ -5,7 +5,7 @@ package eu.andret.parkour.tasks;
 
 import eu.andret.parkour.ParkourPlugin;
 import eu.andret.parkour.parkour.ParkourGame;
-import eu.andret.parkour.parkour.ParkourGame.ParkourOptions;
+import eu.andret.parkour.parkour.ParkourGame.Options;
 import eu.andret.parkour.player.PlayerManager;
 import eu.andret.parkour.util.Data;
 import eu.andret.parkour.util.Medal;
@@ -39,7 +39,7 @@ public class DataBaseOperations implements Runnable {
 
 	@Override
 	public void run() {
-		ParkourOptions o = parkour.getOptions();
+		Options o = parkour.getOptions();
 		try {
 			//przeszedlem kolejny raz
 			PreparedStatement stat;

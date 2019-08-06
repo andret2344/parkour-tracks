@@ -10,10 +10,11 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.bukkit.World;
 import org.bukkit.potion.PotionEffectType;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -61,29 +62,36 @@ public class EffectRegion extends AbstractRegion {
 	}
 
 	@Override
-	public Map<String, Object> toYmlStructure() {
-		Map<String, Object> map = super.toYmlStructure();
-		List<String> s = new ArrayList<>();
+	public JSONObject toJSON() {
+		JSONObject object = super.toJSON();
+		JSONArray jsonArrayToAdd = new JSONArray();
 		for (PotionEffectType p : effectsToAdd) {
-			s.add(p.getName());
+			jsonArrayToAdd.put(p.getName());
 		}
-		map.put(KEY_EFFECTS_TO_ADD, s);
-		s = new ArrayList<>();
+		object.put(KEY_EFFECTS_TO_ADD, jsonArrayToAdd);
+		JSONArray jsonArrayToDel = new JSONArray();
 		for (PotionEffectType p : effectsToDel) {
-			s.add(p.getName());
+			jsonArrayToDel.put(p.getName());
 		}
-		map.put(KEY_EFFECTS_TO_DEL, s);
-		return map;
+		object.put(KEY_EFFECTS_TO_DEL, jsonArrayToDel);
+		return object;
 	}
 
 	@Override
-	public void fromYmlStructure(Map<String, Object> structure) {
-		super.fromYmlStructure(structure);
-		for (String s : (List<String>) structure.get(KEY_EFFECTS_TO_ADD)) {
-			effectsToAdd.add(PotionEffectType.getByName(s));
-		}
-		for (String s : (List<String>) structure.get(KEY_EFFECTS_TO_DEL)) {
-			effectsToDel.add(PotionEffectType.getByName(s));
-		}
+	public void fromJSON(JSONObject object) {
+		super.fromJSON(object);
+		object.getJSONArray(KEY_EFFECTS_TO_ADD)
+				.toList()
+				.stream()
+				.map(String::valueOf)
+				.map(PotionEffectType::getByName)
+				.forEach(effectsToAdd::add);
+		object.getJSONArray(KEY_EFFECTS_TO_DEL)
+				.toList()
+				.stream()
+				.map(String::valueOf)
+				.map(PotionEffectType::getByName)
+				.forEach(effectsToDel::add);
+
 	}
 }

@@ -212,7 +212,7 @@ public class ParkourListeners implements Listener {
 		}
 		if (e.getParkour().getOptions().isBoat()) {
 			Boat b = (Boat) e.getPlayer().getPlayer().getLocation().getWorld().spawnEntity(e.getPlayer().getPlayer().getLocation(), EntityType.BOAT);
-			b.setPassenger(e.getPlayer().getPlayer());
+			b.addPassenger(e.getPlayer().getPlayer());
 		}
 	}
 
@@ -221,7 +221,7 @@ public class ParkourListeners implements Listener {
 		if (e.getExited() instanceof Player) {
 			Player player = (Player) e.getExited();
 			ParkourGame parkour = ParkourManager.getParkour(player);
-			if (PlayerManager.getParkourPlayer(player) != null && parkour.getOptions().isBoat() && e.getVehicle() instanceof Boat && parkour.isRunning() && player.getWorld().equals(parkour.getWorld())) {
+			if (parkour != null && PlayerManager.getParkourPlayer(player) != null && parkour.getOptions().isBoat() && e.getVehicle() instanceof Boat && parkour.isRunning() && player.getWorld().equals(parkour.getWorld())) {
 				e.setCancelled(true);
 			}
 		}

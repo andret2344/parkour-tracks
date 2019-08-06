@@ -10,8 +10,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.NonFinal;
 import org.bukkit.World;
-
-import java.util.Map;
+import org.json.JSONObject;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -40,23 +39,17 @@ public class Checkpoint extends AbstractRegion {
 	}
 
 	@Override
-	public Map<String, Object> toYmlStructure() {
-		Map<String, Object> map = super.toYmlStructure();
-		map.put("yaw", yaw);
-		map.put("pitch", pitch);
-		return map;
+	public JSONObject toJSON() {
+		JSONObject object = super.toJSON();
+		object.put("yaw", yaw);
+		object.put("pitch", pitch);
+		return object;
 	}
 
 	@Override
-	public void fromYmlStructure(Map<String, Object> structure) {
-		super.fromYmlStructure(structure);
-		String yawString = String.valueOf(structure.get("yaw"));
-		String pitchString = String.valueOf(structure.get("pitch"));
-		if (yawString.matches("[0-9]+(\\.[0-9]+)?")) {
-			yaw = Float.valueOf(yawString);
-		}
-		if (pitchString.matches("[0-9]+(\\.[0-9]+)?")) {
-			pitch = Float.valueOf(pitchString);
-		}
+	public void fromJSON(JSONObject object) {
+		super.fromJSON(object);
+		yaw = object.getFloat("yaw");
+		pitch = object.getFloat("pitch");
 	}
 }
