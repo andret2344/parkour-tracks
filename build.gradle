@@ -69,6 +69,7 @@ task delombok(type: DelombokTask, dependsOn: compileJava) {
 }
 
 shadowJar {
+	archiveName "${project.archivesBaseName}.jar"
 	relocate 'org.json', 'eu.andret.json'
 	configurations = [project.configurations.compile]
 }

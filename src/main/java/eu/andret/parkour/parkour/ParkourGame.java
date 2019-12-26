@@ -3,6 +3,7 @@
  */
 package eu.andret.parkour.parkour;
 
+import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import eu.andret.parkour.JSONSerializable;
 import eu.andret.parkour.event.game.GameStartEvent;
@@ -400,12 +401,8 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, JSONSerial
 		object.put("checkpoints", collectionToJSON(checkpoints));
 		object.put("walls", collectionToJSON(walls));
 		object.put("effectRegions", collectionToJSON(effectRegions));
-		if (bestRecord != null) {
-			object.put("recordsSign", locationToJSON(bestRecord));
-		}
-		if (teleportBlock != null) {
-			object.put("teleportBlock", locationToJSON(teleportBlock));
-		}
+		object.put("recordsSign", bestRecord == null ? null : locationToJSON(bestRecord));
+		object.put("teleportBlock", teleportBlock == null ? null : locationToJSON(teleportBlock));
 		object.put("options", options.toJSON());
 		return object;
 	}
@@ -428,6 +425,9 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, JSONSerial
 	}
 
 	private Location locationFromJSON(JSONObject jsonObject) {
+		if (jsonObject == null) {
+			return null;
+		}
 		return new Location(Bukkit.getWorld(jsonObject.getString("world")),
 				jsonObject.getInt(("x")), jsonObject.getInt(("y")), jsonObject.getInt("z"));
 	}
@@ -438,7 +438,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, JSONSerial
 			int length = jsonArray.length();
 			for (int i = 0; i < length; i++) {
 				JSONObject jsonObject = jsonArray.getJSONObject(i);
-				E e = clazz.getConstructor(CuboidRegion.class).newInstance();
+				E e = clazz.getConstructor(CuboidRegion.class).newInstance(new CuboidRegion(BlockVector3.ZERO, BlockVector3.ZERO));
 				e.fromJSON(jsonObject);
 				list.add(e);
 			}
@@ -458,8 +458,8 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, JSONSerial
 		walls.addAll(collectionFromJSON(object.getJSONArray("walls"), Wall.class));
 		effectRegions.clear();
 		effectRegions.addAll(collectionFromJSON(object.getJSONArray("effectRegions"), EffectRegion.class));
-		bestRecord = locationFromJSON(object.getJSONObject("recordSign"));
-		teleportBlock = locationFromJSON(object.getJSONObject("teleportBlock"));
+		bestRecord = object.has("recordSign") ? locationFromJSON(object.getJSONObject("recordSign")) : null;
+		teleportBlock = object.has("teleportBlock") ? locationFromJSON(object.getJSONObject("teleportBlock")) : null;
 		options.fromJSON(object.getJSONObject("options"));
 	}
 

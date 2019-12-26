@@ -1,4 +1,4 @@
-name: ParkourPlugin
+name: atsParkour
 main: eu.andret.parkour.ParkourPlugin
 version: '1.7'
 author: Andret
@@ -8,11 +8,8 @@ api-version: '1.13'
 
 commands:
   parkour:
-    description: The ParkourPlugin command
+    description: The atsParkour command
     aliases: [pk, sr, speedrun]
-  hub:
-    description: back to main server
-    aliases: [lobby, wyjscie, exit]
 
 permissions:
   ats.parkour.*:
