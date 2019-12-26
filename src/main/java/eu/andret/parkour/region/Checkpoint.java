@@ -3,17 +3,17 @@
  */
 package eu.andret.parkour.region;
 
-import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.bukkit.BukkitWorld;
+import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Value;
 import lombok.experimental.NonFinal;
 import org.bukkit.World;
+import org.json.JSONObject;
 
-import java.util.Map;
-
-@Data
+@Value
 @EqualsAndHashCode(callSuper = true)
 public class Checkpoint extends AbstractRegion {
 	@NonFinal
@@ -28,7 +28,7 @@ public class Checkpoint extends AbstractRegion {
 	}
 
 	public Checkpoint(World world, float yaw, float pitch) {
-		this(new CuboidRegion((com.sk89q.worldedit.world.World) new BukkitWorld(world), Vector.ZERO, Vector.ZERO), yaw, pitch);
+		this(new CuboidRegion(new BukkitWorld(world), BlockVector3.ZERO, BlockVector3.ZERO), yaw, pitch);
 	}
 
 	public Checkpoint(CuboidRegion region) {
@@ -40,23 +40,17 @@ public class Checkpoint extends AbstractRegion {
 	}
 
 	@Override
-	public Map<String, Object> toYmlStructure() {
-		Map<String, Object> map = super.toYmlStructure();
-		map.put("yaw", yaw);
-		map.put("pitch", pitch);
-		return map;
+	public JSONObject toJSON() {
+		JSONObject object = super.toJSON();
+		object.put("yaw", yaw);
+		object.put("pitch", pitch);
+		return object;
 	}
 
 	@Override
-	public void fromYmlStructure(Map<String, Object> structure) {
-		super.fromYmlStructure(structure);
-		String yawString = String.valueOf(structure.get("yaw"));
-		String pitchString = String.valueOf(structure.get("pitch"));
-		if (yawString.matches("[0-9]+(\\.[0-9]+)?")) {
-			yaw = Float.valueOf(yawString);
-		}
-		if (pitchString.matches("[0-9]+(\\.[0-9]+)?")) {
-			pitch = Float.valueOf(pitchString);
-		}
+	public void fromJSON(JSONObject object) {
+		super.fromJSON(object);
+		yaw = object.getFloat("yaw");
+		pitch = object.getFloat("pitch");
 	}
 }

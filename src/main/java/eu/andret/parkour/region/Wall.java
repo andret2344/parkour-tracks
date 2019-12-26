@@ -3,9 +3,8 @@
  */
 package eu.andret.parkour.region;
 
-
-import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.bukkit.BukkitWorld;
+import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -19,6 +18,6 @@ public class Wall extends AbstractRegion {
 	}
 
 	public Wall(World world) {
-		this(new CuboidRegion((com.sk89q.worldedit.world.World) new BukkitWorld(world), Vector.ZERO, Vector.ZERO));
+		this(new CuboidRegion(new BukkitWorld(world), BlockVector3.ZERO, BlockVector3.ZERO));
 	}
 }

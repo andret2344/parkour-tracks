@@ -3,17 +3,18 @@
  */
 package eu.andret.parkour.region;
 
-import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.bukkit.BukkitWorld;
+import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.bukkit.World;
 import org.bukkit.potion.PotionEffectType;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -31,7 +32,7 @@ public class EffectRegion extends AbstractRegion {
 	}
 
 	public EffectRegion(World world, List<PotionEffectType> effectsToAdd, List<PotionEffectType> effectsToDel) {
-		this(new CuboidRegion((com.sk89q.worldedit.world.World) new BukkitWorld(world), Vector.ZERO, Vector.ZERO));
+		this(new CuboidRegion(new BukkitWorld(world), BlockVector3.ZERO, BlockVector3.ZERO));
 		this.effectsToAdd.addAll(effectsToAdd);
 		this.effectsToDel.addAll(effectsToDel);
 	}
@@ -41,7 +42,7 @@ public class EffectRegion extends AbstractRegion {
 	}
 
 	public EffectRegion(World world) {
-		this(new CuboidRegion((com.sk89q.worldedit.world.World) new BukkitWorld(world), Vector.ZERO, Vector.ZERO));
+		this(new CuboidRegion(new BukkitWorld(world), BlockVector3.ZERO, BlockVector3.ZERO));
 	}
 
 	public void addEffectToAdd(PotionEffectType effect) {
@@ -61,29 +62,36 @@ public class EffectRegion extends AbstractRegion {
 	}
 
 	@Override
-	public Map<String, Object> toYmlStructure() {
-		Map<String, Object> map = super.toYmlStructure();
-		List<String> s = new ArrayList<>();
+	public JSONObject toJSON() {
+		JSONObject object = super.toJSON();
+		JSONArray jsonArrayToAdd = new JSONArray();
 		for (PotionEffectType p : effectsToAdd) {
-			s.add(p.getName());
+			jsonArrayToAdd.put(p.getName());
 		}
-		map.put(KEY_EFFECTS_TO_ADD, s);
-		s = new ArrayList<>();
+		object.put(KEY_EFFECTS_TO_ADD, jsonArrayToAdd);
+		JSONArray jsonArrayToDel = new JSONArray();
 		for (PotionEffectType p : effectsToDel) {
-			s.add(p.getName());
+			jsonArrayToDel.put(p.getName());
 		}
-		map.put(KEY_EFFECTS_TO_DEL, s);
-		return map;
+		object.put(KEY_EFFECTS_TO_DEL, jsonArrayToDel);
+		return object;
 	}
 
 	@Override
-	public void fromYmlStructure(Map<String, Object> structure) {
-		super.fromYmlStructure(structure);
-		for (String s : (List<String>) structure.get(KEY_EFFECTS_TO_ADD)) {
-			effectsToAdd.add(PotionEffectType.getByName(s));
-		}
-		for (String s : (List<String>) structure.get(KEY_EFFECTS_TO_DEL)) {
-			effectsToDel.add(PotionEffectType.getByName(s));
-		}
+	public void fromJSON(JSONObject object) {
+		super.fromJSON(object);
+		object.getJSONArray(KEY_EFFECTS_TO_ADD)
+				.toList()
+				.stream()
+				.map(String::valueOf)
+				.map(PotionEffectType::getByName)
+				.forEach(effectsToAdd::add);
+		object.getJSONArray(KEY_EFFECTS_TO_DEL)
+				.toList()
+				.stream()
+				.map(String::valueOf)
+				.map(PotionEffectType::getByName)
+				.forEach(effectsToDel::add);
+
 	}
 }

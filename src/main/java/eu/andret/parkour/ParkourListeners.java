@@ -212,7 +212,7 @@ public class ParkourListeners implements Listener {
 		}
 		if (e.getParkour().getOptions().isBoat()) {
 			Boat b = (Boat) e.getPlayer().getPlayer().getLocation().getWorld().spawnEntity(e.getPlayer().getPlayer().getLocation(), EntityType.BOAT);
-			b.setPassenger(e.getPlayer().getPlayer());
+			b.addPassenger(e.getPlayer().getPlayer());
 		}
 	}
 
@@ -221,7 +221,7 @@ public class ParkourListeners implements Listener {
 		if (e.getExited() instanceof Player) {
 			Player player = (Player) e.getExited();
 			ParkourGame parkour = ParkourManager.getParkour(player);
-			if (PlayerManager.getParkourPlayer(player) != null && parkour.getOptions().isBoat() && e.getVehicle() instanceof Boat && parkour.isRunning() && player.getWorld().equals(parkour.getWorld())) {
+			if (parkour != null && PlayerManager.getParkourPlayer(player) != null && parkour.getOptions().isBoat() && e.getVehicle() instanceof Boat && parkour.isRunning() && player.getWorld().equals(parkour.getWorld())) {
 				e.setCancelled(true);
 			}
 		}
@@ -278,7 +278,7 @@ public class ParkourListeners implements Listener {
 		if (!ParkourManager.getPlayersInGames().contains(e.getPlayer())) {
 			return;
 		}
-		if (e.getClickedBlock() != null && (e.getClickedBlock().getType().equals(Material.LEVER) || e.getClickedBlock().getType().equals(Material.WOOD_DOOR) || e.getClickedBlock().getType().equals(Material.WOOD_BUTTON) || e.getClickedBlock().getType().equals(Material.STONE_BUTTON) || e.getClickedBlock().getType().equals(Material.TRAP_DOOR) || e.getClickedBlock().getType().equals(Material.CHEST) || e.getClickedBlock().getType().equals(Material.FENCE_GATE))) {
+		if (e.getClickedBlock() != null && (e.getClickedBlock().getType().equals(Material.LEVER) || e.getClickedBlock().getType().equals(Material.LEGACY_WOOD_DOOR) || e.getClickedBlock().getType().equals(Material.LEGACY_WOOD_BUTTON) || e.getClickedBlock().getType().equals(Material.STONE_BUTTON) || e.getClickedBlock().getType().equals(Material.LEGACY_TRAP_DOOR) || e.getClickedBlock().getType().equals(Material.CHEST) || e.getClickedBlock().getType().equals(Material.LEGACY_FENCE_GATE))) {
 			e.setCancelled(true);
 		}
 

@@ -3,8 +3,9 @@
  */
 package eu.andret.parkour.parkour;
 
+import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.CuboidRegion;
-import eu.andret.parkour.YmlSerializable;
+import eu.andret.parkour.JSONSerializable;
 import eu.andret.parkour.event.game.GameStartEvent;
 import eu.andret.parkour.event.game.GameStopEvent;
 import eu.andret.parkour.event.player.PlayerJoinGameEvent;
@@ -28,6 +29,8 @@ import org.bukkit.World;
 import org.bukkit.configuration.MemorySection;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -35,25 +38,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.TreeMap;
 import java.util.logging.Level;
 
 @Data
-public abstract class ParkourGame implements Comparable<ParkourGame>, YmlSerializable {
+public abstract class ParkourGame implements Comparable<ParkourGame>, JSONSerializable {
 	private boolean running = false;
 	private String name;
 	private World world;
 	private GameRegion gameRegion;
 	private Location bestRecord;
 	private Location teleportBlock;
-	private ParkourOptions options = new ParkourOptions();
+	private Options options = new Options();
 
 	@Getter(AccessLevel.NONE)
 	private final List<Checkpoint> checkpoints = new ArrayList<>();
 	@Getter(AccessLevel.NONE)
 	private final List<Wall> walls = new ArrayList<>();
 	@Getter(AccessLevel.NONE)
-	private final List<EffectRegion> effects = new ArrayList<>();
+	private final List<EffectRegion> effectRegions = new ArrayList<>();
 	@Getter(AccessLevel.NONE)
 	private final List<String> authors = new ArrayList<>();
 	@Getter(AccessLevel.NONE)
@@ -67,7 +69,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, YmlSeriali
 
 	@Data
 	@NoArgsConstructor
-	public class ParkourOptions implements YmlSerializable {
+	public static class Options implements JSONSerializable {
 		private boolean enabled = true;
 		private boolean forcingSprint = false;
 		private boolean alwaysSpawn = false;
@@ -91,7 +93,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, YmlSeriali
 		private ParkourType type = ParkourType.SERVER;
 		private String displayName;
 
-		public ParkourOptions(ParkourOptions options) {
+		public Options(Options options) {
 			enabled = options.enabled;
 			forcingSprint = options.forcingSprint;
 			alwaysSpawn = options.alwaysSpawn;
@@ -144,8 +146,8 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, YmlSeriali
 		}
 
 		@Override
-		public Map<String, Object> toYmlStructure() {
-			Map<String, Object> result = new HashMap<>();
+		public JSONObject toJSON() {
+			JSONObject result = new JSONObject();
 			result.put("alwaysSpawn", alwaysSpawn);
 			result.put("boat", boat);
 			result.put("countingRecords", countingRecords);
@@ -170,14 +172,12 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, YmlSeriali
 			for (Entry<PotionEffectType, Integer> entry : effects.entrySet()) {
 				localEffects.put(entry.getKey().getName(), entry.getValue());
 			}
-			if (localEffects.size() > 0) {
-				result.put("effects", localEffects);
-			}
+			result.put("effects", localEffects);
 			return result;
 		}
 
 		@Override
-		public void fromYmlStructure(Map<String, Object> options) {
+		public void fromJSON(JSONObject options) {
 			alwaysSpawn = (boolean) options.get("alwaysSpawn");
 			boat = (boolean) options.get("boat");
 			countingRecords = (boolean) options.get("countingRecords");
@@ -262,7 +262,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, YmlSeriali
 	}
 
 	public void addEffectRegion(EffectRegion effectRegion) {
-		effects.add(effectRegion);
+		effectRegions.add(effectRegion);
 	}
 
 	public void setWall(int id, CuboidRegion wall) {
@@ -274,7 +274,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, YmlSeriali
 	}
 
 	public void setEffectRegion(int id, EffectRegion effectRegion) {
-		effects.set(id, effectRegion);
+		effectRegions.set(id, effectRegion);
 	}
 
 	public void addAuthor(String author) {
@@ -339,7 +339,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, YmlSeriali
 		arr.add(gameRegion);
 		arr.addAll(walls);
 		arr.addAll(checkpoints);
-		arr.addAll(effects);
+		arr.addAll(effectRegions);
 		return arr;
 	}
 
@@ -373,11 +373,11 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, YmlSeriali
 	}
 
 	public EffectRegion getEffectRegion(int id) {
-		return effects.get(id);
+		return effectRegions.get(id);
 	}
 
 	public List<EffectRegion> getEffectRegionList() {
-		return effects;
+		return effectRegions;
 	}
 
 	public Checkpoint getSpawn() {
@@ -392,85 +392,75 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, YmlSeriali
 	}
 
 	@Override
-	public Map<String, Object> toYmlStructure() {
-		Map<String, Object> map = new TreeMap<>();
+	public JSONObject toJSON() {
 		if (gameRegion == null) {
-			return map;
+			return new JSONObject();
 		}
-		map.put("region", gameRegion.toYmlStructure());
-		if (getSpawn() != null) {
-			map.put("spawn", getSpawn().toYmlStructure());
+		JSONObject object = new JSONObject();
+		object.put("region", gameRegion.toJSON());
+		object.put("checkpoints", collectionToJSON(checkpoints));
+		object.put("walls", collectionToJSON(walls));
+		object.put("effectRegions", collectionToJSON(effectRegions));
+		object.put("recordsSign", bestRecord == null ? null : locationToJSON(bestRecord));
+		object.put("teleportBlock", teleportBlock == null ? null : locationToJSON(teleportBlock));
+		object.put("options", options.toJSON());
+		return object;
+	}
+
+	private JSONArray collectionToJSON(List<? extends AbstractRegion> regions) {
+		JSONArray jsonArray = new JSONArray();
+		regions.stream()
+				.map(AbstractRegion::toJSON)
+				.forEach(jsonArray::put);
+		return jsonArray;
+	}
+
+	private JSONObject locationToJSON(Location location) {
+		JSONObject jsonObject = new JSONObject();
+		jsonObject.put("x", location.getX());
+		jsonObject.put("y", location.getY());
+		jsonObject.put("z", location.getZ());
+		jsonObject.put("world", location.getWorld().getName());
+		return jsonObject;
+	}
+
+	private Location locationFromJSON(JSONObject jsonObject) {
+		if (jsonObject == null) {
+			return null;
 		}
-		for (Checkpoint r : checkpoints) {
-			if (checkpoints.indexOf(r) != 0) {
-				map.put("checkpoint_" + checkpoints.indexOf(r), r.toYmlStructure());
+		return new Location(Bukkit.getWorld(jsonObject.getString("world")),
+				jsonObject.getInt(("x")), jsonObject.getInt(("y")), jsonObject.getInt("z"));
+	}
+
+	private <E extends AbstractRegion> List<E> collectionFromJSON(JSONArray jsonArray, Class<E> clazz) {
+		List<E> list = new ArrayList<>();
+		try {
+			int length = jsonArray.length();
+			for (int i = 0; i < length; i++) {
+				JSONObject jsonObject = jsonArray.getJSONObject(i);
+				E e = clazz.getConstructor(CuboidRegion.class).newInstance(new CuboidRegion(BlockVector3.ZERO, BlockVector3.ZERO));
+				e.fromJSON(jsonObject);
+				list.add(e);
 			}
+		} catch (ReflectiveOperationException ex) {
+			Bukkit.getLogger().throwing(getClass().getName(), "collectionFromJSON", ex);
 		}
-		for (Wall r : walls) {
-			map.put("wall_" + walls.indexOf(r), r.toYmlStructure());
-		}
-		for (EffectRegion r : effects) {
-			map.put("effect_" + effects.indexOf(r), r.toYmlStructure());
-		}
-		if (bestRecord != null) {
-			Map<String, Object> tmp = new HashMap<>();
-			tmp.put("x", bestRecord.getX());
-			tmp.put("y", bestRecord.getY());
-			tmp.put("z", bestRecord.getZ());
-			tmp.put("world", bestRecord.getWorld().getName());
-			map.put("recordssign", tmp);
-		}
-		if (teleportBlock != null) {
-			Map<String, Object> tmp = new HashMap<>();
-			tmp.put("x", teleportBlock.getX());
-			tmp.put("y", teleportBlock.getY());
-			tmp.put("z", teleportBlock.getZ());
-			tmp.put("world", teleportBlock.getWorld().getName());
-			map.put("teleportBlock", tmp);
-		}
-		return map;
+		return list;
 	}
 
 	@Override
-	public void fromYmlStructure(Map<String, Object> structure) {
+	public void fromJSON(JSONObject object) {
 		gameRegion = new GameRegion(world);
-		gameRegion.fromYmlStructure((Map<String, Object>) structure.get("region"));
-		setSpawn(new Checkpoint(world));
-		getSpawn().fromYmlStructure((Map<String, Object>) structure.get("spawn"));
-		for (Entry<String, Object> entry : structure.entrySet()) {
-			switch (entry.getKey().split("_")[0]) {
-				case "checkpoint":
-					Checkpoint checkpoint = new Checkpoint(world);
-					checkpoint.fromYmlStructure((Map<String, Object>) entry.getValue());
-					addCheckpoint(checkpoint);
-					break;
-				case "wall":
-					Wall wall = new Wall(world);
-					wall.fromYmlStructure((Map<String, Object>) entry.getValue());
-					addWall(wall);
-					break;
-				case "effect":
-					EffectRegion effectRegion = new EffectRegion(world);
-					effectRegion.fromYmlStructure((Map<String, Object>) entry.getValue());
-					addEffectRegion(effectRegion);
-					break;
-                /*case "recordssign":
-                    Object o = entry.getValue().get("world");
-                    bestRecord = new Location(o == null ? world : Bukkit.getWorld((String) o),
-                            (double) entry.getValue().get("x"),
-                            (double) entry.getValue().get("y"),
-                            (double) entry.getValue().get("z"));
-                    break;
-                case "teleportBlock":
-                    teleportBlock = new Location(entry.getValue().get("world") == null ? world : Bukkit.getWorld((String) entry.getValue().get("world")),
-                            (double) entry.getValue().get("x"),
-                            (double) entry.getValue().get("y"),
-                            (double) entry.getValue().get("z"));
-                    break;*/
-				default:
-					break;
-			}
-		}
+		gameRegion.fromJSON(object.getJSONObject("region"));
+		checkpoints.clear();
+		checkpoints.addAll(collectionFromJSON(object.getJSONArray("checkpoints"), Checkpoint.class));
+		walls.clear();
+		walls.addAll(collectionFromJSON(object.getJSONArray("walls"), Wall.class));
+		effectRegions.clear();
+		effectRegions.addAll(collectionFromJSON(object.getJSONArray("effectRegions"), EffectRegion.class));
+		bestRecord = object.has("recordSign") ? locationFromJSON(object.getJSONObject("recordSign")) : null;
+		teleportBlock = object.has("teleportBlock") ? locationFromJSON(object.getJSONObject("teleportBlock")) : null;
+		options.fromJSON(object.getJSONObject("options"));
 	}
 
 	@Override

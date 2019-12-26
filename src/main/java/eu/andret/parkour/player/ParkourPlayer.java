@@ -3,12 +3,14 @@
  */
 package eu.andret.parkour.player;
 
-import com.sk89q.worldedit.Vector;
+import com.sk89q.worldedit.math.Vector3;
 import eu.andret.parkour.event.player.PlayerTeleportBackEvent;
 import eu.andret.parkour.parkour.ParkourGame;
 import eu.andret.parkour.parkour.ParkourManager;
 import eu.andret.parkour.region.Checkpoint;
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -35,7 +37,7 @@ public abstract class ParkourPlayer {
 		if (inAnyParkour()) {
 			ParkourGame pk = ParkourManager.getParkour(player);
 			Checkpoint cp = pk.getCheckpoint(id);
-			Vector v = cp.getRegion().getCenter();
+			Vector3 v = cp.getRegion().getCenter();
 			player.teleport(new Location(pk.getWorld(), v.getX() + 0.5, v.getY(), v.getZ() + 0.5, cp.getYaw(), cp.getPitch()));
 			Bukkit.getPluginManager().callEvent(new PlayerTeleportBackEvent(pk, this, cp));
 		}

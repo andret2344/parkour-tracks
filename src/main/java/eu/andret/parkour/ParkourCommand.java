@@ -3,14 +3,16 @@
  */
 package eu.andret.parkour;
 
+import com.sk89q.worldedit.IncompleteRegionException;
+import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
-import com.sk89q.worldedit.bukkit.selections.Selection;
 import com.sk89q.worldedit.regions.CuboidRegion;
+import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.world.AbstractWorld;
 import eu.andret.parkour.parkour.Parkour;
 import eu.andret.parkour.parkour.ParkourGame;
-import eu.andret.parkour.parkour.ParkourGame.ParkourOptions;
+import eu.andret.parkour.parkour.ParkourGame.Options;
 import eu.andret.parkour.parkour.ParkourManager;
 import eu.andret.parkour.player.ParkourPlayer;
 import eu.andret.parkour.player.PlayerManager;
@@ -22,6 +24,7 @@ import eu.andret.parkour.tasks.DataBaseOperations;
 import eu.andret.parkour.tasks.RepairSignTask;
 import eu.andret.parkour.tasks.TopPlayersDataOperations;
 import eu.andret.parkour.util.Data;
+import lombok.SneakyThrows;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.DyeColor;
@@ -51,6 +54,7 @@ public class ParkourCommand implements CommandExecutor {
 		wep = (WorldEditPlugin) plugin.getServer().getPluginManager().getPlugin("WorldEdit");
 	}
 
+	@SneakyThrows
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		if (cmd.getName().equalsIgnoreCase("parkour")) {
@@ -72,10 +76,12 @@ public class ParkourCommand implements CommandExecutor {
 							sender.sendMessage(msg("usageCreate", true));
 						} else {
 							if (ParkourManager.getLobbyLocation() != null) {
-								Selection sel = wep.getSelection((Player) sender);
+								LocalSession session = wep.getSession((Player) sender);
+								Region sel =
+										session.getSelection(new BukkitWorld(((Player) sender).getWorld()));
 								if (sel != null) {
 									AbstractWorld lw = new BukkitWorld(((Player) sender).getWorld());
-									CuboidRegion cr = new CuboidRegion(lw, sel.getNativeMaximumPoint(), sel.getNativeMinimumPoint());
+									CuboidRegion cr = new CuboidRegion(lw, sel.getMaximumPoint(), sel.getMinimumPoint());
 									String name = args[1];
 									if (name.matches("[a-zA-Z0-9_-]+")) {
 										ParkourGame parkour = ParkourManager.getParkour(name);
@@ -119,10 +125,12 @@ public class ParkourCommand implements CommandExecutor {
 						if (args.length == 1) {
 							sender.sendMessage(msg("usageSetspawn", true));
 						} else {
-							Selection sel = wep.getSelection((Player) sender);
+							LocalSession session = wep.getSession((Player) sender);
+							Region sel =
+									session.getSelection(new BukkitWorld(((Player) sender).getWorld()));
 							if (sel != null) {
 								AbstractWorld lw = new BukkitWorld(((Player) sender).getWorld());
-								CuboidRegion cr = new CuboidRegion(lw, sel.getNativeMaximumPoint(), sel.getNativeMinimumPoint());
+								CuboidRegion cr = new CuboidRegion(lw, sel.getMaximumPoint(), sel.getMinimumPoint());
 								ParkourGame pk = ParkourManager.getParkour(args[1]);
 								if (pk != null) {
 									Location l = ((Player) sender).getLocation();
@@ -143,10 +151,12 @@ public class ParkourCommand implements CommandExecutor {
 						if (args.length == 1) {
 							sender.sendMessage(msg("usageAddcheckpoint", true));
 						} else {
-							Selection sel = wep.getSelection((Player) sender);
+							LocalSession session = wep.getSession((Player) sender);
+							Region sel =
+									session.getSelection(new BukkitWorld(((Player) sender).getWorld()));
 							if (sel != null) {
 								AbstractWorld lw = new BukkitWorld(((Player) sender).getWorld());
-								CuboidRegion cr = new CuboidRegion(lw, sel.getNativeMaximumPoint(), sel.getNativeMinimumPoint());
+								CuboidRegion cr = new CuboidRegion(lw, sel.getMaximumPoint(), sel.getMinimumPoint());
 								ParkourGame pk = ParkourManager.getParkour(args[1]);
 								if (pk != null) {
 									if (pk.getSpawn() != null) {
@@ -172,10 +182,12 @@ public class ParkourCommand implements CommandExecutor {
 							sender.sendMessage(msg("usageSetcheckpoint", true));
 						} else {
 							try {
-								Selection sel = wep.getSelection((Player) sender);
+								LocalSession session = wep.getSession((Player) sender);
+								Region sel =
+										session.getSelection(new BukkitWorld(((Player) sender).getWorld()));
 								if (sel != null) {
 									AbstractWorld lw = new BukkitWorld(((Player) sender).getWorld());
-									CuboidRegion cr = new CuboidRegion(lw, sel.getNativeMaximumPoint(), sel.getNativeMinimumPoint());
+									CuboidRegion cr = new CuboidRegion(lw, sel.getMaximumPoint(), sel.getMinimumPoint());
 									int id = Integer.parseInt(args[1]);
 									if (id > 0) {
 										ParkourGame pk = ParkourManager.getParkour(args[2]);
@@ -207,7 +219,7 @@ public class ParkourCommand implements CommandExecutor {
 							ParkourGame pk = ParkourManager.getParkour(args[1]);
 							if (pk != null) {
 								if (pk.getSpawn() != null) {
-									ParkourOptions o = pk.getOptions();
+									Options o = pk.getOptions();
 									if (o.getBronze() != 0 && o.getSilver() != 0 && o.getGold() != 0 && o.getPlatinum() != 0) {
 										if (!pk.isRunning()) {
 											sender.sendMessage(msg("gameStarted", false).replace("%GAMENAME%", args[1]));
@@ -235,10 +247,12 @@ public class ParkourCommand implements CommandExecutor {
 						} else {
 							ParkourGame pk = ParkourManager.getParkour(args[1]);
 							if (pk != null) {
-								Selection sel = wep.getSelection((Player) sender);
+								LocalSession session = wep.getSession((Player) sender);
+								Region sel =
+										session.getSelection(new BukkitWorld(((Player) sender).getWorld()));
 								if (sel != null) {
 									AbstractWorld lw = new BukkitWorld(((Player) sender).getWorld());
-									CuboidRegion cr = new CuboidRegion(lw, sel.getNativeMaximumPoint(), sel.getNativeMinimumPoint());
+									CuboidRegion cr = new CuboidRegion(lw, sel.getMaximumPoint(), sel.getMinimumPoint());
 									pk.getGameRegion().setRegion(cr);
 									sender.sendMessage(msg("gameRecreated", false));
 								} else {
@@ -382,13 +396,18 @@ public class ParkourCommand implements CommandExecutor {
 						if (args.length == 1) {
 							sender.sendMessage(msg("usageAddwall", true));
 						} else {
-							Selection sel = wep.getSelection((Player) sender);
-							if (sel != null) {
+							Region sel = null;
+							try {
 								AbstractWorld lw = new BukkitWorld(((Player) sender).getWorld());
-								CuboidRegion cr = new CuboidRegion(lw, sel.getNativeMaximumPoint(), sel.getNativeMinimumPoint());
+								sel = wep.getSession((Player) sender).getSelection(lw);
+							} catch (IncompleteRegionException e) {
+								e.printStackTrace();
+							}
+							if (sel != null) {
 								ParkourGame pk = ParkourManager.getParkour(args[1]);
 								if (pk != null) {
-									pk.addWall(new Wall(cr));
+									pk.addWall(new Wall(new CuboidRegion(sel.getMaximumPoint(),
+											sel.getMinimumPoint())));
 									sender.sendMessage(msg("setWall", false).replace("%WALLID%", String.valueOf(pk.getWallList().size())));
 								} else {
 									sender.sendMessage(msg("noGame", true));
@@ -406,10 +425,12 @@ public class ParkourCommand implements CommandExecutor {
 							sender.sendMessage(msg("usageSetwall", true));
 						} else {
 							try {
-								Selection sel = wep.getSelection((Player) sender);
+								LocalSession session = wep.getSession((Player) sender);
+								Region sel =
+										session.getSelection(new BukkitWorld(((Player) sender).getWorld()));
 								if (sel != null) {
 									AbstractWorld lw = new BukkitWorld(((Player) sender).getWorld());
-									CuboidRegion cr = new CuboidRegion(lw, sel.getNativeMaximumPoint(), sel.getNativeMinimumPoint());
+									CuboidRegion cr = new CuboidRegion(lw, sel.getMaximumPoint(), sel.getMinimumPoint());
 									int id = Integer.parseInt(args[1]) - 1;
 									if (id > 0) {
 										ParkourGame pk = ParkourManager.getParkour(args[2]);
@@ -541,7 +562,7 @@ public class ParkourCommand implements CommandExecutor {
 							ParkourGame parkour1 = ParkourManager.getParkour(args[1]);
 							ParkourGame parkour2 = ParkourManager.getParkour(args[2]);
 							if (parkour1 != null && parkour2 != null) {
-								parkour2.setOptions(parkour2.new ParkourOptions(parkour1.getOptions()));
+								parkour2.setOptions(new Options(parkour1.getOptions()));
 								sender.sendMessage(msg("successClone", false).replace("%PARKOURFROM%", args[1]).replace("%PARKOURTO%", args[2]));
 							} else {
 								sender.sendMessage(msg("noGame", true));
@@ -695,7 +716,7 @@ public class ParkourCommand implements CommandExecutor {
 						} else {
 							ParkourGame parkour = ParkourManager.getParkour(args[1]);
 							if (parkour != null) {
-								ParkourOptions o = parkour.getOptions();
+								Options o = parkour.getOptions();
 								if (args.length == 2) {
 									for (Entry<PotionEffectType, Integer> entry : o.getEffects().entrySet()) {
 										sender.sendMessage(msg("oneEffect", false).replace("%EFFECT%", "" + entry.getKey().getName()).replace("%AMPLIFIER%", "" + entry.getValue()));
@@ -1133,7 +1154,7 @@ public class ParkourCommand implements CommandExecutor {
 						if (args.length == 2) {
 							ParkourGame parkour = ParkourManager.getParkour(args[1]);
 							if (parkour != null) {
-								parkour.setTeleportBlock(((Player) sender).getTargetBlock((Set<Material>) null, 5).getLocation());
+								parkour.setTeleportBlock(((Player) sender).getTargetBlock(null, 5).getLocation());
 								sender.sendMessage(msg("setTeleportblock", false).replace("%PARKOUR%", args[1]));
 							} else {
 								sender.sendMessage(msg("noGame", true));
@@ -1190,9 +1211,9 @@ public class ParkourCommand implements CommandExecutor {
 						} else {
 							ParkourGame parkour = ParkourManager.getParkour(args[1]);
 							if (parkour != null) {
-								Location loc = ((Player) sender).getTargetBlock((Set<Material>) null, 5).getLocation();
+								Location loc = ((Player) sender).getTargetBlock(null, 5).getLocation();
 								Material m = loc.getBlock().getType();
-								if (m.equals(Material.SIGN) || m.equals(Material.WALL_SIGN) || m.equals(Material.SIGN_POST)) {
+								if (m.equals(Material.LEGACY_SIGN) || m.equals(Material.LEGACY_WALL_SIGN) || m.equals(Material.LEGACY_WALL_SIGN)) {
 									parkour.setBestRecord(loc);
 									sender.sendMessage(msg("setBestrecord", false).replace("%COORDX%", "" + loc.getX()).replace("%COORDY%", "" + loc.getY()).replace("%COORDZ%", "" + loc.getZ()));
 									try {
