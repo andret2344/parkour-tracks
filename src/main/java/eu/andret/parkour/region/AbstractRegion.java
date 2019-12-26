@@ -3,7 +3,7 @@
  */
 package eu.andret.parkour.region;
 
-import com.sk89q.worldedit.Vector;
+import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import eu.andret.parkour.JSONSerializable;
 import lombok.AllArgsConstructor;
@@ -17,7 +17,7 @@ public abstract class AbstractRegion implements JSONSerializable {
 	private CuboidRegion region;
 
 	public boolean contains(Location loc) {
-		return region.contains(new Vector(loc.getX(), loc.getY(), loc.getZ()));
+		return region.contains(BlockVector3.at(loc.getX(), loc.getY(), loc.getZ()));
 	}
 
 	@Override
@@ -34,11 +34,11 @@ public abstract class AbstractRegion implements JSONSerializable {
 
 	@Override
 	public void fromJSON(JSONObject object) {
-		region.setPos1(new Vector(
+		region.setPos1(BlockVector3.at(
 				object.getDouble("x1"),
 				object.getDouble("y1"),
 				object.getDouble("z1")));
-		region.setPos2(new Vector(
+		region.setPos2(BlockVector3.at(
 				object.getDouble("x2"),
 				object.getDouble("y2"),
 				object.getDouble("z2")));

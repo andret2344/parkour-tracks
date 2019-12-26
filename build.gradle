@@ -1,40 +1,78 @@
 /*
  * Copyright Andret (c) 2019. Copying and modifying allowed only keeping git link reference.
  */
+import io.franzbecker.gradle.lombok.task.DelombokTask
+
+buildscript {
+	repositories {
+		jcenter()
+		maven {
+			url "https://plugins.gradle.org/m2/"
+		}
+	}
+	dependencies {
+		classpath 'io.franzbecker:gradle-lombok:2.0'
+		classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.9.6"
+	}
+}
+
+plugins {
+	id "com.github.johnrengelman.shadow" version "5.2.0"
+}
+
 apply plugin: "java"
 apply plugin: "idea"
+apply plugin: 'io.franzbecker.gradle-lombok'
+
 
 jar {
-	setArchiveBaseName "atsStoneGenerator"
-	setArchiveVersion "2.0"
+	setArchiveBaseName "atsParkour"
+	setArchiveVersion "1.7"
 }
 
 sourceCompatibility = JavaVersion.VERSION_12
 targetCompatibility = JavaVersion.VERSION_12
 
 tasks.withType(JavaCompile) {
-//	options.compilerArgs << '-Xlint:unchecked'
-//	options.deprecation = true
+	options.compilerArgs << '-Xlint:unchecked'
+	options.deprecation = true
 }
 
 repositories {
+	mavenLocal()
 	mavenCentral()
-	maven {
-		url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
-		content {
-			includeGroup 'org.bukkit'
-			includeGroup 'org.spigotmc'
-		}
-	}
-	maven { url = 'https://oss.sonatype.org/content/repositories/snapshots' }
+	maven { url 'https://hub.spigotmc.org/nexus/content/groups/public/' }
+	maven { url 'https://oss.sonatype.org/content/groups/public/' }
 	maven { url "http://maven.sk89q.com/artifactory/repo" }
 }
 
 dependencies {
-	compileOnly group: 'com.sk89q.worldedit', name: 'worldedit-bukkit', version: '6.1.4-SNAPSHOT'
-	compileOnly group: 'com.sk89q.worldedit', name: 'worldedit-core', version: '6.1.4-SNAPSHOT'
-	compile group: 'org.json', name: 'json', version: '20180813'
-	compileOnly 'org.spigotmc:spigot-api:1.13.2-R0.1-SNAPSHOT'
-	compileOnly group: "org.projectlombok", name: "lombok", version: "1.18.8"
-	annotationProcessor group: "org.projectlombok", name: "lombok", version: "1.18.8"
+	compileOnly group: 'com.sk89q.worldedit', name: 'worldedit-bukkit', version: '7.0.1'
+	compileOnly group: 'org.bukkit', name: 'bukkit', version: '1.15.1-R0.1-SNAPSHOT'
+	compileOnly group: 'org.spigotmc', name:'spigot-api', version: '1.15.1-R0.1-SNAPSHOT'
+	compileOnly group: "org.projectlombok", name: "lombok", version: "1.18.10"
+	compileOnly group: 'org.jetbrains', name: 'annotations', version: '17.0.0'
+	compile group: 'org.json', name: 'json', version: '20190722'
+	annotationProcessor group: "org.projectlombok", name: "lombok", version: "1.18.10"
 }
+
+task delombok(type: DelombokTask, dependsOn: compileJava) {
+	ext.outputDir = file("$buildDir/delombok")
+	outputs.dir(outputDir)
+	sourceSets.main.java.srcDirs.each {
+		inputs.dir(it)
+		args(it, "-d", outputDir)
+	}
+	doFirst {
+		outputDir.deleteDir()
+	}
+}
+
+shadowJar {
+	relocate 'org.json', 'eu.andret.json'
+	configurations = [project.configurations.compile]
+}
+
+build.dependsOn(shadowJar)
+
+project.archivesBaseName = "$pluginName-$pluginVersion"

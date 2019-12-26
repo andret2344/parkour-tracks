@@ -278,7 +278,7 @@ public class ParkourListeners implements Listener {
 		if (!ParkourManager.getPlayersInGames().contains(e.getPlayer())) {
 			return;
 		}
-		if (e.getClickedBlock() != null && (e.getClickedBlock().getType().equals(Material.LEVER) || e.getClickedBlock().getType().equals(Material.WOOD_DOOR) || e.getClickedBlock().getType().equals(Material.WOOD_BUTTON) || e.getClickedBlock().getType().equals(Material.STONE_BUTTON) || e.getClickedBlock().getType().equals(Material.TRAP_DOOR) || e.getClickedBlock().getType().equals(Material.CHEST) || e.getClickedBlock().getType().equals(Material.FENCE_GATE))) {
+		if (e.getClickedBlock() != null && (e.getClickedBlock().getType().equals(Material.LEVER) || e.getClickedBlock().getType().equals(Material.LEGACY_WOOD_DOOR) || e.getClickedBlock().getType().equals(Material.LEGACY_WOOD_BUTTON) || e.getClickedBlock().getType().equals(Material.STONE_BUTTON) || e.getClickedBlock().getType().equals(Material.LEGACY_TRAP_DOOR) || e.getClickedBlock().getType().equals(Material.CHEST) || e.getClickedBlock().getType().equals(Material.LEGACY_FENCE_GATE))) {
 			e.setCancelled(true);
 		}
 

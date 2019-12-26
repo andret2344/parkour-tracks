@@ -8,39 +8,36 @@ import eu.andret.parkour.parkour.ParkourManager;
 import eu.andret.parkour.region.AbstractRegion;
 import eu.andret.parkour.tasks.KeepConnection;
 import eu.andret.parkour.util.Data;
+import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.json.JSONObject;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Level;
 
 public class ParkourPlugin extends JavaPlugin {
 	private Connection conn;
 	private ItemStack exit;
 	private ParkourListeners listeners;
+	@Getter
 	private final Map<String, String> messages = new LinkedHashMap<>();
-	private final YamlConfiguration msgs = new YamlConfiguration();
+	private final YamlConfiguration yamlConfiguration = new YamlConfiguration();
 	private final String url = getConfig().getString("connection.url");
 	private final String user = getConfig().getString("connection.user");
 	private final String pass = getConfig().getString("connection.pass");
@@ -62,9 +59,9 @@ public class ParkourPlugin extends JavaPlugin {
 		saveResource("messages.yml", false);
 		createDoors();
 		getServer().getPluginManager().registerEvents(listeners, this);
-//		getCommand("parkour").setExecutor(new ParkourCommand(this));
+		getCommand("parkour").setExecutor(new ParkourCommand(this));
 		try {
-			msgs.load(new File(getDataFolder().getAbsolutePath() + File.separator + "messages.yml"));
+			yamlConfiguration.load(new File(getDataFolder().getAbsolutePath() + File.separator + "messages.yml"));
 			load();
 			connect();
 		} catch (Exception ex) {
@@ -85,31 +82,24 @@ public class ParkourPlugin extends JavaPlugin {
 
 	@Override
 	public void onDisable() {
-		save();
 		try {
-			Field f = ParkourManager.class.getDeclaredField("games");
-			Field modifiersField = Field.class.getDeclaredField("modifiers");
-			f.setAccessible(true);
-			modifiersField.setAccessible(true);
-			modifiersField.setInt(f, f.getModifiers() & ~Modifier.FINAL);
-			f.set(eu.andret.parkour.parkour.Parkour.class, new ArrayList<eu.andret.parkour.parkour.Parkour>());
-			modifiersField.setInt(f, f.getModifiers() & Modifier.FINAL);
-			f.setAccessible(false);
-			modifiersField.setAccessible(false);
-			if (conn != null) {
-				conn.close();
+			if (!save()) {
+				getLogger().log(Level.WARNING, "Problem with saving");
 			}
-		} catch (Exception ex) {
-			getServer().getLogger().throwing(getClass().getName(), "onDisable", ex);
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 		Bukkit.getScheduler().cancelTasks(this);
 	}
 
 	private void createDoors() {
 		exit = new ItemStack(Material.IRON_DOOR);
-		ItemMeta im = exit.getItemMeta();
-		im.setDisplayName("§r" + ChatColor.translateAlternateColorCodes('&', getConfig().getString("door.name")));
-		exit.setItemMeta(im);
+		Optional.ofNullable(exit.getItemMeta())
+				.stream()
+				.peek(im -> im.setDisplayName("§r" + ChatColor.translateAlternateColorCodes('&',
+						getConfig().getString("door.name"))))
+				.findAny()
+				.ifPresent(exit::setItemMeta);
 	}
 
 	private void connect() throws SQLException {
@@ -123,37 +113,42 @@ public class ParkourPlugin extends JavaPlugin {
 
 	public String msg(String path, boolean err) {
 		String here;
-		if (msgs.getString("player." + path) != null) {
+		if (yamlConfiguration.getString("player." + path) != null) {
 			here = "player.";
-		} else if (msgs.getString("admin." + path) != null) {
+		} else if (yamlConfiguration.getString("admin." + path) != null) {
 			here = "admin.";
 		} else {
 			throw new NullPointerException("Invalid message");
 		}
 		String result = "";
 		if (err) {
-			result += msgs.getString(here + "errorMsg");
+			result += yamlConfiguration.getString(here + "errorMsg");
 		}
-		return (result + msgs.getString(here + path)).replace('&', '\u00A7');
+		return (result + yamlConfiguration.getString(here + path)).replace('&', '\u00A7');
 	}
 
-	private boolean save() {
+	private boolean save() throws IOException {
+		System.out.println(ParkourManager.getAllGames());
 		for (ParkourGame pk : ParkourManager.getAllGames()) {
+			System.out.println(pk);
 			File path = new File(getDataFolder().getAbsolutePath() + "/games");
-			File file = new File(path.getAbsolutePath(), pk.getName() + ".json");
-			try (OutputStreamWriter writer = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(file)))) {
-				if ((!path.exists() && !path.mkdirs()) || (!file.exists() && !file.createNewFile())) {
-					return false;
-				}
-				JSONObject game = new JSONObject();
-				game.put("world", pk.getWorld().getName());
-				game.put("parkour", pk.toJSON());
-				game.put("started", pk.isRunning());
-				game.put("authors", pk.getAuthors());
-				writer.write(game.toString(2));
-			} catch (Exception ex) {
-				getServer().getLogger().throwing(getClass().getName(), "save", ex);
+			if (!path.exists() && !path.mkdirs()) {
+				return false;
 			}
+			File file = new File(path.getAbsolutePath(), pk.getName() + ".json");
+			if (!file.exists() && !file.createNewFile()) {
+				return false;
+			}
+			PrintWriter pw = new PrintWriter(file);
+			System.out.println("File exists");
+			JSONObject game = new JSONObject();
+			game.put("world", pk.getWorld().getName());
+			game.put("parkour", pk.toJSON());
+			game.put("started", pk.isRunning());
+			game.put("authors", pk.getAuthors());
+			pw.write(game.toString(2));
+			System.out.println("Saved");
+			pw.close();
 		}
 		return true;
 	}
@@ -168,7 +163,7 @@ public class ParkourPlugin extends JavaPlugin {
 		saveConfig();
 	}
 
-	private void load() throws InvalidConfigurationException {
+	private void load() {
 //		String w = getConfig().getString("lobby.world");
 //		if (!w.equals("-1")) {
 //			World world = Bukkit.getWorld(w);
@@ -271,10 +266,6 @@ public class ParkourPlugin extends JavaPlugin {
 		messages.put("silver", msg("cmdSilver", false));
 		messages.put("gold", msg("cmdGold", false));
 		messages.put("platinium", msg("cmdPlatinium", false));
-	}
-
-	public Map<String, String> getMessages() {
-		return messages;
 	}
 
 	ItemStack getExit() {

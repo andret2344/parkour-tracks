@@ -397,9 +397,6 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, JSONSerial
 		}
 		JSONObject object = new JSONObject();
 		object.put("region", gameRegion.toJSON());
-		if (getSpawn() != null) {
-			object.put("spawn", getSpawn().toJSON());
-		}
 		object.put("checkpoints", collectionToJSON(checkpoints));
 		object.put("walls", collectionToJSON(walls));
 		object.put("effectRegions", collectionToJSON(effectRegions));
@@ -416,7 +413,6 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, JSONSerial
 	private JSONArray collectionToJSON(List<? extends AbstractRegion> regions) {
 		JSONArray jsonArray = new JSONArray();
 		regions.stream()
-				.skip(1)
 				.map(AbstractRegion::toJSON)
 				.forEach(jsonArray::put);
 		return jsonArray;
@@ -442,7 +438,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, JSONSerial
 			int length = jsonArray.length();
 			for (int i = 0; i < length; i++) {
 				JSONObject jsonObject = jsonArray.getJSONObject(i);
-				E e = clazz.getConstructor(CuboidRegion.class).newInstance(null);
+				E e = clazz.getConstructor(CuboidRegion.class).newInstance();
 				e.fromJSON(jsonObject);
 				list.add(e);
 			}
@@ -456,8 +452,6 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, JSONSerial
 	public void fromJSON(JSONObject object) {
 		gameRegion = new GameRegion(world);
 		gameRegion.fromJSON(object.getJSONObject("region"));
-		setSpawn(new Checkpoint(world));
-		getSpawn().fromJSON(object.getJSONObject("spawn"));
 		checkpoints.clear();
 		checkpoints.addAll(collectionFromJSON(object.getJSONArray("checkpoints"), Checkpoint.class));
 		walls.clear();

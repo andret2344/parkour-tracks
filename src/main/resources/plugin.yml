@@ -1,9 +1,10 @@
 name: ParkourPlugin
 main: eu.andret.parkour.ParkourPlugin
-version: 1.7
+version: '1.7'
 author: Andret
 depend: [WorldEdit]
 softdepend: [Multiverse, LobbyCoins, GlobalPermissions]
+api-version: '1.13'
 
 commands:
   parkour:

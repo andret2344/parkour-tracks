@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Aggregating class.
@@ -22,6 +23,7 @@ public class AbstractParkourPlayerEvent extends Event {
 	 * List of all Handlers.
 	 */
 	private static final HandlerList HANDLERS = new HandlerList();
+
 	/**
 	 * The Parkour that has been started.
 	 */
@@ -32,8 +34,13 @@ public class AbstractParkourPlayerEvent extends Event {
 	 */
 	private ParkourPlayer player;
 
+	@NotNull
 	@Override
 	public final HandlerList getHandlers() {
+		return getHandlerList();
+	}
+
+	public static HandlerList getHandlerList() {
 		return HANDLERS;
 	}
 }

@@ -1,8 +1,8 @@
 connection:
   url: localhost
   user: root
-  pass: '' #Master0fLobby
-  dbname: ats_parkour #mclobbyuserinfo
+  pass: ''
+  dbname: ats_parkour
 door:
   name: 'Exit!'
   lore: 'Click it/nto exit.'
