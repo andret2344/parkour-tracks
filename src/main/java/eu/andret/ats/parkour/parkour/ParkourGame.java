@@ -226,17 +226,15 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, JSONSerial
 		}
 	}
 
-	public ParkourGame(final String name, final GameRegion gameRegion, final World world) {
+	protected ParkourGame(final String name, final GameRegion gameRegion, final World world) {
 		this.name = name;
 		this.gameRegion = gameRegion;
 		this.world = world;
 		options.displayName = name;
-		ParkourManager.addParkour(this);
 	}
 
 	public void setName(final String newName) {
 		name = newName;
-		ParkourManager.sortGames();
 	}
 
 	public void addCheckpoint(final Checkpoint checkpoint) {
