@@ -14,12 +14,12 @@ import org.bukkit.entity.Player;
 @EqualsAndHashCode(callSuper = true)
 public class Parkour extends ParkourGame {
 
-	public Parkour(String name, GameRegion gameRegion, World world) {
+	public Parkour(final String name, final GameRegion gameRegion, final World world) {
 		super(name, gameRegion, world);
 	}
 
 	@Override
-	public void addPlayer(Player player) {
+	public void addPlayer(final Player player) {
 		super.addPlayer(PlayerManager.getParkourSinglePlayer(player));
 	}
 }

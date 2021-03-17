@@ -14,11 +14,11 @@ import lombok.Value;
  */
 @Value
 @EqualsAndHashCode(callSuper = true)
-public final class PlayerAchieveCheckpointEvent extends AbstractParkourPlayerEvent {
+public class PlayerAchieveCheckpointEvent extends AbstractParkourPlayerEvent {
 	/**
 	 * The checkpoint achieved by the player.
 	 */
-	private Checkpoint checkpoint;
+	Checkpoint checkpoint;
 
 	/**
 	 * Constructor.
@@ -27,7 +27,7 @@ public final class PlayerAchieveCheckpointEvent extends AbstractParkourPlayerEve
 	 * @param player The player that triggers the event.
 	 * @param checkpoint The achieved checkpoint.
 	 */
-	public PlayerAchieveCheckpointEvent(ParkourGame parkour, ParkourPlayer player, Checkpoint checkpoint) {
+	public PlayerAchieveCheckpointEvent(final ParkourGame parkour, final ParkourPlayer player, final Checkpoint checkpoint) {
 		super(parkour, player);
 		this.checkpoint = checkpoint;
 	}

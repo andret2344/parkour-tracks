@@ -22,20 +22,20 @@ import java.util.List;
 public class ParkourGroup extends ParkourGame {
 	private final List<Parkour> parkours = new ArrayList<>();
 
-	public ParkourGroup(String name, GameRegion gameregion, World world) {
+	public ParkourGroup(final String name, final GameRegion gameregion, final World world) {
 		super(name, gameregion, world);
 	}
 
-	public void addParkour(Parkour e) {
+	public void addParkour(final Parkour e) {
 		parkours.add(e);
 	}
 
-	public boolean removeParkour(Parkour e) {
+	public boolean removeParkour(final Parkour e) {
 		return parkours.remove(e);
 	}
 
 	@Override
-	public void addPlayer(Player player) {
+	public void addPlayer(final Player player) {
 		super.addPlayer(PlayerManager.getParkourCompetitorPlayer(player));
 	}
 }

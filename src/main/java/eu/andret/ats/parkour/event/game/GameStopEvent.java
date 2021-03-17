@@ -12,13 +12,13 @@ import lombok.Value;
  */
 @Value
 @EqualsAndHashCode(callSuper = true)
-public final class GameStopEvent extends AbstractGameEvent {
+public class GameStopEvent extends AbstractGameEvent {
 	/**
 	 * Constructor.
 	 *
 	 * @param parkour The game that has been started.
 	 */
-	public GameStopEvent(ParkourGame parkour) {
+	public GameStopEvent(final ParkourGame parkour) {
 		super(parkour);
 	}
 }

@@ -28,7 +28,7 @@ public class ParkourDataOperations implements Runnable {
 	@Getter
 	private int earned;
 
-	public ParkourDataOperations(ParkourPlugin plugin, ParkourGame parkour, Player player, Consumer<ParkourDataOperations> callback) {
+	public ParkourDataOperations(final ParkourPlugin plugin, final ParkourGame parkour, final Player player, final Consumer<ParkourDataOperations> callback) {
 		this.parkour = parkour;
 		this.player = player;
 		this.callback = callback;
@@ -61,7 +61,7 @@ public class ParkourDataOperations implements Runnable {
 			}
 			callback.accept(this);
 			rs.close();
-		} catch (Exception ex) {
+		} catch (final Exception ex) {
 			Bukkit.getLogger().throwing(getClass().getName(), "run", ex);
 		}
 	}

@@ -24,11 +24,11 @@ public class DataBaseOperations implements Runnable {
 	private final ParkourGame parkour;
 	private final ParkourPlugin plugin;
 
-	private float time;
+	private final float time;
 	private Medal lastMedal = Medal.NONE;
-	private Connection sql;
+	private final Connection sql;
 
-	public DataBaseOperations(ParkourPlugin plugin, Player player, ParkourGame parkour, float time) {
+	public DataBaseOperations(final ParkourPlugin plugin, final Player player, final ParkourGame parkour, final float time) {
 		this.player = player;
 		this.parkour = parkour;
 		this.time = time;
@@ -38,7 +38,7 @@ public class DataBaseOperations implements Runnable {
 
 	@Override
 	public void run() {
-		ParkourGame.Options o = parkour.getOptions();
+		final ParkourGame.Options o = parkour.getOptions();
 		try {
 			//przeszedlem kolejny raz
 			PreparedStatement stat;
@@ -47,7 +47,7 @@ public class DataBaseOperations implements Runnable {
 				stat = sql.prepareStatement(String.format("SELECT time FROM %s "
 						+ "WHERE parkour=? ORDER BY `time` ASC LIMIT 1", Data.TABLE_RECORDS));
 				stat.setString(1, parkour.getName());
-				ResultSet rs = stat.executeQuery();
+				final ResultSet rs = stat.executeQuery();
 				if (!rs.next() || rs.getFloat("time") > time) {
 					//tak, jest najlepszy lub nie bylo zadnego
 					player.sendMessage(plugin.msg("generalRecord", false));
@@ -60,14 +60,14 @@ public class DataBaseOperations implements Runnable {
 					+ "WHERE nick=? AND parkour=?", Data.TABLE_RECORDS));
 			stat.setString(1, player.getName());
 			stat.setString(2, parkour.getName());
-			ResultSet rs = stat.executeQuery();
+			final ResultSet rs = stat.executeQuery();
 
 			int c = 0;
 			//czy byl wpis?
 			if (rs.next()) {
 				c = rs.getInt("count");
-				float f = rs.getFloat("time");
-				String s;
+				final float f = rs.getFloat("time");
+				final String s;
 				//czy najlepszy?
 				if (f > time) {
 					s = "UPDATE %s SET time=" + time + ", `count`=?, `earned`=?, `date`=?, `xp`=? WHERE `nick`=? AND `parkour`=?";
@@ -98,11 +98,11 @@ public class DataBaseOperations implements Runnable {
 			}
 			player.sendMessage(plugin.msg("howMany", false).replace("%COUNT%", c + 1 + ""));
 			//jaki dac medal?
-			Medal current = o.getMedalByTime(PlayerManager.getParkourSinglePlayer(player).getTime());
+			final Medal current = o.getMedalByTime(PlayerManager.getParkourSinglePlayer(player).getTime());
 			if (lastMedal.ordinal() > current.ordinal()) {
 				//ile za niego i poprzednie zarabia?
 				int price = 0;
-				for (Medal medal : Medal.values()) {
+				for (final Medal medal : Medal.values()) {
 					price += medal.getPrice();
 				}
 				player.sendMessage(plugin.msg("achieveMedal", false).replace("%MEDAL%", current.name()).replace("%PRICE%", "" + price));
@@ -113,16 +113,16 @@ public class DataBaseOperations implements Runnable {
 				stat.execute();
 			}
 			rs.close();
-		} catch (Exception ex) {
+		} catch (final Exception ex) {
 			Bukkit.getServer().getLogger().throwing(getClass().getName(), "run", ex);
 		}
 	}
 
-	public static void updateSign(ParkourPlugin plugin, String player, double time, ParkourGame parkour) {
-		Location l = parkour.getBestRecord();
+	public static void updateSign(final ParkourPlugin plugin, final String player, final double time, final ParkourGame parkour) {
+		final Location l = parkour.getBestRecord();
 		if (l != null) {
-			Sign s = (Sign) l.getBlock().getState();
-			FileConfiguration c = plugin.getConfig();
+			final Sign s = (Sign) l.getBlock().getState();
+			final FileConfiguration c = plugin.getConfig();
 			s.setLine(0, replace(c.getString("recordSign.line1"), player, time).replace('&', '\u00A7'));
 			s.setLine(1, replace(c.getString("recordSign.line2"), player, time).replace('&', '\u00A7'));
 			s.setLine(2, replace(c.getString("recordSign.line3"), player, time).replace('&', '\u00A7'));
@@ -131,13 +131,13 @@ public class DataBaseOperations implements Runnable {
 		}
 	}
 
-	private static String replace(String s, String nick, double time) {
+	private static String replace(String s, final String nick, final double time) {
 		s = s.replace("%NICK%", nick);
-		int mins = (int) time / 60;
+		final int mins = (int) time / 60;
 		s = s.replace("%MINUTES%", ("" + (mins < 10 ? "0" + mins : mins)).substring(0, 2));
-		int secs = (int) time % 60;
+		final int secs = (int) time % 60;
 		s = s.replace("%SECONDS%", "" + ("" + (secs < 10 ? "0" + secs : secs)).substring(0, 2));
-		int milisecs = (int) Math.round((time % 1) * 100);
+		final int milisecs = (int) Math.round((time % 1) * 100);
 		s = s.replace("%MILISECONDS%", "" + ("" + (milisecs < 10 ? "0" + milisecs : milisecs)).substring(0, 2));
 		return s;
 	}

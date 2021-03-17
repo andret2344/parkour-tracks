@@ -13,14 +13,14 @@ import lombok.Value;
  */
 @Value
 @EqualsAndHashCode(callSuper = true)
-public final class PlayerCompleteParkourEvent extends AbstractParkourPlayerEvent {
+public class PlayerCompleteParkourEvent extends AbstractParkourPlayerEvent {
 	/**
 	 * Constructor.
 	 *
 	 * @param parkour The game that player is in.
 	 * @param player The player that triggers the event.
 	 */
-	public PlayerCompleteParkourEvent(ParkourGame parkour, ParkourPlayer player) {
+	public PlayerCompleteParkourEvent(final ParkourGame parkour, final ParkourPlayer player) {
 		super(parkour, player);
 	}
 }

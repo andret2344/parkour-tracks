@@ -25,18 +25,18 @@ public class ParkourSinglePlayer extends ParkourPlayer implements Runnable {
 	@Setter(AccessLevel.NONE)
 	private int i = 0;
 
-	ParkourSinglePlayer(Player player) {
+	ParkourSinglePlayer(final Player player) {
 		super(player);
 	}
 
 	@Override
 	public void run() {
 		//FIXME: Remove thread thing from here
-		ParkourGame p = ParkourManager.getParkour(player);
+		final ParkourGame p = ParkourManager.getParkour(player);
 		if (ignoring || PlayerManager.getParkourPlayer(player) == null || p == null || !p.isRunning() || spectating) {
 			return;
 		}
-		for (Checkpoint c : p.getCheckpointList()) {
+		for (final Checkpoint c : p.getCheckpointList()) {
 			if (c.contains(player.getLocation())) {
 				return;
 			}

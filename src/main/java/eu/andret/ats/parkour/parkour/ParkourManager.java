@@ -4,6 +4,7 @@
 package eu.andret.ats.parkour.parkour;
 
 import eu.andret.ats.parkour.player.ParkourPlayer;
+import lombok.experimental.UtilityClass;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
@@ -11,58 +12,47 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@UtilityClass
 public final class ParkourManager {
-	private static final List<ParkourGame> games = new ArrayList<>();
-	private static Location lobby;
+	private final List<ParkourGame> games = new ArrayList<>();
+	private Location lobby;
 
-	private ParkourManager() {
-	}
-
-	public static void addParkour(ParkourGame parkour) {
+	public void addParkour(final ParkourGame parkour) {
 		games.add(parkour);
 	}
 
-	public static void sortGames() {
+	public void sortGames() {
 		Collections.sort(games);
 	}
 
-	public static Location getLobbyLocation() {
+	public Location getLobbyLocation() {
 		return lobby;
 	}
 
-	public static void setLobbyLocation(Location lobby) {
+	public void setLobbyLocation(final Location lobby) {
 		ParkourManager.lobby = lobby;
 	}
 
-	public static List<ParkourGame> getAllGames() {
+	public List<ParkourGame> getAllGames() {
 		return new ArrayList<>(games);
 	}
 
-	public static ParkourGame getParkour(Player player) {
-		for (ParkourGame parkour : games) {
-			for (ParkourPlayer parkourPlayer : parkour.getPlayers()) {
-				if (parkourPlayer.getPlayer().equals(player)) {
-					return parkour;
-				}
-			}
-		}
-		return null;
+	public static ParkourGame getParkour(final Player player) {
+		return games.stream()
+				.filter(parkour -> parkour.getPlayers().stream().map(ParkourPlayer::getPlayer).anyMatch(player::equals))
+				.findAny()
+				.orElse(null);
 	}
 
 	public static List<Player> getPlayersInGames() {
 		return games.stream().parallel().collect(ArrayList::new, (l, p) -> p.getPlayers().forEach(r -> l.add(r.getPlayer())), ArrayList::addAll);
 	}
 
-	public static ParkourGame getParkour(String name) {
-		for (ParkourGame s : games) {
-			if (s.getName().equals(name)) {
-				return s;
-			}
-		}
-		return null;
+	public static ParkourGame getParkour(final String name) {
+		return games.stream().filter(game -> game.getName().equals(name)).findAny().orElse(null);
 	}
 
-	public static void removeParkour(ParkourGame parkour) {
+	public static void removeParkour(final ParkourGame parkour) {
 		games.remove(parkour);
 	}
 }
