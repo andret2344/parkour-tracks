@@ -242,7 +242,7 @@ public class ParkourPlugin extends JavaPlugin {
 		messages.put("brozone", msg("cmdBronze", false));
 		messages.put("silver", msg("cmdSilver", false));
 		messages.put("gold", msg("cmdGold", false));
-		messages.put("platinium", msg("cmdPlatinium", false));
+		messages.put("platinum", msg("cmdPlatinum", false));
 	}
 
 	ItemStack getExit() {

@@ -473,8 +473,8 @@ public class ParkourCommand implements CommandExecutor {
 						} else {
 							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
 							if (parkour != null) {
-								parkour.getOptions().setForcingSprint(Boolean.valueOf(args[2]));
-								sender.sendMessage(msg("setSprint", false).replace("%SPRINT%", String.valueOf(Boolean.valueOf(args[2]))));
+								parkour.getOptions().setForcingSprint(Boolean.parseBoolean(args[2]));
+								sender.sendMessage(msg("setSprint", false).replace("%SPRINT%", String.valueOf(Boolean.parseBoolean(args[2]))));
 							} else {
 								sender.sendMessage(msg("noGame", true));
 							}
@@ -496,8 +496,8 @@ public class ParkourCommand implements CommandExecutor {
 						} else {
 							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
 							if (parkour != null) {
-								parkour.getOptions().setAlwaysSpawn(Boolean.valueOf(args[2]));
-								sender.sendMessage(msg("setAlwaysSpawn", false).replace("%ALWAYSSPAWN%", String.valueOf(Boolean.valueOf(args[2]))));
+								parkour.getOptions().setAlwaysSpawn(Boolean.parseBoolean(args[2]));
+								sender.sendMessage(msg("setAlwaysSpawn", false).replace("%ALWAYSSPAWN%", String.valueOf(Boolean.parseBoolean(args[2]))));
 							} else {
 								sender.sendMessage(msg("noGame", true));
 							}
@@ -519,8 +519,8 @@ public class ParkourCommand implements CommandExecutor {
 						} else {
 							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
 							if (parkour != null) {
-								parkour.getOptions().setPrice(Integer.valueOf(args[2]));
-								sender.sendMessage(msg("setPrice", false).replace("%PRICE%", String.valueOf(Integer.valueOf(args[2]))));
+								parkour.getOptions().setPrice(Integer.parseInt(args[2]));
+								sender.sendMessage(msg("setPrice", false).replace("%PRICE%", String.valueOf(Integer.parseInt(args[2]))));
 							} else {
 								sender.sendMessage(msg("noGame", true));
 							}
@@ -542,8 +542,8 @@ public class ParkourCommand implements CommandExecutor {
 						} else {
 							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
 							if (parkour != null) {
-								parkour.getOptions().setXp(Integer.valueOf(args[2]));
-								sender.sendMessage(msg("setXp", false).replace("%XP%", String.valueOf(Integer.valueOf(args[2]))));
+								parkour.getOptions().setXp(Integer.parseInt(args[2]));
+								sender.sendMessage(msg("setXp", false).replace("%XP%", String.valueOf(Integer.parseInt(args[2]))));
 							} else {
 								sender.sendMessage(msg("noGame", true));
 							}
@@ -582,8 +582,8 @@ public class ParkourCommand implements CommandExecutor {
 						} else {
 							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
 							if (parkour != null) {
-								parkour.getOptions().setCountingRecords(Boolean.valueOf(args[2]));
-								sender.sendMessage(msg("setCountingRecords", false).replace("%COUNTRECORDS%", String.valueOf(Boolean.valueOf(args[2]))));
+								parkour.getOptions().setCountingRecords(Boolean.parseBoolean(args[2]));
+								sender.sendMessage(msg("setCountingRecords", false).replace("%COUNTRECORDS%", String.valueOf(Boolean.parseBoolean(args[2]))));
 							} else {
 								sender.sendMessage(msg("noGame", true));
 							}
@@ -605,8 +605,8 @@ public class ParkourCommand implements CommandExecutor {
 						} else {
 							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
 							if (parkour != null) {
-								parkour.getOptions().setVip(Boolean.valueOf(args[2]));
-								sender.sendMessage(msg("setVip", false).replace("%VIP%", String.valueOf(Boolean.valueOf(args[2]))));
+								parkour.getOptions().setVip(Boolean.parseBoolean(args[2]));
+								sender.sendMessage(msg("setVip", false).replace("%VIP%", String.valueOf(Boolean.parseBoolean(args[2]))));
 							} else {
 								sender.sendMessage(msg("noGame", true));
 							}
@@ -628,8 +628,8 @@ public class ParkourCommand implements CommandExecutor {
 						} else {
 							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
 							if (parkour != null) {
-								parkour.getOptions().setAllowingDamage(Boolean.valueOf(args[2]));
-								sender.sendMessage(msg("setAllowingDamage", false).replace("%DAMAGE%", String.valueOf(Boolean.valueOf(args[2]))));
+								parkour.getOptions().setAllowingDamage(Boolean.parseBoolean(args[2]));
+								sender.sendMessage(msg("setAllowingDamage", false).replace("%DAMAGE%", String.valueOf(Boolean.parseBoolean(args[2]))));
 							} else {
 								sender.sendMessage(msg("noGame", true));
 							}
@@ -651,8 +651,8 @@ public class ParkourCommand implements CommandExecutor {
 						} else {
 							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
 							if (parkour != null) {
-								parkour.getOptions().setAvailable(Boolean.valueOf(args[2]));
-								sender.sendMessage(msg("setAvailable", false).replace("%AVAILABLE%", String.valueOf(Boolean.valueOf(args[2]))));
+								parkour.getOptions().setAvailable(Boolean.parseBoolean(args[2]));
+								sender.sendMessage(msg("setAvailable", false).replace("%AVAILABLE%", String.valueOf(Boolean.parseBoolean(args[2]))));
 							} else {
 								sender.sendMessage(msg("noGame", true));
 							}
@@ -674,8 +674,8 @@ public class ParkourCommand implements CommandExecutor {
 						} else {
 							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
 							if (parkour != null) {
-								parkour.getOptions().setBoat(Boolean.valueOf(args[2]));
-								sender.sendMessage(msg("setBoat", false).replace("%BOATS%", String.valueOf(Boolean.valueOf(args[2]))));
+								parkour.getOptions().setBoat(Boolean.parseBoolean(args[2]));
+								sender.sendMessage(msg("setBoat", false).replace("%BOATS%", String.valueOf(Boolean.parseBoolean(args[2]))));
 							} else {
 								sender.sendMessage(msg("noGame", true));
 							}
@@ -697,8 +697,8 @@ public class ParkourCommand implements CommandExecutor {
 						} else {
 							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
 							if (parkour != null) {
-								parkour.getOptions().setEnabled(Boolean.valueOf(args[2]));
-								sender.sendMessage(msg("setEnabled", false).replace("%PROCEEDABLE%", String.valueOf(Boolean.valueOf(args[2]))));
+								parkour.getOptions().setEnabled(Boolean.parseBoolean(args[2]));
+								sender.sendMessage(msg("setEnabled", false).replace("%PROCEEDABLE%", String.valueOf(Boolean.parseBoolean(args[2]))));
 							} else {
 								sender.sendMessage(msg("noGame", true));
 							}
@@ -784,8 +784,8 @@ public class ParkourCommand implements CommandExecutor {
 						} else {
 							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
 							if (parkour != null) {
-								parkour.getOptions().setModifyInventory(Boolean.valueOf(args[2]));
-								sender.sendMessage(msg("setModifyInventory", false).replace("%MODIFYEQ%", String.valueOf(Boolean.valueOf(args[2]))));
+								parkour.getOptions().setModifyInventory(Boolean.parseBoolean(args[2]));
+								sender.sendMessage(msg("setModifyInventory", false).replace("%MODIFYEQ%", String.valueOf(Boolean.parseBoolean(args[2]))));
 							} else {
 								sender.sendMessage(msg("noGame", true));
 							}
@@ -808,8 +808,8 @@ public class ParkourCommand implements CommandExecutor {
 							try {
 								final ParkourGame parkour = ParkourManager.getParkour(args[1]);
 								if (parkour != null) {
-									parkour.getOptions().setDifficulty(Integer.valueOf(args[2]));
-									sender.sendMessage(msg("setDifficulty", false).replace("%DIFFICULTY%", String.valueOf(Integer.valueOf(args[2]))));
+									parkour.getOptions().setDifficulty(Integer.parseInt(args[2]));
+									sender.sendMessage(msg("setDifficulty", false).replace("%DIFFICULTY%", String.valueOf(Integer.parseInt(args[2]))));
 								} else {
 									sender.sendMessage(msg("noGame", true));
 								}
@@ -868,8 +868,8 @@ public class ParkourCommand implements CommandExecutor {
 							try {
 								final ParkourGame parkour = ParkourManager.getParkour(args[1]);
 								if (parkour != null) {
-									parkour.getOptions().setBronze(Integer.valueOf(args[2]));
-									sender.sendMessage(msg("setBronze", false).replace("%BRONZE%", String.valueOf(Integer.valueOf(args[2]))));
+									parkour.getOptions().setBronze(Integer.parseInt(args[2]));
+									sender.sendMessage(msg("setBronze", false).replace("%BRONZE%", String.valueOf(Integer.parseInt(args[2]))));
 								} else {
 									sender.sendMessage(msg("noGame", true));
 								}
@@ -895,8 +895,8 @@ public class ParkourCommand implements CommandExecutor {
 							try {
 								final ParkourGame parkour = ParkourManager.getParkour(args[1]);
 								if (parkour != null) {
-									parkour.getOptions().setFair(Float.valueOf(args[2]));
-									sender.sendMessage(msg("setFair", false).replace("%FAIR%", String.valueOf(Float.valueOf(args[2]))));
+									parkour.getOptions().setFair(Float.parseFloat(args[2]));
+									sender.sendMessage(msg("setFair", false).replace("%FAIR%", String.valueOf(Float.parseFloat(args[2]))));
 								} else {
 									sender.sendMessage(msg("noGame", true));
 								}
@@ -922,8 +922,8 @@ public class ParkourCommand implements CommandExecutor {
 							try {
 								final ParkourGame parkour = ParkourManager.getParkour(args[1]);
 								if (parkour != null) {
-									parkour.getOptions().setSilver(Integer.valueOf(args[2]));
-									sender.sendMessage(msg("setSilver", false).replace("%SILVER%", String.valueOf(Integer.valueOf(args[2]))));
+									parkour.getOptions().setSilver(Integer.parseInt(args[2]));
+									sender.sendMessage(msg("setSilver", false).replace("%SILVER%", String.valueOf(Integer.parseInt(args[2]))));
 								} else {
 									sender.sendMessage(msg("noGame", true));
 								}
@@ -949,8 +949,8 @@ public class ParkourCommand implements CommandExecutor {
 							try {
 								final ParkourGame parkour = ParkourManager.getParkour(args[1]);
 								if (parkour != null) {
-									parkour.getOptions().setGold(Integer.valueOf(args[2]));
-									sender.sendMessage(msg("setGold", false).replace("%GOLD%", String.valueOf(Integer.valueOf(args[2]))));
+									parkour.getOptions().setGold(Integer.parseInt(args[2]));
+									sender.sendMessage(msg("setGold", false).replace("%GOLD%", String.valueOf(Integer.parseInt(args[2]))));
 								} else {
 									sender.sendMessage(msg("noGame", true));
 								}
@@ -961,14 +961,14 @@ public class ParkourCommand implements CommandExecutor {
 					} else {
 						sender.sendMessage(msg("noPerms", true));
 					}
-				} else if (args[0].equalsIgnoreCase("platinium")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.platinium")) {
+				} else if (args[0].equalsIgnoreCase("platinum")) {
+					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.platinum")) {
 						if (args.length == 1) {
-							sender.sendMessage(msg("usagePlatinium", true));
+							sender.sendMessage(msg("usagePlatinum", true));
 						} else if (args.length == 2) {
 							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
 							if (parkour != null) {
-								sender.sendMessage(msg("currentPlatinium", false).replace("%PLATINUM%", String.valueOf(parkour.getOptions().getPlatinum())));
+								sender.sendMessage(msg("currentPlatinum", false).replace("%PLATINUM%", String.valueOf(parkour.getOptions().getPlatinum())));
 							} else {
 								sender.sendMessage(msg("noGame", true));
 							}
@@ -976,8 +976,8 @@ public class ParkourCommand implements CommandExecutor {
 							try {
 								final ParkourGame parkour = ParkourManager.getParkour(args[1]);
 								if (parkour != null) {
-									parkour.getOptions().setPlatinum(Integer.valueOf(args[2]));
-									sender.sendMessage(msg("setPlatnum", false).replace("%PLATINUM%", String.valueOf(Integer.valueOf(args[2]))));
+									parkour.getOptions().setPlatinum(Integer.parseInt(args[2]));
+									sender.sendMessage(msg("setPlatnum", false).replace("%PLATINUM%", String.valueOf(Integer.parseInt(args[2]))));
 								} else {
 									sender.sendMessage(msg("noGame", true));
 								}
@@ -1194,9 +1194,9 @@ public class ParkourCommand implements CommandExecutor {
 						sender.sendMessage(msg("noPerms", true));
 					}
 				} else if (args[0].equalsIgnoreCase("group") || args[0].equalsIgnoreCase("g")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.gropu")) {
+					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.group")) {
 						if (args.length == 1) {
-							sender.sendMessage(msg("udageGroup", true));
+							sender.sendMessage(msg("usageGroup", true));
 						}
 					} else {
 						sender.sendMessage(msg("noPerms", true));
