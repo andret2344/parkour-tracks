@@ -10,6 +10,7 @@ import eu.andret.ats.parkour.region.AbstractRegion;
 import eu.andret.ats.parkour.tasks.KeepConnection;
 import eu.andret.ats.parkour.util.Data;
 import lombok.Getter;
+import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -82,6 +83,7 @@ public class ParkourPlugin extends JavaPlugin {
 			}
 		}
 		getServer().getScheduler().scheduleSyncRepeatingTask(this, new KeepConnection(this), 36_000, 36_000);
+		new Metrics(this, 10700);
 	}
 
 	@Override
