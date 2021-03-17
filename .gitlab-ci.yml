@@ -1,0 +1,108 @@
+image: gradle:jdk11
+
+cache: &wrapper
+  paths:
+    - .gradle/wrapper
+    - .gradle/caches
+
+before_script:
+  - export GRADLE_USER_HOME=`pwd`/.gradle
+  - chmod a+x gradlew
+
+stages:
+  - prepare
+  - build
+  - verify
+  - deploy
+
+wrapper:
+  stage: prepare
+  script:
+    - gradle wrapper
+
+compile:
+  stage: build
+  script:
+    - ./gradlew assemble
+  artifacts:
+    paths:
+      - build/classes/**
+      - build/libs/*.jar
+  cache:
+    <<: *wrapper
+    policy: pull
+
+delombok:
+  stage: build
+  script:
+    - ./gradlew delombok
+  artifacts:
+    paths:
+      - build/delombok/**
+  cache:
+    <<: *wrapper
+    policy: pull
+
+junit:
+  stage: verify
+  dependencies:
+    - compile
+  script:
+    - ./gradlew test
+  coverage: '/^Coverage:\s(\d+\.\d+%)/'
+  when: on_success
+  artifacts:
+    reports:
+      junit: build/test-results/test/**.xml
+  cache:
+    <<: *wrapper
+    policy: pull
+
+publish:
+  stage: deploy
+  script:
+    - ./gradlew clean
+    - ./gradlew publish
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+      when: manual
+    - when: never
+  cache:
+    <<: *wrapper
+    policy: pull
+
+jar:
+  stage: deploy
+  script:
+    - ./gradlew build
+  artifacts:
+    paths:
+      - build/libs/*.jar
+  when: manual
+  cache:
+    <<: *wrapper
+    policy: pull
+
+badges:
+  stage: deploy
+  dependencies:
+    - junit
+  script:
+    - apt-get -qq update
+    - apt-get -qq install python3 python3-pip --yes
+    - pip3 install anybadge
+    - ./gradlew build -q
+    - anybadge -l version -v "$(./gradlew version -q)" -f version.svg -c "#007ec6"
+    - anybadge -l spigot -v "$(./gradlew spigotVersion -q)" -f spigot.svg -c "#007ec6"
+    - anybadge -l atsArguments -v "$(./gradlew argumentsVersion -q)" -f arguments.svg -c "#007ec6"
+  artifacts:
+    paths:
+      - version.svg
+      - spigot.svg
+      - arguments.svg
+    when: always
+    expire_in: 4 weeks
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+      when: manual
+    - when: never

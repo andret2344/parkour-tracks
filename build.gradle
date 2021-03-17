@@ -6,32 +6,25 @@ import io.franzbecker.gradle.lombok.task.DelombokTask
 buildscript {
 	repositories {
 		jcenter()
-		maven {
-			url "https://plugins.gradle.org/m2/"
-		}
+		maven { url 'https://plugins.gradle.org/m2/' }
 	}
-	dependencies {
-		classpath 'io.franzbecker:gradle-lombok:2.0'
-		classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.9.6"
-	}
+	dependencies { classpath 'io.franzbecker:gradle-lombok:2.0' }
 }
 
 plugins {
-	id "com.github.johnrengelman.shadow" version "5.2.0"
+	id 'de.jansauer.printcoverage' version '2.0.0'
+	id 'com.github.johnrengelman.shadow' version '5.2.0'
+	id 'kr.entree.spigradle' version '2.2.3'
+	id 'io.franzbecker.gradle-lombok' version '4.0.0'
 }
 
-apply plugin: "java"
-apply plugin: "idea"
-apply plugin: 'io.franzbecker.gradle-lombok'
+apply plugin: 'idea'
+apply plugin: 'java'
+apply plugin: 'jacoco'
+apply plugin: 'maven-publish'
 
-
-jar {
-	setArchiveBaseName "atsParkour"
-	setArchiveVersion "1.7"
-}
-
-sourceCompatibility = JavaVersion.VERSION_12
-targetCompatibility = JavaVersion.VERSION_12
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
 
 tasks.withType(JavaCompile) {
 	options.compilerArgs << '-Xlint:unchecked'
@@ -41,39 +34,194 @@ tasks.withType(JavaCompile) {
 repositories {
 	mavenLocal()
 	mavenCentral()
-	maven { url 'https://hub.spigotmc.org/nexus/content/groups/public/' }
-	maven { url 'https://oss.sonatype.org/content/groups/public/' }
+	spigot()
+	maven { url 'https://gitlab.com/api/v4/projects/12063927/packages/maven' }
 	maven { url "http://maven.sk89q.com/artifactory/repo" }
 }
 
 dependencies {
+	compileOnly group: 'org.spigotmc', name: 'spigot-api', version: "${spigotVersion}-R0.1-SNAPSHOT"
+	compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.18'
+	compileOnly group: 'org.jetbrains', name: 'annotations', version: '20.1.0'
 	compileOnly group: 'com.sk89q.worldedit', name: 'worldedit-bukkit', version: '7.0.1'
-	compileOnly group: 'org.bukkit', name: 'bukkit', version: '1.15.1-R0.1-SNAPSHOT'
-	compileOnly group: 'org.spigotmc', name:'spigot-api', version: '1.15.1-R0.1-SNAPSHOT'
-	compileOnly group: "org.projectlombok", name: "lombok", version: "1.18.10"
-	compileOnly group: 'org.jetbrains', name: 'annotations', version: '17.0.0'
-	compile group: 'org.json', name: 'json', version: '20190722'
-	annotationProcessor group: "org.projectlombok", name: "lombok", version: "1.18.10"
+	implementation group: 'eu.andret', name: 'ats-arguments', version: argumentsVersion
+	implementation group: 'org.json', name: 'json', version: '20190722'
+	annotationProcessor group: "org.projectlombok", name: "lombok", version: "1.18.18"
+
+	testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.7.0'
+	testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.7.0'
+	testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-params', version: '5.7.0'
 }
+
+compileJava.options.compilerArgs << '-parameters' << '-g' << '-Xlint:deprecation' << '-Xlint:unchecked'
+compileTestJava.options.compilerArgs << '-parameters' << '-g' << '-Xlint:deprecation' << '-Xlint:unchecked'
+
+spigot {
+	authors = ['Andret']
+	apiVersion = '1.16'
+	description = 'A plugin creating and play parkours.'
+	version = project.version
+	depends = ['WorldEdit']
+	softDepends = ['Multiverse']
+
+	//noinspection GroovyAssignabilityCheck
+	commands {
+		parkour {
+			aliases = ['pk']
+			description = 'The atsParkour command'
+		}
+	}
+
+	//noinspection GroovyAssignabilityCheck
+	permissions {
+		'ats.parkour.*' {
+			children = [
+					'ats.parkour.main'         : true,
+					'ats.parkour.create'       : true,
+					'ats.parkour.setspawn'     : true,
+					'ats.parkour.addcheckpoint': true,
+					'ats.parkour.setcheckpoint': true,
+					'ats.parkour.start'        : true,
+					'ats.parkour.recreate'     : true,
+					'ats.parkour.stop'         : true,
+					'ats.parkour.ignore'       : true,
+					'ats.parkour.list'         : true,
+					'ats.parkour.addwall'      : true,
+					'ats.parkour.setwall'      : true,
+					'ats.parkour.sprint'       : true,
+					'ats.parkour.price'        : true,
+					'ats.parkour.alwaysspawn'  : true,
+					'ats.parkour.countrecords' : true,
+					'ats.parkour.modify'       : true,
+					'ats.parkour.damage'       : true,
+					'ats.parkour.help'         : true,
+					'ats.parkour.boats'        : true,
+					'ats.parkour.effect'       : true,
+					'ats.parkour.bronze'       : true,
+					'ats.parkour.silver'       : true,
+					'ats.parkour.gold'         : true,
+					'ats.parkour.platinium'    : true,
+					'ats.parkour.effectregion' : true,
+					'ats.parkour.rename'       : true,
+					'ats.parkour.teleportblock': true,
+					'ats.parkour.teleport'     : true,
+					'ats.parkour.ignorerecords': true,
+					'ats.parkour.available'    : true,
+					'ats.parkour.type'         : true,
+					'ats.parkour.displayname'  : true,
+					'ats.parkour.vip'          : true,
+					'ats.parkour.spectator'    : true,
+					'ats.parkour.fix'          : true,
+					'ats.parkour.proceedable'  : true,
+					'ats.parkour.fair'         : true,
+					'ats.parkour.xp'           : true
+			]
+		}
+	}
+}
+
+test {
+	useJUnitPlatform()
+	finalizedBy jacocoTestCoverageVerification, printCoverage
+}
+
+jacocoTestReport {
+	reports.xml.enabled true
+}
+
+jacocoTestCoverageVerification {
+	violationRules {
+		rule {
+			limit {
+				minimum = 0
+			}
+		}
+	}
+}
+
+javadoc {
+	source = sourceSets.main.allJava
+	classpath = configurations.compileClasspath
+
+	options {
+		setMemberLevel JavadocMemberLevel.PUBLIC
+		setAuthor true
+
+		links 'https://docs.oracle.com/en/java/javase/11/docs/api/'
+	}
+}
+
+task sourceJar(type: Jar) {
+	archiveClassifier.set('sources')
+	from sourceSets.main.allJava
+}
+
+task packageJavadoc(type: Jar) {
+	archiveClassifier.set('javadoc')
+	from javadoc
+}
+
+publishing {
+	publications {
+		//noinspection GroovyAssignabilityCheck
+		library(MavenPublication) {
+			from components.java
+			artifact tasks.sourceJar
+			artifact tasks.packageJavadoc
+			groupId = project.group
+			version = project.version
+			artifactId = project.codeName
+		}
+	}
+	repositories {
+		maven {
+			url 'https://gitlab.com/api/v4/projects/6426481/packages/maven'
+			credentials(HttpHeaderCredentials) {
+				name = 'Job-Token'
+				value = System.getenv('CI_JOB_TOKEN')
+			}
+			authentication {
+				//noinspection GroovyAssignabilityCheck
+				header(HttpHeaderAuthentication)
+			}
+		}
+	}
+}
+
+shadowJar {
+	archiveFileName = "${project.name}-${project.version}.jar"
+	relocate 'org.json', 'eu.andret.ats.parkour.json'
+	relocate 'eu.andret.arguments', 'eu.andret.ats.parkour.arguments'
+	project.configurations.implementation.canBeResolved = true
+	configurations = [project.configurations.implementation]
+}
+
+build.dependsOn(shadowJar)
 
 task delombok(type: DelombokTask, dependsOn: compileJava) {
 	ext.outputDir = file("$buildDir/delombok")
 	outputs.dir(outputDir)
 	sourceSets.main.java.srcDirs.each {
 		inputs.dir(it)
-		args(it, "-d", outputDir)
+		args(it, '-d', outputDir)
 	}
-	doFirst {
-		outputDir.deleteDir()
+	doFirst { outputDir.deleteDir() }
+}
+
+tasks.register('spigotVersion') {
+	doLast {
+		println(spigotVersion)
 	}
 }
 
-shadowJar {
-	archiveName "${project.archivesBaseName}.jar"
-	relocate 'org.json', 'eu.andret.json'
-	configurations = [project.configurations.compile]
+tasks.register('argumentsVersion') {
+	doLast {
+		println(argumentsVersion)
+	}
 }
 
-build.dependsOn(shadowJar)
-
-project.archivesBaseName = "$pluginName-$pluginVersion"
+tasks.register('version') {
+	doLast {
+		println(version)
+	}
+}
