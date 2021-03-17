@@ -20,17 +20,17 @@ public class RepairSignTask implements Runnable {
 	@Override
 	public void run() {
 		try {
-			PreparedStatement stat = plugin.getConnection().prepareStatement(String.format("SELECT * FROM %s "
+			final PreparedStatement stat = plugin.getConnection().prepareStatement(String.format("SELECT * FROM %s "
 					+ "WHERE parkour=? ORDER BY `time` ASC LIMIT 1", Data.TABLE_RECORDS));
 			stat.setString(1, parkour.getName());
-			ResultSet rs = stat.executeQuery();
+			final ResultSet rs = stat.executeQuery();
 			if (!rs.next()) {
 				DataBaseOperations.updateSign(plugin, "========", 0.00, parkour);
 			} else {
 				DataBaseOperations.updateSign(plugin, rs.getString("nick"), rs.getFloat("time"), parkour);
 			}
 			rs.close();
-		} catch (Exception ex) {
+		} catch (final Exception ex) {
 			Bukkit.getServer().getLogger().throwing(getClass().getName(), "run", ex);
 		}
 	}

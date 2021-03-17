@@ -14,11 +14,11 @@ import lombok.Value;
  */
 @Value
 @EqualsAndHashCode(callSuper = true)
-public final class PlayerHitWallEvent extends AbstractParkourPlayerEvent {
+public class PlayerHitWallEvent extends AbstractParkourPlayerEvent {
 	/**
 	 * The wall the player hit.
 	 */
-	private Wall wall;
+	Wall wall;
 
 	/**
 	 * Constructor.
@@ -27,7 +27,7 @@ public final class PlayerHitWallEvent extends AbstractParkourPlayerEvent {
 	 * @param player The player that triggers the event.
 	 * @param wall The wall the player hit.
 	 */
-	public PlayerHitWallEvent(ParkourGame parkour, ParkourPlayer player, Wall wall) {
+	public PlayerHitWallEvent(final ParkourGame parkour, final ParkourPlayer player, final Wall wall) {
 		super(parkour, player);
 		this.wall = wall;
 	}

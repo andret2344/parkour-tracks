@@ -14,11 +14,11 @@ import org.bukkit.entity.Player;
  */
 @Value
 @EqualsAndHashCode(callSuper = true)
-public final class PlayerEnterRegionEvent extends AbstractPlayerEvent {
+public class PlayerEnterRegionEvent extends AbstractPlayerEvent {
 	/**
 	 * The region that player entered.
 	 */
-	private AbstractRegion region;
+	AbstractRegion region;
 
 	/**
 	 * Constructor.
@@ -27,7 +27,7 @@ public final class PlayerEnterRegionEvent extends AbstractPlayerEvent {
 	 * @param player The player that triggers the event.
 	 * @param region The regoin that player came in.
 	 */
-	public PlayerEnterRegionEvent(ParkourGame parkour, Player player, AbstractRegion region) {
+	public PlayerEnterRegionEvent(final ParkourGame parkour, final Player player, final AbstractRegion region) {
 		super(parkour, player);
 		this.region = region;
 	}

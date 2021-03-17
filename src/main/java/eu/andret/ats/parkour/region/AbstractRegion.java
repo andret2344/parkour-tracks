@@ -16,13 +16,13 @@ import org.json.JSONObject;
 public abstract class AbstractRegion implements JSONSerializable {
 	private CuboidRegion region;
 
-	public boolean contains(Location loc) {
+	public boolean contains(final Location loc) {
 		return region.contains(BlockVector3.at(loc.getX(), loc.getY(), loc.getZ()));
 	}
 
 	@Override
 	public JSONObject toJSON() {
-		JSONObject object = new JSONObject();
+		final JSONObject object = new JSONObject();
 		object.put("x1", region.getPos1().getX());
 		object.put("y1", region.getPos1().getY());
 		object.put("z1", region.getPos1().getZ());
@@ -33,7 +33,7 @@ public abstract class AbstractRegion implements JSONSerializable {
 	}
 
 	@Override
-	public void fromJSON(JSONObject object) {
+	public void fromJSON(final JSONObject object) {
 		region.setPos1(BlockVector3.at(
 				object.getDouble("x1"),
 				object.getDouble("y1"),

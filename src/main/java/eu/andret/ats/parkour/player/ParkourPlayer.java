@@ -22,7 +22,7 @@ public abstract class ParkourPlayer {
 	protected boolean ignoring = false;
 	protected boolean spectating = false;
 
-	ParkourPlayer(Player player) {
+	ParkourPlayer(final Player player) {
 		this.player = player;
 	}
 
@@ -31,11 +31,11 @@ public abstract class ParkourPlayer {
 		teleportToCheckpoint(0);
 	}
 
-	public void teleportToCheckpoint(int id) {
+	public void teleportToCheckpoint(final int id) {
 		if (inAnyParkour()) {
-			ParkourGame pk = ParkourManager.getParkour(player);
-			Checkpoint cp = pk.getCheckpoint(id);
-			Vector3 v = cp.getRegion().getCenter();
+			final ParkourGame pk = ParkourManager.getParkour(player);
+			final Checkpoint cp = pk.getCheckpoint(id);
+			final Vector3 v = cp.getRegion().getCenter();
 			player.teleport(new Location(pk.getWorld(), v.getX() + 0.5, v.getY(), v.getZ() + 0.5, cp.getYaw(), cp.getPitch()));
 			Bukkit.getPluginManager().callEvent(new PlayerTeleportBackEvent(pk, this, cp));
 		}
@@ -45,17 +45,8 @@ public abstract class ParkourPlayer {
 		PlayerManager.remove(player);
 	}
 
-	public void setSpectating(boolean spectating) {
+	public void setSpectating(final boolean spectating) {
 		this.spectating = spectating;
-		if (spectating) {
-			for (Player pl : Bukkit.getOnlinePlayers()) {
-				pl.hidePlayer(player);
-			}
-		} else {
-			for (Player pl : Bukkit.getOnlinePlayers()) {
-				pl.showPlayer(player);
-			}
-		}
 	}
 
 	public boolean inAnyParkour() {

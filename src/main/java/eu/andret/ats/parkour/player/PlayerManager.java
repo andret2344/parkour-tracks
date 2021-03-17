@@ -3,37 +3,36 @@
  */
 package eu.andret.ats.parkour.player;
 
+import lombok.experimental.UtilityClass;
 import org.bukkit.entity.Player;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@UtilityClass
 public final class PlayerManager {
-	private static final Map<Player, ParkourSinglePlayer> singlePlayers = new HashMap<>();
-	private static final Map<Player, ParkourCompetitorPlayer> competitorPlayers = new HashMap<>();
+	private final Map<Player, ParkourSinglePlayer> singlePlayers = new HashMap<>();
+	private final Map<Player, ParkourCompetitorPlayer> competitorPlayers = new HashMap<>();
 
-	private PlayerManager() {
-	}
-
-	public static ParkourSinglePlayer getParkourSinglePlayer(Player player) {
+	public ParkourSinglePlayer getParkourSinglePlayer(final Player player) {
 		if (singlePlayers.containsKey(player)) {
 			return singlePlayers.get(player);
 		}
-		ParkourSinglePlayer p = new ParkourSinglePlayer(player);
+		final ParkourSinglePlayer p = new ParkourSinglePlayer(player);
 		singlePlayers.put(player, p);
 		return p;
 	}
 
-	public static ParkourCompetitorPlayer getParkourCompetitorPlayer(Player player) {
+	public ParkourCompetitorPlayer getParkourCompetitorPlayer(final Player player) {
 		if (competitorPlayers.containsKey(player)) {
 			return competitorPlayers.get(player);
 		}
-		ParkourCompetitorPlayer p = new ParkourCompetitorPlayer(player);
+		final ParkourCompetitorPlayer p = new ParkourCompetitorPlayer(player);
 		competitorPlayers.put(player, p);
 		return p;
 	}
 
-	public static ParkourPlayer getParkourPlayer(Player player) {
+	public ParkourPlayer getParkourPlayer(final Player player) {
 		if (singlePlayers.containsKey(player)) {
 			return singlePlayers.get(player);
 		}
@@ -43,8 +42,8 @@ public final class PlayerManager {
 		return null;
 	}
 
-	public static ParkourPlayer remove(Player player) {
-		ParkourPlayer pp = singlePlayers.remove(player);
+	public ParkourPlayer remove(final Player player) {
+		final ParkourPlayer pp = singlePlayers.remove(player);
 		if (pp != null) {
 			return pp;
 		}

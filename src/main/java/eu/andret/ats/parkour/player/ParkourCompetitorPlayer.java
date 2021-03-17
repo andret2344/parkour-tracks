@@ -20,7 +20,7 @@ public class ParkourCompetitorPlayer extends ParkourPlayer {
 	@Setter(AccessLevel.NONE)
 	private int completes = 0;
 
-	ParkourCompetitorPlayer(Player player) {
+	ParkourCompetitorPlayer(final Player player) {
 		super(player);
 	}
 

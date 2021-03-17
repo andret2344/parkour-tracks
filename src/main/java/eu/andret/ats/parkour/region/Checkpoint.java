@@ -16,38 +16,38 @@ import org.json.JSONObject;
 @EqualsAndHashCode(callSuper = true)
 public class Checkpoint extends AbstractRegion {
 	@NonFinal
-	private float yaw;
+	float yaw;
 	@NonFinal
-	private float pitch;
+	float pitch;
 
-	public Checkpoint(CuboidRegion region, float yaw, float pitch) {
+	public Checkpoint(final CuboidRegion region, final float yaw, final float pitch) {
 		super(region);
 		this.yaw = yaw;
 		this.pitch = pitch;
 	}
 
-	public Checkpoint(World world, float yaw, float pitch) {
+	public Checkpoint(final World world, final float yaw, final float pitch) {
 		this(new CuboidRegion(new BukkitWorld(world), BlockVector3.ZERO, BlockVector3.ZERO), yaw, pitch);
 	}
 
-	public Checkpoint(CuboidRegion region) {
+	public Checkpoint(final CuboidRegion region) {
 		this(region, 0, 0);
 	}
 
-	public Checkpoint(World world) {
+	public Checkpoint(final World world) {
 		this(world, 0, 0);
 	}
 
 	@Override
 	public JSONObject toJSON() {
-		JSONObject object = super.toJSON();
+		final JSONObject object = super.toJSON();
 		object.put("yaw", yaw);
 		object.put("pitch", pitch);
 		return object;
 	}
 
 	@Override
-	public void fromJSON(JSONObject object) {
+	public void fromJSON(final JSONObject object) {
 		super.fromJSON(object);
 		yaw = object.getFloat("yaw");
 		pitch = object.getFloat("pitch");

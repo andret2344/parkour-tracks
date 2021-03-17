@@ -16,7 +16,7 @@ public class KeepConnection implements Runnable {
 	public void run() {
 		try {
 			plugin.getConnection().prepareStatement("SELECT id FROM " + Data.TABLE_RECORDS + " WHERE id<0").executeQuery();
-		} catch (Exception ex) {
+		} catch (final Exception ex) {
 			Bukkit.getServer().getLogger().throwing(getClass().getName(), "run", ex);
 		}
 	}

@@ -29,52 +29,52 @@ public class EffectRegion extends AbstractRegion {
 	private final List<PotionEffectType> effectsToAdd = new ArrayList<>();
 	private final List<PotionEffectType> effectsToDel = new ArrayList<>();
 
-	public EffectRegion(CuboidRegion cuboidregion, List<PotionEffectType> effectsToAdd, List<PotionEffectType> effectsToDel) {
+	public EffectRegion(final CuboidRegion cuboidregion, final List<PotionEffectType> effectsToAdd, final List<PotionEffectType> effectsToDel) {
 		this(cuboidregion);
 		this.effectsToAdd.addAll(effectsToAdd);
 		this.effectsToDel.addAll(effectsToDel);
 	}
 
-	public EffectRegion(World world, List<PotionEffectType> effectsToAdd, List<PotionEffectType> effectsToDel) {
+	public EffectRegion(final World world, final List<PotionEffectType> effectsToAdd, final List<PotionEffectType> effectsToDel) {
 		this(new CuboidRegion(new BukkitWorld(world), BlockVector3.ZERO, BlockVector3.ZERO));
 		this.effectsToAdd.addAll(effectsToAdd);
 		this.effectsToDel.addAll(effectsToDel);
 	}
 
-	public EffectRegion(CuboidRegion cuboidregion) {
+	public EffectRegion(final CuboidRegion cuboidregion) {
 		super(cuboidregion);
 	}
 
-	public EffectRegion(World world) {
+	public EffectRegion(final World world) {
 		this(new CuboidRegion(new BukkitWorld(world), BlockVector3.ZERO, BlockVector3.ZERO));
 	}
 
-	public void addEffectToAdd(PotionEffectType effect) {
+	public void addEffectToAdd(final PotionEffectType effect) {
 		effectsToAdd.add(effect);
 	}
 
-	public boolean delEffectToAdd(PotionEffectType effect) {
+	public boolean delEffectToAdd(final PotionEffectType effect) {
 		return effectsToAdd.remove(effect);
 	}
 
-	public void addEffectToDel(PotionEffectType effect) {
+	public void addEffectToDel(final PotionEffectType effect) {
 		effectsToDel.add(effect);
 	}
 
-	public boolean delEffectToDel(PotionEffectType effect) {
+	public boolean delEffectToDel(final PotionEffectType effect) {
 		return effectsToDel.remove(effect);
 	}
 
 	@Override
 	public JSONObject toJSON() {
-		JSONObject object = super.toJSON();
-		JSONArray jsonArrayToAdd = new JSONArray();
-		for (PotionEffectType p : effectsToAdd) {
+		final JSONObject object = super.toJSON();
+		final JSONArray jsonArrayToAdd = new JSONArray();
+		for (final PotionEffectType p : effectsToAdd) {
 			jsonArrayToAdd.put(p.getName());
 		}
 		object.put(KEY_EFFECTS_TO_ADD, jsonArrayToAdd);
-		JSONArray jsonArrayToDel = new JSONArray();
-		for (PotionEffectType p : effectsToDel) {
+		final JSONArray jsonArrayToDel = new JSONArray();
+		for (final PotionEffectType p : effectsToDel) {
 			jsonArrayToDel.put(p.getName());
 		}
 		object.put(KEY_EFFECTS_TO_DEL, jsonArrayToDel);
@@ -82,7 +82,7 @@ public class EffectRegion extends AbstractRegion {
 	}
 
 	@Override
-	public void fromJSON(JSONObject object) {
+	public void fromJSON(final JSONObject object) {
 		super.fromJSON(object);
 		object.getJSONArray(KEY_EFFECTS_TO_ADD)
 				.toList()

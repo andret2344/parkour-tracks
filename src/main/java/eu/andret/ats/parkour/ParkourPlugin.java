@@ -6,7 +6,6 @@ package eu.andret.ats.parkour;
 import eu.andret.ats.parkour.parkour.Parkour;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourManager;
-import eu.andret.ats.parkour.region.AbstractRegion;
 import eu.andret.ats.parkour.tasks.KeepConnection;
 import eu.andret.ats.parkour.util.Data;
 import lombok.Getter;
@@ -17,7 +16,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.json.JSONObject;
@@ -69,19 +67,13 @@ public class ParkourPlugin extends JavaPlugin {
 			yamlConfiguration.load(new File(getDataFolder().getAbsolutePath() + File.separator + "messages.yml"));
 			load();
 			connect();
-		} catch (Exception ex) {
+		} catch (final Exception ex) {
 			getServer().getLogger().throwing(getClass().getName(), "onEnable", ex);
 		}
 		generate();
-		for (ParkourGame p : ParkourManager.getAllGames()) {
-			for (Player pl : Bukkit.getServer().getOnlinePlayers()) {
-				for (AbstractRegion r : p.getAllRegions()) {
-					if (r.contains(pl.getLocation())) {
-						p.addPlayer(pl);
-					}
-				}
-			}
-		}
+		ParkourManager.getAllGames().forEach(p -> Bukkit.getServer().getOnlinePlayers().stream()
+				.filter(pl -> p.getAllRegions().stream().anyMatch(r -> r.contains(pl.getLocation())))
+				.forEach(p::addPlayer));
 		getServer().getScheduler().scheduleSyncRepeatingTask(this, new KeepConnection(this), 36_000, 36_000);
 		new Metrics(this, 10700);
 	}
@@ -92,7 +84,7 @@ public class ParkourPlugin extends JavaPlugin {
 			if (!save()) {
 				getLogger().log(Level.WARNING, "Problem with saving");
 			}
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			e.printStackTrace();
 		}
 		Bukkit.getScheduler().cancelTasks(this);
@@ -110,15 +102,15 @@ public class ParkourPlugin extends JavaPlugin {
 
 	private void connect() throws SQLException {
 		conn = DriverManager.getConnection("jdbc:mysql://" + url, user, pass);
-		try (Statement stat = conn.createStatement()) {
+		try (final Statement stat = conn.createStatement()) {
 			stat.execute("CREATE DATABASE IF NOT EXISTS `" + database + "`;");
 			stat.execute("USE " + database + ";");
 			stat.execute(String.format("CREATE TABLE IF NOT EXISTS %s(id INT PRIMARY KEY AUTO_INCREMENT, date DATETIME, nick VARCHAR(64), parkour VARCHAR(64), time FLOAT, count INT, earned INT, xp INT);", Data.TABLE_RECORDS));
 		}
 	}
 
-	public String msg(String path, boolean err) {
-		String here;
+	public String msg(final String path, final boolean err) {
+		final String here;
 		if (yamlConfiguration.getString("player." + path) != null) {
 			here = "player.";
 		} else if (yamlConfiguration.getString("admin." + path) != null) {
@@ -134,17 +126,17 @@ public class ParkourPlugin extends JavaPlugin {
 	}
 
 	private boolean save() throws IOException {
-		for (ParkourGame pk : ParkourManager.getAllGames()) {
-			File path = new File(getDataFolder().getAbsolutePath() + "/games");
+		for (final ParkourGame pk : ParkourManager.getAllGames()) {
+			final File path = new File(getDataFolder().getAbsolutePath() + "/games");
 			if (!path.exists() && !path.mkdirs()) {
 				return false;
 			}
-			File file = new File(path.getAbsolutePath(), pk.getName() + ".json");
+			final File file = new File(path.getAbsolutePath(), pk.getName() + ".json");
 			if (!file.exists() && !file.createNewFile()) {
 				return false;
 			}
-			PrintWriter pw = new PrintWriter(file);
-			JSONObject game = new JSONObject();
+			final PrintWriter pw = new PrintWriter(file);
+			final JSONObject game = new JSONObject();
 			game.put("world", pk.getWorld().getName());
 			game.put("parkour", pk.toJSON());
 			game.put("started", pk.isRunning());
@@ -155,7 +147,7 @@ public class ParkourPlugin extends JavaPlugin {
 		return true;
 	}
 
-	public void saveLobbyLoc(Location l) {
+	public void saveLobbyLoc(final Location l) {
 		getConfig().set("lobby.world", l.getWorld().getName());
 		getConfig().set("lobby.x", l.getX());
 		getConfig().set("lobby.y", l.getY());
@@ -166,18 +158,18 @@ public class ParkourPlugin extends JavaPlugin {
 	}
 
 	private void load() {
-		String w = getConfig().getString("lobby.world");
+		final String w = getConfig().getString("lobby.world");
 		if (!"-1".equals(w)) {
-			World world = Bukkit.getWorld(w);
+			final World world = Bukkit.getWorld(w);
 			if (world == null) {
 				return;
 			}
-			Location l = new Location(world, getConfig().getDouble("lobby.x"), getConfig().getDouble("lobby.y"), getConfig().getDouble("lobby.z"));
+			final Location l = new Location(world, getConfig().getDouble("lobby.x"), getConfig().getDouble("lobby.y"), getConfig().getDouble("lobby.z"));
 			l.setPitch((float) getConfig().getDouble("lobby.pitch"));
 			l.setYaw((float) getConfig().getDouble("lobby.yaw"));
 			ParkourManager.setLobbyLocation(l);
 		}
-		File folder = new File(getDataFolder().getAbsolutePath(), "games");
+		final File folder = new File(getDataFolder().getAbsolutePath(), "games");
 		if (!folder.exists() || folder.listFiles() == null) {
 			return;
 		}
@@ -186,23 +178,23 @@ public class ParkourPlugin extends JavaPlugin {
 				.filter(file -> file.getName().endsWith("json"))
 				.peek(System.out::print)
 				.forEach(file -> {
-					String name = file.getName().substring(0, file.getName().lastIndexOf('.'));
+					final String name = file.getName().substring(0, file.getName().lastIndexOf('.'));
 					getServer().getLogger().log(Level.INFO, "[atsParkour] Loading parkour \"{0}\"", name);
 					String rawJSON = null;
 					try {
 						rawJSON = String.join("", Files.readAllLines(file.toPath()));
-					} catch (IOException e) {
+						final JSONObject jsonObject = new JSONObject(rawJSON);
+						final World parkourWorld = Bukkit.getWorld(jsonObject.getString("world"));
+						if (parkourWorld == null) {
+							return;
+						}
+						final Parkour pk = new Parkour(name, null, parkourWorld);
+						pk.fromJSON(jsonObject.getJSONObject("parkour"));
+						getServer().getLogger().log(Level.INFO, "Loaded parkour \"{0}\" in world \"{1}\"", new String[]{pk.getName(), pk.getWorld().getName()});
+						System.out.print(pk);
+					} catch (final IOException e) {
 						e.printStackTrace();
 					}
-					JSONObject jsonObject = new JSONObject(rawJSON);
-					World parkourWorld = Bukkit.getWorld(jsonObject.getString("world"));
-					if (parkourWorld == null) {
-						return;
-					}
-					Parkour pk = new Parkour(name, null, parkourWorld);
-					pk.fromJSON(jsonObject.getJSONObject("parkour"));
-					getServer().getLogger().log(Level.INFO, "Loaded parkour \"{0}\" in world \"{1}\"", new String[]{pk.getName(), pk.getWorld().getName()});
-					System.out.print(pk);
 				});
 		getServer().getLogger().log(Level.INFO, "Successfully loaded all parkours.");
 	}
@@ -252,7 +244,7 @@ public class ParkourPlugin extends JavaPlugin {
 		messages.put("brozone", msg("cmdBronze", false));
 		messages.put("silver", msg("cmdSilver", false));
 		messages.put("gold", msg("cmdGold", false));
-		messages.put("platinium", msg("cmdPlatinium", false));
+		messages.put("platinum", msg("cmdPlatinum", false));
 	}
 
 	ItemStack getExit() {

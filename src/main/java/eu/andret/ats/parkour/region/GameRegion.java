@@ -17,11 +17,11 @@ import org.bukkit.World;
 @ToString
 @EqualsAndHashCode(callSuper = true)
 public class GameRegion extends AbstractRegion {
-	public GameRegion(CuboidRegion region) {
+	public GameRegion(final CuboidRegion region) {
 		super(region);
 	}
 
-	public GameRegion(World world) {
+	public GameRegion(final World world) {
 		this(new CuboidRegion(new BukkitWorld(world), BlockVector3.ZERO, BlockVector3.ZERO));
 	}
 }
