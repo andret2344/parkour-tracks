@@ -16,7 +16,7 @@ import org.bukkit.entity.Player;
 @EqualsAndHashCode(callSuper = true)
 public class PlayerLeaveRegionEvent extends AbstractPlayerEvent {
 	/**
-	 * The region that player leaved.
+	 * The region that player left.
 	 */
 	AbstractRegion region;
 
@@ -25,7 +25,7 @@ public class PlayerLeaveRegionEvent extends AbstractPlayerEvent {
 	 *
 	 * @param parkour The game that player is in.
 	 * @param player The player that triggers the event.
-	 * @param region The region the player leaved.
+	 * @param region The region the player left.
 	 */
 	public PlayerLeaveRegionEvent(final ParkourGame parkour, final Player player, final AbstractRegion region) {
 		super(parkour, player);

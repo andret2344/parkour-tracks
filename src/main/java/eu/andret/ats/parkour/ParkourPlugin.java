@@ -6,7 +6,6 @@ package eu.andret.ats.parkour;
 import eu.andret.ats.parkour.parkour.Parkour;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourManager;
-import eu.andret.ats.parkour.region.AbstractRegion;
 import eu.andret.ats.parkour.tasks.KeepConnection;
 import eu.andret.ats.parkour.util.Data;
 import lombok.Getter;
@@ -16,7 +15,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.json.JSONObject;
@@ -72,15 +70,9 @@ public class ParkourPlugin extends JavaPlugin {
 			getServer().getLogger().throwing(getClass().getName(), "onEnable", ex);
 		}
 		generate();
-		for (final ParkourGame p : ParkourManager.getAllGames()) {
-			for (final Player pl : Bukkit.getServer().getOnlinePlayers()) {
-				for (final AbstractRegion r : p.getAllRegions()) {
-					if (r.contains(pl.getLocation())) {
-						p.addPlayer(pl);
-					}
-				}
-			}
-		}
+		ParkourManager.getAllGames().forEach(p -> Bukkit.getServer().getOnlinePlayers().stream()
+				.filter(pl -> p.getAllRegions().stream().anyMatch(r -> r.contains(pl.getLocation())))
+				.forEach(p::addPlayer));
 		getServer().getScheduler().scheduleSyncRepeatingTask(this, new KeepConnection(this), 36_000, 36_000);
 	}
 
@@ -189,18 +181,18 @@ public class ParkourPlugin extends JavaPlugin {
 					String rawJSON = null;
 					try {
 						rawJSON = String.join("", Files.readAllLines(file.toPath()));
+						final JSONObject jsonObject = new JSONObject(rawJSON);
+						final World parkourWorld = Bukkit.getWorld(jsonObject.getString("world"));
+						if (parkourWorld == null) {
+							return;
+						}
+						final Parkour pk = new Parkour(name, null, parkourWorld);
+						pk.fromJSON(jsonObject.getJSONObject("parkour"));
+						getServer().getLogger().log(Level.INFO, "Loaded parkour \"{0}\" in world \"{1}\"", new String[]{pk.getName(), pk.getWorld().getName()});
+						System.out.print(pk);
 					} catch (final IOException e) {
 						e.printStackTrace();
 					}
-					final JSONObject jsonObject = new JSONObject(rawJSON);
-					final World parkourWorld = Bukkit.getWorld(jsonObject.getString("world"));
-					if (parkourWorld == null) {
-						return;
-					}
-					final Parkour pk = new Parkour(name, null, parkourWorld);
-					pk.fromJSON(jsonObject.getJSONObject("parkour"));
-					getServer().getLogger().log(Level.INFO, "Loaded parkour \"{0}\" in world \"{1}\"", new String[]{pk.getName(), pk.getWorld().getName()});
-					System.out.print(pk);
 				});
 		getServer().getLogger().log(Level.INFO, "Successfully loaded all parkours.");
 	}
