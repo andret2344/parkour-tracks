@@ -10,6 +10,7 @@ import eu.andret.ats.parkour.parkour.Parkour;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourManager;
 import eu.andret.ats.parkour.tasks.KeepConnection;
+import eu.andret.ats.parkour.util.Data;
 import lombok.Getter;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
@@ -20,6 +21,7 @@ import org.bukkit.World;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffectType;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -30,10 +32,12 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ParkourPlugin extends JavaPlugin {
@@ -57,7 +61,7 @@ public class ParkourPlugin extends JavaPlugin {
 		}
 		listeners = new ParkourListeners(this);
 		getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
-		if (!new File(getDataFolder().getAbsolutePath() + File.separator + "config.yml").exists()) {
+		if (!new File(getDataFolder().getAbsolutePath(), "config.yml").exists()) {
 			saveDefaultConfig();
 		}
 		saveResource("scoreboard.yml", false);
@@ -68,8 +72,16 @@ public class ParkourPlugin extends JavaPlugin {
 		command.setOnInsufficientPermissionsListener(sender -> sender.sendMessage(msg("noPerms", true)));
 		command.setOnUnknownSubCommandExecutionListener(sender -> sender.sendMessage(msg("wrongArg", true)));
 		command.addArgumentMapper("parkourGame", ParkourGame.class, ParkourManager::getParkour, Fallback.ON_NULL);
+		command.addArgumentMapper("potion", PotionEffectType.class, PotionEffectType::getByName, Fallback.ON_NULL);
+		command.addTypeCompleter(ParkourGame.class, () -> ParkourManager.getAllGames().stream()
+				.map(ParkourGame::getName)
+				.collect(Collectors.toList()));
+		command.addTypeCompleter(boolean.class, Arrays.asList("false", "true"));
+		command.addTypeCompleter(PotionEffectType.class, () -> Data.ALLOWED_EFFECTS.stream()
+				.map(PotionEffectType::getName)
+				.collect(Collectors.toList()));
 		try {
-			yamlConfiguration.load(new File(getDataFolder().getAbsolutePath() + File.separator + "messages.yml"));
+			yamlConfiguration.load(new File(getDataFolder().getAbsolutePath(), "messages.yml"));
 			load();
 			connect();
 		} catch (final Exception ex) {

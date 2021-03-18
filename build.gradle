@@ -41,7 +41,7 @@ dependencies {
 	compileOnly group: 'com.sk89q.worldedit', name: 'worldedit-bukkit', version: '7.0.1'
 	implementation group: 'eu.andret', name: 'ats-arguments', version: argumentsVersion
 	implementation group: 'org.bstats', name: 'bstats-bukkit', version: '2.2.1'
-	implementation group: 'org.json', name: 'json', version: '20190722'
+	implementation group: 'org.json', name: 'json', version: '20210307'
 	annotationProcessor group: "org.projectlombok", name: "lombok", version: "1.18.18"
 
 	testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.7.0'
@@ -104,7 +104,7 @@ spigot {
 					'ats.parkour.type'         : true,
 					'ats.parkour.displayName'  : true,
 					'ats.parkour.vip'          : true,
-					'ats.parkour.spectator'    : true,
+					'ats.parkour.spectate'     : true,
 					'ats.parkour.fix'          : true,
 					'ats.parkour.enabled'      : true,
 					'ats.parkour.fair'         : true
