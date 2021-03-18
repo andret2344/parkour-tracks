@@ -185,7 +185,7 @@ public class ParkourPlugin extends JavaPlugin {
 				.forEach(file -> {
 					final String name = file.getName().substring(0, file.getName().lastIndexOf('.'));
 					getServer().getLogger().log(Level.INFO, "[atsParkour] Loading parkour \"{0}\"", name);
-					String rawJSON = null;
+					final String rawJSON;
 					try {
 						rawJSON = String.join("", Files.readAllLines(file.toPath()));
 						final JSONObject jsonObject = new JSONObject(rawJSON);

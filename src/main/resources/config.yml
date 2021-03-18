@@ -14,8 +14,8 @@ lobby:
   yaw: -1
   pitch: -1
 recordSign:
-  line1: '&2&lREKORD'
-  line2: '%MINUTES%:%SECONDS%.%MILISECONDS%'
+  line1: '&2&lRECORD'
+  line2: '%MINUTES%:%SECONDS%.%MILLISECONDS%'
   line3: '%NICK%'
   line4: ''
 last-checkpoint-info: false

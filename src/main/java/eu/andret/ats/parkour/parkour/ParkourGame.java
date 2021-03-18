@@ -191,7 +191,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, JSONSerial
 			for (int i = 0; i < localEffects.length(); i++) {
 				final JSONObject jsonObject = localEffects.getJSONObject(i);
 				final String name = jsonObject.getString("name");
-				final int amplifier = jsonObject.getInt("apmplifier");
+				final int amplifier = jsonObject.getInt("amplifier");
 				effects.put(PotionEffectType.getByName(name), amplifier);
 			}
 			available = options.getBoolean("available");

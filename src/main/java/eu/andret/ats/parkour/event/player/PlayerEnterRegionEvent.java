@@ -25,7 +25,7 @@ public class PlayerEnterRegionEvent extends AbstractPlayerEvent {
 	 *
 	 * @param parkourGame The game that player is in.
 	 * @param player The player that triggers the event.
-	 * @param abstractRegion The regoin that player came in.
+	 * @param abstractRegion The region that player came in.
 	 */
 	public PlayerEnterRegionEvent(final ParkourGame parkourGame, final Player player, final AbstractRegion abstractRegion) {
 		super(parkourGame, player);
