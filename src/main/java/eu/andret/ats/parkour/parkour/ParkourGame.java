@@ -252,11 +252,11 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, JSONSerial
 		effectRegions.add(effectRegion);
 	}
 
-	public void SetWall(final int id, final CuboidRegion wall) {
+	public void setWall(final int id, final CuboidRegion wall) {
 		walls.get(id).setRegion(wall);
 	}
 
-	public void SetWall(final int id, final Wall wall) {
+	public void setWall(final int id, final Wall wall) {
 		walls.set(id, wall);
 	}
 
@@ -264,7 +264,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, JSONSerial
 		effectRegions.set(id, effectRegion);
 	}
 
-	public void SetSpawn(final Checkpoint newSpawnLocation) {
+	public void setSpawn(final Checkpoint newSpawnLocation) {
 		if (checkpoints.isEmpty()) {
 			checkpoints.add(newSpawnLocation);
 		} else {
@@ -458,6 +458,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame>, JSONSerial
 	}
 
 	public void setAuthors(final Collection<String> authors) {
+		this.authors.clear();
 		this.authors.addAll(authors);
 	}
 }

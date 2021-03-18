@@ -214,7 +214,7 @@ public class ParkourPlugin extends JavaPlugin {
 		messages.put("create|c", msg("cmdCreate", false));
 		messages.put("remove|r", msg("cmdRemove", false));
 		messages.put("info", msg("cmdInfo", false));
-		messages.put("SetSpawn|ss", msg("cmdSetSpawn", false));
+		messages.put("setSpawn|ss", msg("cmdSetSpawn", false));
 		messages.put("recreate|rc", msg("cmdRecreate", false));
 		messages.put("start|s", msg("cmdStart", false));
 		messages.put("stop", msg("cmdStop", false));

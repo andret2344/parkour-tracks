@@ -44,8 +44,7 @@ public class DataBaseOperations implements Runnable {
 			PreparedStatement stat;
 			if (!player.hasPermission("ats.parkour.ignorerecords")) {
 				//czy moj czas jest najlepszy?
-				stat = sql.prepareStatement(String.format("SELECT time FROM %s "
-						+ "WHERE parkour=? ORDER BY `time` ASC LIMIT 1", Data.TABLE_RECORDS));
+				stat = sql.prepareStatement("SELECT time FROM ats_parkour_records WHERE parkour=? ORDER BY `time` ASC LIMIT 1");
 				stat.setString(1, parkour.getName());
 				final ResultSet rs = stat.executeQuery();
 				if (!rs.next() || rs.getFloat("time") > time) {
@@ -56,8 +55,7 @@ public class DataBaseOperations implements Runnable {
 				rs.close();
 			}
 			//biore wszystkie dane gracza
-			stat = sql.prepareStatement(String.format("SELECT * FROM %s "
-					+ "WHERE nick=? AND parkour=?", Data.TABLE_RECORDS));
+			stat = sql.prepareStatement("SELECT * FROM ats_parkour_records WHERE nick = ? AND parkour = ?");
 			stat.setString(1, player.getName());
 			stat.setString(2, parkour.getName());
 			final ResultSet rs = stat.executeQuery();
