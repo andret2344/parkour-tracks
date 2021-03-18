@@ -6,7 +6,6 @@ package eu.andret.ats.parkour.tasks;
 import eu.andret.ats.parkour.ParkourPlugin;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.player.PlayerManager;
-import eu.andret.ats.parkour.util.Data;
 import eu.andret.ats.parkour.util.Medal;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -44,7 +43,7 @@ public class DataBaseOperations implements Runnable {
 			PreparedStatement stat;
 			if (!player.hasPermission("ats.parkour.ignorerecords")) {
 				//czy moj czas jest najlepszy?
-				stat = sql.prepareStatement("SELECT time FROM ats_parkour_records WHERE parkour=? ORDER BY `time` ASC LIMIT 1");
+				stat = sql.prepareStatement("SELECT time FROM ats_parkour_records WHERE parkour = ? ORDER BY time ASC LIMIT 1");
 				stat.setString(1, parkour.getName());
 				final ResultSet rs = stat.executeQuery();
 				if (!rs.next() || rs.getFloat("time") > time) {
@@ -68,12 +67,12 @@ public class DataBaseOperations implements Runnable {
 				final String s;
 				//czy najlepszy?
 				if (f > time) {
-					s = "UPDATE %s SET time=" + time + ", `count`=?, `earned`=?, `date`=?, `xp`=? WHERE `nick`=? AND `parkour`=?";
+					s = "UPDATE ats_parkour_records SET time = " + time + ", count = ?, date = ? WHERE nick = ? AND parkour = ?";
 					player.sendMessage(plugin.msg("newRecord", false));
 				} else {
-					s = "UPDATE %s SET `count`=?, `date`=?, WHERE `nick`=? AND `parkour`=?";
+					s = "UPDATE ats_parkour_records SET count = ?, date = ? WHERE nick = ? AND parkour = ?";
 				}
-				stat = sql.prepareStatement(String.format(s, Data.TABLE_RECORDS));
+				stat = sql.prepareStatement(s);
 				stat.setInt(1, c + 1);
 				stat.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
 				stat.setString(3, player.getName());
@@ -82,7 +81,7 @@ public class DataBaseOperations implements Runnable {
 				//a jaki byl ostatni medal?
 				lastMedal = o.getMedalByTime(f);
 			} else {
-				stat = sql.prepareStatement(String.format("INSERT INTO %s VALUES(null, ?, ?, ?, ?, 1)", Data.TABLE_RECORDS));
+				stat = sql.prepareStatement("INSERT INTO ats_parkour_records VALUES(null, ?, ?, ?, ?, 1)");
 				stat.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
 				stat.setString(2, player.getName());
 				stat.setString(3, parkour.getName());
@@ -100,11 +99,6 @@ public class DataBaseOperations implements Runnable {
 					price += medal.getPrice();
 				}
 				player.sendMessage(plugin.msg("achieveMedal", false).replace("%MEDAL%", current.name()).replace("%PRICE%", "" + price));
-				stat = sql.prepareStatement(String.format("UPDATE %s SET "
-						+ "`earned`=`earned`+" + price + " WHERE nick=? AND parkour=?", Data.TABLE_RECORDS));
-				stat.setString(1, player.getName());
-				stat.setString(2, parkour.getName());
-				stat.execute();
 			}
 			rs.close();
 		} catch (final Exception ex) {

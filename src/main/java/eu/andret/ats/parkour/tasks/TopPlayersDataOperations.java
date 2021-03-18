@@ -5,7 +5,6 @@ package eu.andret.ats.parkour.tasks;
 
 import eu.andret.ats.parkour.ParkourPlugin;
 import eu.andret.ats.parkour.parkour.ParkourGame;
-import eu.andret.ats.parkour.util.Data;
 import lombok.Value;
 import org.bukkit.Bukkit;
 
@@ -26,8 +25,7 @@ public class TopPlayersDataOperations implements Runnable {
 	@Override
 	public void run() {
 		try {
-			final PreparedStatement stat = plugin.getConnection().prepareStatement(String.format("SELECT nick, time FROM %s "
-					+ "WHERE parkour=? ORDER BY time LIMIT 10", Data.TABLE_RECORDS));
+			final PreparedStatement stat = plugin.getConnection().prepareStatement("SELECT nick, time FROM ats_parkour_records WHERE parkour=? ORDER BY time LIMIT 10");
 			stat.setString(1, parkour.getName());
 			final ResultSet rs = stat.executeQuery();
 			for (int i = 0; i < count && rs.next(); i++) {

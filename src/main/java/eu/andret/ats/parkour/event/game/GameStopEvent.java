@@ -16,9 +16,9 @@ public class GameStopEvent extends AbstractGameEvent {
 	/**
 	 * Constructor.
 	 *
-	 * @param parkour The game that has been started.
+	 * @param parkourGame The game that has been started.
 	 */
-	public GameStopEvent(final ParkourGame parkour) {
-		super(parkour);
+	public GameStopEvent(final ParkourGame parkourGame) {
+		super(parkourGame);
 	}
 }

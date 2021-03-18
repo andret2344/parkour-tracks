@@ -5,7 +5,6 @@ package eu.andret.ats.parkour.tasks;
 
 import eu.andret.ats.parkour.ParkourPlugin;
 import eu.andret.ats.parkour.parkour.ParkourGame;
-import eu.andret.ats.parkour.util.Data;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -39,14 +38,12 @@ public class ParkourDataOperations implements Runnable {
 	public void run() {
 		ResultSet rs;
 		try {
-			PreparedStatement stat = plugin.getConnection().prepareStatement(String.format("SELECT time FROM %s "
-					+ "WHERE parkour=? ORDER BY time LIMIT 1", Data.TABLE_RECORDS));
+			PreparedStatement stat = plugin.getConnection().prepareStatement("SELECT time FROM ats_parkour_records WHERE parkour=? ORDER BY time LIMIT 1");
 			stat.setString(1, parkour.getName());
 			rs = stat.executeQuery();
 			time = rs.next() ? rs.getFloat("time") : 0;
 
-			stat = plugin.getConnection().prepareStatement(String.format("SELECT * FROM %s "
-					+ "WHERE parkour=? AND nick=?", Data.TABLE_RECORDS));
+			stat = plugin.getConnection().prepareStatement("SELECT * FROM ats_parkour_records WHERE parkour = ? AND nick = ?");
 			stat.setString(1, parkour.getName());
 			stat.setString(2, player.getName());
 			rs = stat.executeQuery();

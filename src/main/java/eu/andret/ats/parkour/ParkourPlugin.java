@@ -110,7 +110,7 @@ public class ParkourPlugin extends JavaPlugin {
 		try (final Statement stat = conn.createStatement()) {
 			stat.execute("CREATE DATABASE IF NOT EXISTS `" + database + "`;");
 			stat.execute("USE " + database + ";");
-			stat.execute("CREATE TABLE IF NOT EXISTS ats_parkour_records(id INT PRIMARY KEY AUTO_INCREMENT, date DATETIME, nick VARCHAR(64), parkour VARCHAR(64), time FLOAT, count INT, earned INT, xp INT);");
+			stat.execute("CREATE TABLE IF NOT EXISTS ats_parkour_records(id INT PRIMARY KEY AUTO_INCREMENT, date DATETIME, nick VARCHAR(64), parkour VARCHAR(64), time FLOAT, count INT);");
 		}
 	}
 
@@ -225,7 +225,7 @@ public class ParkourPlugin extends JavaPlugin {
 		messages.put("list|ls", msg("cmdList", false));
 		messages.put("ignore|i", msg("cmdIgnore", false));
 		messages.put("reload|rl", msg("cmdReload", false));
-		messages.put("sprint|sp", msg("cmdSprint", false));
+		messages.put("sprintForced|sp", msg("cmdSprintForced", false));
 		messages.put("alwaysSpawn|as", msg("cmdAlwaysSpawn", false));
 		messages.put("recordCounting|cr", msg("cmdRecordCounting", false));
 		messages.put("damageAllowed|dmg", msg("cmdDamage", false));

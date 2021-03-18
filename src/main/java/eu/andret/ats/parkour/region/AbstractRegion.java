@@ -14,31 +14,31 @@ import org.json.JSONObject;
 @Data
 @AllArgsConstructor
 public abstract class AbstractRegion implements JSONSerializable {
-	private CuboidRegion region;
+	private CuboidRegion cuboidRegion;
 
-	public boolean contains(final Location loc) {
-		return region.contains(BlockVector3.at(loc.getX(), loc.getY(), loc.getZ()));
+	public boolean contains(final Location location) {
+		return cuboidRegion.contains(BlockVector3.at(location.getX(), location.getY(), location.getZ()));
 	}
 
 	@Override
 	public JSONObject toJSON() {
 		final JSONObject object = new JSONObject();
-		object.put("x1", region.getPos1().getX());
-		object.put("y1", region.getPos1().getY());
-		object.put("z1", region.getPos1().getZ());
-		object.put("x2", region.getPos2().getX());
-		object.put("y2", region.getPos2().getY());
-		object.put("z2", region.getPos2().getZ());
+		object.put("x1", cuboidRegion.getPos1().getX());
+		object.put("y1", cuboidRegion.getPos1().getY());
+		object.put("z1", cuboidRegion.getPos1().getZ());
+		object.put("x2", cuboidRegion.getPos2().getX());
+		object.put("y2", cuboidRegion.getPos2().getY());
+		object.put("z2", cuboidRegion.getPos2().getZ());
 		return object;
 	}
 
 	@Override
 	public void fromJSON(final JSONObject object) {
-		region.setPos1(BlockVector3.at(
+		cuboidRegion.setPos1(BlockVector3.at(
 				object.getDouble("x1"),
 				object.getDouble("y1"),
 				object.getDouble("z1")));
-		region.setPos2(BlockVector3.at(
+		cuboidRegion.setPos2(BlockVector3.at(
 				object.getDouble("x2"),
 				object.getDouble("y2"),
 				object.getDouble("z2")));

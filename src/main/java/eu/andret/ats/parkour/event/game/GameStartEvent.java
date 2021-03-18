@@ -16,9 +16,9 @@ public class GameStartEvent extends AbstractGameEvent {
 	/**
 	 * Constructor.
 	 *
-	 * @param parkour The game that has been started.
+	 * @param parkourGame The game that has been started.
 	 */
-	public GameStartEvent(final ParkourGame parkour) {
-		super(parkour);
+	public GameStartEvent(final ParkourGame parkourGame) {
+		super(parkourGame);
 	}
 }

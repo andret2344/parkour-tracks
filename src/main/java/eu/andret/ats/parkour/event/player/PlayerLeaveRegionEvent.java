@@ -18,17 +18,17 @@ public class PlayerLeaveRegionEvent extends AbstractPlayerEvent {
 	/**
 	 * The region that player left.
 	 */
-	AbstractRegion region;
+	AbstractRegion abstractRegion;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param parkour The game that player is in.
+	 * @param parkourGame The game that player is in.
 	 * @param player The player that triggers the event.
-	 * @param region The region the player left.
+	 * @param abstractRegion The region the player left.
 	 */
-	public PlayerLeaveRegionEvent(final ParkourGame parkour, final Player player, final AbstractRegion region) {
-		super(parkour, player);
-		this.region = region;
+	public PlayerLeaveRegionEvent(final ParkourGame parkourGame, final Player player, final AbstractRegion abstractRegion) {
+		super(parkourGame, player);
+		this.abstractRegion = abstractRegion;
 	}
 }

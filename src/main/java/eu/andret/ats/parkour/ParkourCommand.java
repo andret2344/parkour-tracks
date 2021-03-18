@@ -58,6 +58,112 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		wep = (WorldEditPlugin) plugin.getServer().getPluginManager().getPlugin("WorldEdit");
 	}
 
+	// === UNIVERSAL ===
+
+	@Argument
+	public String lobby() {
+		final Location l = ((Player) sender).getLocation();
+		ParkourManager.setLobbyLocation(l);
+		return msg("setLobby", false)
+				.replace("%COORD_X%", String.valueOf(l.getX()))
+				.replace("%COORD_Y%", String.valueOf(l.getY()))
+				.replace("%COORD_Z%", String.valueOf(l.getZ()));
+	}
+
+	@Argument
+	public String list() {
+		if (ParkourManager.getAllGames().isEmpty()) {
+			return msg("emptyList", false);
+		}
+		final StringBuilder builder = new StringBuilder();
+		builder.append(msg("listHeader", false).replace("%COUNT%", String.valueOf(ParkourManager.getAllGames().size())));
+		final List<ParkourGame> allGames = ParkourManager.getAllGames();
+		for (int i = 1; i <= allGames.size(); i++) {
+			final ParkourGame parkourGame = allGames.get(i - 1);
+			final String on;
+			if (parkourGame.isRunning()) {
+				on = ChatColor.GREEN + "" + ChatColor.ITALIC + "[Started]";
+			} else {
+				on = ChatColor.RED + "" + ChatColor.ITALIC + "[Stopped]";
+			}
+			builder.append(i).append(". ").append(parkourGame.getName()).append(" ").append(on).append("\n");
+		}
+		return builder.toString();
+	}
+
+	@Argument
+	public String fix() {
+		ParkourManager.getAllGames()
+				.stream()
+				.map(parkourGame -> new RepairSignTask(plugin, parkourGame))
+				.forEach(repairSignTask -> Bukkit.getScheduler().runTaskAsynchronously(plugin, repairSignTask));
+		return msg("successFix", false);
+	}
+
+	@Argument
+	public String ignore() {
+		final Player pl = (Player) sender;
+		final ParkourPlayer parkourPlayer = PlayerManager.getParkourSinglePlayer(pl);
+		if (parkourPlayer.isIgnoring()) {
+			parkourPlayer.setIgnoring(false);
+			ParkourManager.getAllGames().stream()
+					.filter(p -> p.inAnyRegion(pl.getLocation()))
+					.forEach(p -> p.addPlayer(pl));
+			return msg("ignoreStop", false);
+		}
+		parkourPlayer.setIgnoring(true);
+		final ParkourGame parkour = ParkourManager.getParkour(pl);
+		if (parkour != null) {
+			parkour.removePlayer(pl);
+		}
+		return msg("ignoreStart", false);
+	}
+
+	@Argument
+	public String spectator() {
+		final Player player = (Player) sender;
+		final ParkourPlayer parkourPlayer = PlayerManager.getParkourSinglePlayer(player);
+		if (parkourPlayer.isSpectating()) {
+			parkourPlayer.setSpectating(false);
+			Bukkit.getOnlinePlayers().forEach(p -> p.showPlayer(plugin, player));
+			ParkourManager.getAllGames()
+					.stream().filter(p -> p.inAnyRegion(player.getLocation()))
+					.forEach(p -> p.addPlayer(player));
+			return msg("spectatorStop", false);
+		} else {
+			parkourPlayer.setSpectating(true);
+			Bukkit.getOnlinePlayers().forEach(p -> p.hidePlayer(plugin, player));
+			final ParkourGame parkour = ParkourManager.getParkour(player);
+			if (parkour != null) {
+				parkour.removePlayer(player);
+			}
+			return msg("spectatorStart", false);
+		}
+	}
+
+	@Argument
+	public String help() {
+		return help(1);
+	}
+
+	@Argument
+	public String help(final int page) {
+		final Map<String, String> messages = plugin.getMessages();
+		final int maxPages = messages.size() / 5 + 1;
+		final int skip = 5 * (page - 1);
+		return msg("currentPage", false)
+				.replace("%PAGE%", String.valueOf(page))
+				.replace("%PAGES%", String.valueOf(maxPages)) +
+				messages.entrySet()
+						.stream()
+						.skip(skip)
+						.limit(5)
+						.map(x -> "§2/parkourGame " + x.getKey() + "§r - " + x.getValue())
+						.collect(Collectors.joining("\n"));
+	}
+
+	// === GENERAL ===
+
 	@Argument(executorType = ExecutorType.PLAYER, permission = "ats.parkour.create", aliases = {"c"})
 	public String create(final String name) {
 		if (ParkourManager.getLobbyLocation() == null) {
@@ -89,6 +195,87 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 	public String remove() {
 		return msg("noGame", true);
 	}
+
+	@Argument
+	public String start(@Param("parkourGame") final ParkourGame parkourGame) {
+		if (parkourGame.getSpawn() == null) {
+			return msg("noSpawn", true);
+		}
+		final ParkourGame.Options options = parkourGame.getOptions();
+		if (options.getBronze() == 0 || options.getSilver() == 0 || options.getGold() == 0 || options.getPlatinum() == 0) {
+			return msg("medalsFirst", true);
+		}
+		if (parkourGame.isRunning()) {
+			return msg("alreadyStarted", true);
+		}
+		parkourGame.start();
+		ParkourManager.sortGames();
+		return msg("gameStarted", false).replace("%NAME%", parkourGame.getName());
+	}
+
+	@Fallback
+	public String start() {
+		return msg("noGame", true);
+	}
+
+	@Argument
+	public String stop(@Param("parkourGame") final ParkourGame parkourGame) {
+		if (!parkourGame.isRunning()) {
+			return msg("alreadyStopped", true);
+		}
+		parkourGame.stop();
+		ParkourManager.sortGames();
+		return msg("gameStopped", false).replace("%NAME%", parkourGame.getName());
+	}
+
+	@Fallback
+	public String stop() {
+		return msg("noGame", true);
+	}
+
+	@Argument
+	public String recreate(@Param("parkourGame") final ParkourGame parkourGame) {
+		final CuboidRegion cr = getFromSelection((Player) sender);
+		if (cr == null) {
+			return msg("wrongSel", true);
+		}
+		parkourGame.getGameRegion().setCuboidRegion(cr);
+		return msg("gameRecreated", false);
+	}
+
+	@Fallback
+	public String recreate() {
+		return msg("noGame", true);
+	}
+
+	@Argument
+	public String rename(@Param("parkourGame") final ParkourGame parkourGame, final String name) {
+		if (ParkourManager.getParkour(name) == null) {
+			return msg("gameExists", true);
+		}
+		parkourGame.setName(name);
+		return msg("gameRenamed", false).replace("%OLD_NAME%", parkourGame.getName()).replace("%NEW_NAME%", name);
+	}
+
+	@Fallback
+	public String rename() {
+		return msg("noGame", true);
+	}
+
+	@Argument
+	public void teleport(@Param("parkourGame") final ParkourGame parkourGame) {
+		parkourGame.addPlayer((Player) sender);
+		final ParkourPlayer p = PlayerManager.getParkourSinglePlayer((Player) sender);
+		p.teleportToSpawn();
+		p.reset();
+	}
+
+	@Fallback
+	public String teleport() {
+		return msg("noGame", true);
+	}
+
+	// === REGIONS ===
 
 	@Argument(executorType = ExecutorType.PLAYER, permission = "ats.parkour.setSpawn", aliases = {"ss"})
 	public String setSpawn(@Param("parkourGame") final ParkourGame parkourGame) {
@@ -145,112 +332,6 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 	}
 
 	@Argument
-	public String start(@Param("parkourGame") final ParkourGame parkourGame) {
-		if (parkourGame.getSpawn() == null) {
-			return msg("noSpawn", true);
-		}
-		final ParkourGame.Options options = parkourGame.getOptions();
-		if (options.getBronze() == 0 || options.getSilver() == 0 || options.getGold() == 0 || options.getPlatinum() == 0) {
-			return msg("medalsFirst", true);
-		}
-		if (parkourGame.isRunning()) {
-			return msg("alreadyStarted", true);
-		}
-		parkourGame.start();
-		return msg("gameStarted", false).replace("%NAME%", parkourGame.getName());
-	}
-
-	@Argument
-	public String stop(@Param("parkourGame") final ParkourGame parkourGame) {
-		if (!parkourGame.isRunning()) {
-			return msg("alreadyStopped", true);
-		}
-		parkourGame.stop();
-		return msg("gameStopped", false).replace("%NAME%", parkourGame.getName());
-	}
-
-	@Argument
-	public String recreate(@Param("parkourGame") final ParkourGame parkourGame) {
-		final CuboidRegion cr = getFromSelection((Player) sender);
-		if (cr == null) {
-			return msg("wrongSel", true);
-		}
-		parkourGame.getGameRegion().setRegion(cr);
-		return msg("gameRecreated", false);
-	}
-
-	@Argument
-	public String fix() {
-		ParkourManager.getAllGames()
-				.stream()
-				.map(parkourGame -> new RepairSignTask(plugin, parkourGame))
-				.forEach(repairSignTask -> Bukkit.getScheduler().runTaskAsynchronously(plugin, repairSignTask));
-		return msg("successFix", false);
-	}
-
-	@Argument
-	public String ignore() {
-		final Player pl = (Player) sender;
-		final ParkourPlayer parkourPlayer = PlayerManager.getParkourSinglePlayer(pl);
-		if (parkourPlayer.isIgnoring()) {
-			parkourPlayer.setIgnoring(false);
-			ParkourManager.getAllGames().stream()
-					.filter(p -> p.inAnyRegion(pl.getLocation()))
-					.forEach(p -> p.addPlayer(pl));
-			return msg("ignoreStop", false);
-		}
-		parkourPlayer.setIgnoring(true);
-		final ParkourGame parkour = ParkourManager.getParkour(pl);
-		if (parkour != null) {
-			parkour.removePlayer(pl);
-		}
-		return msg("ignoreStart", false);
-	}
-
-	@Argument
-	public String spectator() {
-		final Player player = (Player) sender;
-		final ParkourPlayer parkourPlayer = PlayerManager.getParkourSinglePlayer(player);
-		if (parkourPlayer.isSpectating()) {
-			parkourPlayer.setSpectating(false);
-			Bukkit.getOnlinePlayers().forEach(p -> p.showPlayer(plugin, player));
-			ParkourManager.getAllGames()
-					.stream().filter(p -> p.inAnyRegion(player.getLocation()))
-					.forEach(p -> p.addPlayer(player));
-			return msg("spectatorStop", false);
-		} else {
-			parkourPlayer.setSpectating(true);
-			Bukkit.getOnlinePlayers().forEach(p -> p.hidePlayer(plugin, player));
-			final ParkourGame parkour = ParkourManager.getParkour(player);
-			if (parkour != null) {
-				parkour.removePlayer(player);
-			}
-			return msg("spectatorStart", false);
-		}
-	}
-
-	@Argument
-	public String list() {
-		if (ParkourManager.getAllGames().isEmpty()) {
-			return msg("emptyList", false);
-		}
-		final StringBuilder builder = new StringBuilder();
-		builder.append(msg("listHeader", false).replace("%COUNT%", String.valueOf(ParkourManager.getAllGames().size())));
-		final List<ParkourGame> allGames = ParkourManager.getAllGames();
-		for (int i = 1; i <= allGames.size(); i++) {
-			final ParkourGame parkourGame = allGames.get(i - 1);
-			final String on;
-			if (parkourGame.isRunning()) {
-				on = ChatColor.GREEN + "" + ChatColor.ITALIC + "[Started]";
-			} else {
-				on = ChatColor.RED + "" + ChatColor.ITALIC + "[Stopped]";
-			}
-			builder.append(i).append(". ").append(parkourGame.getName()).append(" ").append(on).append("\n");
-		}
-		return builder.toString();
-	}
-
-	@Argument
 	public String addWall(@Param("parkourGame") final ParkourGame parkourGame) {
 		final CuboidRegion selection = getFromSelection((Player) sender);
 		if (selection == null) {
@@ -258,6 +339,11 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		}
 		parkourGame.addWall(new Wall(new CuboidRegion(selection.getMaximumPoint(), selection.getMinimumPoint())));
 		return msg("setWall", false).replace("%WALL_ID%", String.valueOf(parkourGame.getWallList().size()));
+	}
+
+	@Fallback
+	public String addWall() {
+		return msg("noGame", true);
 	}
 
 	@Argument
@@ -273,12 +359,22 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		return msg("setWall", false).replace("%WALL_ID%", String.valueOf(id));
 	}
 
+	@Fallback
+	public String setWall() {
+		return msg("noGame", true);
+	}
+
 	@Argument
 	public String effects(final int id, @Param("parkourGame") final ParkourGame parkourGame) {
 		return parkourGame.getOptions().getEffects().entrySet()
 				.stream()
 				.map(entry -> msg("oneEffect", false).replace("%EFFECT%", entry.getKey().getName()).replace("%AMPLIFIER%", String.valueOf(entry.getValue())))
 				.collect(Collectors.joining("\n"));
+	}
+
+	@Fallback
+	public String effects() {
+		return msg("noGame", true);
 	}
 
 	@Argument
@@ -291,42 +387,27 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		return msg("setEffect", false).replace("%EFFECT%", type.getName()).replace("%AMPLIFIER%", String.valueOf(power));
 	}
 
-	@Argument
-	public String lobby() {
-		final Location l = ((Player) sender).getLocation();
-		ParkourManager.setLobbyLocation(l);
-		return msg("setLobby", false)
-				.replace("%COORD_X%", String.valueOf(l.getX()))
-				.replace("%COORD_Y%", String.valueOf(l.getY()))
-				.replace("%COORD_Z%", String.valueOf(l.getZ()));
+	@Fallback
+	public String setEffect() {
+		return msg("noGame", true);
 	}
 
-	@Argument
-	public String rename(@Param("parkourGame") final ParkourGame parkourGame, final String name) {
-		if (ParkourManager.getParkour(name) == null) {
-			return msg("gameExists", true);
-		}
-		parkourGame.setName(name);
-		return msg("gameRenamed", false).replace("%OLD_NAME%", parkourGame.getName()).replace("%NEW_NAME%", name);
-	}
-
-	@Argument
-	public void teleport(@Param("parkourGame") final ParkourGame parkourGame) {
-		parkourGame.addPlayer((Player) sender);
-		final ParkourPlayer p = PlayerManager.getParkourSinglePlayer((Player) sender);
-		p.teleportToSpawn();
-		p.reset();
-	}
+	// === OPTIONS ===
 
 	@Argument
 	public String sprintForced(@Param("parkourGame") final ParkourGame parkourGame) {
-		return msg("currentSprint", false).replace("%SPRINT%", String.valueOf(parkourGame.getOptions().isForcingSprint()));
+		return msg("currentSprintForced", false).replace("%SPRINT_FORCED%", String.valueOf(parkourGame.getOptions().isSprintForced()));
 	}
 
 	@Argument
 	public String sprintForced(@Param("parkourGame") final ParkourGame parkourGame, final boolean sprintForced) {
-		parkourGame.getOptions().setForcingSprint(sprintForced);
-		return msg("setSprint", false).replace("%SPRINT%", String.valueOf(sprintForced));
+		parkourGame.getOptions().setSprintForced(sprintForced);
+		return msg("setSprintForced", false).replace("%SPRINT_FORCED%", String.valueOf(sprintForced));
+	}
+
+	@Fallback
+	public String sprintForced() {
+		return msg("noGame", true);
 	}
 
 	@Argument
@@ -340,6 +421,11 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		return msg("setAlwaysSpawn", false).replace("%ALWAYS_SPAWN%", String.valueOf(alwaysSpawn));
 	}
 
+	@Fallback
+	public String alwaysSpawn() {
+		return msg("noGame", true);
+	}
+
 	@Argument
 	public String recordCounting(@Param("parkourGame") final ParkourGame parkourGame) {
 		return msg("currentRecordCounting", false).replace("%RECORD_COUNTING%", String.valueOf(parkourGame.getOptions().isRecordsCounting()));
@@ -351,15 +437,25 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		return msg("setRecordCounting", false).replace("%RECORD_COUNTING%", String.valueOf(recordCounting));
 	}
 
+	@Fallback
+	public String recordCounting() {
+		return msg("noGame", true);
+	}
+
 	@Argument
-	public String vip(@Param("parkourGame") final ParkourGame parkourGame) {
-		return msg("currentVip", false).replace("%VIP%", String.valueOf(parkourGame.getOptions().isVip()));
+	public String vipOnly(@Param("parkourGame") final ParkourGame parkourGame) {
+		return msg("currentVipOnly", false).replace("%VIP_ONLY%", String.valueOf(parkourGame.getOptions().isVipOnly()));
 	}
 
 	@Argument
 	public String vip(@Param("parkourGame") final ParkourGame parkourGame, final boolean vip) {
-		parkourGame.getOptions().setVip(vip);
+		parkourGame.getOptions().setVipOnly(vip);
 		return msg("setVip", false).replace("%VIP%", String.valueOf(vip));
+	}
+
+	@Fallback
+	public String vip() {
+		return msg("noGame", true);
 	}
 
 	@Argument
@@ -373,6 +469,11 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		return msg("setDamageAllowed", false).replace("%DAMAGE_ALLOWED%", String.valueOf(damageAllowed));
 	}
 
+	@Fallback
+	public String damageAllowed() {
+		return msg("noGame", true);
+	}
+
 	@Argument
 	public String available(@Param("parkourGame") final ParkourGame parkourGame) {
 		return msg("currentAvailable", false).replace("%AVAILABLE%", String.valueOf(parkourGame.getOptions().isAvailable()));
@@ -382,6 +483,11 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 	public String available(@Param("parkourGame") final ParkourGame parkourGame, final boolean available) {
 		parkourGame.getOptions().setAvailable(available);
 		return msg("setAvailable", false).replace("%AVAILABLE%", String.valueOf(available));
+	}
+
+	@Fallback
+	public String available() {
+		return msg("noGame", true);
 	}
 
 	@Argument
@@ -395,6 +501,11 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		return msg("setBoat", false).replace("%BOAT%", String.valueOf(boat));
 	}
 
+	@Fallback
+	public String boat() {
+		return msg("noGame", true);
+	}
+
 	@Argument
 	public String enabled(@Param("parkourGame") final ParkourGame parkourGame) {
 		return msg("currentEnabled", false).replace("%ENABLED%", String.valueOf(parkourGame.getOptions().isEnabled()));
@@ -406,6 +517,11 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		return msg("setEnabled", false).replace("%ENABLED%", String.valueOf(enabled));
 	}
 
+	@Fallback
+	public String enabled() {
+		return msg("noGame", true);
+	}
+
 	@Argument
 	public String modifyInventory(@Param("parkourGame") final ParkourGame parkourGame) {
 		return msg("currentModifyInventory", false).replace("%MODIFY_INVENTORY%", String.valueOf(parkourGame.getOptions().isModifyInventory()));
@@ -415,6 +531,11 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 	public String modifyInventory(@Param("parkourGame") final ParkourGame parkourGame, final boolean modifyInventory) {
 		parkourGame.getOptions().setModifyInventory(modifyInventory);
 		return msg("setModifyInventory", false).replace("%MODIFY_INVENTORY%", String.valueOf(modifyInventory));
+	}
+
+	@Fallback
+	public String modifyInventory() {
+		return msg("noGame", true);
 	}
 
 	@Argument
@@ -431,6 +552,11 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 	public String difficulty(@Param("parkourGame") final ParkourGame parkourGame, final int difficulty) {
 		parkourGame.getOptions().setDifficulty(difficulty);
 		return msg("setDifficulty", false).replace("%DIFFICULTY%", String.valueOf(difficulty));
+	}
+
+	@Fallback
+	public String difficulty() {
+		return msg("noGame", true);
 	}
 
 	@Argument
@@ -450,6 +576,11 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		return msg("setDisplayName", false).replace("%DISPLAY_NAME%", name + color);
 	}
 
+	@Fallback
+	public String displayName() {
+		return msg("noGame", true);
+	}
+
 	@Argument
 	public String fair(@Param("parkourGame") final ParkourGame parkourGame) {
 		return msg("currentFair", false).replace("%FAIR%", String.valueOf(parkourGame.getOptions().getFair()));
@@ -461,48 +592,9 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		return msg("setFair", false).replace("%FAIR%", String.valueOf(fair));
 	}
 
-	@Argument
-	public String bronze(@Param("parkourGame") final ParkourGame parkourGame) {
-		return msg("currentBronze", false).replace("%BRONZE%", String.valueOf(parkourGame.getOptions().getBronze()));
-	}
-
-	@Argument
-	public String bronze(@Param("parkourGame") final ParkourGame parkourGame, final double bronze) {
-		parkourGame.getOptions().setBronze(bronze);
-		return msg("setBronze", false).replace("%BRONZE%", String.valueOf(bronze));
-	}
-
-	@Argument
-	public String silver(@Param("parkourGame") final ParkourGame parkourGame) {
-		return msg("currentSilver", false).replace("%SILVER%", String.valueOf(parkourGame.getOptions().getSilver()));
-	}
-
-	@Argument
-	public String silver(@Param("parkourGame") final ParkourGame parkourGame, final double silver) {
-		parkourGame.getOptions().setSilver(silver);
-		return msg("setSilver", false).replace("%SILVER%", String.valueOf(silver));
-	}
-
-	@Argument
-	public String gold(@Param("parkourGame") final ParkourGame parkourGame) {
-		return msg("currentGold", false).replace("%GOLD%", String.valueOf(parkourGame.getOptions().getGold()));
-	}
-
-	@Argument
-	public String gold(@Param("parkourGame") final ParkourGame parkourGame, final double gold) {
-		parkourGame.getOptions().setGold(gold);
-		return msg("setGold", false).replace("%GOLD%", String.valueOf(gold));
-	}
-
-	@Argument
-	public String platinum(@Param("parkourGame") final ParkourGame parkourGame) {
-		return msg("currentPlatinum", false).replace("%PLATINUM%", String.valueOf(parkourGame.getOptions().getPlatinum()));
-	}
-
-	@Argument
-	public String platinum(@Param("parkourGame") final ParkourGame parkourGame, final double platinum) {
-		parkourGame.getOptions().setPlatinum(platinum);
-		return msg("setPlatinum", false).replace("%PLATINUM%", String.valueOf(platinum));
+	@Fallback
+	public String fair() {
+		return msg("noGame", true);
 	}
 
 	@Argument
@@ -516,6 +608,11 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		return msg("setColor", false).replace("%COLOR%", color.name());
 	}
 
+	@Fallback
+	public String color() {
+		return msg("noGame", true);
+	}
+
 	@Argument
 	public String authors(@Param("parkourGame") final ParkourGame parkourGame) {
 		return msg("currentAuthors", false).replace("%AUTHORS%", parkourGame.getAuthors().toString());
@@ -525,6 +622,11 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 	public String authors(@Param("parkourGame") final ParkourGame parkourGame, final String... authors) {
 		parkourGame.setAuthors(Arrays.asList(authors));
 		return msg("setColor", false).replace("%AUTHORS%", Arrays.toString(authors));
+	}
+
+	@Fallback
+	public String authors() {
+		return msg("noGame", true);
 	}
 
 	@Argument
@@ -538,31 +640,20 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		return msg("setType", false).replace("%TYPE%", type.name());
 	}
 
-	@Argument
-	public String help() {
-		return help(1);
-	}
-
-	@Argument
-	public String help(final int page) {
-		final Map<String, String> messages = plugin.getMessages();
-		final int maxPages = messages.size() / 5 + 1;
-		final int skip = 5 * (page - 1);
-		return msg("currentPage", false)
-				.replace("%PAGE%", String.valueOf(page))
-				.replace("%PAGES%", String.valueOf(maxPages)) +
-				messages.entrySet()
-						.stream()
-						.skip(skip)
-						.limit(5)
-						.map(x -> "§2/parkourGame " + x.getKey() + "§r - " + x.getValue())
-						.collect(Collectors.joining("\n"));
+	@Fallback
+	public String type() {
+		return msg("noGame", true);
 	}
 
 	@Argument
 	public String teleportBlock(@Param("parkourGame") final ParkourGame parkourGame) {
 		parkourGame.setTeleportBlock(((Player) sender).getTargetBlock(null, 5).getLocation());
 		return msg("setTeleportBlock", false).replace("%PARKOUR%", parkourGame.getName());
+	}
+
+	@Fallback
+	public String teleportBlock() {
+		return msg("noGame", true);
 	}
 
 	@Argument
@@ -573,6 +664,11 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 				sender.sendMessage(msg("topRecord", false).replace("%NUMBER%", "" + j++).replace("%PLAYER%", entry.getKey()).replace("%TIME%", "" + entry.getValue()));
 			}
 		}));
+	}
+
+	@Fallback
+	public String top() {
+		return msg("noGame", true);
 	}
 
 	@Argument
@@ -597,6 +693,79 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 			sender.sendMessage(msg("noSign", true));
 		}
 	}
+
+	@Fallback
+	public String bestRecord() {
+		return msg("noGame", true);
+	}
+
+	// === MEDALS ===
+
+	@Argument
+	public String bronze(@Param("parkourGame") final ParkourGame parkourGame) {
+		return msg("currentBronze", false).replace("%BRONZE%", String.valueOf(parkourGame.getOptions().getBronze()));
+	}
+
+	@Argument
+	public String bronze(@Param("parkourGame") final ParkourGame parkourGame, final double bronze) {
+		parkourGame.getOptions().setBronze(bronze);
+		return msg("setBronze", false).replace("%BRONZE%", String.valueOf(bronze));
+	}
+
+	@Fallback
+	public String bronze() {
+		return msg("noGame", true);
+	}
+
+	@Argument
+	public String silver(@Param("parkourGame") final ParkourGame parkourGame) {
+		return msg("currentSilver", false).replace("%SILVER%", String.valueOf(parkourGame.getOptions().getSilver()));
+	}
+
+	@Argument
+	public String silver(@Param("parkourGame") final ParkourGame parkourGame, final double silver) {
+		parkourGame.getOptions().setSilver(silver);
+		return msg("setSilver", false).replace("%SILVER%", String.valueOf(silver));
+	}
+
+	@Fallback
+	public String silver() {
+		return msg("noGame", true);
+	}
+
+	@Argument
+	public String gold(@Param("parkourGame") final ParkourGame parkourGame) {
+		return msg("currentGold", false).replace("%GOLD%", String.valueOf(parkourGame.getOptions().getGold()));
+	}
+
+	@Argument
+	public String gold(@Param("parkourGame") final ParkourGame parkourGame, final double gold) {
+		parkourGame.getOptions().setGold(gold);
+		return msg("setGold", false).replace("%GOLD%", String.valueOf(gold));
+	}
+
+	@Fallback
+	public String gold() {
+		return msg("noGame", true);
+	}
+
+	@Argument
+	public String platinum(@Param("parkourGame") final ParkourGame parkourGame) {
+		return msg("currentPlatinum", false).replace("%PLATINUM%", String.valueOf(parkourGame.getOptions().getPlatinum()));
+	}
+
+	@Argument
+	public String platinum(@Param("parkourGame") final ParkourGame parkourGame, final double platinum) {
+		parkourGame.getOptions().setPlatinum(platinum);
+		return msg("setPlatinum", false).replace("%PLATINUM%", String.valueOf(platinum));
+	}
+
+	@Fallback
+	public String platinum() {
+		return msg("noGame", true);
+	}
+
+	// === UTILITIES ===
 
 	private CuboidRegion getFromSelection(final Player player) {
 		final LocalSession session = wep.getSession(player);

@@ -35,7 +35,7 @@ public abstract class ParkourPlayer {
 		if (inAnyParkour()) {
 			final ParkourGame pk = ParkourManager.getParkour(player);
 			final Checkpoint cp = pk.getCheckpoint(id);
-			final Vector3 v = cp.getRegion().getCenter();
+			final Vector3 v = cp.getCuboidRegion().getCenter();
 			player.teleport(new Location(pk.getWorld(), v.getX() + 0.5, v.getY(), v.getZ() + 0.5, cp.getYaw(), cp.getPitch()));
 			Bukkit.getPluginManager().callEvent(new PlayerTeleportBackEvent(pk, this, cp));
 		}

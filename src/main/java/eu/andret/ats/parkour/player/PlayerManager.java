@@ -43,9 +43,9 @@ public final class PlayerManager {
 	}
 
 	public ParkourPlayer remove(final Player player) {
-		final ParkourPlayer pp = singlePlayers.remove(player);
-		if (pp != null) {
-			return pp;
+		final ParkourPlayer parkourPlayer = singlePlayers.remove(player);
+		if (parkourPlayer != null) {
+			return parkourPlayer;
 		}
 		return competitorPlayers.remove(player);
 	}

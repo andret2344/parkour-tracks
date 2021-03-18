@@ -17,16 +17,6 @@ import java.util.stream.Stream;
 @UtilityClass
 public final class Data {
 	/**
-	 * The table's name in database, that will keep times.
-	 */
-	public static final String TABLE_RECORDS = "ats_parkour_records";
-
-	/**
-	 * The name that will be shown on scoreboard.
-	 */
-	public static final String SCOREBOARD_NAME = "ParkourLand";
-
-	/**
 	 * List of potion effects that can be applied to a region.
 	 */
 	public static final List<PotionEffectType> ALLOWED_EFFECTS = List.of(
@@ -130,6 +120,9 @@ public final class Data {
 			Material.WARPED_FENCE_GATE
 	);
 
+	/**
+	 * @return {@code List<Material>} of all available interactive blocks.
+	 */
 	public static List<Material> getInteractiveMaterials() {
 		final List<Material> result = new ArrayList<>();
 		Stream.of(LEVERS, DOORS, BUTTONS, TRAPDOORS, CHESTS, GATES).forEach(result::addAll);
