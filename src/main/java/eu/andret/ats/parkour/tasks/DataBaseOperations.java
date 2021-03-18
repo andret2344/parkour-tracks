@@ -73,26 +73,22 @@ public class DataBaseOperations implements Runnable {
 					s = "UPDATE %s SET time=" + time + ", `count`=?, `earned`=?, `date`=?, `xp`=? WHERE `nick`=? AND `parkour`=?";
 					player.sendMessage(plugin.msg("newRecord", false));
 				} else {
-					s = "UPDATE %s SET `count`=?, `earned`=?, `date`=?, `xp`=? WHERE `nick`=? AND `parkour`=?";
+					s = "UPDATE %s SET `count`=?, `date`=?, WHERE `nick`=? AND `parkour`=?";
 				}
 				stat = sql.prepareStatement(String.format(s, Data.TABLE_RECORDS));
 				stat.setInt(1, c + 1);
-				stat.setInt(2, rs.getInt("earned") + o.getPrice());
-				stat.setTimestamp(3, new Timestamp(System.currentTimeMillis()));
-				stat.setInt(4, rs.getInt("xp") + o.getXp());
-				stat.setString(5, player.getName());
-				stat.setString(6, parkour.getName());
+				stat.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
+				stat.setString(3, player.getName());
+				stat.setString(4, parkour.getName());
 				stat.execute();
 				//a jaki byl ostatni medal?
 				lastMedal = o.getMedalByTime(f);
 			} else {
-				stat = sql.prepareStatement(String.format("INSERT INTO %s VALUES(null, ?, ?, ?, ?, 1, ?, ?)", Data.TABLE_RECORDS));
+				stat = sql.prepareStatement(String.format("INSERT INTO %s VALUES(null, ?, ?, ?, ?, 1)", Data.TABLE_RECORDS));
 				stat.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
 				stat.setString(2, player.getName());
 				stat.setString(3, parkour.getName());
 				stat.setFloat(4, time);
-				stat.setInt(5, o.getPrice());
-				stat.setInt(6, o.getXp());
 				stat.execute();
 				player.sendMessage(plugin.msg("newRecord", false));
 			}

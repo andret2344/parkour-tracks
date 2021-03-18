@@ -193,7 +193,7 @@ public class ParkourListeners implements Listener {
 		final Player player = e.getPlayer().getPlayer();
 		player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.5F, 0.5F);
 		if (!SchedulerManager.TELEPORT_COUNT_2.containsKey(player.getUniqueId())) {
-			if (e.getParkour().getOptions().isCountingRecords()) {
+			if (e.getParkour().getOptions().isRecordsCounting()) {
 				final float curr = PlayerManager.getParkourSinglePlayer(player).getTime();
 				if (curr < e.getParkour().getOptions().getFair()) {
 					Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "tban " + player.getName() + " 1");
@@ -241,7 +241,7 @@ public class ParkourListeners implements Listener {
 
 	@EventHandler
 	public synchronized void joinGame(final PlayerJoinGameEvent e) {
-		if (e.getParkour().getOptions().isCountingRecords() && !e.getPlayer().getPlayer().getGameMode().equals(GameMode.CREATIVE)) {
+		if (e.getParkour().getOptions().isRecordsCounting() && !e.getPlayer().getPlayer().getGameMode().equals(GameMode.CREATIVE)) {
 			e.getPlayer().getPlayer().setLevel(0);
 			e.getPlayer().getPlayer().setExp(0);
 			if (!SchedulerManager.COUNT_TIME.containsKey(e.getPlayer().getPlayer().getUniqueId()) && !PlayerManager.getParkourSinglePlayer(e.getPlayer().getPlayer()).isSpectating()) {
@@ -334,7 +334,7 @@ public class ParkourListeners implements Listener {
 		for (final ParkourGame p : ParkourManager.getAllGames()) {
 			if (p.inAnyRegion(e.getTo()) && !p.getPlayers().contains(PlayerManager.getParkourSinglePlayer(e.getPlayer())) && !PlayerManager.getParkourSinglePlayer(e.getPlayer()).isIgnoring()) {
 				p.addPlayer(e.getPlayer());
-				if (!SchedulerManager.COUNT_TIME.containsKey(e.getPlayer().getUniqueId()) && p.getOptions().isCountingRecords()) {
+				if (!SchedulerManager.COUNT_TIME.containsKey(e.getPlayer().getUniqueId()) && p.getOptions().isRecordsCounting()) {
 					final int s = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, PlayerManager.getParkourSinglePlayer(e.getPlayer()), 1, 1);
 					SchedulerManager.COUNT_TIME.put(e.getPlayer().getUniqueId(), s);
 				}
@@ -352,7 +352,7 @@ public class ParkourListeners implements Listener {
 		if (e.getEntity() instanceof Player) {
 			final Player pl = (Player) e.getEntity();
 			final ParkourGame parkour = ParkourManager.getParkour(pl);
-			if (parkour != null && !parkour.getOptions().isAllowingDamage() && parkour.getWorld().equals(pl.getWorld())) {
+			if (parkour != null && !parkour.getOptions().isDamageAllowed() && parkour.getWorld().equals(pl.getWorld())) {
 				e.setCancelled(true);
 			}
 		}

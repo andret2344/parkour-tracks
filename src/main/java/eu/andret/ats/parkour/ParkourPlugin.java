@@ -3,11 +3,13 @@
  */
 package eu.andret.ats.parkour;
 
+import eu.andret.arguments.AnnotatedCommand;
+import eu.andret.arguments.CommandManager;
+import eu.andret.arguments.api.annotation.Fallback;
 import eu.andret.ats.parkour.parkour.Parkour;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourManager;
 import eu.andret.ats.parkour.tasks.KeepConnection;
-import eu.andret.ats.parkour.util.Data;
 import lombok.Getter;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
@@ -62,7 +64,10 @@ public class ParkourPlugin extends JavaPlugin {
 		saveResource("messages.yml", false);
 		createDoors();
 		getServer().getPluginManager().registerEvents(listeners, this);
-		getCommand("parkour").setExecutor(new ParkourCommand(this));
+		final AnnotatedCommand command = CommandManager.registerCommand(ParkourCommand.class, this);
+		command.setOnInsufficientPermissionsListener(sender -> sender.sendMessage(msg("noPerms", true)));
+		command.setOnUnknownSubCommandExecutionListener(sender -> sender.sendMessage(msg("wrongArg", true)));
+		command.addArgumentMapper("parkourGame", ParkourGame.class, ParkourManager::getParkour, Fallback.ON_NULL);
 		try {
 			yamlConfiguration.load(new File(getDataFolder().getAbsolutePath() + File.separator + "messages.yml"));
 			load();
@@ -101,11 +106,11 @@ public class ParkourPlugin extends JavaPlugin {
 	}
 
 	private void connect() throws SQLException {
-		conn = DriverManager.getConnection("jdbc:mysql://" + url, user, pass);
+		conn = DriverManager.getConnection("jdbc:mysql://" + url + "&useSSL=true", user, pass);
 		try (final Statement stat = conn.createStatement()) {
 			stat.execute("CREATE DATABASE IF NOT EXISTS `" + database + "`;");
 			stat.execute("USE " + database + ";");
-			stat.execute(String.format("CREATE TABLE IF NOT EXISTS %s(id INT PRIMARY KEY AUTO_INCREMENT, date DATETIME, nick VARCHAR(64), parkour VARCHAR(64), time FLOAT, count INT, earned INT, xp INT);", Data.TABLE_RECORDS));
+			stat.execute("CREATE TABLE IF NOT EXISTS ats_parkour_records(id INT PRIMARY KEY AUTO_INCREMENT, date DATETIME, nick VARCHAR(64), parkour VARCHAR(64), time FLOAT, count INT, earned INT, xp INT);");
 		}
 	}
 
@@ -116,7 +121,7 @@ public class ParkourPlugin extends JavaPlugin {
 		} else if (yamlConfiguration.getString("admin." + path) != null) {
 			here = "admin.";
 		} else {
-			throw new NullPointerException("Invalid message");
+			throw new NullPointerException("Invalid message: " + path + " (should be error: " + err + ")");
 		}
 		String result = "";
 		if (err) {
@@ -209,39 +214,38 @@ public class ParkourPlugin extends JavaPlugin {
 		messages.put("create|c", msg("cmdCreate", false));
 		messages.put("remove|r", msg("cmdRemove", false));
 		messages.put("info", msg("cmdInfo", false));
-		messages.put("setspawn|ss", msg("cmdSetspawn", false));
+		messages.put("SetSpawn|ss", msg("cmdSetSpawn", false));
 		messages.put("recreate|rc", msg("cmdRecreate", false));
 		messages.put("start|s", msg("cmdStart", false));
 		messages.put("stop", msg("cmdStop", false));
-		messages.put("addcheckpoint|ac", msg("cmdAddcheckpoint", false));
-		messages.put("setcheckpoint|sc", msg("cmdSetcheckpoint", false));
-		messages.put("addwall|aw", msg("cmdAddwall", false));
-		messages.put("setwall|sw", msg("cmdSetwall", false));
+		messages.put("addCheckpoint|ac", msg("cmdAddCheckpoint", false));
+		messages.put("setCheckpoint|sc", msg("cmdSetCheckpoint", false));
+		messages.put("addWall|aw", msg("cmdAddWall", false));
+		messages.put("setWall|sw", msg("cmdSetWall", false));
 		messages.put("list|ls", msg("cmdList", false));
 		messages.put("ignore|i", msg("cmdIgnore", false));
 		messages.put("reload|rl", msg("cmdReload", false));
 		messages.put("sprint|sp", msg("cmdSprint", false));
-		messages.put("alwaysSpawn|as", msg("cmdAlwaysspawn", false));
-		messages.put("price|p", msg("cmdPrice", false));
-		messages.put("countingRecords|cr", msg("cmdPrice", false));
-		messages.put("allowingDamage|dmg", msg("cmdDamage", false));
+		messages.put("alwaysSpawn|as", msg("cmdAlwaysSpawn", false));
+		messages.put("recordCounting|cr", msg("cmdRecordCounting", false));
+		messages.put("damageAllowed|dmg", msg("cmdDamage", false));
 		messages.put("effect|e", msg("cmdEffect", false));
 		messages.put("boat|b", msg("cmdBoats", false));
 		messages.put("fair", msg("cmdFair", false));
-		messages.put("enabled", msg("cmdProceedable", false));
-		messages.put("modifyInventory|eq", msg("cmdModifyeq", false));
-		messages.put("bestrecord|br", msg("cmdBestrecord", false));
-		messages.put("teleportblock|tb", msg("cmdTeleportblock", false));
+		messages.put("enabled", msg("cmdEnabled", false));
+		messages.put("modifyInventory|eq", msg("cmdModifyInventory", false));
+		messages.put("bestRecord|br", msg("cmdBestRecord", false));
+		messages.put("teleportBlock|tb", msg("cmdTeleportBlock", false));
 		messages.put("teleport|tp", msg("cmdTeleport", false));
 		messages.put("fix", msg("cmdFix", false));
 		messages.put("color", msg("cmdColor", false));
 		messages.put("difficulty|d", msg("cmdDifficulty", false));
 		messages.put("available|a", msg("cmdAvailable", false));
 		messages.put("type", msg("cmdType", false));
-		messages.put("displayname|dn", msg("cmdDisplayname", false));
+		messages.put("displayName|dn", msg("cmdDisplayName", false));
 		messages.put("authors", msg("cmdAuthors", false));
 		messages.put("vip", msg("cmdVip", false));
-		messages.put("brozone", msg("cmdBronze", false));
+		messages.put("bronze", msg("cmdBronze", false));
 		messages.put("silver", msg("cmdSilver", false));
 		messages.put("gold", msg("cmdGold", false));
 		messages.put("platinum", msg("cmdPlatinum", false));
