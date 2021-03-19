@@ -7,16 +7,19 @@ import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import eu.andret.arguments.AnnotatedCommand;
 import eu.andret.arguments.CommandManager;
 import eu.andret.arguments.api.annotation.Fallback;
+import eu.andret.ats.parkour.api.FinancialProvider;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourManager;
 import eu.andret.ats.parkour.tasks.KeepConnection;
 import eu.andret.ats.parkour.util.Data;
 import eu.andret.ats.parkour.util.JSONSerializer;
 import lombok.Getter;
+import lombok.Setter;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
@@ -48,6 +51,9 @@ public class ParkourPlugin extends JavaPlugin {
 	private ItemStack exit;
 	private ParkourListeners listeners;
 	@Getter
+	@Setter
+	private FinancialProvider financialProvider;
+	@Getter
 	private final Map<String, String> messages = new LinkedHashMap<>();
 	private final YamlConfiguration yamlConfiguration = new YamlConfiguration();
 	private final String url = getConfig().getString("connection.url");
@@ -64,6 +70,17 @@ public class ParkourPlugin extends JavaPlugin {
 			setEnabled(false);
 			return;
 		}
+		financialProvider = new FinancialProvider() {
+			@Override
+			public void addMoney(final OfflinePlayer player, final double amount) {
+				// do nothing
+			}
+
+			@Override
+			public double getMoney(final OfflinePlayer player) {
+				return 0;
+			}
+		};
 		listeners = new ParkourListeners(this);
 		getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
 		if (!new File(getDataFolder(), "config.yml").exists()) {

@@ -16,6 +16,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
+import java.util.Arrays;
 
 public class DataBaseOperations implements Runnable {
 	private final Player player;
@@ -93,10 +94,8 @@ public class DataBaseOperations implements Runnable {
 			final Medal current = o.getMedalByTime(PlayerManager.getParkourSinglePlayer(player).getTime());
 			if (lastMedal.ordinal() > current.ordinal()) {
 				// How much does it cost?
-				int price = 0;
-				for (final Medal medal : Medal.values()) {
-					price += medal.getPrice();
-				}
+				final int price = Arrays.stream(Medal.values()).mapToInt(Medal::getPrice).sum();
+				plugin.getFinancialProvider().addMoney(player, price);
 				player.sendMessage(plugin.msg("achieveMedal", false).replace("%MEDAL%", current.name()).replace("%PRICE%", "" + price));
 			}
 			rs.close();
