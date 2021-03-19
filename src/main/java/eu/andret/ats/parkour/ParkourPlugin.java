@@ -9,7 +9,6 @@ import eu.andret.arguments.CommandManager;
 import eu.andret.arguments.api.annotation.Fallback;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourManager;
-import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.tasks.KeepConnection;
 import eu.andret.ats.parkour.util.Data;
 import eu.andret.ats.parkour.util.JSONSerializer;
@@ -127,7 +126,7 @@ public class ParkourPlugin extends JavaPlugin {
 	}
 
 	private void setupDatabase() {
-		final boolean databaseEnabled = getConfig().getBoolean("database.enabled");
+		final boolean databaseEnabled = getConfig().getBoolean("database.enabled", false);
 		if (!databaseEnabled) {
 			System.out.println("[atsParkour] Database is disabled. In order to save records, enable it in config.");
 			return;
@@ -303,7 +302,10 @@ public class ParkourPlugin extends JavaPlugin {
 			return;
 		}
 		final Sign sign = (Sign) location.getBlock().getState();
-		IntStream.of(0, 1, 2, 3).forEach(x -> sign.setLine(x, replace(getConfig().getString("recordSign.line" + (x + 1)), player, time).replace('&', '\u00A7')));
+		IntStream.of(0, 1, 2, 3).forEach(x -> {
+			final String lineText = getConfig().getString("recordSign.line" + (x + 1));
+			sign.setLine(x, replace(String.valueOf(lineText), player, time).replace('&', '\u00A7'));
+		});
 		sign.update();
 	}
 
@@ -315,13 +317,6 @@ public class ParkourPlugin extends JavaPlugin {
 				.replace("%MINUTES%", ("" + (minutes < 10 ? "0" + minutes : minutes)).substring(0, 2))
 				.replace("%SECONDS%", "" + ("" + (secs < 10 ? "0" + secs : secs)).substring(0, 2))
 				.replace("%MILLISECONDS%", "" + ("" + (milliseconds < 10 ? "0" + milliseconds : milliseconds)).substring(0, 2));
-	}
-
-	public void stopScheduling(final ParkourPlayer player) {
-		if (teleportCount.containsKey(player.getPlayer().getUniqueId())) {
-			getServer().getScheduler().cancelTask(teleportCount.get(player.getPlayer().getUniqueId()));
-			player.teleportToLobby();
-		}
 	}
 
 	public Map<UUID, Integer> getTeleportCount() {

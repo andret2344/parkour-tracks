@@ -31,11 +31,13 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Boat;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
@@ -293,28 +295,25 @@ public class ParkourListeners implements Listener {
 
 	@EventHandler
 	public void quitGame(final PlayerQuitGameEvent event) {
-		if (plugin.getPlayerTimeCounters().containsKey(event.getParkourPlayer().getPlayer().getUniqueId())) {
-			plugin.getServer().getScheduler().cancelTask(plugin.getPlayerTimeCounters().get(event.getParkourPlayer().getPlayer().getUniqueId()));
-			PlayerManager.getParkourSinglePlayer(event.getParkourPlayer().getPlayer()).reset();
-			plugin.getPlayerTimeCounters().remove(event.getParkourPlayer().getPlayer().getUniqueId());
+		final Player player = event.getParkourPlayer().getPlayer();
+		if (plugin.getPlayerTimeCounters().containsKey(player.getUniqueId())) {
+			plugin.getServer().getScheduler().cancelTask(plugin.getPlayerTimeCounters().get(player.getUniqueId()));
+			PlayerManager.getParkourSinglePlayer(player).reset();
+			plugin.getPlayerTimeCounters().remove(player.getUniqueId());
 		}
-		if (event.getParkourGame().isRunning() && !PlayerManager.getParkourSinglePlayer(event.getParkourPlayer().getPlayer()).isIgnoring()) {
-			event.getParkourPlayer().getPlayer().getInventory().setItem(8, new ItemStack(Material.AIR));
+		if (event.getParkourGame().isRunning() && !PlayerManager.getParkourSinglePlayer(player).isIgnoring()) {
+			player.getInventory().setItem(8, new ItemStack(Material.AIR));
 			for (final Entry<PotionEffectType, Integer> entry : event.getParkourGame().getOptions().getEffects().entrySet()) {
-				event.getParkourPlayer().getPlayer().removePotionEffect(entry.getKey());
+				player.removePotionEffect(entry.getKey());
 			}
 		}
-		if (plugin.getTeleportCount().containsKey(event.getParkourPlayer().getPlayer().getUniqueId())) {
-//			if (plugin.getTeleportCount2().get(event.getParkourPlayer().getPlayer().getUniqueId()).getLeastTime() > 0) {
-//				event.getParkourPlayer().getPlayer().sendMessage(plugin.msg("teleportationCanceled", false));
-//			}
-			plugin.getServer().getScheduler().cancelTask(plugin.getTeleportCount().get(event.getParkourPlayer().getPlayer().getUniqueId()));
-			plugin.getTeleportCount().remove(event.getParkourPlayer().getPlayer().getUniqueId());
+		if (plugin.getTeleportCount().containsKey(player.getUniqueId())) {
+			player.sendMessage(plugin.msg("teleportationCanceled", false));
+			plugin.getServer().getScheduler().cancelTask(plugin.getTeleportCount().get(player.getUniqueId()));
+			plugin.getTeleportCount().remove(player.getUniqueId());
 		}
-		PlayerManager.remove(event.getParkourPlayer().getPlayer());
-		for (final Entry<PotionEffectType, Integer> entry : event.getParkourGame().getOptions().getEffects().entrySet()) {
-			event.getParkourPlayer().getPlayer().removePotionEffect(entry.getKey());
-		}
+		event.getParkourGame().getOptions().getEffects().keySet().forEach(player::removePotionEffect);
+		PlayerManager.remove(player);
 	}
 
 	@EventHandler(priority = EventPriority.LOW)
@@ -367,12 +366,7 @@ public class ParkourListeners implements Listener {
 		if (event.getPlayer().hasPermission("ats.parkour.modify")) {
 			return;
 		}
-		ParkourManager.getAllGames().stream()
-				.map(ParkourGame::getAllRegions)
-				.flatMap(Collection::stream)
-				.filter(Objects::nonNull)
-				.filter(r -> r.contains(event.getBlock().getLocation()) && new BukkitWorld(event.getPlayer().getWorld()).equals(r.getCuboidRegion().getWorld()))
-				.findFirst().ifPresent(r -> event.setCancelled(true));
+		universalBlockEventHandler(event, event.getPlayer());
 	}
 
 	@EventHandler
@@ -380,12 +374,17 @@ public class ParkourListeners implements Listener {
 		if (event.getPlayer().hasPermission("ats.parkour.modify")) {
 			return;
 		}
+		universalBlockEventHandler(event, event.getPlayer());
+	}
+
+	private void universalBlockEventHandler(final BlockEvent event, final Player player) {
 		ParkourManager.getAllGames().stream()
 				.map(ParkourGame::getAllRegions)
 				.flatMap(Collection::stream)
 				.filter(Objects::nonNull)
-				.filter(r -> r.contains(event.getBlock().getLocation()) && r.getCuboidRegion().getWorld().equals(new BukkitWorld(event.getPlayer().getWorld())))
-				.findFirst().ifPresent(r -> event.setCancelled(true));
+				.filter(r -> r.contains(event.getBlock().getLocation()) && new BukkitWorld(player.getWorld()).equals(r.getCuboidRegion().getWorld()))
+				.findFirst()
+				.ifPresent(r -> ((Cancellable) event).setCancelled(true));
 	}
 
 	@EventHandler

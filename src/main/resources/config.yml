@@ -4,16 +4,11 @@ database:
   user: root
   pass: ''
   dbname: ats_parkour
+
 door:
   name: 'Exit!'
   lore: 'Click it/nto exit.'
-lobby:
-  world: -1
-  x: -1
-  y: -1
-  z: -1
-  yaw: -1
-  pitch: -1
+
 recordSign:
   line1: '&2&lRECORD'
   line2: '%MINUTES%:%SECONDS%.%MILLISECONDS%'
