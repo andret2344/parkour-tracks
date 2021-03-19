@@ -70,7 +70,7 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 	@Argument(permission = "ats.parkour.list", description = "Lists all parkour games", aliases = "ls")
 	public String list() {
 		if (ParkourManager.getAllGames().isEmpty()) {
-			return msg("emptyList", false);
+			return msg("noParkours", false);
 		}
 		sender.sendMessage(msg("listHeader", false).replace("%COUNT%", String.valueOf(ParkourManager.getAllGames().size())));
 		final List<ParkourGame> allGames = ParkourManager.getAllGames();
@@ -99,19 +99,19 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 	@Argument(permission = "ats.parkour.ignore", executorType = ExecutorType.PLAYER, description = "Allows sender to ignore parkour regions interaction", aliases = "i")
 	public String ignore() {
 		// FIXME: Nor working!
-		final Player pl = (Player) sender;
-		final ParkourPlayer parkourPlayer = PlayerManager.getParkourSinglePlayer(pl);
+		final Player player = (Player) sender;
+		final ParkourPlayer parkourPlayer = PlayerManager.getParkourSinglePlayer(player);
 		if (parkourPlayer.isIgnoring()) {
 			parkourPlayer.setIgnoring(false);
 			ParkourManager.getAllGames().stream()
-					.filter(p -> p.inAnyRegion(pl.getLocation()))
-					.forEach(p -> p.addPlayer(pl));
+					.filter(p -> p.inAnyRegion(player.getLocation()))
+					.forEach(p -> p.addPlayer(player));
 			return msg("ignoreStop", false);
 		}
 		parkourPlayer.setIgnoring(true);
-		final ParkourGame parkour = ParkourManager.getParkour(pl);
+		final ParkourGame parkour = ParkourManager.getParkour(player);
 		if (parkour != null) {
-			parkour.removePlayer(pl);
+			parkour.removePlayer(player);
 		}
 		return msg("ignoreStart", false);
 	}
@@ -147,11 +147,13 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 	@Argument(permission = "ats.parkour.help", description = "Shows help page", aliases = "?")
 	public void help(final int page) {
 		final Map<String, String> messages = plugin.getMessages();
-		final int maxPages = messages.size() / 5 + 1;
+		final int maxPages = (int) Math.ceil(messages.size() / 5.);
 		final int skip = 5 * (page - 1);
+		if (page > maxPages) {
+			return;
+		}
 		sender.sendMessage(msg("currentPage", false)
 				.replace("%PAGE%", String.valueOf(page))
-				// FIXME: maxGaes is too large by 1
 				.replace("%PAGES%", String.valueOf(maxPages)));
 		messages.entrySet()
 				.stream()
@@ -207,7 +209,9 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		if (parkourGame.isRunning()) {
 			return msg("alreadyStarted", true);
 		}
-		// FIXME: No checkpoints check!
+		if (parkourGame.getCheckpointList().size() < 2) {
+			return msg("noCheckpoint", true);
+		}
 		parkourGame.start();
 		ParkourManager.sortGames();
 		return msg("gameStarted", false).replace("%NAME%", parkourGame.getName());
@@ -267,11 +271,10 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		parkourGame.addPlayer((Player) sender);
 		final ParkourPlayer parkourPlayer = PlayerManager.getParkourSinglePlayer((Player) sender);
 		parkourPlayer.reset();
-		// TODO: Messages to yml
 		if (!parkourPlayer.teleportToSpawn()) {
-			return "No parkour spawn found!";
+			return msg("noSpawn", true);
 		}
-		return "Teleported";
+		return msg("teleported", false).replace("%NAME%", parkourGame.getName());
 	}
 
 	@Fallback
@@ -326,8 +329,7 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 			return msg("negativeNumber", true);
 		}
 		if (id > parkourGame.getLastCheckpointId()) {
-			// TODO: Message to yml!
-			return "Too large!";
+			return msg("tooLargeNumber", true);
 		}
 		final Location location = ((Player) sender).getLocation();
 		parkourGame.setCheckpoint(id, new Checkpoint(selection, location.getYaw(), location.getPitch()));
@@ -364,8 +366,7 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 			return msg("negativeNumber", true);
 		}
 		if (id > parkourGame.getLastCheckpointId()) {
-			// TODO: Message to yml!
-			return "Too large!";
+			return msg("tooLargeNumber", true);
 		}
 		parkourGame.setWall(id - 1, selection);
 		return msg("setWall", false).replace("%WALL_ID%", String.valueOf(id));
@@ -378,11 +379,14 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 
 	@Argument(permission = "ats.parkour.effects", description = "Shows current parkour effects")
 	public String effects(@Param("parkourGame") final ParkourGame parkourGame) {
-		// FIXME: No effects is empty line,
-		return parkourGame.getOptions().getEffects().entrySet()
+		final List<String> effects = parkourGame.getOptions().getEffects().entrySet()
 				.stream()
 				.map(entry -> msg("oneEffect", false).replace("%EFFECT%", entry.getKey().getName()).replace("%AMPLIFIER%", String.valueOf(entry.getValue())))
-				.collect(Collectors.joining("\n"));
+				.collect(Collectors.toList());
+		if (effects.isEmpty()) {
+			return null;
+		}
+		return String.join("\n", effects);
 	}
 
 	@Fallback
@@ -414,7 +418,6 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 
 	@Argument(permission = "ats.parkour.sprintForced", description = "Sets value of sprintForced flag")
 	public String sprintForced(@Param("parkourGame") final ParkourGame parkourGame, final boolean sprintForced) {
-		// TODO: tets it better
 		parkourGame.getOptions().setSprintForced(sprintForced);
 		return msg("setSprintForced", false).replace("%SPRINT_FORCED%", String.valueOf(sprintForced));
 	}
