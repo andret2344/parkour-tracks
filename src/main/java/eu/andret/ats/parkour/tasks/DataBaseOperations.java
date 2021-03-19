@@ -6,9 +6,7 @@ package eu.andret.ats.parkour.tasks;
 import eu.andret.ats.parkour.ParkourPlugin;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.player.PlayerManager;
-import eu.andret.ats.parkour.util.Data;
 import eu.andret.ats.parkour.util.Medal;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Sign;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -40,81 +38,70 @@ public class DataBaseOperations implements Runnable {
 	public void run() {
 		final ParkourGame.Options o = parkour.getOptions();
 		try {
-			//przeszedlem kolejny raz
+			// Another win
 			PreparedStatement stat;
 			if (!player.hasPermission("ats.parkour.ignorerecords")) {
-				//czy moj czas jest najlepszy?
-				stat = sql.prepareStatement(String.format("SELECT time FROM %s "
-						+ "WHERE parkour=? ORDER BY `time` ASC LIMIT 1", Data.TABLE_RECORDS));
+				// Is my time the best?
+				stat = sql.prepareStatement("SELECT time FROM ats_parkour_records WHERE parkour = ? ORDER BY time ASC LIMIT 1");
 				stat.setString(1, parkour.getName());
 				final ResultSet rs = stat.executeQuery();
 				if (!rs.next() || rs.getFloat("time") > time) {
-					//tak, jest najlepszy lub nie bylo zadnego
+					// Is the best or the only one
 					player.sendMessage(plugin.msg("generalRecord", false));
 					updateSign(plugin, player.getName(), time, parkour);
 				}
 				rs.close();
 			}
-			//biore wszystkie dane gracza
-			stat = sql.prepareStatement(String.format("SELECT * FROM %s "
-					+ "WHERE nick=? AND parkour=?", Data.TABLE_RECORDS));
+			// Collect players data
+			stat = sql.prepareStatement("SELECT * FROM ats_parkour_records WHERE nick = ? AND parkour = ?");
 			stat.setString(1, player.getName());
 			stat.setString(2, parkour.getName());
 			final ResultSet rs = stat.executeQuery();
 
 			int c = 0;
-			//czy byl wpis?
+			// Was there the record?
 			if (rs.next()) {
 				c = rs.getInt("count");
 				final float f = rs.getFloat("time");
 				final String s;
-				//czy najlepszy?
+				// Is best?
 				if (f > time) {
-					s = "UPDATE %s SET time=" + time + ", `count`=?, `earned`=?, `date`=?, `xp`=? WHERE `nick`=? AND `parkour`=?";
+					s = "UPDATE ats_parkour_records SET time = " + time + ", count = ?, date = ? WHERE nick = ? AND parkour = ?";
 					player.sendMessage(plugin.msg("newRecord", false));
 				} else {
-					s = "UPDATE %s SET `count`=?, `earned`=?, `date`=?, `xp`=? WHERE `nick`=? AND `parkour`=?";
+					s = "UPDATE ats_parkour_records SET count = ?, date = ? WHERE nick = ? AND parkour = ?";
 				}
-				stat = sql.prepareStatement(String.format(s, Data.TABLE_RECORDS));
+				stat = sql.prepareStatement(s);
 				stat.setInt(1, c + 1);
-				stat.setInt(2, rs.getInt("earned") + o.getPrice());
-				stat.setTimestamp(3, new Timestamp(System.currentTimeMillis()));
-				stat.setInt(4, rs.getInt("xp") + o.getXp());
-				stat.setString(5, player.getName());
-				stat.setString(6, parkour.getName());
+				stat.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
+				stat.setString(3, player.getName());
+				stat.setString(4, parkour.getName());
 				stat.execute();
-				//a jaki byl ostatni medal?
+				// What medal was previously?
 				lastMedal = o.getMedalByTime(f);
 			} else {
-				stat = sql.prepareStatement(String.format("INSERT INTO %s VALUES(null, ?, ?, ?, ?, 1, ?, ?)", Data.TABLE_RECORDS));
+				stat = sql.prepareStatement("INSERT INTO ats_parkour_records VALUES(null, ?, ?, ?, ?, 1)");
 				stat.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
 				stat.setString(2, player.getName());
 				stat.setString(3, parkour.getName());
 				stat.setFloat(4, time);
-				stat.setInt(5, o.getPrice());
-				stat.setInt(6, o.getXp());
 				stat.execute();
 				player.sendMessage(plugin.msg("newRecord", false));
 			}
 			player.sendMessage(plugin.msg("howMany", false).replace("%COUNT%", c + 1 + ""));
-			//jaki dac medal?
+			// What medal to give?
 			final Medal current = o.getMedalByTime(PlayerManager.getParkourSinglePlayer(player).getTime());
 			if (lastMedal.ordinal() > current.ordinal()) {
-				//ile za niego i poprzednie zarabia?
+				// How much does it cost?
 				int price = 0;
 				for (final Medal medal : Medal.values()) {
 					price += medal.getPrice();
 				}
 				player.sendMessage(plugin.msg("achieveMedal", false).replace("%MEDAL%", current.name()).replace("%PRICE%", "" + price));
-				stat = sql.prepareStatement(String.format("UPDATE %s SET "
-						+ "`earned`=`earned`+" + price + " WHERE nick=? AND parkour=?", Data.TABLE_RECORDS));
-				stat.setString(1, player.getName());
-				stat.setString(2, parkour.getName());
-				stat.execute();
 			}
 			rs.close();
 		} catch (final Exception ex) {
-			Bukkit.getServer().getLogger().throwing(getClass().getName(), "run", ex);
+			plugin.getServer().getLogger().throwing(getClass().getName(), "run", ex);
 		}
 	}
 
@@ -133,12 +120,12 @@ public class DataBaseOperations implements Runnable {
 
 	private static String replace(String s, final String nick, final double time) {
 		s = s.replace("%NICK%", nick);
-		final int mins = (int) time / 60;
-		s = s.replace("%MINUTES%", ("" + (mins < 10 ? "0" + mins : mins)).substring(0, 2));
+		final int minutes = (int) time / 60;
+		s = s.replace("%MINUTES%", ("" + (minutes < 10 ? "0" + minutes : minutes)).substring(0, 2));
 		final int secs = (int) time % 60;
 		s = s.replace("%SECONDS%", "" + ("" + (secs < 10 ? "0" + secs : secs)).substring(0, 2));
-		final int milisecs = (int) Math.round((time % 1) * 100);
-		s = s.replace("%MILISECONDS%", "" + ("" + (milisecs < 10 ? "0" + milisecs : milisecs)).substring(0, 2));
+		final int milliseconds = (int) Math.round((time % 1) * 100);
+		s = s.replace("%MILLISECONDS%", "" + ("" + (milliseconds < 10 ? "0" + milliseconds : milliseconds)).substring(0, 2));
 		return s;
 	}
 }

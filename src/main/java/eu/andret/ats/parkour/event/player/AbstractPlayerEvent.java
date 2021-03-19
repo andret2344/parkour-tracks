@@ -27,7 +27,7 @@ public class AbstractPlayerEvent extends Event {
 	/**
 	 * The Parkour that has been started.
 	 */
-	private ParkourGame parkour;
+	private ParkourGame parkourGame;
 
 	/**
 	 * The player that triggered the event.

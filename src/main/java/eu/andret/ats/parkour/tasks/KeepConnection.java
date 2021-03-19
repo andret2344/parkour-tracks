@@ -4,9 +4,9 @@
 package eu.andret.ats.parkour.tasks;
 
 import eu.andret.ats.parkour.ParkourPlugin;
-import eu.andret.ats.parkour.util.Data;
 import lombok.AllArgsConstructor;
-import org.bukkit.Bukkit;
+
+import java.sql.PreparedStatement;
 
 @AllArgsConstructor
 public class KeepConnection implements Runnable {
@@ -14,10 +14,10 @@ public class KeepConnection implements Runnable {
 
 	@Override
 	public void run() {
-		try {
-			plugin.getConnection().prepareStatement("SELECT id FROM " + Data.TABLE_RECORDS + " WHERE id<0").executeQuery();
+		try (final PreparedStatement statement = plugin.getConnection().prepareStatement("SELECT id FROM ats_parkour_records WHERE id < 0")) {
+			statement.executeQuery();
 		} catch (final Exception ex) {
-			Bukkit.getServer().getLogger().throwing(getClass().getName(), "run", ex);
+			plugin.getServer().getLogger().throwing(getClass().getName(), "run", ex);
 		}
 	}
 }

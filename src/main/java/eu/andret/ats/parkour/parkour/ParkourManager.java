@@ -9,20 +9,22 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @UtilityClass
 public final class ParkourManager {
-	private final List<ParkourGame> games = new ArrayList<>();
+	private final List<ParkourGame> PARKOUR_GAMES = new ArrayList<>();
 	private Location lobby;
 
-	public void addParkour(final ParkourGame parkour) {
-		games.add(parkour);
+	public void addParkour(final ParkourGame parkourGame) {
+		PARKOUR_GAMES.add(parkourGame);
 	}
 
 	public void sortGames() {
-		Collections.sort(games);
+		Collections.sort(PARKOUR_GAMES);
 	}
 
 	public Location getLobbyLocation() {
@@ -34,25 +36,32 @@ public final class ParkourManager {
 	}
 
 	public List<ParkourGame> getAllGames() {
-		return new ArrayList<>(games);
+		return new ArrayList<>(PARKOUR_GAMES);
 	}
 
 	public static ParkourGame getParkour(final Player player) {
-		return games.stream()
+		return PARKOUR_GAMES.stream()
 				.filter(parkour -> parkour.getPlayers().stream().map(ParkourPlayer::getPlayer).anyMatch(player::equals))
 				.findAny()
 				.orElse(null);
 	}
 
 	public static List<Player> getPlayersInGames() {
-		return games.stream().parallel().collect(ArrayList::new, (l, p) -> p.getPlayers().forEach(r -> l.add(r.getPlayer())), ArrayList::addAll);
+		return PARKOUR_GAMES.stream()
+				.map(ParkourGame::getPlayers)
+				.flatMap(Collection::stream)
+				.map(ParkourPlayer::getPlayer)
+				.collect(Collectors.toList());
 	}
 
 	public static ParkourGame getParkour(final String name) {
-		return games.stream().filter(game -> game.getName().equals(name)).findAny().orElse(null);
+		return PARKOUR_GAMES.stream()
+				.filter(game -> game.getName().equals(name))
+				.findAny()
+				.orElse(null);
 	}
 
-	public static void removeParkour(final ParkourGame parkour) {
-		games.remove(parkour);
+	public static void removeParkour(final ParkourGame parkourGame) {
+		PARKOUR_GAMES.remove(parkourGame);
 	}
 }

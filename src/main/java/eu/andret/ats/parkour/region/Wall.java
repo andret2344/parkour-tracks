@@ -17,8 +17,8 @@ import org.bukkit.World;
 @ToString
 @EqualsAndHashCode(callSuper = true)
 public class Wall extends AbstractRegion {
-	public Wall(final CuboidRegion region) {
-		super(region);
+	public Wall(final CuboidRegion cuboidRegion) {
+		super(cuboidRegion);
 	}
 
 	public Wall(final World world) {

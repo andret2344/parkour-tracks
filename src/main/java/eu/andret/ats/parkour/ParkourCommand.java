@@ -10,12 +10,17 @@ import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.world.AbstractWorld;
+import eu.andret.arguments.AnnotatedCommandExecutor;
+import eu.andret.arguments.api.annotation.Argument;
+import eu.andret.arguments.api.annotation.BaseCommand;
+import eu.andret.arguments.api.annotation.Fallback;
+import eu.andret.arguments.api.annotation.Param;
+import eu.andret.arguments.api.entity.ExecutorType;
 import eu.andret.ats.parkour.parkour.Parkour;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourManager;
 import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.player.PlayerManager;
-import eu.andret.ats.parkour.region.AbstractRegion;
 import eu.andret.ats.parkour.region.Checkpoint;
 import eu.andret.ats.parkour.region.GameRegion;
 import eu.andret.ats.parkour.region.Wall;
@@ -23,1224 +28,775 @@ import eu.andret.ats.parkour.tasks.DataBaseOperations;
 import eu.andret.ats.parkour.tasks.RepairSignTask;
 import eu.andret.ats.parkour.tasks.TopPlayersDataOperations;
 import eu.andret.ats.parkour.util.Data;
-import lombok.SneakyThrows;
-import org.bukkit.Bukkit;
+import lombok.EqualsAndHashCode;
 import org.bukkit.ChatColor;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
-import org.jetbrains.annotations.NotNull;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
-public class ParkourCommand implements CommandExecutor {
-	private final WorldEditPlugin wep;
-	private final ParkourPlugin plugin;
+@BaseCommand("parkour")
+@EqualsAndHashCode(callSuper = true)
+public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
+	WorldEditPlugin worldEdit;
 
-	public ParkourCommand(final ParkourPlugin plugin) {
-		this.plugin = plugin;
-		wep = (WorldEditPlugin) plugin.getServer().getPluginManager().getPlugin("WorldEdit");
+	public ParkourCommand(final CommandSender sender, final ParkourPlugin plugin) {
+		super(sender, plugin);
+		worldEdit = (WorldEditPlugin) plugin.getServer().getPluginManager().getPlugin("WorldEdit");
 	}
 
-	@SneakyThrows
-	@Override
-	public boolean onCommand(@NotNull final CommandSender sender, @NotNull final Command cmd, @NotNull final String label, @NotNull final String[] args) {
-		if (cmd.getName().equalsIgnoreCase("parkour")) {
-			if (args.length == 0) {
-				if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.main")) {
-					plugin.getMessages().entrySet().stream()
-							.map(entry -> "§2/pk " + entry.getKey() + "§r - " + entry.getValue())
-							.forEach(sender::sendMessage);
-				} else {
-					sender.sendMessage(msg("noPerms", true));
-				}
-			} else {
-				if (args[0].equalsIgnoreCase("create") || args[0].equalsIgnoreCase("c")) {
-					if (sender instanceof Player && sender.hasPermission("ats.parkour.create")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageCreate", true));
-						} else {
-							if (ParkourManager.getLobbyLocation() != null) {
-								final LocalSession session = wep.getSession((Player) sender);
-								final Region sel =
-										session.getSelection(new BukkitWorld(((Player) sender).getWorld()));
-								if (sel != null) {
-									final AbstractWorld lw = new BukkitWorld(((Player) sender).getWorld());
-									final CuboidRegion cr = new CuboidRegion(lw, sel.getMaximumPoint(), sel.getMinimumPoint());
-									final String name = args[1];
-									if (name.matches("[a-zA-Z0-9_-]+")) {
-										final ParkourGame parkour = ParkourManager.getParkour(name);
-										if (parkour == null) {
-											final Parkour pk = new Parkour(name, new GameRegion(cr), ((Player) sender).getLocation().getWorld());
-											sender.sendMessage(msg("gameCreated", false).replace("%GAMENAME%", pk.getName()));
-										} else {
-											sender.sendMessage(msg("gameExists", true).replace("%GAMENAME%", name));
-										}
-									} else {
-										sender.sendMessage(msg("wrongName", true));
-									}
-								} else {
-									sender.sendMessage(msg("wrongSel", true));
-								}
-							} else {
-								sender.sendMessage(msg("lobbyFirst", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("remove") || args[0].equalsIgnoreCase("r")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.remove")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageRemove", true));
-						} else {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								ParkourManager.removeParkour(parkour);
-								sender.sendMessage(msg("gameRemoved", false).replace("%GAMENAME%", args[1]));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("setspawn") || args[0].equalsIgnoreCase("ss")) {
-					if (sender instanceof Player && sender.hasPermission("ats.parkour.setspawn")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageSetspawn", true));
-						} else {
-							final LocalSession session = wep.getSession((Player) sender);
-							final Region sel =
-									session.getSelection(new BukkitWorld(((Player) sender).getWorld()));
-							if (sel != null) {
-								final AbstractWorld lw = new BukkitWorld(((Player) sender).getWorld());
-								final CuboidRegion cr = new CuboidRegion(lw, sel.getMaximumPoint(), sel.getMinimumPoint());
-								final ParkourGame pk = ParkourManager.getParkour(args[1]);
-								if (pk != null) {
-									final Location l = ((Player) sender).getLocation();
-									pk.setSpawn(new Checkpoint(cr, l.getYaw(), l.getPitch()));
-									sender.sendMessage(msg("setSpawn", false));
-								} else {
-									sender.sendMessage(msg("noGame", true));
-								}
-							} else {
-								sender.sendMessage(msg("wrongSel", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("addcheckpoint") || args[0].equalsIgnoreCase("ac")) {
-					if (sender instanceof Player && sender.hasPermission("ats.parkour.addcheckpoint")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageAddcheckpoint", true));
-						} else {
-							final LocalSession session = wep.getSession((Player) sender);
-							final Region sel =
-									session.getSelection(new BukkitWorld(((Player) sender).getWorld()));
-							if (sel != null) {
-								final AbstractWorld lw = new BukkitWorld(((Player) sender).getWorld());
-								final CuboidRegion cr = new CuboidRegion(lw, sel.getMaximumPoint(), sel.getMinimumPoint());
-								final ParkourGame pk = ParkourManager.getParkour(args[1]);
-								if (pk != null) {
-									if (pk.getSpawn() != null) {
-										final Location l = ((Player) sender).getLocation();
-										pk.addCheckpoint(new Checkpoint(cr, l.getYaw(), l.getPitch()));
-										sender.sendMessage(msg("setCheckpoint", false).replace("%CHECKPOINTID%", String.valueOf(pk.getCheckpointList().size() - 1)));
-									} else {
-										sender.sendMessage(msg("noSpawn", true));
-									}
-								} else {
-									sender.sendMessage(msg("noGame", true));
-								}
-							} else {
-								sender.sendMessage(msg("wrongSel", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("setcheckpoint") || args[0].equalsIgnoreCase("sc")) {
-					if (sender instanceof Player && sender.hasPermission("ats.parkour.setcheckpoint")) {
-						if (args.length == 1 || args.length == 2) {
-							sender.sendMessage(msg("usageSetcheckpoint", true));
-						} else {
-							try {
-								final LocalSession session = wep.getSession((Player) sender);
-								final Region sel =
-										session.getSelection(new BukkitWorld(((Player) sender).getWorld()));
-								if (sel != null) {
-									final AbstractWorld lw = new BukkitWorld(((Player) sender).getWorld());
-									final CuboidRegion cr = new CuboidRegion(lw, sel.getMaximumPoint(), sel.getMinimumPoint());
-									final int id = Integer.parseInt(args[1]);
-									if (id > 0) {
-										final ParkourGame pk = ParkourManager.getParkour(args[2]);
-										if (pk != null) {
-											final Location l = ((Player) sender).getLocation();
-											pk.setCheckpoint(id, new Checkpoint(cr, l.getYaw(), l.getPitch()));
-											sender.sendMessage(msg("setCheckpoint", false).replace("%CHECKPOINTID%", args[1]));
-										} else {
-											sender.sendMessage(msg("noGame", true));
-										}
-									} else {
-										sender.sendMessage(msg("negativeNumber", true));
-									}
-								} else {
-									sender.sendMessage(msg("wrongSel", true));
-								}
-							} catch (final NumberFormatException ex) {
-								sender.sendMessage(msg("noNumber", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("start") || args[0].equalsIgnoreCase("s")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.start")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageStart", true));
-						} else {
-							final ParkourGame pk = ParkourManager.getParkour(args[1]);
-							if (pk != null) {
-								if (pk.getSpawn() != null) {
-									final ParkourGame.Options o = pk.getOptions();
-									if (o.getBronze() != 0 && o.getSilver() != 0 && o.getGold() != 0 && o.getPlatinum() != 0) {
-										if (!pk.isRunning()) {
-											sender.sendMessage(msg("gameStarted", false).replace("%GAMENAME%", args[1]));
-											pk.start();
-										} else {
-											sender.sendMessage(msg("alreadyStarted", true));
-										}
-									} else {
-										sender.sendMessage(msg("medalsFirst", true));
-									}
-								} else {
-									sender.sendMessage(msg("noSpawn", true));
-								}
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("recreate") || args[0].equalsIgnoreCase("rc")) {
-					if (sender instanceof Player && sender.hasPermission("ats.parkour.recreate")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageRecreate", true));
-						} else {
-							final ParkourGame pk = ParkourManager.getParkour(args[1]);
-							if (pk != null) {
-								final LocalSession session = wep.getSession((Player) sender);
-								final Region sel =
-										session.getSelection(new BukkitWorld(((Player) sender).getWorld()));
-								if (sel != null) {
-									final AbstractWorld lw = new BukkitWorld(((Player) sender).getWorld());
-									final CuboidRegion cr = new CuboidRegion(lw, sel.getMaximumPoint(), sel.getMinimumPoint());
-									pk.getGameRegion().setRegion(cr);
-									sender.sendMessage(msg("gameRecreated", false));
-								} else {
-									sender.sendMessage(msg("wrongSel", true));
-								}
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("fix")) {
-					if (sender instanceof Player && sender.hasPermission("ats.parkour.fix")) {
-						for (final ParkourGame p : ParkourManager.getAllGames()) {
-							Bukkit.getScheduler().runTaskAsynchronously(plugin, new RepairSignTask(plugin, p));
-						}
-						sender.sendMessage(msg("successFix", false));
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("stop")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.stop")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageStop", true));
-						} else {
-							final ParkourGame pk = ParkourManager.getParkour(args[1]);
-							if (pk != null) {
-								if (pk.isRunning()) {
-									pk.stop();
-									sender.sendMessage(msg("gameStopped", false).replace("%GAMENAME%", args[1]));
-								} else {
-									sender.sendMessage(msg("alreadyStopped", true));
-								}
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("top")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.top")) {
-						int i;
-						if (args.length == 1) {
-							sender.sendMessage("usageTop");
-						} else {
-							if (args.length == 2) {
-								i = 10;
-							} else {
-								try {
-									i = Integer.parseInt(args[2]);
-								} catch (final NumberFormatException ex) {
-									i = 10;
-								}
-							}
-							final ParkourGame pk = ParkourManager.getParkour(args[1]);
-							if (pk != null) {
-								Bukkit.getScheduler().runTaskAsynchronously(plugin, new TopPlayersDataOperations(plugin, pk, i, result -> {
-									int j = 1;
-									for (final Entry<String, Float> entry : result.getResult().entrySet()) {
-										sender.sendMessage(msg("topRecord", false).replace("%NUMBER%", "" + j++).replace("%PLAYER%", entry.getKey()).replace("%TIME%", "" + entry.getValue()));
-									}
-								}));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("ignore") || args[0].equalsIgnoreCase("i")) {
-					if (sender instanceof Player && sender.hasPermission("ats.parkour.ignore")) {
-						final Player pl = (Player) sender;
-						final ParkourPlayer lp = PlayerManager.getParkourSinglePlayer(pl);
-						if (lp.isIgnoring()) {
-							lp.setIgnoring(false);
-							sender.sendMessage(msg("ignoreStop", false));
-							for (final ParkourGame p : ParkourManager.getAllGames()) {
-								if (p.inAnyRegion(pl.getLocation())) {
-									p.addPlayer(pl);
-								}
-							}
-						} else {
-							lp.setIgnoring(true);
-							sender.sendMessage(msg("ignoreStart", false));
-							final ParkourGame parkour = ParkourManager.getParkour(pl);
-							if (parkour != null) {
-								parkour.removePlayer(pl);
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("spectator") || args[0].equalsIgnoreCase("spec")) {
-					if (sender instanceof Player && sender.hasPermission("ats.parkour.spectator")) {
-						final Player pl = (Player) sender;
-						final ParkourPlayer lp = PlayerManager.getParkourSinglePlayer(pl);
-						if (lp.isSpectating()) {
-							lp.setSpectating(false);
-							Bukkit.getOnlinePlayers().forEach(p -> p.showPlayer(plugin, pl));
-							sender.sendMessage(msg("spectatorStop", false));
-							for (final ParkourGame p : ParkourManager.getAllGames()) {
-								if (p.inAnyRegion(pl.getLocation())) {
-									p.addPlayer(pl);
-								}
-							}
-						} else {
-							lp.setSpectating(true);
-							Bukkit.getOnlinePlayers().forEach(p -> p.hidePlayer(plugin, pl));
-							sender.sendMessage(msg("spectatorStart", false));
-							final ParkourGame parkour = ParkourManager.getParkour(pl);
-							if (parkour != null) {
-								parkour.removePlayer(pl);
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("list") || args[0].equalsIgnoreCase("ls")) {
-					if (sender instanceof Player && sender.hasPermission("ats.parkour.list")) {
-						if (ParkourManager.getAllGames().isEmpty()) {
-							sender.sendMessage(msg("emptyList", false));
-						} else {
-							sender.sendMessage(msg("listHeader", false).replace("%COUNT%", String.valueOf(ParkourManager.getAllGames().size())));
-							int i = 1;
-							for (final ParkourGame pk : ParkourManager.getAllGames()) {
-								final String on;
-								if (pk.isRunning()) {
-									on = ChatColor.GREEN + "" + ChatColor.ITALIC + "[Started]";
-								} else {
-									on = ChatColor.RED + "" + ChatColor.ITALIC + "[Stopped]";
-								}
-								sender.sendMessage(i + ". " + pk.getName() + " " + on);
-								i++;
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("addwall") || args[0].equalsIgnoreCase("aw")) {
-					if (sender instanceof Player && sender.hasPermission("ats.parkour.addwall")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageAddwall", true));
-						} else {
-							Region sel = null;
-							try {
-								final AbstractWorld lw = new BukkitWorld(((Player) sender).getWorld());
-								sel = wep.getSession((Player) sender).getSelection(lw);
-							} catch (final IncompleteRegionException e) {
-								e.printStackTrace();
-							}
-							if (sel != null) {
-								final ParkourGame pk = ParkourManager.getParkour(args[1]);
-								if (pk != null) {
-									pk.addWall(new Wall(new CuboidRegion(sel.getMaximumPoint(),
-											sel.getMinimumPoint())));
-									sender.sendMessage(msg("setWall", false).replace("%WALLID%", String.valueOf(pk.getWallList().size())));
-								} else {
-									sender.sendMessage(msg("noGame", true));
-								}
-							} else {
-								sender.sendMessage(msg("wrongSel", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("setwall") || args[0].equalsIgnoreCase("sw")) {
-					if (sender instanceof Player && sender.hasPermission("ats.parkour.setwall")) {
-						if (args.length < 3) {
-							sender.sendMessage(msg("usageSetwall", true));
-						} else {
-							try {
-								final LocalSession session = wep.getSession((Player) sender);
-								final Region sel =
-										session.getSelection(new BukkitWorld(((Player) sender).getWorld()));
-								if (sel != null) {
-									final AbstractWorld lw = new BukkitWorld(((Player) sender).getWorld());
-									final CuboidRegion cr = new CuboidRegion(lw, sel.getMaximumPoint(), sel.getMinimumPoint());
-									final int id = Integer.parseInt(args[1]) - 1;
-									if (id > 0) {
-										final ParkourGame pk = ParkourManager.getParkour(args[2]);
-										if (pk != null) {
-											pk.setWall(id, cr);
-											sender.sendMessage(msg("setWall", false).replace("%WALLID%", args[1]));
-										} else {
-											sender.sendMessage(msg("noGame", true));
-										}
-									} else {
-										sender.sendMessage(msg("negativeNumber", true));
-									}
-								} else {
-									sender.sendMessage(msg("wrongSel", true));
-								}
-							} catch (final NumberFormatException ex) {
-								sender.sendMessage(msg("noNumber", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("reload") || args[0].equalsIgnoreCase("rl")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.reload")) {
-						plugin.onDisable();
-						plugin.onEnable();
-						plugin.reloadConfig();
-						sender.sendMessage(msg("reloadedConfig", false));
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("sprint") || args[0].equalsIgnoreCase("sp")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.sprint")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageSprint", true));
-						} else if (args.length == 2) {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								sender.sendMessage(msg("currentSprint", false).replace("%SPRINT%", String.valueOf(parkour.getOptions().isForcingSprint())));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						} else {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								parkour.getOptions().setForcingSprint(Boolean.parseBoolean(args[2]));
-								sender.sendMessage(msg("setSprint", false).replace("%SPRINT%", String.valueOf(Boolean.parseBoolean(args[2]))));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("alwaysSpawn") || args[0].equalsIgnoreCase("as")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.alwaysSpawn")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageAlwaysspawn", true));
-						} else if (args.length == 2) {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								sender.sendMessage(msg("currentAlwaysspawn", false).replace("%ALWAYSSPAWN%", String.valueOf(parkour.getOptions().isAlwaysSpawn())));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						} else {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								parkour.getOptions().setAlwaysSpawn(Boolean.parseBoolean(args[2]));
-								sender.sendMessage(msg("setAlwaysSpawn", false).replace("%ALWAYSSPAWN%", String.valueOf(Boolean.parseBoolean(args[2]))));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("price") || args[0].equalsIgnoreCase("p")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.price")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usagePrice", true));
-						} else if (args.length == 2) {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								sender.sendMessage(msg("currentPrice", false).replace("%PRICE%", String.valueOf(parkour.getOptions().getPrice())));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						} else {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								parkour.getOptions().setPrice(Integer.parseInt(args[2]));
-								sender.sendMessage(msg("setPrice", false).replace("%PRICE%", String.valueOf(Integer.parseInt(args[2]))));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("xp")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.xp")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageXp", true));
-						} else if (args.length == 2) {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								sender.sendMessage(msg("currentXp", false).replace("%XP%", String.valueOf(parkour.getOptions().getXp())));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						} else {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								parkour.getOptions().setXp(Integer.parseInt(args[2]));
-								sender.sendMessage(msg("setXp", false).replace("%XP%", String.valueOf(Integer.parseInt(args[2]))));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("clone")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.clone")) {
-						if (args.length < 3) {
-							sender.sendMessage(msg("usageClone", true));
-						} else {
-							final ParkourGame parkour1 = ParkourManager.getParkour(args[1]);
-							final ParkourGame parkour2 = ParkourManager.getParkour(args[2]);
-							if (parkour1 != null && parkour2 != null) {
-								parkour2.setOptions(new ParkourGame.Options(parkour1.getOptions()));
-								sender.sendMessage(msg("successClone", false).replace("%PARKOURFROM%", args[1]).replace("%PARKOURTO%", args[2]));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("countingRecords") || args[0].equalsIgnoreCase("cr")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.countingRecords")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageCountrecords", true));
-						} else if (args.length == 2) {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								sender.sendMessage(msg("currentCountrecords", false).replace("%COUNTRECORDS%", String.valueOf(parkour.getOptions().isCountingRecords())));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						} else {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								parkour.getOptions().setCountingRecords(Boolean.parseBoolean(args[2]));
-								sender.sendMessage(msg("setCountingRecords", false).replace("%COUNTRECORDS%", String.valueOf(Boolean.parseBoolean(args[2]))));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("vip") || args[0].equalsIgnoreCase("v")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.vip")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageVip", true));
-						} else if (args.length == 2) {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								sender.sendMessage(msg("currentVip", false).replace("%VIP%", String.valueOf(parkour.getOptions().isVip())));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						} else {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								parkour.getOptions().setVip(Boolean.parseBoolean(args[2]));
-								sender.sendMessage(msg("setVip", false).replace("%VIP%", String.valueOf(Boolean.parseBoolean(args[2]))));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("allowingDamage") || args[0].equalsIgnoreCase("dmg")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.allowingDamage")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageDamage", true));
-						} else if (args.length == 2) {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								sender.sendMessage(msg("currentDamage", false).replace("%DAMAGE%", String.valueOf(parkour.getOptions().isAllowingDamage())));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						} else {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								parkour.getOptions().setAllowingDamage(Boolean.parseBoolean(args[2]));
-								sender.sendMessage(msg("setAllowingDamage", false).replace("%DAMAGE%", String.valueOf(Boolean.parseBoolean(args[2]))));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("available") || args[0].equalsIgnoreCase("a")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.available")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageAvailable", true));
-						} else if (args.length == 2) {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								sender.sendMessage(msg("currentAvailable", false).replace("%AVAILABLE%", String.valueOf(parkour.getOptions().isAvailable())));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						} else {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								parkour.getOptions().setAvailable(Boolean.parseBoolean(args[2]));
-								sender.sendMessage(msg("setAvailable", false).replace("%AVAILABLE%", String.valueOf(Boolean.parseBoolean(args[2]))));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("boat") || args[0].equalsIgnoreCase("b")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.boat")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageBoats", true));
-						} else if (args.length == 2) {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								sender.sendMessage(msg("currentBoats", false).replace("%BOATS%", String.valueOf(parkour.getOptions().isBoat())));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						} else {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								parkour.getOptions().setBoat(Boolean.parseBoolean(args[2]));
-								sender.sendMessage(msg("setBoat", false).replace("%BOATS%", String.valueOf(Boolean.parseBoolean(args[2]))));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("enabled") || args[0].equalsIgnoreCase("p")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.enabled")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageProceedable", true));
-						} else if (args.length == 2) {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								sender.sendMessage(msg("currentProceedable", false).replace("%PROCEEDABLE%", String.valueOf(parkour.getOptions().isEnabled())));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						} else {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								parkour.getOptions().setEnabled(Boolean.parseBoolean(args[2]));
-								sender.sendMessage(msg("setEnabled", false).replace("%PROCEEDABLE%", String.valueOf(Boolean.parseBoolean(args[2]))));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("effect") || args[0].equalsIgnoreCase("e")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.effect")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageEffect", true));
-						} else {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								final ParkourGame.Options o = parkour.getOptions();
-								if (args.length == 2) {
-									for (final Entry<PotionEffectType, Integer> entry : o.getEffects().entrySet()) {
-										sender.sendMessage(msg("oneEffect", false).replace("%EFFECT%", "" + entry.getKey().getName()).replace("%AMPLIFIER%", "" + entry.getValue()));
-									}
-								} else {
-									final PotionEffectType p = PotionEffectType.getByName(args[2]);
-									if (p != null) {
-										if (Data.ALLOWED_EFFECTS.contains(p)) {
-											if (args.length == 3) {
-												sender.sendMessage(msg("currentEffect", false).replace("%EFFECT%", p.getName()).replace("%AMPLIFIER%", "" + o.getEffects().get(p)));
-											} else {
-												try {
-													final int a = Integer.parseInt(args[3]);
-													if (a == 0) {
-														o.removeEffect(p);
-														sender.sendMessage(msg("effectRemoved", false).replace("%EFFECT%", p.getName()));
-													} else {
-														o.setEffect(p, a);
-														sender.sendMessage(msg("setEffect", false).replace("%EFFECT%", p.getName()).replace("%AMPLIFIER%", a + ""));
-													}
-												} catch (final Exception ex) {
-													sender.sendMessage(msg("noNumber", true));
-												}
-											}
-										} else {
-											sender.sendMessage(msg("disallowedEffect", true));
-										}
-									} else {
-										sender.sendMessage(msg("noEffect", true));
-									}
-								}
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-					// TODO:
-					// } else if (args[0].equalsIgnoreCase("effectregion") ||
-					// args[0].equalsIgnoreCase("er")) {
-					// if (!(sender instanceof Player) || ((Player)
-					// sender).hasPermission("ats.parkour.effectregion")) {
-					// if (args.length==1) {
-					// sender.sendMessage(msgA("usageEffectregion", true));
-					// } else if (args.length==2) {
-					// if (ParkourPlugin.gameExists(args[1])) {
-					// ParkourPlugin pk = ParkourPlugin.getGame(args[1]);
-					//
-					// } else {
-					// sender.sendMessage(msgA("noGame", true));
-					// }
-					// }
-					// } else {
-					// sender.sendMessage(msgA("noPerms", true));
-					// }
-				} else if (args[0].equalsIgnoreCase("modifyInventory") || args[0].equalsIgnoreCase("eq")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.modifyInventory")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageModifyeq", true));
-						} else if (args.length == 2) {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								sender.sendMessage(msg("currentModifyeq", false).replace("%MODIFYEQ%", String.valueOf(parkour.getOptions().isModifyInventory())));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						} else {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								parkour.getOptions().setModifyInventory(Boolean.parseBoolean(args[2]));
-								sender.sendMessage(msg("setModifyInventory", false).replace("%MODIFYEQ%", String.valueOf(Boolean.parseBoolean(args[2]))));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("difficulty") || args[0].equalsIgnoreCase("d")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.difficulty")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageDifficulty", true));
-						} else if (args.length == 2) {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								sender.sendMessage(msg("currentDifficulty", false).replace("%DIFFICULTY%", String.valueOf(parkour.getOptions().getDifficulty())));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						} else {
-							try {
-								final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-								if (parkour != null) {
-									parkour.getOptions().setDifficulty(Integer.parseInt(args[2]));
-									sender.sendMessage(msg("setDifficulty", false).replace("%DIFFICULTY%", String.valueOf(Integer.parseInt(args[2]))));
-								} else {
-									sender.sendMessage(msg("noGame", true));
-								}
-							} catch (final NumberFormatException e) {
-								sender.sendMessage(msg("numberExpected", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("displayname") || args[0].equalsIgnoreCase("dn")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.displayname")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageDisplayname", true));
-						} else if (args.length == 2) {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								final String tmp = msg("currentDisplayname", false).split("%")[0];
-								final String color = "\u00A7" + tmp.charAt(tmp.lastIndexOf('\u00A7') + 1);
-								sender.sendMessage(msg("currentDisplayname", false).replace("%DISPLAYNAME%", "\u00A7r" + parkour.getOptions().getDisplayName().replace('&', '\u00A7') + color));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						} else {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								final StringBuilder nameBuilder = new StringBuilder();
-								for (int i = 2; i < args.length; i++) {
-									nameBuilder.append(" ").append(args[i]);
-								}
-								String name = nameBuilder.substring(1);
-								name = name.replace('&', '\u00A7');
-								final String tmp = msg("setDisplayname", false).split("%")[0];
-								final String color = "\u00A7" + tmp.charAt(tmp.lastIndexOf('\u00A7') + 1);
-								parkour.getOptions().setDisplayName(name);
-								sender.sendMessage(msg("setDisplayname", false).replace("%DISPLAYNAME%", name + color));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("bronze")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.bronze")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageBronze", true));
-						} else if (args.length == 2) {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								sender.sendMessage(msg("currentBronze", false).replace("%BRONZE%", String.valueOf(parkour.getOptions().getBronze())));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						} else {
-							try {
-								final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-								if (parkour != null) {
-									parkour.getOptions().setBronze(Integer.parseInt(args[2]));
-									sender.sendMessage(msg("setBronze", false).replace("%BRONZE%", String.valueOf(Integer.parseInt(args[2]))));
-								} else {
-									sender.sendMessage(msg("noGame", true));
-								}
-							} catch (final NumberFormatException e) {
-								sender.sendMessage(msg("numberExpected", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("fair")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.fair")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageFair", true));
-						} else if (args.length == 2) {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								sender.sendMessage(msg("currentFair", false).replace("%FAIR%", String.valueOf(parkour.getOptions().getFair())));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						} else {
-							try {
-								final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-								if (parkour != null) {
-									parkour.getOptions().setFair(Float.parseFloat(args[2]));
-									sender.sendMessage(msg("setFair", false).replace("%FAIR%", String.valueOf(Float.parseFloat(args[2]))));
-								} else {
-									sender.sendMessage(msg("noGame", true));
-								}
-							} catch (final NumberFormatException e) {
-								sender.sendMessage(msg("numberExpected", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("silver")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.silver")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageSilver", true));
-						} else if (args.length == 2) {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								sender.sendMessage(msg("currentSilver", false).replace("%SILVER%", String.valueOf(parkour.getOptions().getSilver())));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						} else {
-							try {
-								final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-								if (parkour != null) {
-									parkour.getOptions().setSilver(Integer.parseInt(args[2]));
-									sender.sendMessage(msg("setSilver", false).replace("%SILVER%", String.valueOf(Integer.parseInt(args[2]))));
-								} else {
-									sender.sendMessage(msg("noGame", true));
-								}
-							} catch (final NumberFormatException e) {
-								sender.sendMessage(msg("numberExpected", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("gold")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.gold")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageGold", true));
-						} else if (args.length == 2) {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								sender.sendMessage(msg("currentGold", false).replace("%GOLD%", String.valueOf(parkour.getOptions().getGold())));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						} else {
-							try {
-								final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-								if (parkour != null) {
-									parkour.getOptions().setGold(Integer.parseInt(args[2]));
-									sender.sendMessage(msg("setGold", false).replace("%GOLD%", String.valueOf(Integer.parseInt(args[2]))));
-								} else {
-									sender.sendMessage(msg("noGame", true));
-								}
-							} catch (final NumberFormatException e) {
-								sender.sendMessage(msg("numberExpected", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("platinum")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.platinum")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usagePlatinum", true));
-						} else if (args.length == 2) {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								sender.sendMessage(msg("currentPlatinum", false).replace("%PLATINUM%", String.valueOf(parkour.getOptions().getPlatinum())));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						} else {
-							try {
-								final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-								if (parkour != null) {
-									parkour.getOptions().setPlatinum(Integer.parseInt(args[2]));
-									sender.sendMessage(msg("setPlatnum", false).replace("%PLATINUM%", String.valueOf(Integer.parseInt(args[2]))));
-								} else {
-									sender.sendMessage(msg("noGame", true));
-								}
-							} catch (final NumberFormatException e) {
-								sender.sendMessage(msg("numberExpected", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("color")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.color")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageColor", true));
-						} else if (args.length == 2) {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								sender.sendMessage(msg("currentColor", false).replace("%COLOR%", "" + parkour.getOptions().getColor().name()));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						} else {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								try {
-									args[2] = args[2].toUpperCase();
-									parkour.getOptions().setColor(DyeColor.valueOf(args[2]));
-									sender.sendMessage(msg("setColor", false).replace("%COLOR%", "" + DyeColor.valueOf(args[2]).name()));
-								} catch (final IllegalArgumentException ex) {
-									sender.sendMessage(msg("wrongColor", true).replace("%COLOR%", args[2]));
-								}
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("authors")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.authors")) {
-						if (args.length == 1 || args.length == 3) {
-							sender.sendMessage(msg("usageAuthors", true));
-						} else if (args.length == 2) {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								sender.sendMessage(msg("currentAuthors", false).replace("%AUTHORS%", "" + parkour.getAuthors()));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						} else {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								if (args[2].equalsIgnoreCase("add")) {
-									parkour.addAuthor(args[3]);
-									sender.sendMessage(msg("addedAuthor", false));
-								} else if (args[2].equalsIgnoreCase("remove")) {
-									if (parkour.removeAuthor(args[3])) {
-										sender.sendMessage(msg("removedAuthor", false));
-									} else {
-										sender.sendMessage(msg("noAuthor", true));
-									}
-								} else {
-									sender.sendMessage(msg("wrongArg", true));
-								}
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("type")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.type")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageType", true));
-						} else if (args.length == 2) {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								sender.sendMessage(msg("currentType", false).replace("%TYPE%", "" + parkour.getOptions().getType().toString()));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						} else {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								try {
-									parkour.getOptions().setType(Parkour.ParkourType.valueOf(args[2]));
-									sender.sendMessage(msg("setType", false).replace("%TYPE%", "" + Parkour.ParkourType.valueOf(args[2]).toString()));
-								} catch (final Exception ex) {
-									sender.sendMessage(msg("noType", true));
-								}
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("lobby")) {
-					if ((sender instanceof Player) && sender.hasPermission("ats.parkour.lobby")) {
-						final Location l = ((Player) sender).getLocation();
-						ParkourManager.setLobbyLocation(l);
-						sender.sendMessage(msg("setLobby", false).replace("%COORDX%", String.valueOf(l.getX())).replace("%COORDY%", String.valueOf(l.getY())).replace("%COORDZ%", String.valueOf(l.getZ())));
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("help") || args[0].equalsIgnoreCase("?")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.help")) {
-						int i = 0;
-						if (args.length != 1) {
-							try {
-								i = 5 * (Integer.parseInt(args[1]) - 1);
-							} catch (final NumberFormatException ex) {
-								sender.sendMessage(ChatColor.DARK_RED + ex.getMessage());
-								i = 0;
-							}
-						}
-						final Map<String, String> list = plugin.getMessages();
-						final int max = i + 5;
-						final int value = list.size() / 5 + 1;
-						final int p = i / 5 + 1;
-						if (p <= value) {
-							sender.sendMessage(msg("currentPage", false).replace("%PAGE%", String.valueOf(p)).replace("%MAXPAGES%", String.valueOf(value)));
-							final List<?> l = new ArrayList<>(list.entrySet());
-							for (; i < max && i < list.size(); i++) {
-								final String arg = String.valueOf(l.get(i)).split("=")[0];
-								final String desc = String.valueOf(l.get(i)).split("=")[1];
-								sender.sendMessage("§2/pk " + arg + "§r - " + desc);
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("rename") || args[0].equalsIgnoreCase("rn")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.rename")) {
-						if (args.length == 3) {
-							final ParkourGame parkour1 = ParkourManager.getParkour(args[1]);
-							if (parkour1 != null) {
-								if (ParkourManager.getParkour(args[2]) != null) {
-									parkour1.setName(args[2]);
-									sender.sendMessage(msg("gameRenamed", false).replace("%OLDNAME%", args[1]).replace("%NEWNAME%", args[2]));
-								} else {
-									sender.sendMessage(msg("gameExists", true));
-								}
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						} else {
-							sender.sendMessage(msg("usageRename", true));
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("info")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.info")) {
-						if (args.length == 2) {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								sender.sendMessage(parkour.toString());
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						} else {
-							sender.sendMessage(msg("usageInfo", true));
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("teleportblock") || args[0].equalsIgnoreCase("tb")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.teleportblock")) {
-						if (args.length == 2) {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								parkour.setTeleportBlock(((Player) sender).getTargetBlock(null, 5).getLocation());
-								sender.sendMessage(msg("setTeleportblock", false).replace("%PARKOUR%", args[1]));
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						} else {
-							sender.sendMessage(msg("usageTeleportblock", true));
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("check")) {
-					if ((sender instanceof Player) && sender.hasPermission("ats.parkour.check")) {
-						for (final ParkourGame p : ParkourManager.getAllGames()) {
-							for (final AbstractRegion r : p.getAllRegions()) {
-								if (r.contains(((Player) sender).getLocation()) && p.getWorld().equals(((Player) sender).getWorld())) {
-									sender.sendMessage(msg("currentParkour", false).replace("%PARKOUR%", p.getName()));
-									break;
-								}
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("teleport") || args[0].equalsIgnoreCase("tp")) {
-					if ((sender instanceof Player) && sender.hasPermission("ats.parkour.teleport")) {
-						if (args.length > 1) {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								parkour.addPlayer((Player) sender);
-								final ParkourPlayer p = PlayerManager.getParkourSinglePlayer((Player) sender);
-								p.teleportToSpawn();
-								p.reset();
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						} else {
-							sender.sendMessage(msg("usageTeleport", true));
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("group") || args[0].equalsIgnoreCase("g")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.group")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageGroup", true));
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else if (args[0].equalsIgnoreCase("bestrecord") || args[0].equalsIgnoreCase("br")) {
-					if (!(sender instanceof Player) || sender.hasPermission("ats.parkour.bestrecord")) {
-						if (args.length == 1) {
-							sender.sendMessage(msg("usageBestrecord", true));
-						} else {
-							final ParkourGame parkour = ParkourManager.getParkour(args[1]);
-							if (parkour != null) {
-								final Location loc = ((Player) sender).getTargetBlock(null, 5).getLocation();
-								final Material m = loc.getBlock().getType();
-								if (Data.SIGNS.contains(m)) {
-									parkour.setBestRecord(loc);
-									sender.sendMessage(msg("setBestrecord", false).replace("%COORDX%", "" + loc.getX()).replace("%COORDY%", "" + loc.getY()).replace("%COORDZ%", "" + loc.getZ()));
-									try {
-										final PreparedStatement stat = plugin.getConnection().prepareStatement(String.format("SELECT time, nick FROM %s WHERE parkour=? ORDER BY time LIMIT 1", Data.TABLE_RECORDS));
-										stat.setString(1, args[1]);
-										final ResultSet rs = stat.executeQuery();
-										if (rs.next()) {
-											DataBaseOperations.updateSign(plugin, rs.getString("nick"), rs.getDouble("time"), parkour);
-										} else {
-											DataBaseOperations.updateSign(plugin, "========", 0.00, parkour);
-										}
-									} catch (final Exception ex) {
-										Bukkit.getServer().getLogger().throwing(getClass().getName(), "onCommand", ex);
-									}
-								} else {
-									sender.sendMessage(msg("noSign", true));
-								}
-							} else {
-								sender.sendMessage(msg("noGame", true));
-							}
-						}
-					} else {
-						sender.sendMessage(msg("noPerms", true));
-					}
-				} else {
-					sender.sendMessage(msg("wrongArg", true));
-				}
-			}
+	// === UNIVERSAL ===
+
+	@Argument(permission = "ats.parkour.lobby", executorType = ExecutorType.PLAYER, description = "Sets lobby location to executor location")
+	public String lobby() {
+		final Location l = ((Player) sender).getLocation();
+		ParkourManager.setLobbyLocation(l);
+		return msg("setLobby", false)
+				.replace("%COORD_X%", String.valueOf(l.getX()))
+				.replace("%COORD_Y%", String.valueOf(l.getY()))
+				.replace("%COORD_Z%", String.valueOf(l.getZ()));
+	}
+
+	@Argument(permission = "ats.parkour.list", description = "Lists all parkour games", aliases = "ls")
+	public String list() {
+		if (ParkourManager.getAllGames().isEmpty()) {
+			return msg("noParkours", false);
 		}
-		return true;
+		sender.sendMessage(msg("listHeader", false).replace("%COUNT%", String.valueOf(ParkourManager.getAllGames().size())));
+		final List<ParkourGame> allGames = ParkourManager.getAllGames();
+		for (int i = 1; i <= allGames.size(); i++) {
+			final ParkourGame parkourGame = allGames.get(i - 1);
+			final String on;
+			if (parkourGame.isRunning()) {
+				on = ChatColor.GREEN + "" + ChatColor.ITALIC + "[Started]";
+			} else {
+				on = ChatColor.RED + "" + ChatColor.ITALIC + "[Stopped]";
+			}
+			sender.sendMessage(String.format("%d. %s %s", i, parkourGame.getName(), on));
+		}
+		return null;
+	}
+
+	@Argument(permission = "ats.parkour.fix", description = "Fixes signs after database connection troubles.")
+	public String fix() {
+		ParkourManager.getAllGames()
+				.stream()
+				.map(parkourGame -> new RepairSignTask(plugin, parkourGame))
+				.forEach(repairSignTask -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, repairSignTask));
+		return msg("successFix", false);
+	}
+
+	@Argument(permission = "ats.parkour.ignore", executorType = ExecutorType.PLAYER, description = "Allows sender to ignore parkour regions interaction", aliases = "i")
+	public String ignore() {
+		// FIXME: Nor working!
+		final Player player = (Player) sender;
+		final ParkourPlayer parkourPlayer = PlayerManager.getParkourSinglePlayer(player);
+		if (parkourPlayer.isIgnoring()) {
+			parkourPlayer.setIgnoring(false);
+			ParkourManager.getAllGames().stream()
+					.filter(p -> p.inAnyRegion(player.getLocation()))
+					.forEach(p -> p.addPlayer(player));
+			return msg("ignoreStop", false);
+		}
+		parkourPlayer.setIgnoring(true);
+		final ParkourGame parkour = ParkourManager.getParkour(player);
+		if (parkour != null) {
+			parkour.removePlayer(player);
+		}
+		return msg("ignoreStart", false);
+	}
+
+	@Argument(permission = "ats.parkour.spectate", executorType = ExecutorType.PLAYER, description = "Allows sender to spectate")
+	public String spectate() {
+		// FIXME: Not working!
+		final Player player = (Player) sender;
+		final ParkourPlayer parkourPlayer = PlayerManager.getParkourSinglePlayer(player);
+		if (parkourPlayer.isSpectating()) {
+			parkourPlayer.setSpectating(false);
+			plugin.getServer().getOnlinePlayers().forEach(p -> p.showPlayer(plugin, player));
+			ParkourManager.getAllGames()
+					.stream().filter(p -> p.inAnyRegion(player.getLocation()))
+					.forEach(p -> p.addPlayer(player));
+			return msg("spectateStop", false);
+		} else {
+			parkourPlayer.setSpectating(true);
+			plugin.getServer().getOnlinePlayers().forEach(p -> p.hidePlayer(plugin, player));
+			final ParkourGame parkour = ParkourManager.getParkour(player);
+			if (parkour != null) {
+				parkour.removePlayer(player);
+			}
+			return msg("spectateStart", false);
+		}
+	}
+
+	@Argument(permission = "ats.parkour.help", description = "Shows help page", aliases = "?")
+	public void help() {
+		help(1);
+	}
+
+	@Argument(permission = "ats.parkour.help", description = "Shows help page", aliases = "?")
+	public void help(final int page) {
+		final Map<String, String> messages = plugin.getMessages();
+		final int maxPages = (int) Math.ceil(messages.size() / 5.);
+		final int skip = 5 * (page - 1);
+		if (page > maxPages) {
+			return;
+		}
+		sender.sendMessage(msg("currentPage", false)
+				.replace("%PAGE%", String.valueOf(page))
+				.replace("%PAGES%", String.valueOf(maxPages)));
+		messages.entrySet()
+				.stream()
+				.skip(skip)
+				.limit(5)
+				.map(command -> String.format("%s/parkour %s%s - %s", ChatColor.GREEN.toString(), command.getKey(), ChatColor.RESET.toString(), command.getValue()))
+				.forEach(sender::sendMessage);
+	}
+
+	// === GENERAL ===
+
+	@Argument(permission = "ats.parkour.create", executorType = ExecutorType.PLAYER, description = "Creates parkour game", aliases = "c")
+	public String create(final String name) {
+		if (ParkourManager.getLobbyLocation() == null) {
+			return msg("lobbyFirst", true);
+		}
+		final CuboidRegion selection = getRegionSelection((Player) sender);
+		if (selection == null) {
+			return msg("wrongSel", true);
+		}
+		if (!name.matches("[a-zA-Z0-9_-]+")) {
+			return msg("wrongName", true);
+		}
+		final ParkourGame parkour = ParkourManager.getParkour(name);
+		if (parkour != null) {
+			return msg("gameExists", true).replace("%NAME%", name);
+		}
+		final Parkour parkourGame = new Parkour(name, new GameRegion(selection), ((Player) sender).getLocation().getWorld());
+		ParkourManager.addParkour(parkourGame);
+		return msg("gameCreated", false).replace("%NAME%", parkourGame.getName());
+	}
+
+	@Argument(permission = "ats.parkour.remove", description = "Removes parkour game", aliases = "r")
+	public String remove(@Param("parkourGame") final ParkourGame parkourGame) {
+		ParkourManager.removeParkour(parkourGame);
+		return msg("gameRemoved", false).replace("%NAME%", parkourGame.getName());
+	}
+
+	@Fallback
+	public String remove() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.start", description = "Starts parkour game")
+	public String start(@Param("parkourGame") final ParkourGame parkourGame) {
+		if (parkourGame.getSpawn() == null) {
+			return msg("noSpawn", true);
+		}
+		final ParkourGame.Options options = parkourGame.getOptions();
+		if (options.getBronze() == 0 || options.getSilver() == 0 || options.getGold() == 0 || options.getPlatinum() == 0) {
+			return msg("medalsFirst", true);
+		}
+		if (parkourGame.isRunning()) {
+			return msg("alreadyStarted", true);
+		}
+		if (parkourGame.getCheckpointList().size() < 2) {
+			return msg("noCheckpoint", true);
+		}
+		parkourGame.start();
+		ParkourManager.sortGames();
+		return msg("gameStarted", false).replace("%NAME%", parkourGame.getName());
+	}
+
+	@Fallback
+	public String start() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.stop", description = "Stops parkour game")
+	public String stop(@Param("parkourGame") final ParkourGame parkourGame) {
+		if (!parkourGame.isRunning()) {
+			return msg("alreadyStopped", true);
+		}
+		parkourGame.stop();
+		ParkourManager.sortGames();
+		return msg("gameStopped", false).replace("%NAME%", parkourGame.getName());
+	}
+
+	@Fallback
+	public String stop() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.recreate", executorType = ExecutorType.PLAYER, description = "Sets new region for parkour game")
+	public String recreate(@Param("parkourGame") final ParkourGame parkourGame) {
+		final CuboidRegion selection = getRegionSelection((Player) sender);
+		if (selection == null) {
+			return msg("wrongSel", true);
+		}
+		parkourGame.getGameRegion().setCuboidRegion(selection);
+		return msg("gameRecreated", false);
+	}
+
+	@Fallback
+	public String recreate() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.rename", description = "Sets new name for parkour game")
+	public String rename(@Param("parkourGame") final ParkourGame parkourGame, final String name) {
+		if (ParkourManager.getParkour(name) != null) {
+			return msg("gameExists", true).replace("%NAME%", name);
+		}
+		parkourGame.setName(name);
+		return msg("gameRenamed", false).replace("%OLD_NAME%", parkourGame.getName()).replace("%NEW_NAME%", name);
+	}
+
+	@Fallback
+	public String rename() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.teleport", executorType = ExecutorType.PLAYER, description = "Teleports sender to parkours spawn region")
+	public String teleport(@Param("parkourGame") final ParkourGame parkourGame) {
+		parkourGame.addPlayer((Player) sender);
+		final ParkourPlayer parkourPlayer = PlayerManager.getParkourSinglePlayer((Player) sender);
+		parkourPlayer.reset();
+		if (!parkourPlayer.teleportToSpawn()) {
+			return msg("noSpawn", true);
+		}
+		return msg("teleported", false).replace("%NAME%", parkourGame.getName());
+	}
+
+	@Fallback
+	public String teleport() {
+		return msg("noGame", true);
+	}
+
+	// === REGIONS ===
+
+	@Argument(permission = "ats.parkour.setSpawn", description = "Sets parkour spawn region", executorType = ExecutorType.PLAYER, aliases = "ss")
+	public String setSpawn(@Param("parkourGame") final ParkourGame parkourGame) {
+		final CuboidRegion selection = getRegionSelection((Player) sender);
+		if (selection == null) {
+			return msg("wrongSel", true);
+		}
+		final Location location = ((Player) sender).getLocation();
+		parkourGame.setSpawn(new Checkpoint(selection, location.getYaw(), location.getPitch()));
+		return msg("setSpawn", false);
+	}
+
+	@Fallback
+	public String setSpawn() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.addCheckpoint", description = "Adds checkpoint to parkour game", executorType = ExecutorType.PLAYER, aliases = "ac")
+	public String addCheckpoint(@Param("parkourGame") final ParkourGame parkourGame) {
+		final CuboidRegion selection = getRegionSelection((Player) sender);
+		if (selection == null) {
+			return msg("wrongSel", true);
+		}
+		if (parkourGame.getSpawn() == null) {
+			return msg("noSpawn", true);
+		}
+		final Location l = ((Player) sender).getLocation();
+		parkourGame.addCheckpoint(new Checkpoint(selection, l.getYaw(), l.getPitch()));
+		return msg("setCheckpoint", false).replace("%CHECKPOINT_ID%", String.valueOf(parkourGame.getCheckpointList().size() - 1));
+	}
+
+	@Fallback
+	public String addCheckpoint() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.setCheckpoint", description = "Sets specified parkour game checkpoint", executorType = ExecutorType.PLAYER, aliases = "sc")
+	public String setCheckpoint(@Param("parkourGame") final ParkourGame parkourGame, final int id) {
+		final CuboidRegion selection = getRegionSelection((Player) sender);
+		if (selection == null) {
+			return msg("wrongSel", true);
+		}
+		if (id <= 0) {
+			return msg("negativeNumber", true);
+		}
+		if (id > parkourGame.getLastCheckpointId()) {
+			return msg("tooLargeNumber", true);
+		}
+		final Location location = ((Player) sender).getLocation();
+		parkourGame.setCheckpoint(id, new Checkpoint(selection, location.getYaw(), location.getPitch()));
+		return msg("setCheckpoint", false).replace("%CHECKPOINT_ID%", String.valueOf(id));
+	}
+
+	@Fallback
+	public String setCheckpoint() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.addWall", description = "Adds wall to parkour game", executorType = ExecutorType.PLAYER, aliases = "aw")
+	public String addWall(@Param("parkourGame") final ParkourGame parkourGame) {
+		final CuboidRegion selection = getRegionSelection((Player) sender);
+		if (selection == null) {
+			return msg("wrongSel", true);
+		}
+		parkourGame.addWall(new Wall(new CuboidRegion(selection.getMaximumPoint(), selection.getMinimumPoint())));
+		return msg("setWall", false).replace("%WALL_ID%", String.valueOf(parkourGame.getWallList().size()));
+	}
+
+	@Fallback
+	public String addWall() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.setWall", description = "Sets specified parkour game wall", executorType = ExecutorType.PLAYER, aliases = "sw")
+	public String setWall(@Param("parkourGame") final ParkourGame parkourGame, final int id) {
+		final CuboidRegion selection = getRegionSelection((Player) sender);
+		if (selection == null) {
+			return msg("wrongSel", true);
+		}
+		if (id <= 1) {
+			return msg("negativeNumber", true);
+		}
+		if (id > parkourGame.getLastCheckpointId()) {
+			return msg("tooLargeNumber", true);
+		}
+		parkourGame.setWall(id - 1, selection);
+		return msg("setWall", false).replace("%WALL_ID%", String.valueOf(id));
+	}
+
+	@Fallback
+	public String setWall() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.effects", description = "Shows current parkour effects")
+	public String effects(@Param("parkourGame") final ParkourGame parkourGame) {
+		final List<String> effects = parkourGame.getOptions().getEffects().entrySet()
+				.stream()
+				.map(entry -> msg("oneEffect", false).replace("%EFFECT%", entry.getKey().getName()).replace("%AMPLIFIER%", String.valueOf(entry.getValue())))
+				.collect(Collectors.toList());
+		if (effects.isEmpty()) {
+			return null;
+		}
+		return String.join("\n", effects);
+	}
+
+	@Fallback
+	public String effects() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.setEffect", description = "Sets parkour game effect", aliases = "se")
+	public String setEffect(@Param("parkourGame") final ParkourGame parkourGame, @Param("potion") final PotionEffectType type, final int power) {
+		if (power == 0) {
+			parkourGame.getOptions().removeEffect(type);
+			return msg("effectRemoved", false).replace("%EFFECT%", type.getName());
+		}
+		parkourGame.getOptions().setEffect(type, power);
+		return msg("setEffect", false).replace("%EFFECT%", type.getName()).replace("%AMPLIFIER%", String.valueOf(power));
+	}
+
+	@Fallback
+	public String setEffect() {
+		return msg("noGame", true);
+	}
+
+	// === OPTIONS ===
+
+	@Argument(permission = "ats.parkour.sprintForced", description = "Shows value of sprintForced flag")
+	public String sprintForced(@Param("parkourGame") final ParkourGame parkourGame) {
+		return msg("currentSprintForced", false).replace("%SPRINT_FORCED%", String.valueOf(parkourGame.getOptions().isSprintForced()));
+	}
+
+	@Argument(permission = "ats.parkour.sprintForced", description = "Sets value of sprintForced flag")
+	public String sprintForced(@Param("parkourGame") final ParkourGame parkourGame, final boolean sprintForced) {
+		parkourGame.getOptions().setSprintForced(sprintForced);
+		return msg("setSprintForced", false).replace("%SPRINT_FORCED%", String.valueOf(sprintForced));
+	}
+
+	@Fallback
+	public String sprintForced() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.alwaysSpawn", description = "Shows value of alwaysSpawn flag")
+	public String alwaysSpawn(@Param("parkourGame") final ParkourGame parkourGame) {
+		return msg("currentAlwaysSpawn", false).replace("%ALWAYS_SPAWN%", String.valueOf(parkourGame.getOptions().isAlwaysSpawn()));
+	}
+
+	@Argument(permission = "ats.parkour.alwaysSpawn", description = "Sets value of alwaysSpawn flag")
+	public String alwaysSpawn(@Param("parkourGame") final ParkourGame parkourGame, final boolean alwaysSpawn) {
+		parkourGame.getOptions().setAlwaysSpawn(alwaysSpawn);
+		return msg("setAlwaysSpawn", false).replace("%ALWAYS_SPAWN%", String.valueOf(alwaysSpawn));
+	}
+
+	@Fallback
+	public String alwaysSpawn() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.recordCounting", description = "Shows value of recordCounting flag")
+	public String recordCounting(@Param("parkourGame") final ParkourGame parkourGame) {
+		return msg("currentRecordCounting", false).replace("%RECORD_COUNTING%", String.valueOf(parkourGame.getOptions().isRecordsCounting()));
+	}
+
+	@Argument(permission = "ats.parkour.recordCounting", description = "Sets value of recordCounting flag")
+	public String recordCounting(@Param("parkourGame") final ParkourGame parkourGame, final boolean recordCounting) {
+		parkourGame.getOptions().setRecordsCounting(recordCounting);
+		return msg("setRecordCounting", false).replace("%RECORD_COUNTING%", String.valueOf(recordCounting));
+	}
+
+	@Fallback
+	public String recordCounting() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.vipOnly", description = "Shows value of vipOnly flag")
+	public String vipOnly(@Param("parkourGame") final ParkourGame parkourGame) {
+		return msg("currentVipOnly", false).replace("%VIP_ONLY%", String.valueOf(parkourGame.getOptions().isVipOnly()));
+	}
+
+	@Argument(permission = "ats.parkour.vipOnly", description = "Sets value of vipOnly flag")
+	public String vip(@Param("parkourGame") final ParkourGame parkourGame, final boolean vip) {
+		parkourGame.getOptions().setVipOnly(vip);
+		return msg("setVip", false).replace("%VIP%", String.valueOf(vip));
+	}
+
+	@Fallback
+	public String vip() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.damageAllowed", description = "Shows value of damageAllowed flag")
+	public String damageAllowed(@Param("parkourGame") final ParkourGame parkourGame) {
+		return msg("currentDamageAllowed", false).replace("%DAMAGE_ALLOWED%", String.valueOf(parkourGame.getOptions().isDamageAllowed()));
+	}
+
+	@Argument(permission = "ats.parkour.damageAllowed", description = "Sets value of damageAllowed flag")
+	public String damageAllowed(@Param("parkourGame") final ParkourGame parkourGame, final boolean damageAllowed) {
+		parkourGame.getOptions().setDamageAllowed(damageAllowed);
+		return msg("setDamageAllowed", false).replace("%DAMAGE_ALLOWED%", String.valueOf(damageAllowed));
+	}
+
+	@Fallback
+	public String damageAllowed() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.available", description = "Shows value of available flag")
+	public String available(@Param("parkourGame") final ParkourGame parkourGame) {
+		return msg("currentAvailable", false).replace("%AVAILABLE%", String.valueOf(parkourGame.getOptions().isAvailable()));
+	}
+
+	@Argument(permission = "ats.parkour.available", description = "Sets value of available flag")
+	public String available(@Param("parkourGame") final ParkourGame parkourGame, final boolean available) {
+		parkourGame.getOptions().setAvailable(available);
+		return msg("setAvailable", false).replace("%AVAILABLE%", String.valueOf(available));
+	}
+
+	@Fallback
+	public String available() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.boat", description = "Shows value of boat flag")
+	public String boat(@Param("parkourGame") final ParkourGame parkourGame) {
+		return msg("currentBoat", false).replace("%BOAT%", String.valueOf(parkourGame.getOptions().isBoat()));
+	}
+
+	@Argument(permission = "ats.parkour.boat", description = "Sets value of boat flag")
+	public String boat(@Param("parkourGame") final ParkourGame parkourGame, final boolean boat) {
+		parkourGame.getOptions().setBoat(boat);
+		return msg("setBoat", false).replace("%BOAT%", String.valueOf(boat));
+	}
+
+	@Fallback
+	public String boat() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.enabled", description = "Shows value of enabled flag")
+	public String enabled(@Param("parkourGame") final ParkourGame parkourGame) {
+		return msg("currentEnabled", false).replace("%ENABLED%", String.valueOf(parkourGame.getOptions().isEnabled()));
+	}
+
+	@Argument(permission = "ats.parkour.enabled", description = "Sets value of enabled flag")
+	public String enabled(@Param("parkourGame") final ParkourGame parkourGame, final boolean enabled) {
+		parkourGame.getOptions().setEnabled(enabled);
+		return msg("setEnabled", false).replace("%ENABLED%", String.valueOf(enabled));
+	}
+
+	@Fallback
+	public String enabled() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.modifyInventory", description = "Shows value of modifyInventory flag")
+	public String modifyInventory(@Param("parkourGame") final ParkourGame parkourGame) {
+		return msg("currentModifyInventory", false).replace("%MODIFY_INVENTORY%", String.valueOf(parkourGame.getOptions().isModifyInventory()));
+	}
+
+	@Argument(permission = "ats.parkour.modifyInventory", description = "Sets value of modifyInventory flag")
+	public String modifyInventory(@Param("parkourGame") final ParkourGame parkourGame, final boolean modifyInventory) {
+		parkourGame.getOptions().setModifyInventory(modifyInventory);
+		return msg("setModifyInventory", false).replace("%MODIFY_INVENTORY%", String.valueOf(modifyInventory));
+	}
+
+	@Fallback
+	public String modifyInventory() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.info", description = "Shows information about parkour game")
+	public String info(@Param("parkourGame") final ParkourGame parkourGame) {
+		return parkourGame.toString();
+	}
+
+	@Argument(permission = "ats.parkour.difficulty", description = "Shows parkour game difficulty")
+	public String difficulty(@Param("parkourGame") final ParkourGame parkourGame) {
+		return msg("currentDifficulty", false).replace("%DIFFICULTY%", String.valueOf(parkourGame.getOptions().getDifficulty()));
+	}
+
+	@Argument(permission = "ats.parkour.difficulty", description = "Sets parkour game difficulty")
+	public String difficulty(@Param("parkourGame") final ParkourGame parkourGame, final int difficulty) {
+		parkourGame.getOptions().setDifficulty(difficulty);
+		return msg("setDifficulty", false).replace("%DIFFICULTY%", String.valueOf(difficulty));
+	}
+
+	@Fallback
+	public String difficulty() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.displayName", description = "Shows parkour game displayName")
+	public String displayName(@Param("parkourGame") final ParkourGame parkourGame) {
+		final String tmp = msg("currentDisplayName", false).split("%")[0];
+		final String color = "\u00A7" + tmp.charAt(tmp.lastIndexOf('\u00A7') + 1);
+		return msg("currentDisplayName", false)
+				.replace("%DISPLAY_NAME%", "\u00A7r" + parkourGame.getOptions().getDisplayName().replace('&', '\u00A7') + color);
+	}
+
+	@Argument(permission = "ats.parkour.displayName", description = "Sets parkour game displayName")
+	public String displayName(@Param("parkourGame") final ParkourGame parkourGame, final String... newName) {
+		final String name = String.join(" ", newName).replace('&', '\u00A7');
+		final String tmp = msg("setDisplayName", false).split("%")[0];
+		final String color = "\u00A7" + tmp.charAt(tmp.lastIndexOf('\u00A7') + 1);
+		parkourGame.getOptions().setDisplayName(name);
+		return msg("setDisplayName", false).replace("%DISPLAY_NAME%", name + color);
+	}
+
+	@Fallback
+	public String displayName() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.fair", description = "Shows value of fair flag")
+	public String fair(@Param("parkourGame") final ParkourGame parkourGame) {
+		return msg("currentFair", false).replace("%FAIR%", String.valueOf(parkourGame.getOptions().getFair()));
+	}
+
+	@Argument(permission = "ats.parkour.fair", description = "Sets value of fair flag")
+	public String fair(@Param("parkourGame") final ParkourGame parkourGame, final double fair) {
+		parkourGame.getOptions().setFair(fair);
+		return msg("setFair", false).replace("%FAIR%", String.valueOf(fair));
+	}
+
+	@Fallback
+	public String fair() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.color", description = "Shows value of parkour color")
+	public String color(@Param("parkourGame") final ParkourGame parkourGame) {
+		return msg("currentColor", false).replace("%COLOR%", parkourGame.getOptions().getColor().name());
+	}
+
+	@Argument(permission = "ats.parkour.color", description = "Sets value of parkour color")
+	public String color(@Param("parkourGame") final ParkourGame parkourGame, final DyeColor color) {
+		parkourGame.getOptions().setColor(color);
+		return msg("setColor", false).replace("%COLOR%", color.name());
+	}
+
+	@Fallback
+	public String color() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.authors", description = "Shows parkour authors")
+	public String authors(@Param("parkourGame") final ParkourGame parkourGame) {
+		return msg("currentAuthors", false).replace("%AUTHORS%", parkourGame.getAuthors().toString());
+	}
+
+	@Argument(permission = "ats.parkour.authors", description = "Sets parkour authors")
+	public String authors(@Param("parkourGame") final ParkourGame parkourGame, final String... authors) {
+		parkourGame.setAuthors(Arrays.asList(authors));
+		return msg("setAuthors", false).replace("%AUTHORS%", Arrays.toString(authors));
+	}
+
+	@Fallback
+	public String authors() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.type", description = "Shows parkour type")
+	public String type(@Param("parkourGame") final ParkourGame parkourGame) {
+		return msg("currentType", false).replace("%TYPE%", parkourGame.getOptions().getType().name());
+	}
+
+	@Argument(permission = "ats.parkour.type", description = "Sets parkour type")
+	public String type(@Param("parkourGame") final ParkourGame parkourGame, final ParkourGame.ParkourType type) {
+		parkourGame.getOptions().setType(type);
+		return msg("setType", false).replace("%TYPE%", type.name());
+	}
+
+	@Fallback
+	public String type() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.teleportBlock", description = "Sets parkour teleportBlock")
+	public String teleportBlock(@Param("parkourGame") final ParkourGame parkourGame) {
+		parkourGame.setTeleportBlock(((Player) sender).getTargetBlock(null, 5).getLocation());
+		return msg("setTeleportBlock", false).replace("%PARKOUR%", parkourGame.getName());
+	}
+
+	@Fallback
+	public String teleportBlock() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.top", description = "Shows top players for parkour game")
+	public void top(@Param("parkourGame") final ParkourGame parkourGame, final int count) {
+		plugin.getServer().getScheduler().runTaskAsynchronously(plugin, new TopPlayersDataOperations(plugin, parkourGame, count, result -> {
+			int j = 1;
+			for (final Entry<String, Float> entry : result.getResult().entrySet()) {
+				sender.sendMessage(msg("topRecord", false).replace("%NUMBER%", "" + j++).replace("%PLAYER%", entry.getKey()).replace("%TIME%", "" + entry.getValue()));
+			}
+		}));
+	}
+
+	@Fallback
+	public String top() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.bestRecord", description = "Sets bestRecord sign location")
+	public String bestRecord(@Param("parkourGame") final ParkourGame parkourGame) {
+		final Location loc = ((Player) sender).getTargetBlock(null, 5).getLocation();
+		final Material m = loc.getBlock().getType();
+		if (!Data.SIGNS.contains(m)) {
+			return msg("noSign", true);
+		}
+		parkourGame.setBestRecord(loc);
+		sender.sendMessage(msg("setBestRecord", false).replace("%COORD_X%", "" + loc.getX()).replace("%COORD_Y%", "" + loc.getY()).replace("%COORD_Z%", "" + loc.getZ()));
+		try (final PreparedStatement stat = plugin.getConnection().prepareStatement("SELECT `time`, `nick` FROM ats_parkour_records WHERE parkour=? ORDER BY time LIMIT 1")) {
+			stat.setString(1, parkourGame.getName());
+			final ResultSet rs = stat.executeQuery();
+			if (rs.next()) {
+				DataBaseOperations.updateSign(plugin, rs.getString("nick"), rs.getDouble("time"), parkourGame);
+			} else {
+				DataBaseOperations.updateSign(plugin, "========", 0.00, parkourGame);
+			}
+		} catch (final Exception ex) {
+			plugin.getServer().getLogger().throwing(getClass().getName(), "onCommand", ex);
+		}
+		return null;
+	}
+
+	@Fallback
+	public String bestRecord() {
+		return msg("noGame", true);
+	}
+
+	// === MEDALS ===
+
+	@Argument(permission = "ats.parkour.bronze", description = "Shows bronze medal time")
+	public String bronze(@Param("parkourGame") final ParkourGame parkourGame) {
+		return msg("currentBronze", false).replace("%BRONZE%", String.valueOf(parkourGame.getOptions().getBronze()));
+	}
+
+	@Argument(permission = "ats.parkour.bronze", description = "Sets bronze medal time")
+	public String bronze(@Param("parkourGame") final ParkourGame parkourGame, final double bronze) {
+		parkourGame.getOptions().setBronze(bronze);
+		return msg("setBronze", false).replace("%BRONZE%", String.valueOf(bronze));
+	}
+
+	@Fallback
+	public String bronze() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.silver", description = "Shows silver medal time")
+	public String silver(@Param("parkourGame") final ParkourGame parkourGame) {
+		return msg("currentSilver", false).replace("%SILVER%", String.valueOf(parkourGame.getOptions().getSilver()));
+	}
+
+	@Argument(permission = "ats.parkour.silver", description = "Sets silver medal time")
+	public String silver(@Param("parkourGame") final ParkourGame parkourGame, final double silver) {
+		parkourGame.getOptions().setSilver(silver);
+		return msg("setSilver", false).replace("%SILVER%", String.valueOf(silver));
+	}
+
+	@Fallback
+	public String silver() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.gold", description = "Shows gold medal time")
+	public String gold(@Param("parkourGame") final ParkourGame parkourGame) {
+		return msg("currentGold", false).replace("%GOLD%", String.valueOf(parkourGame.getOptions().getGold()));
+	}
+
+	@Argument(permission = "ats.parkour.gold", description = "Sets gold medal time")
+	public String gold(@Param("parkourGame") final ParkourGame parkourGame, final double gold) {
+		parkourGame.getOptions().setGold(gold);
+		return msg("setGold", false).replace("%GOLD%", String.valueOf(gold));
+	}
+
+	@Fallback
+	public String gold() {
+		return msg("noGame", true);
+	}
+
+	@Argument(permission = "ats.parkour.platinum", description = "Shows platinum medal time")
+	public String platinum(@Param("parkourGame") final ParkourGame parkourGame) {
+		return msg("currentPlatinum", false).replace("%PLATINUM%", String.valueOf(parkourGame.getOptions().getPlatinum()));
+	}
+
+	@Argument(permission = "ats.parkour.platinum", description = "Sets platinum medal time")
+	public String platinum(@Param("parkourGame") final ParkourGame parkourGame, final double platinum) {
+		parkourGame.getOptions().setPlatinum(platinum);
+		return msg("setPlatinum", false).replace("%PLATINUM%", String.valueOf(platinum));
+	}
+
+	@Fallback
+	public String platinum() {
+		return msg("noGame", true);
+	}
+
+	// === UTILITIES ===
+
+	private CuboidRegion getRegionSelection(final Player player) {
+		final LocalSession session = worldEdit.getSession(player);
+		try {
+			final Region sel = session.getSelection(new BukkitWorld(((Player) sender).getWorld()));
+			if (sel == null) {
+				return null;
+			}
+			final AbstractWorld abstractWorld = new BukkitWorld(((Player) sender).getWorld());
+			return new CuboidRegion(abstractWorld, sel.getMaximumPoint(), sel.getMinimumPoint());
+		} catch (final IncompleteRegionException e) {
+			// Do nothing
+		}
+		return null;
 	}
 
 	private String msg(final String arg, final boolean error) {

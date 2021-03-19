@@ -23,12 +23,12 @@ public class PlayerAchieveCheckpointEvent extends AbstractParkourPlayerEvent {
 	/**
 	 * Constructor.
 	 *
-	 * @param parkour The game that player is in.
-	 * @param player The player that triggers the event.
+	 * @param parkourGame The game that player is in.
+	 * @param parkourPlayer The player that triggers the event.
 	 * @param checkpoint The achieved checkpoint.
 	 */
-	public PlayerAchieveCheckpointEvent(final ParkourGame parkour, final ParkourPlayer player, final Checkpoint checkpoint) {
-		super(parkour, player);
+	public PlayerAchieveCheckpointEvent(final ParkourGame parkourGame, final ParkourPlayer parkourPlayer, final Checkpoint checkpoint) {
+		super(parkourGame, parkourPlayer);
 		this.checkpoint = checkpoint;
 	}
 }

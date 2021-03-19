@@ -26,11 +26,6 @@ apply plugin: 'maven-publish'
 sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
 
-tasks.withType(JavaCompile) {
-	options.compilerArgs << '-Xlint:unchecked'
-	options.deprecation = true
-}
-
 repositories {
 	mavenLocal()
 	mavenCentral()
@@ -46,7 +41,7 @@ dependencies {
 	compileOnly group: 'com.sk89q.worldedit', name: 'worldedit-bukkit', version: '7.0.1'
 	implementation group: 'eu.andret', name: 'ats-arguments', version: argumentsVersion
 	implementation group: 'org.bstats', name: 'bstats-bukkit', version: '2.2.1'
-	implementation group: 'org.json', name: 'json', version: '20190722'
+	implementation group: 'org.json', name: 'json', version: '20210307'
 	annotationProcessor group: "org.projectlombok", name: "lombok", version: "1.18.18"
 
 	testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.7.0'
@@ -79,20 +74,19 @@ spigot {
 			children = [
 					'ats.parkour.main'         : true,
 					'ats.parkour.create'       : true,
-					'ats.parkour.setspawn'     : true,
-					'ats.parkour.addcheckpoint': true,
-					'ats.parkour.setcheckpoint': true,
+					'ats.parkour.setSpawn'     : true,
+					'ats.parkour.addCheckpoint': true,
+					'ats.parkour.setCheckpoint': true,
 					'ats.parkour.start'        : true,
 					'ats.parkour.recreate'     : true,
 					'ats.parkour.stop'         : true,
 					'ats.parkour.ignore'       : true,
 					'ats.parkour.list'         : true,
-					'ats.parkour.addwall'      : true,
-					'ats.parkour.setwall'      : true,
+					'ats.parkour.addWall'      : true,
+					'ats.parkour.setWall'      : true,
 					'ats.parkour.sprint'       : true,
-					'ats.parkour.price'        : true,
-					'ats.parkour.alwaysspawn'  : true,
-					'ats.parkour.countrecords' : true,
+					'ats.parkour.alwaysSpawn'  : true,
+					'ats.parkour.countRecords' : true,
 					'ats.parkour.modify'       : true,
 					'ats.parkour.damage'       : true,
 					'ats.parkour.help'         : true,
@@ -102,20 +96,18 @@ spigot {
 					'ats.parkour.silver'       : true,
 					'ats.parkour.gold'         : true,
 					'ats.parkour.platinum'     : true,
-					'ats.parkour.effectregion' : true,
 					'ats.parkour.rename'       : true,
-					'ats.parkour.teleportblock': true,
+					'ats.parkour.teleportBlock': true,
 					'ats.parkour.teleport'     : true,
-					'ats.parkour.ignorerecords': true,
+					'ats.parkour.ignoreRecords': true,
 					'ats.parkour.available'    : true,
 					'ats.parkour.type'         : true,
-					'ats.parkour.displayname'  : true,
+					'ats.parkour.displayName'  : true,
 					'ats.parkour.vip'          : true,
-					'ats.parkour.spectator'    : true,
+					'ats.parkour.spectate'     : true,
 					'ats.parkour.fix'          : true,
-					'ats.parkour.proceedable'  : true,
-					'ats.parkour.fair'         : true,
-					'ats.parkour.xp'           : true
+					'ats.parkour.enabled'      : true,
+					'ats.parkour.fair'         : true
 			]
 		}
 	}
@@ -193,6 +185,7 @@ shadowJar {
 	archiveFileName = "${project.name}-${project.version}.jar"
 	relocate 'org.json', 'eu.andret.ats.parkour.json'
 	relocate 'eu.andret.arguments', 'eu.andret.ats.parkour.arguments'
+	relocate "org.bstats", "eu.andret.ats.parkour.bstats"
 	project.configurations.implementation.canBeResolved = true
 	configurations = [project.configurations.implementation]
 }

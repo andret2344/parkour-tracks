@@ -47,7 +47,7 @@ public class ParkourSinglePlayer extends ParkourPlayer implements Runnable {
 		if (!SchedulerManager.TELEPORT_COUNT.containsKey(player.getUniqueId())) {
 			time = (i++) / 20F;
 		}
-		if (i == 1 && !spectating) {
+		if (i == 1) {
 			player.playSound(player.getLocation(), Sound.BLOCK_LEVER_CLICK, 0.5F, 0.5F);
 		}
 		player.setLevel((int) time);

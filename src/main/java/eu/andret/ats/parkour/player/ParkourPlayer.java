@@ -26,19 +26,23 @@ public abstract class ParkourPlayer {
 		this.player = player;
 	}
 
-	public void teleportToSpawn() {
-		reset();
-		teleportToCheckpoint(0);
+	public boolean teleportToSpawn() {
+		return teleportToCheckpoint(0);
 	}
 
-	public void teleportToCheckpoint(final int id) {
+	public boolean teleportToCheckpoint(final int id) {
+		// TODO: WHY?
 		if (inAnyParkour()) {
-			final ParkourGame pk = ParkourManager.getParkour(player);
-			final Checkpoint cp = pk.getCheckpoint(id);
-			final Vector3 v = cp.getRegion().getCenter();
-			player.teleport(new Location(pk.getWorld(), v.getX() + 0.5, v.getY(), v.getZ() + 0.5, cp.getYaw(), cp.getPitch()));
-			Bukkit.getPluginManager().callEvent(new PlayerTeleportBackEvent(pk, this, cp));
+			final ParkourGame parkourGame = ParkourManager.getParkour(player);
+			final Checkpoint checkpoint = parkourGame.getCheckpoint(id);
+			if (checkpoint == null) {
+				return false;
+			}
+			final Vector3 vector = checkpoint.getCuboidRegion().getCenter();
+			player.teleport(new Location(parkourGame.getWorld(), vector.getX() + 0.5, vector.getY(), vector.getZ() + 0.5, checkpoint.getYaw(), checkpoint.getPitch()));
+			Bukkit.getPluginManager().callEvent(new PlayerTeleportBackEvent(parkourGame, this, checkpoint));
 		}
+		return true;
 	}
 
 	public final void destroy() {

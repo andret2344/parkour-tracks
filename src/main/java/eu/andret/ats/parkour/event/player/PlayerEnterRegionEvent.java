@@ -18,17 +18,17 @@ public class PlayerEnterRegionEvent extends AbstractPlayerEvent {
 	/**
 	 * The region that player entered.
 	 */
-	AbstractRegion region;
+	AbstractRegion abstractRegion;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param parkour The game that player is in.
+	 * @param parkourGame The game that player is in.
 	 * @param player The player that triggers the event.
-	 * @param region The regoin that player came in.
+	 * @param abstractRegion The region that player came in.
 	 */
-	public PlayerEnterRegionEvent(final ParkourGame parkour, final Player player, final AbstractRegion region) {
-		super(parkour, player);
-		this.region = region;
+	public PlayerEnterRegionEvent(final ParkourGame parkourGame, final Player player, final AbstractRegion abstractRegion) {
+		super(parkourGame, player);
+		this.abstractRegion = abstractRegion;
 	}
 }

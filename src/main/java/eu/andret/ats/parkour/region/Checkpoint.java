@@ -20,8 +20,8 @@ public class Checkpoint extends AbstractRegion {
 	@NonFinal
 	float pitch;
 
-	public Checkpoint(final CuboidRegion region, final float yaw, final float pitch) {
-		super(region);
+	public Checkpoint(final CuboidRegion cuboidRegion, final float yaw, final float pitch) {
+		super(cuboidRegion);
 		this.yaw = yaw;
 		this.pitch = pitch;
 	}
@@ -30,8 +30,8 @@ public class Checkpoint extends AbstractRegion {
 		this(new CuboidRegion(new BukkitWorld(world), BlockVector3.ZERO, BlockVector3.ZERO), yaw, pitch);
 	}
 
-	public Checkpoint(final CuboidRegion region) {
-		this(region, 0, 0);
+	public Checkpoint(final CuboidRegion cuboidRegion) {
+		this(cuboidRegion, 0, 0);
 	}
 
 	public Checkpoint(final World world) {
