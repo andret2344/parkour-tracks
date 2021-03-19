@@ -6,7 +6,6 @@ package eu.andret.ats.parkour.tasks;
 import eu.andret.ats.parkour.ParkourPlugin;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import lombok.Value;
-import org.bukkit.Bukkit;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -33,7 +32,7 @@ public class TopPlayersDataOperations implements Runnable {
 			}
 			callback.accept(this);
 		} catch (final Exception ex) {
-			Bukkit.getServer().getLogger().throwing(getClass().getName(), "run", ex);
+			plugin.getServer().getLogger().throwing(getClass().getName(), "run", ex);
 		}
 	}
 

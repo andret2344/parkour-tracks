@@ -25,7 +25,6 @@ import eu.andret.ats.parkour.tasks.TeleportCount;
 import eu.andret.ats.parkour.util.Data;
 import eu.andret.ats.parkour.util.SchedulerManager;
 import lombok.Value;
-import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -98,13 +97,13 @@ public class ParkourListeners implements Listener {
 				for (final AbstractRegion r : p.getAllRegions()) {
 					if (!pp.isSpectating() && p.isRunning() && !pp.isIgnoring() && p.getWorld().equals(parkour.getWorld())) {
 						if (r.contains(event.getFrom()) && !r.contains(event.getTo())) {
-							Bukkit.getPluginManager().callEvent(new PlayerLeaveRegionEvent(p, pl, r));
+							plugin.getServer().getPluginManager().callEvent(new PlayerLeaveRegionEvent(p, pl, r));
 						} else if (!r.contains(event.getFrom()) && r.contains(event.getTo())) {
-							Bukkit.getPluginManager().callEvent(new PlayerEnterRegionEvent(p, pl, r));
+							plugin.getServer().getPluginManager().callEvent(new PlayerEnterRegionEvent(p, pl, r));
 							if (r instanceof Checkpoint) {
-								Bukkit.getPluginManager().callEvent(new PlayerAchieveCheckpointEvent(p, PlayerManager.getParkourPlayer(pl), (Checkpoint) r));
+								plugin.getServer().getPluginManager().callEvent(new PlayerAchieveCheckpointEvent(p, PlayerManager.getParkourPlayer(pl), (Checkpoint) r));
 							} else if (r instanceof Wall) {
-								Bukkit.getPluginManager().callEvent(new PlayerHitWallEvent(p, PlayerManager.getParkourPlayer(pl), (Wall) r));
+								plugin.getServer().getPluginManager().callEvent(new PlayerHitWallEvent(p, PlayerManager.getParkourPlayer(pl), (Wall) r));
 							}
 						}
 					}
@@ -163,7 +162,7 @@ public class ParkourListeners implements Listener {
 				}
 			}
 			if (checkpointId == pk.getLastCheckpointId()) {
-				Bukkit.getPluginManager().callEvent(new PlayerCompleteParkourEvent(event.getParkourGame(), event.getParkourPlayer()));
+				plugin.getServer().getPluginManager().callEvent(new PlayerCompleteParkourEvent(event.getParkourGame(), event.getParkourPlayer()));
 			}
 			if (checkpointId == 0) {
 				PlayerManager.getParkourSinglePlayer(event.getParkourPlayer().getPlayer()).reset();
@@ -196,14 +195,14 @@ public class ParkourListeners implements Listener {
 			if (event.getParkourGame().getOptions().isRecordsCounting()) {
 				final float curr = PlayerManager.getParkourSinglePlayer(player).getTime();
 				if (curr < event.getParkourGame().getOptions().getFair()) {
-					Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "tban " + player.getName() + " 1");
+					plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), "tban " + player.getName() + " 1");
 					return;
 				}
 				final String time = String.valueOf(curr);
 				player.sendMessage(plugin.msg("finishTime", false).replace("%TIME%", Math.abs(time.lastIndexOf('.') - time.length()) == 2 ? (time + "0") : time));
-				Bukkit.getScheduler().runTaskAsynchronously(plugin, new DataBaseOperations(plugin, player, event.getParkourGame(), curr));
+				plugin.getServer().getScheduler().runTaskAsynchronously(plugin, new DataBaseOperations(plugin, player, event.getParkourGame(), curr));
 			}
-			Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> startScheduling(player), 5L);
+			plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, () -> startScheduling(player), 5L);
 		}
 	}
 
@@ -245,7 +244,7 @@ public class ParkourListeners implements Listener {
 			event.getParkourPlayer().getPlayer().setLevel(0);
 			event.getParkourPlayer().getPlayer().setExp(0);
 			if (!SchedulerManager.COUNT_TIME.containsKey(event.getParkourPlayer().getPlayer().getUniqueId()) && !PlayerManager.getParkourSinglePlayer(event.getParkourPlayer().getPlayer()).isSpectating()) {
-				final int s = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, PlayerManager.getParkourSinglePlayer(event.getParkourPlayer().getPlayer()), 1, 1);
+				final int s = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, PlayerManager.getParkourSinglePlayer(event.getParkourPlayer().getPlayer()), 1, 1);
 				SchedulerManager.COUNT_TIME.put(event.getParkourPlayer().getPlayer().getUniqueId(), s);
 			}
 		}
@@ -293,7 +292,7 @@ public class ParkourListeners implements Listener {
 	@EventHandler
 	public void quitGame(final PlayerQuitGameEvent event) {
 		if (SchedulerManager.COUNT_TIME.containsKey(event.getParkourPlayer().getPlayer().getUniqueId())) {
-			Bukkit.getScheduler().cancelTask(SchedulerManager.COUNT_TIME.get(event.getParkourPlayer().getPlayer().getUniqueId()));
+			plugin.getServer().getScheduler().cancelTask(SchedulerManager.COUNT_TIME.get(event.getParkourPlayer().getPlayer().getUniqueId()));
 			PlayerManager.getParkourSinglePlayer(event.getParkourPlayer().getPlayer()).reset();
 			SchedulerManager.COUNT_TIME.remove(event.getParkourPlayer().getPlayer().getUniqueId());
 		}
@@ -307,7 +306,7 @@ public class ParkourListeners implements Listener {
 			if (SchedulerManager.TELEPORT_COUNT_2.get(event.getParkourPlayer().getPlayer().getUniqueId()).getLeastTime() > 0) {
 				event.getParkourPlayer().getPlayer().sendMessage(plugin.msg("teleportationCanceled", false));
 			}
-			Bukkit.getScheduler().cancelTask(SchedulerManager.TELEPORT_COUNT.get(event.getParkourPlayer().getPlayer().getUniqueId()));
+			plugin.getServer().getScheduler().cancelTask(SchedulerManager.TELEPORT_COUNT.get(event.getParkourPlayer().getPlayer().getUniqueId()));
 			SchedulerManager.TELEPORT_COUNT.remove(event.getParkourPlayer().getPlayer().getUniqueId());
 			SchedulerManager.TELEPORT_COUNT_2.remove(event.getParkourPlayer().getPlayer().getUniqueId());
 		}
@@ -335,7 +334,7 @@ public class ParkourListeners implements Listener {
 			if (p.inAnyRegion(event.getTo()) && !p.getPlayers().contains(PlayerManager.getParkourSinglePlayer(event.getPlayer())) && !PlayerManager.getParkourSinglePlayer(event.getPlayer()).isIgnoring()) {
 				p.addPlayer(event.getPlayer());
 				if (!SchedulerManager.COUNT_TIME.containsKey(event.getPlayer().getUniqueId()) && p.getOptions().isRecordsCounting()) {
-					final int s = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, PlayerManager.getParkourSinglePlayer(event.getPlayer()), 1, 1);
+					final int s = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, PlayerManager.getParkourSinglePlayer(event.getPlayer()), 1, 1);
 					SchedulerManager.COUNT_TIME.put(event.getPlayer().getUniqueId(), s);
 				}
 				continue;
@@ -398,14 +397,14 @@ public class ParkourListeners implements Listener {
 
 	public void stopScheduling(final Player player) {
 		if (SchedulerManager.TELEPORT_COUNT.containsKey(player.getUniqueId())) {
-			Bukkit.getScheduler().cancelTask(SchedulerManager.TELEPORT_COUNT.get(player.getUniqueId()));
+			plugin.getServer().getScheduler().cancelTask(SchedulerManager.TELEPORT_COUNT.get(player.getUniqueId()));
 			PlayerManager.getParkourSinglePlayer(player).teleportToLobby();
 		}
 	}
 
 	public void startScheduling(final Player player) {
 		final TeleportCount t = new TeleportCount(plugin, PlayerManager.getParkourPlayer(player));
-		final int s = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, t, 0, 20);
+		final int s = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, t, 0, 20);
 		SchedulerManager.TELEPORT_COUNT.put(player.getUniqueId(), s);
 		SchedulerManager.TELEPORT_COUNT_2.put(player.getUniqueId(), t);
 	}

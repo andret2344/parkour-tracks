@@ -6,7 +6,6 @@ package eu.andret.ats.parkour.tasks;
 import eu.andret.ats.parkour.ParkourPlugin;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import lombok.Getter;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.sql.PreparedStatement;
@@ -59,7 +58,7 @@ public class ParkourDataOperations implements Runnable {
 			callback.accept(this);
 			rs.close();
 		} catch (final Exception ex) {
-			Bukkit.getLogger().throwing(getClass().getName(), "run", ex);
+			plugin.getServer().getLogger().throwing(getClass().getName(), "run", ex);
 		}
 	}
 }

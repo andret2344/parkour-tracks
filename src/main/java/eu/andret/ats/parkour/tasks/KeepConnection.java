@@ -5,7 +5,6 @@ package eu.andret.ats.parkour.tasks;
 
 import eu.andret.ats.parkour.ParkourPlugin;
 import lombok.AllArgsConstructor;
-import org.bukkit.Bukkit;
 
 import java.sql.PreparedStatement;
 
@@ -18,7 +17,7 @@ public class KeepConnection implements Runnable {
 		try (final PreparedStatement statement = plugin.getConnection().prepareStatement("SELECT id FROM ats_parkour_records WHERE id < 0")) {
 			statement.executeQuery();
 		} catch (final Exception ex) {
-			Bukkit.getServer().getLogger().throwing(getClass().getName(), "run", ex);
+			plugin.getServer().getLogger().throwing(getClass().getName(), "run", ex);
 		}
 	}
 }

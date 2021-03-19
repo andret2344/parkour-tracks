@@ -7,7 +7,6 @@ import eu.andret.ats.parkour.ParkourPlugin;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.player.PlayerManager;
 import eu.andret.ats.parkour.util.Medal;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Sign;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -102,7 +101,7 @@ public class DataBaseOperations implements Runnable {
 			}
 			rs.close();
 		} catch (final Exception ex) {
-			Bukkit.getServer().getLogger().throwing(getClass().getName(), "run", ex);
+			plugin.getServer().getLogger().throwing(getClass().getName(), "run", ex);
 		}
 	}
 

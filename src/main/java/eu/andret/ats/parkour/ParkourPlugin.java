@@ -13,7 +13,6 @@ import eu.andret.ats.parkour.tasks.KeepConnection;
 import eu.andret.ats.parkour.util.Data;
 import lombok.Getter;
 import org.bstats.bukkit.Metrics;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -88,7 +87,7 @@ public class ParkourPlugin extends JavaPlugin {
 			getServer().getLogger().throwing(getClass().getName(), "onEnable", ex);
 		}
 		generate();
-		ParkourManager.getAllGames().forEach(p -> Bukkit.getServer().getOnlinePlayers().stream()
+		ParkourManager.getAllGames().forEach(p -> getServer().getOnlinePlayers().stream()
 				.filter(pl -> p.getAllRegions().stream().anyMatch(r -> r.contains(pl.getLocation())))
 				.forEach(p::addPlayer));
 		getServer().getScheduler().scheduleSyncRepeatingTask(this, new KeepConnection(this), 36_000, 36_000);
@@ -104,15 +103,14 @@ public class ParkourPlugin extends JavaPlugin {
 		} catch (final IOException e) {
 			e.printStackTrace();
 		}
-		Bukkit.getScheduler().cancelTasks(this);
+		getServer().getScheduler().cancelTasks(this);
 	}
 
 	private void createDoors() {
 		exit = new ItemStack(Material.IRON_DOOR);
 		Optional.ofNullable(exit.getItemMeta())
 				.stream()
-				.peek(im -> im.setDisplayName("§r" + ChatColor.translateAlternateColorCodes('&',
-						getConfig().getString("door.name"))))
+				.peek(im -> im.setDisplayName("§r" + ChatColor.translateAlternateColorCodes('&', getConfig().getString("door.name"))))
 				.findAny()
 				.ifPresent(exit::setItemMeta);
 	}
@@ -175,9 +173,9 @@ public class ParkourPlugin extends JavaPlugin {
 	}
 
 	private void load() {
-		final String w = getConfig().getString("lobby.world");
-		if (!"-1".equals(w)) {
-			final World world = Bukkit.getWorld(w);
+		final String worldName = getConfig().getString("lobby.world");
+		if (!"-1".equals(worldName) && worldName != null) {
+			final World world = getServer().getWorld(worldName);
 			if (world == null) {
 				return;
 			}
@@ -193,7 +191,6 @@ public class ParkourPlugin extends JavaPlugin {
 		Stream.of(folder.listFiles())
 				.filter(File::isFile)
 				.filter(file -> file.getName().endsWith("json"))
-				.peek(System.out::print)
 				.forEach(file -> {
 					final String name = file.getName().substring(0, file.getName().lastIndexOf('.'));
 					getServer().getLogger().log(Level.INFO, "[atsParkour] Loading parkour \"{0}\"", name);
@@ -201,7 +198,7 @@ public class ParkourPlugin extends JavaPlugin {
 					try {
 						rawJSON = String.join("", Files.readAllLines(file.toPath()));
 						final JSONObject jsonObject = new JSONObject(rawJSON);
-						final World parkourWorld = Bukkit.getWorld(jsonObject.getString("world"));
+						final World parkourWorld = getServer().getWorld(jsonObject.getString("world"));
 						if (parkourWorld == null) {
 							return;
 						}
