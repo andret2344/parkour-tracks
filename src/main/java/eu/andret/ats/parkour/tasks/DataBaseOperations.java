@@ -40,7 +40,7 @@ public class DataBaseOperations implements Runnable {
 		try {
 			// Another win
 			PreparedStatement stat;
-			if (!player.hasPermission("ats.parkour.ignorerecords")) {
+			if (!player.hasPermission("ats.parkour.ignoreRecords")) {
 				// Is my time the best?
 				stat = sql.prepareStatement("SELECT time FROM ats_parkour_records WHERE parkour = ? ORDER BY time ASC LIMIT 1");
 				stat.setString(1, parkour.getName());
@@ -106,7 +106,7 @@ public class DataBaseOperations implements Runnable {
 	}
 
 	public static void updateSign(final ParkourPlugin plugin, final String player, final double time, final ParkourGame parkour) {
-		final Location l = parkour.getBestRecord();
+		final Location l = parkour.getRecordsBlock();
 		if (l != null) {
 			final Sign s = (Sign) l.getBlock().getState();
 			final FileConfiguration c = plugin.getConfig();
