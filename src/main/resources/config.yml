@@ -1,4 +1,5 @@
-connection:
+database:
+  enabled: false
   url: localhost
   user: root
   pass: ''

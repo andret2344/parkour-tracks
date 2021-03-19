@@ -86,8 +86,6 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 		private double gold = 0;
 		@Builder.Default
 		private double platinum = 0;
-		@Builder.Default
-		private double fair = 0;
 		@Getter(AccessLevel.NONE)
 		private final Map<PotionEffectType, Integer> effects = new HashMap<>();
 		@Builder.Default

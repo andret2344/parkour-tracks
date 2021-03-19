@@ -106,8 +106,7 @@ spigot {
 					'ats.parkour.vip'          : true,
 					'ats.parkour.spectate'     : true,
 					'ats.parkour.fix'          : true,
-					'ats.parkour.enabled'      : true,
-					'ats.parkour.fair'         : true
+					'ats.parkour.enabled'      : true
 			]
 		}
 	}

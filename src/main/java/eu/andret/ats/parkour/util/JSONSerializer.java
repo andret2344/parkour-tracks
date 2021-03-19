@@ -42,13 +42,21 @@ public class JSONSerializer {
 	private static final String Z = "z";
 	private static final String YAW = "yaw";
 	private static final String PITCH = "pitch";
-	public static final String SPAWN = "spawn";
+	private static final String SPAWN = "spawn";
 
 	ParkourPlugin plugin;
 
 	// === READING ===
 
-	public ParkourGame readParkourGame(final String name, final JSONObject jsonObject) {
+	public List<ParkourGame> readParkourGames(final JSONArray jsonArray) {
+		final List<ParkourGame> list = new ArrayList<>();
+		for (int i = 0; i < jsonArray.length(); i++) {
+			list.add(readParkourGame(jsonArray.getJSONObject(i)));
+		}
+		return list;
+	}
+
+	private ParkourGame readParkourGame(final JSONObject jsonObject) {
 		final String world = jsonObject.getString(WORLD);
 		if (world == null) {
 			return null;
@@ -56,8 +64,11 @@ public class JSONSerializer {
 		if (!jsonObject.has(REGION)) {
 			return null;
 		}
+		if (!jsonObject.has("name")) {
+			return null;
+		}
 		final AbstractRegion gameRegion = readAbstractRegion(jsonObject.getJSONObject(REGION));
-		final ParkourGame parkourGame = new Parkour(name, gameRegion, plugin.getServer().getWorld(world));
+		final ParkourGame parkourGame = new Parkour(jsonObject.getString("name"), gameRegion, plugin.getServer().getWorld(world));
 		if (jsonObject.has(SPAWN)) {
 			parkourGame.setSpawn(readDirectionalRegion(jsonObject.getJSONObject(SPAWN)));
 		}
@@ -121,7 +132,6 @@ public class JSONSerializer {
 				.type(ParkourGame.ParkourType.valueOf(jsonObject1.getString("type")))
 				.vipOnly(jsonObject1.getBoolean("vipOnly"))
 				.enabled(jsonObject1.getBoolean("enabled"))
-				.fair(jsonObject1.getDouble("fair"))
 				.build();
 		final JSONArray effects = jsonObject1.getJSONArray(EFFECTS);
 		for (int i = 0; i < effects.length(); i++) {
@@ -186,7 +196,7 @@ public class JSONSerializer {
 		return new DirectionalRegion(cuboidRegion, yaw, pitch);
 	}
 
-	private Location readLocation(final JSONObject jsonObject) {
+	public Location readLocation(final JSONObject jsonObject) {
 		if (jsonObject == null) {
 			return null;
 		}
@@ -197,9 +207,15 @@ public class JSONSerializer {
 		return new Location(Bukkit.getWorld(world), x, y, z);
 	}
 
-	// ==
+	// === WRITING ===
 
-	public JSONObject writeParkourGame(final ParkourGame parkourGame) {
+	public JSONArray writeParkourGames(final List<ParkourGame> list) {
+		final JSONArray jsonArray = new JSONArray();
+		list.stream().map(this::writeParkourGame).forEach(jsonArray::put);
+		return jsonArray;
+	}
+
+	private JSONObject writeParkourGame(final ParkourGame parkourGame) {
 		if (parkourGame == null) {
 			return null;
 		}
@@ -218,7 +234,7 @@ public class JSONSerializer {
 		return jsonObject;
 	}
 
-	public JSONArray writeStringCollection(final Collection<String> list) {
+	private JSONArray writeStringCollection(final Collection<String> list) {
 		final JSONArray jsonArray = new JSONArray();
 		if (list != null) {
 			list.forEach(jsonArray::put);
@@ -247,7 +263,7 @@ public class JSONSerializer {
 		return writeCuboidRegion(abstractRegion.getCuboidRegion());
 	}
 
-	private JSONObject writeLocation(final Location location) {
+	public JSONObject writeLocation(final Location location) {
 		if (location == null || location.getWorld() == null) {
 			return null;
 		}
@@ -307,7 +323,6 @@ public class JSONSerializer {
 		jsonObject1.put("difficulty", options.getDifficulty());
 		jsonObject1.put("vipOnly", options.isVipOnly());
 		jsonObject1.put("enabled", options.isEnabled());
-		jsonObject1.put("fair", options.getFair());
 		jsonObject1.put("type", options.getType().name());
 		final JSONArray effects = new JSONArray();
 		for (final Map.Entry<PotionEffectType, Integer> entry : options.getEffects().entrySet()) {

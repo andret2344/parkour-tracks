@@ -3,21 +3,22 @@
  */
 package eu.andret.ats.parkour.tasks;
 
-import eu.andret.ats.parkour.ParkourPlugin;
 import lombok.AllArgsConstructor;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 
 @AllArgsConstructor
 public class KeepConnection implements Runnable {
-	private final ParkourPlugin plugin;
+	private final Connection connection;
 
 	@Override
 	public void run() {
-		try (final PreparedStatement statement = plugin.getConnection().prepareStatement("SELECT id FROM ats_parkour_records WHERE id < 0")) {
+		try (final PreparedStatement statement = connection.prepareStatement("SELECT id FROM ats_parkour_records WHERE id < 0")) {
 			statement.executeQuery();
-		} catch (final Exception ex) {
-			plugin.getServer().getLogger().throwing(getClass().getName(), "run", ex);
+		} catch (final SQLException ex) {
+			ex.printStackTrace();
 		}
 	}
 }
