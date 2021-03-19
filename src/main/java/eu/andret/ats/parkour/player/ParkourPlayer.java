@@ -7,7 +7,7 @@ import com.sk89q.worldedit.math.Vector3;
 import eu.andret.ats.parkour.event.player.PlayerTeleportBackEvent;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourManager;
-import eu.andret.ats.parkour.region.Checkpoint;
+import eu.andret.ats.parkour.region.DirectionalRegion;
 import lombok.Data;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -34,19 +34,15 @@ public abstract class ParkourPlayer {
 		// TODO: WHY?
 		if (inAnyParkour()) {
 			final ParkourGame parkourGame = ParkourManager.getParkour(player);
-			final Checkpoint checkpoint = parkourGame.getCheckpoint(id);
-			if (checkpoint == null) {
+			final DirectionalRegion checkpointRegion = parkourGame.getCheckpoints().get(id);
+			if (checkpointRegion == null) {
 				return false;
 			}
-			final Vector3 vector = checkpoint.getCuboidRegion().getCenter();
-			player.teleport(new Location(parkourGame.getWorld(), vector.getX() + 0.5, vector.getY(), vector.getZ() + 0.5, checkpoint.getYaw(), checkpoint.getPitch()));
-			Bukkit.getPluginManager().callEvent(new PlayerTeleportBackEvent(parkourGame, this, checkpoint));
+			final Vector3 vector = checkpointRegion.getCuboidRegion().getCenter();
+			player.teleport(new Location(parkourGame.getWorld(), vector.getX() + 0.5, vector.getY(), vector.getZ() + 0.5, (float) checkpointRegion.getYaw(), (float) checkpointRegion.getPitch()));
+			Bukkit.getPluginManager().callEvent(new PlayerTeleportBackEvent(parkourGame, this, checkpointRegion));
 		}
 		return true;
-	}
-
-	public final void destroy() {
-		PlayerManager.remove(player);
 	}
 
 	public void setSpectating(final boolean spectating) {

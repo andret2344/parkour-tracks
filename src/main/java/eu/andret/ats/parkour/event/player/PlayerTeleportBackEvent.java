@@ -5,7 +5,7 @@ package eu.andret.ats.parkour.event.player;
 
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.player.ParkourPlayer;
-import eu.andret.ats.parkour.region.Checkpoint;
+import eu.andret.ats.parkour.region.DirectionalRegion;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 
@@ -18,17 +18,17 @@ public class PlayerTeleportBackEvent extends AbstractParkourPlayerEvent {
 	/**
 	 * The checkpoint the player was teleported to.
 	 */
-	Checkpoint checkpoint;
+	DirectionalRegion checkpointRegion;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param parkourGame The game that player is in.
 	 * @param parkourPlayer The player that triggers the event.
-	 * @param checkpoint The checkpoint the player is teleported to.
+	 * @param checkpointRegion The checkpoint the player is teleported to.
 	 */
-	public PlayerTeleportBackEvent(final ParkourGame parkourGame, final ParkourPlayer parkourPlayer, final Checkpoint checkpoint) {
+	public PlayerTeleportBackEvent(final ParkourGame parkourGame, final ParkourPlayer parkourPlayer, final DirectionalRegion checkpointRegion) {
 		super(parkourGame, parkourPlayer);
-		this.checkpoint = checkpoint;
+		this.checkpointRegion = checkpointRegion;
 	}
 }

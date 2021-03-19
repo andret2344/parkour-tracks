@@ -5,7 +5,6 @@ package eu.andret.ats.parkour.player;
 
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourManager;
-import eu.andret.ats.parkour.region.Checkpoint;
 import eu.andret.ats.parkour.util.SchedulerManager;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
@@ -36,10 +35,9 @@ public class ParkourSinglePlayer extends ParkourPlayer implements Runnable {
 		if (ignoring || PlayerManager.getParkourPlayer(player) == null || p == null || !p.isRunning() || spectating) {
 			return;
 		}
-		for (final Checkpoint c : p.getCheckpointList()) {
-			if (c.contains(player.getLocation())) {
-				return;
-			}
+		final boolean playerInAnyCheckpoint = p.getCheckpoints().stream().anyMatch(c -> c.contains(player.getLocation()));
+		if (playerInAnyCheckpoint) {
+			return;
 		}
 		if (p.getSpawn().contains(player.getLocation())) {
 			i = 0;

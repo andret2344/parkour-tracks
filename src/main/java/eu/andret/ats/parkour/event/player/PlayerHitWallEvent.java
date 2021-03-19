@@ -5,7 +5,7 @@ package eu.andret.ats.parkour.event.player;
 
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.player.ParkourPlayer;
-import eu.andret.ats.parkour.region.Wall;
+import eu.andret.ats.parkour.region.AbstractRegion;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 
@@ -18,17 +18,17 @@ public class PlayerHitWallEvent extends AbstractParkourPlayerEvent {
 	/**
 	 * The wall the player hit.
 	 */
-	Wall wall;
+	AbstractRegion wallRegion;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param parkourGame The game that player is in.
 	 * @param parkourPlayer The player that triggers the event.
-	 * @param wall The wall the player hit.
+	 * @param wallRegion The wall the player hit.
 	 */
-	public PlayerHitWallEvent(final ParkourGame parkourGame, final ParkourPlayer parkourPlayer, final Wall wall) {
+	public PlayerHitWallEvent(final ParkourGame parkourGame, final ParkourPlayer parkourPlayer, final AbstractRegion wallRegion) {
 		super(parkourGame, parkourPlayer);
-		this.wall = wall;
+		this.wallRegion = wallRegion;
 	}
 }

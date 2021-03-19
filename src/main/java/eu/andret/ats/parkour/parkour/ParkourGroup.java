@@ -4,7 +4,7 @@
 package eu.andret.ats.parkour.parkour;
 
 import eu.andret.ats.parkour.player.PlayerManager;
-import eu.andret.ats.parkour.region.GameRegion;
+import eu.andret.ats.parkour.region.AbstractRegion;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -22,7 +22,7 @@ import java.util.List;
 public class ParkourGroup extends ParkourGame {
 	private final List<Parkour> parkours = new ArrayList<>();
 
-	public ParkourGroup(final String name, final GameRegion gameRegion, final World world) {
+	public ParkourGroup(final String name, final AbstractRegion gameRegion, final World world) {
 		super(name, gameRegion, world);
 	}
 
