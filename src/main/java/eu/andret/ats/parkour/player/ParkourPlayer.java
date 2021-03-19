@@ -18,7 +18,7 @@ import org.bukkit.inventory.ItemStack;
 @Data
 public abstract class ParkourPlayer {
 	protected final Player player;
-	protected int lastVisitedCheckpointId = 0;
+	protected int lastVisitedCheckpointId = -1;
 	protected boolean ignoring = false;
 	protected boolean spectating = false;
 
@@ -27,22 +27,32 @@ public abstract class ParkourPlayer {
 	}
 
 	public boolean teleportToSpawn() {
-		return teleportToCheckpoint(0);
+		final ParkourGame parkourGame = ParkourManager.getParkour(player);
+		final DirectionalRegion spawn = parkourGame.getSpawn();
+		if (spawn == null) {
+			return false;
+		}
+		teleportToRegion(parkourGame, spawn);
+		return true;
 	}
 
 	public boolean teleportToCheckpoint(final int id) {
+		final ParkourGame parkourGame = ParkourManager.getParkour(player);
+		final DirectionalRegion checkpointRegion = parkourGame.getCheckpoints().get(id);
+		if (checkpointRegion == null) {
+			return false;
+		}
+		teleportToRegion(parkourGame, checkpointRegion);
+		return true;
+	}
+
+	public void teleportToRegion(final ParkourGame game, final DirectionalRegion region) {
 		// TODO: WHY?
 		if (inAnyParkour()) {
-			final ParkourGame parkourGame = ParkourManager.getParkour(player);
-			final DirectionalRegion checkpointRegion = parkourGame.getCheckpoints().get(id);
-			if (checkpointRegion == null) {
-				return false;
-			}
-			final Vector3 vector = checkpointRegion.getCuboidRegion().getCenter();
-			player.teleport(new Location(parkourGame.getWorld(), vector.getX() + 0.5, vector.getY(), vector.getZ() + 0.5, (float) checkpointRegion.getYaw(), (float) checkpointRegion.getPitch()));
-			Bukkit.getPluginManager().callEvent(new PlayerTeleportBackEvent(parkourGame, this, checkpointRegion));
+			final Vector3 vector = region.getCuboidRegion().getCenter();
+			player.teleport(new Location(game.getWorld(), vector.getX() + 0.5, vector.getY(), vector.getZ() + 0.5, (float) region.getYaw(), (float) region.getPitch()));
+			Bukkit.getPluginManager().callEvent(new PlayerTeleportBackEvent(game, this, region));
 		}
-		return true;
 	}
 
 	public void setSpectating(final boolean spectating) {

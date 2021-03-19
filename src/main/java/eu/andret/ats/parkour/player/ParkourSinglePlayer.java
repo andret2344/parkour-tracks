@@ -16,7 +16,7 @@ import org.bukkit.entity.Player;
 
 @Getter
 @Setter
-@ToString
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public class ParkourSinglePlayer extends ParkourPlayer implements Runnable {
 	private float time = 0;
@@ -31,16 +31,17 @@ public class ParkourSinglePlayer extends ParkourPlayer implements Runnable {
 	@Override
 	public void run() {
 		//FIXME: Remove thread thing from here
-		final ParkourGame p = ParkourManager.getParkour(player);
-		if (ignoring || PlayerManager.getParkourPlayer(player) == null || p == null || !p.isRunning() || spectating) {
+		final ParkourGame parkourGame = ParkourManager.getParkour(player);
+		if (ignoring || PlayerManager.getParkourPlayer(player) == null || parkourGame == null || !parkourGame.isRunning() || spectating) {
 			return;
 		}
-		final boolean playerInAnyCheckpoint = p.getCheckpoints().stream().anyMatch(c -> c.contains(player.getLocation()));
-		if (playerInAnyCheckpoint) {
-			return;
-		}
-		if (p.getSpawn().contains(player.getLocation())) {
+		final boolean playerInSpawn = parkourGame.getSpawn() != null && parkourGame.getSpawn().contains(player.getLocation());
+		final boolean playerInAnyCheckpoint = parkourGame.getCheckpoints().stream().anyMatch(c -> c.contains(player.getLocation()));
+		if (playerInSpawn) {
 			i = 0;
+		}
+		if (playerInAnyCheckpoint || playerInSpawn) {
+			return;
 		}
 		if (!SchedulerManager.TELEPORT_COUNT.containsKey(player.getUniqueId())) {
 			time = (i++) / 20F;

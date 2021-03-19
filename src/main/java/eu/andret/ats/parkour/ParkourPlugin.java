@@ -37,6 +37,7 @@ import java.sql.Statement;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -94,7 +95,7 @@ public class ParkourPlugin extends JavaPlugin {
 		}
 		generate();
 		ParkourManager.getAllGames().forEach(p -> getServer().getOnlinePlayers().stream()
-				.filter(pl -> p.getAllRegions().stream().anyMatch(r -> r.contains(pl.getLocation())))
+				.filter(pl -> p.getAllRegions().stream().filter(Objects::nonNull).anyMatch(r -> r.contains(pl.getLocation())))
 				.forEach(p::addPlayer));
 		getServer().getScheduler().scheduleSyncRepeatingTask(this, new KeepConnection(this), 36_000, 36_000);
 		new Metrics(this, 10700);

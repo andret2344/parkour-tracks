@@ -17,6 +17,9 @@ public class AbstractRegion {
 	CuboidRegion cuboidRegion;
 
 	public boolean contains(final Location location) {
+		if (location == null) {
+			return false;
+		}
 		return cuboidRegion.contains(BlockVector3.at(location.getX(), location.getY(), location.getZ()));
 	}
 }

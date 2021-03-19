@@ -42,6 +42,7 @@ public class JSONSerializer {
 	private static final String Z = "z";
 	private static final String YAW = "yaw";
 	private static final String PITCH = "pitch";
+	public static final String SPAWN = "spawn";
 
 	ParkourPlugin plugin;
 
@@ -57,6 +58,9 @@ public class JSONSerializer {
 		}
 		final AbstractRegion gameRegion = readAbstractRegion(jsonObject.getJSONObject(REGION));
 		final ParkourGame parkourGame = new Parkour(name, gameRegion, plugin.getServer().getWorld(world));
+		if (jsonObject.has(SPAWN)) {
+			parkourGame.setSpawn(readDirectionalRegion(jsonObject.getJSONObject(SPAWN)));
+		}
 		if (jsonObject.has(CHECKPOINTS)) {
 			readDirectionalRegions(jsonObject.getJSONArray(CHECKPOINTS)).forEach(x -> parkourGame.getCheckpoints().add(x));
 		}
@@ -202,6 +206,7 @@ public class JSONSerializer {
 		final JSONObject jsonObject = new JSONObject();
 		jsonObject.put(WORLD, parkourGame.getWorld().getName());
 		jsonObject.put(REGION, writeAbstractRegion(parkourGame.getGameRegion()));
+		jsonObject.put(SPAWN, writeDirectionalRegion(parkourGame.getSpawn()));
 		jsonObject.put(CHECKPOINTS, writeDirectionalRegions(parkourGame.getCheckpoints()));
 		jsonObject.put(WALLS, writeAbstractRegions(parkourGame.getWalls()));
 		jsonObject.put(OPTIONS, writeOptions(parkourGame.getOptions()));

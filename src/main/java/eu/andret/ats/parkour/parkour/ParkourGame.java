@@ -24,11 +24,12 @@ import org.bukkit.potion.PotionEffectType;
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 @Data
 public abstract class ParkourGame implements Comparable<ParkourGame> {
@@ -46,7 +47,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 	private final List<DirectionalRegion> checkpoints = new ArrayList<>();
 	private final List<AbstractRegion> walls = new ArrayList<>();
 	private final Set<String> authors = new TreeSet<>();
-	private final Set<ParkourPlayer> players = new HashSet<>();
+	private final List<ParkourPlayer> players = new ArrayList<>();
 
 	public enum ParkourType {
 		SERVER,
@@ -135,7 +136,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 		arr.add(spawn);
 		arr.addAll(walls);
 		arr.addAll(checkpoints);
-		return arr;
+		return arr.stream().filter(Objects::nonNull).collect(Collectors.toList());
 	}
 
 	public int getLastCheckpointId() {

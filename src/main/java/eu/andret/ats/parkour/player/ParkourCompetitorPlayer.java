@@ -12,7 +12,7 @@ import org.bukkit.entity.Player;
 
 @Getter
 @Setter
-@ToString
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public class ParkourCompetitorPlayer extends ParkourPlayer {
 	@Setter(AccessLevel.NONE)

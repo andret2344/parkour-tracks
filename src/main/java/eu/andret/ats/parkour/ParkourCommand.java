@@ -43,6 +43,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @BaseCommand("parkour")
@@ -101,7 +102,7 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		if (parkourPlayer.isIgnoring()) {
 			parkourPlayer.setIgnoring(false);
 			ParkourManager.getAllGames().stream()
-					.filter(p -> p.getAllRegions().stream().anyMatch(x -> x.contains(player.getLocation())))
+					.filter(p -> p.getAllRegions().stream().filter(Objects::nonNull).anyMatch(x -> x.contains(player.getLocation())))
 					.forEach(p -> p.addPlayer(player));
 			return msg("ignoreStop", false);
 		}
