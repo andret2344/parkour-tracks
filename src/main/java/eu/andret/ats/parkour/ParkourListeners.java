@@ -26,9 +26,11 @@ import eu.andret.ats.parkour.tasks.database.DataBaseOperations;
 import eu.andret.ats.parkour.util.Data;
 import lombok.Value;
 import org.bukkit.GameMode;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.Boat;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -56,6 +58,7 @@ import org.bukkit.potion.PotionEffectType;
 import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 @Value
@@ -66,14 +69,16 @@ public class ParkourListeners implements Listener {
 	public synchronized void move(final PlayerMoveEvent event) {
 		final Player player = event.getPlayer();
 		final ParkourPlayer parkourPlayer = PlayerManager.getParkourSinglePlayer(event.getPlayer());
-		if (event.getTo().getY() < -10) {
+		if (event.getTo() != null && event.getTo().getY() < -10) {
 			parkourPlayer.teleportToLobby();
 		}
 		final ParkourGame parkour = ParkourManager.getParkour(player);
 		if (parkour != null && !parkourPlayer.isIgnoring()) {
 			if (player.getWorld().equals(parkour.getWorld()) && parkour.isRunning()) {
 				player.setFoodLevel(20);
-				player.setHealth(player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
+				Optional.ofNullable(player.getAttribute(Attribute.GENERIC_MAX_HEALTH))
+						.map(AttributeInstance::getValue)
+						.ifPresent(player::setHealth);
 				for (final Entry<PotionEffectType, Integer> entry : parkour.getOptions().getEffects().entrySet()) {
 					player.addPotionEffect(new PotionEffect(entry.getKey(), 99999999, entry.getValue()));
 				}
@@ -201,22 +206,6 @@ public class ParkourListeners implements Listener {
 		if (plugin.getTeleportCount().containsKey(uniqueId)) {
 			return;
 		}
-		if (parkourGame.getOptions().isRecordsCounting()) {
-			// FIXME: FInd better way
-			final float currentTime = player.getLevel() + player.getExp();
-			final String time = String.valueOf(currentTime);
-			player.sendMessage(plugin.msg("finishTime", false).replace("%TIME%", Math.abs(time.lastIndexOf('.') - time.length()) == 2 ? (time + "0") : time));
-			if (player.hasPermission("ats.parkour.ignoreRecords")) {
-				player.sendMessage("Your time hasn't been saved to database, due to \"ats.parkour.ignoreRecords\" permission.");
-			} else {
-				plugin.getConnection()
-						.map(connection -> new DataBaseOperations(connection, parkourGame, player, currentTime, oldTime -> {
-							player.sendMessage(plugin.msg("newRecord", false));
-							player.sendMessage(plugin.msg("howMany", false).replace("%COUNT%", "1"));
-						}))
-						.ifPresent(dataBaseOperations -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, dataBaseOperations));
-			}
-		}
 		final ParkourCountdown task = new ParkourCountdown(5,
 				() -> player.sendMessage(plugin.msg("teleportingTime", false).replace("%SECONDS%", "5")),
 				i -> player.sendMessage(plugin.msg("counting", false).replace("%NUMBER%", String.valueOf(i))),
@@ -225,8 +214,32 @@ public class ParkourListeners implements Listener {
 					plugin.getTeleportCount().remove(uniqueId);
 					player.teleport(ParkourManager.getLobbyLocation());
 				});
-		final int schedulerId = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, task, 5, 20);
+		final int schedulerId = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, task, 10, 20);
 		plugin.getTeleportCount().put(uniqueId, schedulerId);
+		if (!parkourGame.getOptions().isRecordsCounting()) {
+			return;
+		}
+		// FIXME: FInd better way
+		final float currentTime = player.getLevel() + player.getExp();
+		final String time = String.valueOf(currentTime);
+		player.sendMessage(plugin.msg("finishTime", false).replace("%TIME%", Math.abs(time.lastIndexOf('.') - time.length()) == 2 ? (time + "0") : time));
+		if (player.hasPermission("ats.parkour.ignoreRecords")) {
+			player.sendMessage("Your time hasn't been saved to database");
+		} else {
+			plugin.getConnection()
+					.map(connection -> new DataBaseOperations(connection, parkourGame, player, currentTime, (previousCount, previousPlayerBest, previousParkourBest) -> {
+						player.sendMessage(plugin.msg("howMany", false).replace("%COUNT%", String.valueOf(previousCount + 1)));
+						if (previousParkourBest > currentTime) {
+							player.sendMessage(plugin.msg("newParkourBestTime", false));
+							plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, () ->
+									plugin.updateSign(player.getName(), currentTime, parkourGame));
+						}
+						if (previousPlayerBest > currentTime) {
+							player.sendMessage(plugin.msg("newPersonalBestTime", false));
+						}
+					}))
+					.ifPresent(dataBaseOperations -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, dataBaseOperations));
+		}
 	}
 
 	@EventHandler
@@ -234,21 +247,40 @@ public class ParkourListeners implements Listener {
 		if (event.getCheckpointRegion() == event.getParkourGame().getSpawn()) {
 			PlayerManager.getParkourSinglePlayer(event.getParkourPlayer().getPlayer()).reset();
 		}
-		if (event.getParkourGame().getOptions().isBoat()) {
-			final Boat b = (Boat) event.getParkourPlayer().getPlayer().getLocation().getWorld().spawnEntity(event.getParkourPlayer().getPlayer().getLocation(), EntityType.BOAT);
-			b.addPassenger(event.getParkourPlayer().getPlayer());
+		if (!event.getParkourGame().getOptions().isBoat()) {
+			return;
 		}
+		final Location location = event.getParkourPlayer().getPlayer().getLocation();
+		if (location.getWorld() == null) {
+			return;
+		}
+		final Boat boat = (Boat) location.getWorld().spawnEntity(location, EntityType.BOAT);
+		boat.addPassenger(event.getParkourPlayer().getPlayer());
 	}
 
 	@EventHandler
 	public void leaveBoat(final VehicleExitEvent event) {
-		if (event.getExited() instanceof Player) {
-			final Player player = (Player) event.getExited();
-			final ParkourGame parkourGame = ParkourManager.getParkour(player);
-			if (parkourGame != null && PlayerManager.getParkourPlayer(player) != null && parkourGame.getOptions().isBoat() && event.getVehicle() instanceof Boat && parkourGame.isRunning() && player.getWorld().equals(parkourGame.getWorld())) {
-				event.setCancelled(true);
-			}
+		if (!(event.getExited() instanceof Player)) {
+			return;
 		}
+		final Player player = (Player) event.getExited();
+		final ParkourGame parkourGame = ParkourManager.getParkour(player);
+		if (parkourGame == null) {
+			return;
+		}
+		if (PlayerManager.getParkourPlayer(player) == null) {
+			return;
+		}
+		if (!parkourGame.getOptions().isBoat()) {
+			return;
+		}
+		if (parkourGame.isRunning()) {
+			return;
+		}
+		if (!(event.getVehicle() instanceof Boat) || !player.getWorld().equals(parkourGame.getWorld())) {
+			return;
+		}
+		event.setCancelled(true);
 	}
 
 	@EventHandler

@@ -95,7 +95,6 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 
 	@Argument(permission = "ats.parkour.ignore", executorType = ExecutorType.PLAYER, description = "Allows sender to ignore parkour regions interaction", aliases = "i")
 	public String ignore() {
-		// FIXME: Nor working!
 		final Player player = (Player) sender;
 		final ParkourPlayer parkourPlayer = PlayerManager.getParkourSinglePlayer(player);
 		if (parkourPlayer.isIgnoring()) {
@@ -677,21 +676,23 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		return msg("noGame", true);
 	}
 
-	@Argument(permission = "ats.parkour.bestRecord", description = "Sets bestRecord sign location")
-	public String bestRecord(@Param("parkourGame") final ParkourGame parkourGame) {
+	@Argument(permission = "ats.parkour.recordsBlock", description = "Sets recordsBlock sign location")
+	public String recordsBlock(@Param("parkourGame") final ParkourGame parkourGame) {
 		final Location location = ((Player) sender).getTargetBlock(null, 5).getLocation();
 		final Material material = location.getBlock().getType();
 		if (!Data.SIGNS.contains(material)) {
 			return msg("noSign", true);
 		}
 		parkourGame.setRecordsBlock(location);
-		sender.sendMessage(msg("setBestRecord", false)
+		sender.sendMessage(msg("setRecordsBlock", false)
 				.replace("%COORD_X%", String.valueOf(location.getX()))
 				.replace("%COORD_Y%", String.valueOf(location.getY()))
 				.replace("%COORD_Z%", String.valueOf(location.getZ())));
 
 		plugin.getConnection()
-				.map(connection -> new FetchParkourBestRecordTask(connection, parkourGame, 1, data -> plugin.updateSign(data.get(0).getNick(), data.get(0).getTime(), parkourGame)))
+				.map(connection -> new FetchParkourBestRecordTask(connection, parkourGame, 1, data ->
+						plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, () ->
+								plugin.updateSign(data.get(0).getNick(), data.get(0).getTime(), parkourGame))))
 				.ifPresentOrElse(
 						fetchParkourBestRecordTask -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchParkourBestRecordTask),
 						() -> sender.sendMessage(msg("noDatabase", true)));
@@ -699,7 +700,7 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 	}
 
 	@Fallback
-	public String bestRecord() {
+	public String recordsBlock() {
 		return msg("noGame", true);
 	}
 

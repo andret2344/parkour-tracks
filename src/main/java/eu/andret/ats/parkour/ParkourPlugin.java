@@ -18,6 +18,7 @@ import org.bstats.bukkit.Metrics;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -49,6 +50,7 @@ import java.util.stream.IntStream;
 
 public class ParkourPlugin extends JavaPlugin {
 	private Connection connection;
+	@Getter
 	private ItemStack exit;
 	@Getter
 	private final Map<String, String> messages = new LinkedHashMap<>();
@@ -92,17 +94,17 @@ public class ParkourPlugin extends JavaPlugin {
 		getServer().getScheduler().cancelTasks(this);
 	}
 
-	public String msg(final String path, final boolean err) {
+	public String msg(final String path, final boolean isError) {
 		final String here;
 		if (yamlConfiguration.getString("player." + path) != null) {
 			here = "player.";
 		} else if (yamlConfiguration.getString("admin." + path) != null) {
 			here = "admin.";
 		} else {
-			throw new NullPointerException("Invalid message: " + path + " (should be error: " + err + ")");
+			throw new NullPointerException("Invalid message: " + path + " (should be error: " + isError + ")");
 		}
 		String result = "";
-		if (err) {
+		if (isError) {
 			result += yamlConfiguration.getString(here + "errorMsg");
 		}
 		return (result + yamlConfiguration.getString(here + path)).replace('&', '\u00A7');
@@ -112,28 +114,24 @@ public class ParkourPlugin extends JavaPlugin {
 		return Optional.ofNullable(connection);
 	}
 
-	ItemStack getExit() {
-		return exit;
-	}
-
 	public WorldEditPlugin getWorldEdit() {
 		return (WorldEditPlugin) getServer().getPluginManager().getPlugin("WorldEdit");
 	}
 
 	public void updateSign(final String player, final double time, final ParkourGame parkour) {
-		final Location location = parkour.getRecordsBlock();
-		if (location == null) {
-			return;
-		}
-		if (!(location.getBlock().getState() instanceof Sign)) {
-			return;
-		}
-		final Sign sign = (Sign) location.getBlock().getState();
-		IntStream.of(0, 1, 2, 3).forEach(x -> {
-			final String lineText = getConfig().getString("recordSign.line" + (x + 1));
-			sign.setLine(x, replace(String.valueOf(lineText), player, time).replace('&', '\u00A7'));
-		});
-		sign.update();
+		Optional.of(parkour)
+				.map(ParkourGame::getRecordsBlock)
+				.map(Location::getBlock)
+				.map(Block::getState)
+				.filter(x -> x instanceof Sign)
+				.map(Sign.class::cast)
+				.ifPresent(sign -> {
+					IntStream.of(0, 1, 2, 3).forEach(x -> {
+						final String lineText = getConfig().getString("recordSign.line" + (x + 1));
+						sign.setLine(x, replace(String.valueOf(lineText), player, time).replace('&', '\u00A7'));
+					});
+					sign.update();
+				});
 	}
 
 	public Map<UUID, Integer> getTeleportCount() {
@@ -206,7 +204,7 @@ public class ParkourPlugin extends JavaPlugin {
 	}
 
 	private void connect() throws SQLException {
-		final String database = getConfig().getString("connection.dbname");
+		final String database = getConfig().getString("database.dbname");
 		try (final Statement stat = connection.createStatement()) {
 			stat.execute("CREATE DATABASE IF NOT EXISTS `" + database + "`;");
 			stat.execute("USE " + database + ";");
@@ -305,7 +303,7 @@ public class ParkourPlugin extends JavaPlugin {
 		messages.put("boat|b", msg("cmdBoats", false));
 		messages.put("enabled", msg("cmdEnabled", false));
 		messages.put("modifyInventory|eq", msg("cmdModifyInventory", false));
-		messages.put("bestRecord|br", msg("cmdBestRecord", false));
+		messages.put("recordsBlock|rb", msg("cmdRecordsBlock", false));
 		messages.put("teleportBlock|tb", msg("cmdTeleportBlock", false));
 		messages.put("teleport|tp", msg("cmdTeleport", false));
 		messages.put("fix", msg("cmdFix", false));
