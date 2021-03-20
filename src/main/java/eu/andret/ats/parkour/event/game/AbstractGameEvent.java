@@ -1,6 +1,7 @@
 /*
- * Copyright Andret (c) 2019. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
  */
+
 package eu.andret.ats.parkour.event.game;
 
 import eu.andret.ats.parkour.parkour.ParkourGame;
@@ -22,7 +23,7 @@ public class AbstractGameEvent extends Event {
 	 * List of all Handlers.
 	 */
 	private static final HandlerList HANDLERS = new HandlerList();
-	
+
 	/**
 	 * The Parkour that has been started.
 	 */

@@ -1,3 +1,7 @@
+/*
+ * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
+ */
+
 package eu.andret.ats.parkour.region;
 
 import com.sk89q.worldedit.regions.CuboidRegion;
@@ -8,7 +12,7 @@ import lombok.experimental.NonFinal;
 @Value
 @NonFinal
 @EqualsAndHashCode(callSuper = true)
-public class DirectionalRegion extends AbstractRegion {
+public class DirectionalRegion extends BasicRegion {
 	double yaw;
 	double pitch;
 

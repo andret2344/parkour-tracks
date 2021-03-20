@@ -1,6 +1,7 @@
 /*
- * Copyright Andret (c) 2019. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
  */
+
 package eu.andret.ats.parkour;
 
 import com.sk89q.worldedit.IncompleteRegionException;
@@ -22,7 +23,7 @@ import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourManager;
 import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.player.PlayerManager;
-import eu.andret.ats.parkour.region.AbstractRegion;
+import eu.andret.ats.parkour.region.BasicRegion;
 import eu.andret.ats.parkour.region.DirectionalRegion;
 import eu.andret.ats.parkour.tasks.RepairSignTask;
 import eu.andret.ats.parkour.tasks.TopPlayersDataOperations;
@@ -181,7 +182,7 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		if (parkour != null) {
 			return msg("gameExists", true).replace("%NAME%", name);
 		}
-		final Parkour parkourGame = new Parkour(name, new AbstractRegion(selection), ((Player) sender).getLocation().getWorld());
+		final Parkour parkourGame = new Parkour(name, new BasicRegion(selection), ((Player) sender).getLocation().getWorld());
 		ParkourManager.addParkour(parkourGame);
 		return msg("gameCreated", false).replace("%NAME%", parkourGame.getName());
 	}
@@ -245,7 +246,7 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		if (selection == null) {
 			return msg("wrongSel", true);
 		}
-		parkourGame.setGameRegion(new AbstractRegion(selection));
+		parkourGame.setGameRegion(new BasicRegion(selection));
 		return msg("gameRecreated", false);
 	}
 
@@ -349,7 +350,7 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		if (selection == null) {
 			return msg("wrongSel", true);
 		}
-		parkourGame.getWalls().add(new AbstractRegion(new CuboidRegion(selection.getMaximumPoint(), selection.getMinimumPoint())));
+		parkourGame.getWalls().add(new BasicRegion(new CuboidRegion(selection.getMaximumPoint(), selection.getMinimumPoint())));
 		return msg("setWall", false).replace("%WALL_ID%", String.valueOf(parkourGame.getWalls().size()));
 	}
 
@@ -370,7 +371,7 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		if (id > parkourGame.getLastCheckpointId()) {
 			return msg("tooLargeNumber", true);
 		}
-		parkourGame.getWalls().set(id - 1, new AbstractRegion(selection));
+		parkourGame.getWalls().set(id - 1, new BasicRegion(selection));
 		return msg("setWall", false).replace("%WALL_ID%", String.valueOf(id));
 	}
 

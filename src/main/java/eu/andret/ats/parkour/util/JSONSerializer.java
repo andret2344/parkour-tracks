@@ -1,3 +1,7 @@
+/*
+ * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
+ */
+
 package eu.andret.ats.parkour.util;
 
 import com.sk89q.worldedit.math.BlockVector3;
@@ -6,7 +10,7 @@ import eu.andret.ats.parkour.ParkourPlugin;
 import eu.andret.ats.parkour.event.game.GameStartEvent;
 import eu.andret.ats.parkour.parkour.Parkour;
 import eu.andret.ats.parkour.parkour.ParkourGame;
-import eu.andret.ats.parkour.region.AbstractRegion;
+import eu.andret.ats.parkour.region.BasicRegion;
 import eu.andret.ats.parkour.region.DirectionalRegion;
 import lombok.AllArgsConstructor;
 import org.bukkit.Bukkit;
@@ -67,7 +71,7 @@ public class JSONSerializer {
 		if (!jsonObject.has(NAME)) {
 			return null;
 		}
-		final AbstractRegion gameRegion = readAbstractRegion(jsonObject.getJSONObject(REGION));
+		final BasicRegion gameRegion = readAbstractRegion(jsonObject.getJSONObject(REGION));
 		final ParkourGame parkourGame = new Parkour(jsonObject.getString(NAME), gameRegion, plugin.getServer().getWorld(world));
 		if (jsonObject.has(SPAWN)) {
 			parkourGame.setSpawn(readDirectionalRegion(jsonObject.getJSONObject(SPAWN)));
@@ -156,11 +160,11 @@ public class JSONSerializer {
 		return list;
 	}
 
-	private List<AbstractRegion> readAbstractRegions(final JSONArray jsonArray) {
-		final List<AbstractRegion> list = new ArrayList<>();
+	private List<BasicRegion> readAbstractRegions(final JSONArray jsonArray) {
+		final List<BasicRegion> list = new ArrayList<>();
 		for (int i = 0; i < jsonArray.length(); i++) {
 			final JSONObject item = jsonArray.getJSONObject(i);
-			final AbstractRegion region = readAbstractRegion(item);
+			final BasicRegion region = readAbstractRegion(item);
 			list.add(region);
 		}
 		return list;
@@ -179,11 +183,11 @@ public class JSONSerializer {
 		return new CuboidRegion(BlockVector3.at(x1, y1, z1), BlockVector3.at(x2, y2, z2));
 	}
 
-	private AbstractRegion readAbstractRegion(final JSONObject jsonObject) {
+	private BasicRegion readAbstractRegion(final JSONObject jsonObject) {
 		if (jsonObject == null) {
 			return null;
 		}
-		return new AbstractRegion(readCuboidRegion(jsonObject));
+		return new BasicRegion(readCuboidRegion(jsonObject));
 	}
 
 	private DirectionalRegion readDirectionalRegion(final JSONObject jsonObject) {
@@ -257,11 +261,11 @@ public class JSONSerializer {
 		return jsonObject;
 	}
 
-	private JSONObject writeAbstractRegion(final AbstractRegion abstractRegion) {
-		if (abstractRegion == null) {
+	private JSONObject writeAbstractRegion(final BasicRegion basicRegion) {
+		if (basicRegion == null) {
 			return null;
 		}
-		return writeCuboidRegion(abstractRegion.getCuboidRegion());
+		return writeCuboidRegion(basicRegion.getCuboidRegion());
 	}
 
 	public JSONObject writeLocation(final Location location) {
@@ -285,7 +289,7 @@ public class JSONSerializer {
 		return jsonArray;
 	}
 
-	private JSONArray writeAbstractRegions(final List<AbstractRegion> list) {
+	private JSONArray writeAbstractRegions(final List<BasicRegion> list) {
 		final JSONArray jsonArray = new JSONArray();
 		if (list == null) {
 			return jsonArray;

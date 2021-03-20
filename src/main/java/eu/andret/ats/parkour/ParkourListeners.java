@@ -1,6 +1,7 @@
 /*
- * Copyright Andret (c) 2019. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
  */
+
 package eu.andret.ats.parkour;
 
 import com.sk89q.worldedit.bukkit.BukkitWorld;
@@ -17,7 +18,7 @@ import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourManager;
 import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.player.PlayerManager;
-import eu.andret.ats.parkour.region.AbstractRegion;
+import eu.andret.ats.parkour.region.BasicRegion;
 import eu.andret.ats.parkour.region.DirectionalRegion;
 import eu.andret.ats.parkour.tasks.DataBaseOperations;
 import eu.andret.ats.parkour.tasks.ParkourCountdown;
@@ -109,7 +110,7 @@ public class ParkourListeners implements Listener {
 						}
 					}
 
-					for (final AbstractRegion region : parkourGame.getWalls()) {
+					for (final BasicRegion region : parkourGame.getWalls()) {
 						if (region.contains(event.getFrom()) && !region.contains(event.getTo())) {
 							pluginManager.callEvent(new PlayerLeaveRegionEvent(parkourGame, player, region));
 						} else if (!region.contains(event.getFrom()) && region.contains(event.getTo())) {
@@ -327,8 +328,8 @@ public class ParkourListeners implements Listener {
 	@EventHandler(priority = EventPriority.LOW)
 	public void join(final PlayerJoinEvent event) {
 		for (final ParkourGame parkourGame : ParkourManager.getAllGames()) {
-			for (final AbstractRegion abstractRegion : parkourGame.getAllRegions()) {
-				if (abstractRegion.contains(event.getPlayer().getLocation())
+			for (final BasicRegion basicRegion : parkourGame.getAllRegions()) {
+				if (basicRegion.contains(event.getPlayer().getLocation())
 						&& parkourGame.getWorld().equals(event.getPlayer().getWorld())
 						&& !PlayerManager.getParkourSinglePlayer(event.getPlayer()).isIgnoring()) {
 					parkourGame.addPlayer(event.getPlayer());

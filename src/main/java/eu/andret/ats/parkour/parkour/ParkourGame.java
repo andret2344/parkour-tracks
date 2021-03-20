@@ -1,13 +1,14 @@
 /*
- * Copyright Andret (c) 2019. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
  */
+
 package eu.andret.ats.parkour.parkour;
 
 import eu.andret.ats.parkour.event.player.PlayerJoinGameEvent;
 import eu.andret.ats.parkour.event.player.PlayerQuitGameEvent;
 import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.player.PlayerManager;
-import eu.andret.ats.parkour.region.AbstractRegion;
+import eu.andret.ats.parkour.region.BasicRegion;
 import eu.andret.ats.parkour.region.DirectionalRegion;
 import eu.andret.ats.parkour.util.Medal;
 import lombok.AccessLevel;
@@ -36,7 +37,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 	private boolean running;
 	private String name;
 	private World world;
-	private AbstractRegion gameRegion;
+	private BasicRegion gameRegion;
 	private Location recordsBlock;
 	private Location teleportBlock;
 	private DirectionalRegion spawn;
@@ -45,7 +46,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 	private Options options = Options.builder().build();
 
 	private final List<DirectionalRegion> checkpoints = new ArrayList<>();
-	private final List<AbstractRegion> walls = new ArrayList<>();
+	private final List<BasicRegion> walls = new ArrayList<>();
 	private final Set<String> authors = new TreeSet<>();
 	private final List<ParkourPlayer> players = new ArrayList<>();
 
@@ -122,14 +123,14 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 		}
 	}
 
-	protected ParkourGame(final String name, final AbstractRegion gameRegion, final World world) {
+	protected ParkourGame(final String name, final BasicRegion gameRegion, final World world) {
 		this.name = displayName = name;
 		this.gameRegion = gameRegion;
 		this.world = world;
 	}
 
-	public List<AbstractRegion> getAllRegions() {
-		final List<AbstractRegion> arr = new ArrayList<>();
+	public List<BasicRegion> getAllRegions() {
+		final List<BasicRegion> arr = new ArrayList<>();
 		arr.add(gameRegion);
 		arr.add(spawn);
 		arr.addAll(walls);
