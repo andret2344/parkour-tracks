@@ -36,7 +36,7 @@ public class FetchParkourBestRecordTask extends AbstractParkourTask {
 			final ResultSet rs = stat.executeQuery();
 			final List<ParkourRecord> result = new ArrayList<>();
 			for (int i = 0; i < count && rs.next(); i++) {
-				result.add(new ParkourRecord(rs.getString("nick"), rs.getFloat("time")));
+				result.add(new ParkourRecord(rs.getString("nick"), parkourGame, rs.getFloat("time")));
 			}
 			callback.accept(result);
 			rs.close();

@@ -10,6 +10,7 @@ import eu.andret.arguments.CommandManager;
 import eu.andret.arguments.api.annotation.Fallback;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourManager;
+import eu.andret.ats.parkour.parkour.ParkourRecord;
 import eu.andret.ats.parkour.tasks.database.KeepAliveTask;
 import eu.andret.ats.parkour.util.Data;
 import eu.andret.ats.parkour.util.JSONSerializer;
@@ -118,8 +119,8 @@ public class ParkourPlugin extends JavaPlugin {
 		return (WorldEditPlugin) getServer().getPluginManager().getPlugin("WorldEdit");
 	}
 
-	public void updateSign(final String player, final double time, final ParkourGame parkour) {
-		Optional.of(parkour)
+	public void updateSign(final ParkourRecord parkourRecord) {
+		Optional.of(parkourRecord.getParkourGame())
 				.map(ParkourGame::getRecordsBlock)
 				.map(Location::getBlock)
 				.map(Block::getState)
@@ -128,7 +129,7 @@ public class ParkourPlugin extends JavaPlugin {
 				.ifPresent(sign -> {
 					IntStream.of(0, 1, 2, 3).forEach(x -> {
 						final String lineText = getConfig().getString("recordSign.line" + (x + 1));
-						sign.setLine(x, replace(String.valueOf(lineText), player, time).replace('&', '\u00A7'));
+						sign.setLine(x, replace(String.valueOf(lineText), parkourRecord).replace('&', '\u00A7'));
 					});
 					sign.update();
 				});
@@ -320,11 +321,12 @@ public class ParkourPlugin extends JavaPlugin {
 		messages.put("platinum", msg("cmdPlatinum", false));
 	}
 
-	private String replace(final String source, final String nick, final double time) {
+	private String replace(final String source, final ParkourRecord parkourRecord) {
+		final float time = parkourRecord.getTime();
 		final int minutes = (int) time / 60;
 		final int secs = (int) time % 60;
-		final int milliseconds = (int) Math.round((time % 1) * 100);
-		return source.replace("%NICK%", nick)
+		final int milliseconds = Math.round((time % 1) * 100);
+		return source.replace("%NICK%", parkourRecord.getNick())
 				.replace("%MINUTES%", ("" + (minutes < 10 ? "0" + minutes : minutes)).substring(0, 2))
 				.replace("%SECONDS%", "" + ("" + (secs < 10 ? "0" + secs : secs)).substring(0, 2))
 				.replace("%MILLISECONDS%", "" + ("" + (milliseconds < 10 ? "0" + milliseconds : milliseconds)).substring(0, 2));

@@ -16,6 +16,7 @@ import eu.andret.ats.parkour.event.player.PlayerQuitGameEvent;
 import eu.andret.ats.parkour.event.player.PlayerTeleportBackEvent;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourManager;
+import eu.andret.ats.parkour.parkour.ParkourRecord;
 import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.player.PlayerManager;
 import eu.andret.ats.parkour.region.BasicRegion;
@@ -232,7 +233,7 @@ public class ParkourListeners implements Listener {
 						if (previousParkourBest > currentTime) {
 							player.sendMessage(plugin.msg("newParkourBestTime", false));
 							plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, () ->
-									plugin.updateSign(player.getName(), currentTime, parkourGame));
+									plugin.updateSign(new ParkourRecord(player.getName(), parkourGame, currentTime)));
 						}
 						if (previousPlayerBest > currentTime) {
 							player.sendMessage(plugin.msg("newPersonalBestTime", false));

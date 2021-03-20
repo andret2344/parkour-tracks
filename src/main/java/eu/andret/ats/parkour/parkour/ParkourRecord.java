@@ -9,5 +9,6 @@ import lombok.Value;
 @Value
 public class ParkourRecord {
 	String nick;
+	ParkourGame parkourGame;
 	float time;
 }

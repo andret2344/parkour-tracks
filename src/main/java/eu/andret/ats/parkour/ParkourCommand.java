@@ -87,7 +87,7 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		plugin.getConnection().ifPresentOrElse(connection -> {
 			ParkourManager.getAllGames()
 					.stream()
-					.map(parkourGame -> new FetchParkourBestRecordTask(connection, parkourGame, 1, data -> plugin.updateSign(data.get(0).getNick(), data.get(0).getTime(), parkourGame)))
+					.map(parkourGame -> new FetchParkourBestRecordTask(connection, parkourGame, 1, data -> plugin.updateSign(data.get(0))))
 					.forEach(fetchParkourBestRecordTask -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchParkourBestRecordTask));
 			sender.sendMessage(msg("successFix", false));
 		}, () -> sender.sendMessage(msg("noDatabase", true)));
@@ -691,8 +691,7 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 
 		plugin.getConnection()
 				.map(connection -> new FetchParkourBestRecordTask(connection, parkourGame, 1, data ->
-						plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, () ->
-								plugin.updateSign(data.get(0).getNick(), data.get(0).getTime(), parkourGame))))
+						plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, () -> plugin.updateSign(data.get(0)))))
 				.ifPresentOrElse(
 						fetchParkourBestRecordTask -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchParkourBestRecordTask),
 						() -> sender.sendMessage(msg("noDatabase", true)));
