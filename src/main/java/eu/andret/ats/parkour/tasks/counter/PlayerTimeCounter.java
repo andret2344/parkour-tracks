@@ -2,7 +2,7 @@
  * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
  */
 
-package eu.andret.ats.parkour.tasks;
+package eu.andret.ats.parkour.tasks.counter;
 
 import eu.andret.ats.parkour.ParkourPlugin;
 import eu.andret.ats.parkour.parkour.ParkourGame;
@@ -12,12 +12,12 @@ import org.bukkit.Sound;
 
 public class PlayerTimeCounter implements Runnable {
 	private final ParkourPlayer parkourPlayer;
-	private final ParkourPlugin plugin;
+	private final ParkourPlugin parkourPlugin;
 	private int counter;
 
-	public PlayerTimeCounter(final ParkourPlayer parkourPlayer, final ParkourPlugin plugin) {
+	public PlayerTimeCounter(final ParkourPlayer parkourPlayer, final ParkourPlugin parkourPlugin) {
 		this.parkourPlayer = parkourPlayer;
-		this.plugin = plugin;
+		this.parkourPlugin = parkourPlugin;
 	}
 
 	@Override
@@ -35,7 +35,7 @@ public class PlayerTimeCounter implements Runnable {
 			return;
 		}
 		double time = 0;
-		if (!plugin.getTeleportCount().containsKey(parkourPlayer.getPlayer().getUniqueId())) {
+		if (!parkourPlugin.getTeleportCount().containsKey(parkourPlayer.getPlayer().getUniqueId())) {
 			time = counter++ / 20.;
 		}
 		if (counter == 1) {

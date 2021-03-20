@@ -21,12 +21,12 @@ import eu.andret.ats.parkour.event.game.GameStopEvent;
 import eu.andret.ats.parkour.parkour.Parkour;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourManager;
+import eu.andret.ats.parkour.parkour.ParkourRecord;
 import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.player.PlayerManager;
 import eu.andret.ats.parkour.region.BasicRegion;
 import eu.andret.ats.parkour.region.DirectionalRegion;
-import eu.andret.ats.parkour.tasks.RepairSignTask;
-import eu.andret.ats.parkour.tasks.TopPlayersDataOperations;
+import eu.andret.ats.parkour.tasks.database.FetchParkourBestRecordTask;
 import eu.andret.ats.parkour.util.Data;
 import lombok.EqualsAndHashCode;
 import org.bukkit.ChatColor;
@@ -37,13 +37,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -91,8 +87,8 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		plugin.getConnection().ifPresentOrElse(connection -> {
 			ParkourManager.getAllGames()
 					.stream()
-					.map(parkourGame -> new RepairSignTask(connection, parkourGame, (s, f) -> plugin.updateSign(s, f, parkourGame)))
-					.forEach(repairSignTask -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, repairSignTask));
+					.map(parkourGame -> new FetchParkourBestRecordTask(connection, parkourGame, 1, data -> plugin.updateSign(data.get(0).getNick(), data.get(0).getTime(), parkourGame)))
+					.forEach(fetchParkourBestRecordTask -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchParkourBestRecordTask));
 			sender.sendMessage(msg("successFix", false));
 		}, () -> sender.sendMessage(msg("noDatabase", true)));
 	}
@@ -664,13 +660,13 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 	@Argument(permission = "ats.parkour.top", description = "Shows top players for parkour game")
 	public void top(@Param("parkourGame") final ParkourGame parkourGame, final int count) {
 		plugin.getConnection()
-				.map(x -> new TopPlayersDataOperations(x, parkourGame, count, result -> {
+				.map(x -> new FetchParkourBestRecordTask(x, parkourGame, count, result -> {
 					int i = 1;
-					for (final Entry<String, Float> entry : result.entrySet()) {
+					for (final ParkourRecord parkourRecord : result) {
 						sender.sendMessage(msg("topRecord", false)
 								.replace("%NUMBER%", "" + i++)
-								.replace("%PLAYER%", entry.getKey())
-								.replace("%TIME%", String.valueOf(entry.getValue())));
+								.replace("%PLAYER%", parkourRecord.getNick())
+								.replace("%TIME%", String.valueOf(parkourRecord.getTime())));
 					}
 				}))
 				.ifPresent(topPlayersDataOperations -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, topPlayersDataOperations));
@@ -683,26 +679,22 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 
 	@Argument(permission = "ats.parkour.bestRecord", description = "Sets bestRecord sign location")
 	public String bestRecord(@Param("parkourGame") final ParkourGame parkourGame) {
-		final Location loc = ((Player) sender).getTargetBlock(null, 5).getLocation();
-		final Material m = loc.getBlock().getType();
-		if (!Data.SIGNS.contains(m)) {
+		final Location location = ((Player) sender).getTargetBlock(null, 5).getLocation();
+		final Material material = location.getBlock().getType();
+		if (!Data.SIGNS.contains(material)) {
 			return msg("noSign", true);
 		}
-		parkourGame.setRecordsBlock(loc);
-		sender.sendMessage(msg("setBestRecord", false).replace("%COORD_X%", "" + loc.getX()).replace("%COORD_Y%", "" + loc.getY()).replace("%COORD_Z%", "" + loc.getZ()));
-		plugin.getConnection().ifPresent(connection -> {
-			try (final PreparedStatement stat = connection.prepareStatement("SELECT `time`, `nick` FROM ats_parkour_records WHERE parkour=? ORDER BY time LIMIT 1")) {
-				stat.setString(1, parkourGame.getName());
-				final ResultSet rs = stat.executeQuery();
-				if (rs.next()) {
-					plugin.updateSign(rs.getString("nick"), rs.getDouble("time"), parkourGame);
-				} else {
-					plugin.updateSign("========", 0.00, parkourGame);
-				}
-			} catch (final SQLException ex) {
-				ex.printStackTrace();
-			}
-		});
+		parkourGame.setRecordsBlock(location);
+		sender.sendMessage(msg("setBestRecord", false)
+				.replace("%COORD_X%", String.valueOf(location.getX()))
+				.replace("%COORD_Y%", String.valueOf(location.getY()))
+				.replace("%COORD_Z%", String.valueOf(location.getZ())));
+
+		plugin.getConnection()
+				.map(connection -> new FetchParkourBestRecordTask(connection, parkourGame, 1, data -> plugin.updateSign(data.get(0).getNick(), data.get(0).getTime(), parkourGame)))
+				.ifPresentOrElse(
+						fetchParkourBestRecordTask -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchParkourBestRecordTask),
+						() -> sender.sendMessage(msg("noDatabase", true)));
 		return null;
 	}
 

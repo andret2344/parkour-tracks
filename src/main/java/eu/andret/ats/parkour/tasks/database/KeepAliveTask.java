@@ -2,17 +2,16 @@
  * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
  */
 
-package eu.andret.ats.parkour.tasks;
-
-import lombok.AllArgsConstructor;
+package eu.andret.ats.parkour.tasks.database;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-@AllArgsConstructor
-public class KeepConnection implements Runnable {
-	private final Connection connection;
+public class KeepAliveTask extends AbstractTask {
+	public KeepAliveTask(final Connection connection) {
+		super(connection);
+	}
 
 	@Override
 	public void run() {

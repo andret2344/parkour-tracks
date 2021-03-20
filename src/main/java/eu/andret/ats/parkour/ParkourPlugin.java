@@ -10,7 +10,7 @@ import eu.andret.arguments.CommandManager;
 import eu.andret.arguments.api.annotation.Fallback;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourManager;
-import eu.andret.ats.parkour.tasks.KeepConnection;
+import eu.andret.ats.parkour.tasks.database.KeepAliveTask;
 import eu.andret.ats.parkour.util.Data;
 import eu.andret.ats.parkour.util.JSONSerializer;
 import lombok.Getter;
@@ -79,8 +79,8 @@ public class ParkourPlugin extends JavaPlugin {
 						.filter(pl -> p.getAllRegions().stream().filter(Objects::nonNull).anyMatch(r -> r.contains(pl.getLocation())))
 						.forEach(p::addPlayer));
 		getConnection()
-				.map(KeepConnection::new)
-				.ifPresent(keepConnection -> getServer().getScheduler().scheduleSyncRepeatingTask(this, keepConnection, 36_000, 36_000));
+				.map(KeepAliveTask::new)
+				.ifPresent(keepAliveTask -> getServer().getScheduler().scheduleSyncRepeatingTask(this, keepAliveTask, 20_000, 20_000));
 
 		new Metrics(this, 10700);
 	}
@@ -90,6 +90,58 @@ public class ParkourPlugin extends JavaPlugin {
 		saveParkourLobby();
 		saveAllGames();
 		getServer().getScheduler().cancelTasks(this);
+	}
+
+	public String msg(final String path, final boolean err) {
+		final String here;
+		if (yamlConfiguration.getString("player." + path) != null) {
+			here = "player.";
+		} else if (yamlConfiguration.getString("admin." + path) != null) {
+			here = "admin.";
+		} else {
+			throw new NullPointerException("Invalid message: " + path + " (should be error: " + err + ")");
+		}
+		String result = "";
+		if (err) {
+			result += yamlConfiguration.getString(here + "errorMsg");
+		}
+		return (result + yamlConfiguration.getString(here + path)).replace('&', '\u00A7');
+	}
+
+	public Optional<Connection> getConnection() {
+		return Optional.ofNullable(connection);
+	}
+
+	ItemStack getExit() {
+		return exit;
+	}
+
+	public WorldEditPlugin getWorldEdit() {
+		return (WorldEditPlugin) getServer().getPluginManager().getPlugin("WorldEdit");
+	}
+
+	public void updateSign(final String player, final double time, final ParkourGame parkour) {
+		final Location location = parkour.getRecordsBlock();
+		if (location == null) {
+			return;
+		}
+		if (!(location.getBlock().getState() instanceof Sign)) {
+			return;
+		}
+		final Sign sign = (Sign) location.getBlock().getState();
+		IntStream.of(0, 1, 2, 3).forEach(x -> {
+			final String lineText = getConfig().getString("recordSign.line" + (x + 1));
+			sign.setLine(x, replace(String.valueOf(lineText), player, time).replace('&', '\u00A7'));
+		});
+		sign.update();
+	}
+
+	public Map<UUID, Integer> getTeleportCount() {
+		return teleportCount;
+	}
+
+	public Map<UUID, Integer> getPlayerTimeCounters() {
+		return playerTimeCounters;
 	}
 
 	private void setupConfigFiles() {
@@ -114,7 +166,7 @@ public class ParkourPlugin extends JavaPlugin {
 				});
 	}
 
-	public void setupCommand() {
+	private void setupCommand() {
 		final AnnotatedCommand command = CommandManager.registerCommand(ParkourCommand.class, this);
 		command.setOnInsufficientPermissionsListener(sender -> sender.sendMessage(msg("noPerms", true)));
 		command.setOnUnknownSubCommandExecutionListener(sender -> sender.sendMessage(msg("wrongArg", true)));
@@ -160,22 +212,6 @@ public class ParkourPlugin extends JavaPlugin {
 			stat.execute("USE " + database + ";");
 			stat.execute("CREATE TABLE IF NOT EXISTS ats_parkour_records(id INT PRIMARY KEY AUTO_INCREMENT, date DATETIME, nick VARCHAR(64), parkour VARCHAR(64), time FLOAT, count INT);");
 		}
-	}
-
-	public String msg(final String path, final boolean err) {
-		final String here;
-		if (yamlConfiguration.getString("player." + path) != null) {
-			here = "player.";
-		} else if (yamlConfiguration.getString("admin." + path) != null) {
-			here = "admin.";
-		} else {
-			throw new NullPointerException("Invalid message: " + path + " (should be error: " + err + ")");
-		}
-		String result = "";
-		if (err) {
-			result += yamlConfiguration.getString(here + "errorMsg");
-		}
-		return (result + yamlConfiguration.getString(here + path)).replace('&', '\u00A7');
 	}
 
 	private void saveParkourLobby() {
@@ -244,10 +280,6 @@ public class ParkourPlugin extends JavaPlugin {
 		}
 	}
 
-	public Optional<Connection> getConnection() {
-		return Optional.ofNullable(connection);
-	}
-
 	private void generate() {
 		messages.put("help|?", msg("cmdHelp", false));
 		messages.put("lobby", msg("cmdLobby", false));
@@ -290,30 +322,6 @@ public class ParkourPlugin extends JavaPlugin {
 		messages.put("platinum", msg("cmdPlatinum", false));
 	}
 
-	ItemStack getExit() {
-		return exit;
-	}
-
-	public WorldEditPlugin getWorldEdit() {
-		return (WorldEditPlugin) getServer().getPluginManager().getPlugin("WorldEdit");
-	}
-
-	public void updateSign(final String player, final double time, final ParkourGame parkour) {
-		final Location location = parkour.getRecordsBlock();
-		if (location == null) {
-			return;
-		}
-		if (!(location.getBlock().getState() instanceof Sign)) {
-			return;
-		}
-		final Sign sign = (Sign) location.getBlock().getState();
-		IntStream.of(0, 1, 2, 3).forEach(x -> {
-			final String lineText = getConfig().getString("recordSign.line" + (x + 1));
-			sign.setLine(x, replace(String.valueOf(lineText), player, time).replace('&', '\u00A7'));
-		});
-		sign.update();
-	}
-
 	private String replace(final String source, final String nick, final double time) {
 		final int minutes = (int) time / 60;
 		final int secs = (int) time % 60;
@@ -322,13 +330,5 @@ public class ParkourPlugin extends JavaPlugin {
 				.replace("%MINUTES%", ("" + (minutes < 10 ? "0" + minutes : minutes)).substring(0, 2))
 				.replace("%SECONDS%", "" + ("" + (secs < 10 ? "0" + secs : secs)).substring(0, 2))
 				.replace("%MILLISECONDS%", "" + ("" + (milliseconds < 10 ? "0" + milliseconds : milliseconds)).substring(0, 2));
-	}
-
-	public Map<UUID, Integer> getTeleportCount() {
-		return teleportCount;
-	}
-
-	public Map<UUID, Integer> getPlayerTimeCounters() {
-		return playerTimeCounters;
 	}
 }

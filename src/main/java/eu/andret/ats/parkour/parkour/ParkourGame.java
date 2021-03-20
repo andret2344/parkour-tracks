@@ -10,7 +10,6 @@ import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.player.PlayerManager;
 import eu.andret.ats.parkour.region.BasicRegion;
 import eu.andret.ats.parkour.region.DirectionalRegion;
-import eu.andret.ats.parkour.util.Medal;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;

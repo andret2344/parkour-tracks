@@ -2,12 +2,11 @@
  * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
  */
 
-package eu.andret.ats.parkour.tasks;
+package eu.andret.ats.parkour.tasks.database;
 
 import eu.andret.ats.parkour.ParkourPlugin;
+import eu.andret.ats.parkour.parkour.Medal;
 import eu.andret.ats.parkour.parkour.ParkourGame;
-import eu.andret.ats.parkour.util.Medal;
-import lombok.Value;
 import org.bukkit.entity.Player;
 
 import java.sql.Connection;
@@ -16,13 +15,17 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 
-@Value
-public class DataBaseOperations implements Runnable {
-	Player player;
-	ParkourGame parkour;
-	float time;
+public class DataBaseOperations extends AbstractParkourTask {
 	ParkourPlugin plugin;
-	Connection connection;
+	Player player;
+	float time;
+
+	public DataBaseOperations(final Connection connection, final ParkourGame parkour, final ParkourPlugin plugin, final Player player, final float time) {
+		super(connection, parkour);
+		this.plugin = plugin;
+		this.player = player;
+		this.time = time;
+	}
 
 	@Override
 	public void run() {
@@ -32,7 +35,7 @@ public class DataBaseOperations implements Runnable {
 		// Collect players data
 		try (final PreparedStatement stat = connection.prepareStatement("SELECT * FROM ats_parkour_records WHERE nick = ? AND parkour = ?")) {
 			stat.setString(1, player.getName());
-			stat.setString(2, parkour.getName());
+			stat.setString(2, parkourGame.getName());
 
 			final ResultSet rs = stat.executeQuery();
 			Medal lastMedal = Medal.NONE;
@@ -53,7 +56,7 @@ public class DataBaseOperations implements Runnable {
 
 	private void calculateMedals(final Medal lastMedal) {
 		// What medal to give?
-		final Medal current = parkour.getOptions().getMedalByTime(0/*PlayerManager.getParkourSinglePlayer(player).getTime()*/);
+		final Medal current = parkourGame.getOptions().getMedalByTime(0/*PlayerManager.getParkourSinglePlayer(player).getTime()*/);
 		if (lastMedal.ordinal() > current.ordinal()) {
 			// How much does it cost?
 			int price = 0;
@@ -77,18 +80,18 @@ public class DataBaseOperations implements Runnable {
 		stat.setInt(1, count + 1);
 		stat.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
 		stat.setString(3, player.getName());
-		stat.setString(4, parkour.getName());
+		stat.setString(4, parkourGame.getName());
 		stat.execute();
 		// What medal was previously?
 		player.sendMessage(plugin.msg("howMany", false).replace("%COUNT%", "1"));
-		return parkour.getOptions().getMedalByTime(f);
+		return parkourGame.getOptions().getMedalByTime(f);
 	}
 
 	private void insertNewRecord() {
 		try (final PreparedStatement stat = connection.prepareStatement("INSERT INTO ats_parkour_records VALUES(null, ?, ?, ?, ?, 1)")) {
 			stat.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
 			stat.setString(2, player.getName());
-			stat.setString(3, parkour.getName());
+			stat.setString(3, parkourGame.getName());
 			stat.setFloat(4, time);
 			stat.execute();
 			player.sendMessage(plugin.msg("newRecord", false));
@@ -100,12 +103,12 @@ public class DataBaseOperations implements Runnable {
 
 	private void verifyParkourBestTime() {
 		try (final PreparedStatement stat = connection.prepareStatement("SELECT time FROM ats_parkour_records WHERE parkour = ? ORDER BY time LIMIT 1")) {
-			stat.setString(1, parkour.getName());
+			stat.setString(1, parkourGame.getName());
 			final ResultSet rs = stat.executeQuery();
 			if (!rs.next() || rs.getFloat("time") > time) {
 				// First attempt or the best time
 				player.sendMessage(plugin.msg("generalRecord", false));
-				plugin.updateSign(player.getName(), time, parkour);
+				plugin.updateSign(player.getName(), time, parkourGame);
 			}
 			rs.close();
 		} catch (final SQLException ex) {
