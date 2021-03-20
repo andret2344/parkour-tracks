@@ -206,9 +206,16 @@ public class ParkourListeners implements Listener {
 			final float currentTime = player.getLevel() + player.getExp();
 			final String time = String.valueOf(currentTime);
 			player.sendMessage(plugin.msg("finishTime", false).replace("%TIME%", Math.abs(time.lastIndexOf('.') - time.length()) == 2 ? (time + "0") : time));
-			plugin.getConnection()
-					.map(connection -> new DataBaseOperations(connection, parkourGame, plugin, player, currentTime))
-					.ifPresent(dataBaseOperations -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, dataBaseOperations));
+			if (player.hasPermission("ats.parkour.ignoreRecords")) {
+				player.sendMessage("Your time hasn't been saved to database, due to \"ats.parkour.ignoreRecords\" permission.");
+			} else {
+				plugin.getConnection()
+						.map(connection -> new DataBaseOperations(connection, parkourGame, player, currentTime, oldTime -> {
+							player.sendMessage(plugin.msg("newRecord", false));
+							player.sendMessage(plugin.msg("howMany", false).replace("%COUNT%", "1"));
+						}))
+						.ifPresent(dataBaseOperations -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, dataBaseOperations));
+			}
 		}
 		final ParkourCountdown task = new ParkourCountdown(5,
 				() -> player.sendMessage(plugin.msg("teleportingTime", false).replace("%SECONDS%", "5")),
