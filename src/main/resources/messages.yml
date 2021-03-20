@@ -171,6 +171,6 @@ player:
   newRecord: '&6Congratulations! You have new own best record on this parkour!'
   rewardPrice: '&bYou have earned %PRICE% LobbyCoins.'
   teleportationCanceled: '&aTeleportation counting has been just cancelled. You are not being teleported.'
-  teleportingTime: '&3You are being teleported in 5 seconds.'
+  teleportingTime: '&3You are being teleported in %SECONDS% seconds.'
   topRecord: '%NUMBER%. %PLAYER% - %TIME%'
   usageTop: '&cCorrect usage: /parkour top <name> [count]'

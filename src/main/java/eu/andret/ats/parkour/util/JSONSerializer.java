@@ -64,11 +64,11 @@ public class JSONSerializer {
 		if (!jsonObject.has(REGION)) {
 			return null;
 		}
-		if (!jsonObject.has("name")) {
+		if (!jsonObject.has(NAME)) {
 			return null;
 		}
 		final AbstractRegion gameRegion = readAbstractRegion(jsonObject.getJSONObject(REGION));
-		final ParkourGame parkourGame = new Parkour(jsonObject.getString("name"), gameRegion, plugin.getServer().getWorld(world));
+		final ParkourGame parkourGame = new Parkour(jsonObject.getString(NAME), gameRegion, plugin.getServer().getWorld(world));
 		if (jsonObject.has(SPAWN)) {
 			parkourGame.setSpawn(readDirectionalRegion(jsonObject.getJSONObject(SPAWN)));
 		}
@@ -220,6 +220,7 @@ public class JSONSerializer {
 			return null;
 		}
 		final JSONObject jsonObject = new JSONObject();
+		jsonObject.put(NAME, parkourGame.getName());
 		jsonObject.put(WORLD, parkourGame.getWorld().getName());
 		jsonObject.put(REGION, writeAbstractRegion(parkourGame.getGameRegion()));
 		jsonObject.put(SPAWN, writeDirectionalRegion(parkourGame.getSpawn()));

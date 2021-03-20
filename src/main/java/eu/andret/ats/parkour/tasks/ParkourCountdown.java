@@ -15,7 +15,8 @@ public class ParkourCountdown implements Runnable {
 	private int iterator;
 
 	public ParkourCountdown(final int begin, @NotNull final Runnable opening, @NotNull final Consumer<Integer> step, @NotNull final Runnable closing) {
-		this.begin = iterator = begin;
+		this.begin = begin;
+		iterator = begin + 1;
 		this.opening = opening;
 		this.step = step;
 		this.closing = closing;
@@ -23,6 +24,7 @@ public class ParkourCountdown implements Runnable {
 
 	@Override
 	public void run() {
+		iterator--;
 		if (iterator == begin) {
 			opening.run();
 			return;
@@ -31,6 +33,6 @@ public class ParkourCountdown implements Runnable {
 			closing.run();
 			return;
 		}
-		step.accept(--iterator);
+		step.accept(iterator);
 	}
 }

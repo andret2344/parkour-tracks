@@ -60,7 +60,7 @@ public class ParkourPlugin extends JavaPlugin {
 	@Override
 	public void onEnable() {
 		if (getWorldEdit() == null) {
-			System.err.println("[atsParkour] CRITICAL! Cannot find WorldEdit plugin! Disabling...");
+			System.out.println("[atsParkour] CRITICAL! Cannot find WorldEdit plugin! Disabling...");
 			setEnabled(false);
 			return;
 		}
@@ -71,9 +71,12 @@ public class ParkourPlugin extends JavaPlugin {
 		setupDatabase();
 		loadParkourLobby();
 		loadAllParkourGames();
-		ParkourManager.getAllGames().forEach(p -> getServer().getOnlinePlayers().stream()
-				.filter(pl -> p.getAllRegions().stream().filter(Objects::nonNull).anyMatch(r -> r.contains(pl.getLocation())))
-				.forEach(p::addPlayer));
+		ParkourManager.getAllGames().stream()
+				.filter(Objects::nonNull)
+				.forEach(p -> getServer().getOnlinePlayers().stream()
+						.filter(Objects::nonNull)
+						.filter(pl -> p.getAllRegions().stream().filter(Objects::nonNull).anyMatch(r -> r.contains(pl.getLocation())))
+						.forEach(p::addPlayer));
 		getConnection()
 				.map(KeepConnection::new)
 				.ifPresent(keepConnection -> getServer().getScheduler().scheduleSyncRepeatingTask(this, keepConnection, 36_000, 36_000));
@@ -95,7 +98,7 @@ public class ParkourPlugin extends JavaPlugin {
 		try {
 			yamlConfiguration.load(new File(getDataFolder(), "messages.yml"));
 		} catch (final IOException | InvalidConfigurationException ex) {
-			System.err.println("[atsParkour] An error occurred when loading messages");
+			System.out.println("[atsParkour] An error occurred when loading messages");
 			ex.printStackTrace();
 		}
 		generate();
@@ -178,7 +181,7 @@ public class ParkourPlugin extends JavaPlugin {
 		try {
 			final File lobby = new File(getDataFolder(), "lobby.json");
 			if (!lobby.exists() && !lobby.createNewFile()) {
-				System.err.println("[atsParkour] An error occurred when trying to create lobby file");
+				System.out.println("[atsParkour] An error occurred when trying to create lobby file");
 				return;
 			}
 			final PrintWriter printWriter = new PrintWriter(lobby);
@@ -186,7 +189,7 @@ public class ParkourPlugin extends JavaPlugin {
 			printWriter.close();
 			System.out.println("[atsParkour] Successfully saved lobby");
 		} catch (final IOException ex) {
-			System.err.println("[atsParkour] An error occurred when trying to save lobby");
+			System.out.println("[atsParkour] An error occurred when trying to save lobby");
 			ex.printStackTrace();
 		}
 	}
@@ -195,14 +198,14 @@ public class ParkourPlugin extends JavaPlugin {
 		try {
 			final File games = new File(getDataFolder(), "games.json");
 			if (!games.exists() && !games.createNewFile()) {
-				System.err.println("[atsParkour] An error occurred when trying to create games file");
+				System.out.println("[atsParkour] An error occurred when trying to create games file");
 			}
 			final PrintWriter printWriter = new PrintWriter(games);
 			printWriter.write(jsonSerializer.writeParkourGames(ParkourManager.getAllGames()).toString(4));
 			printWriter.close();
 			System.out.println("[atsParkour] Successfully saved " + ParkourManager.getAllGames() + " games");
 		} catch (final IOException ex) {
-			System.err.println("[atsParkour] An error occurred when trying to save games");
+			System.out.println("[atsParkour] An error occurred when trying to save games");
 			ex.printStackTrace();
 		}
 	}
@@ -218,7 +221,7 @@ public class ParkourPlugin extends JavaPlugin {
 			ParkourManager.setLobbyLocation(jsonSerializer.readLocation(jsonObject));
 			System.out.println("[atsParkour] Successfully loaded lobby");
 		} catch (final IOException ex) {
-			System.err.println("[atsParkour] An error occurred when trying to load lobby");
+			System.out.println("[atsParkour] An error occurred when trying to load lobby");
 			ex.printStackTrace();
 		}
 	}
@@ -226,6 +229,7 @@ public class ParkourPlugin extends JavaPlugin {
 	private void loadAllParkourGames() {
 		final File games = new File(getDataFolder(), "games.json");
 		if (!games.exists()) {
+			System.out.println("[atsParkour] No games.json file found");
 			return;
 		}
 		try (final Reader reader = new FileReader(games)) {
@@ -234,13 +238,13 @@ public class ParkourPlugin extends JavaPlugin {
 			jsonSerializer.readParkourGames(jsonArray).forEach(ParkourManager::addParkour);
 			System.out.printf("[atsParkour] Successfully loaded %d parkour games", ParkourManager.getAllGames().size());
 		} catch (final IOException ex) {
-			System.err.println("[atsParkour] An error occurred when trying to load parkour");
+			System.out.println("[atsParkour] An error occurred when trying to load parkour");
 			ex.printStackTrace();
 		}
 	}
 
 	public Optional<Connection> getConnection() {
-		return Optional.of(connection);
+		return Optional.ofNullable(connection);
 	}
 
 	private void generate() {

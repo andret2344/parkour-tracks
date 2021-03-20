@@ -93,7 +93,7 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 					.map(parkourGame -> new RepairSignTask(connection, parkourGame, (s, f) -> plugin.updateSign(s, f, parkourGame)))
 					.forEach(repairSignTask -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, repairSignTask));
 			sender.sendMessage(msg("successFix", false));
-		}, () -> sender.sendMessage(msg("noDatabase", false)));
+		}, () -> sender.sendMessage(msg("noDatabase", true)));
 	}
 
 	@Argument(permission = "ats.parkour.ignore", executorType = ExecutorType.PLAYER, description = "Allows sender to ignore parkour regions interaction", aliases = "i")
