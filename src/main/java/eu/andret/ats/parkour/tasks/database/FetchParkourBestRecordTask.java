@@ -39,7 +39,6 @@ public class FetchParkourBestRecordTask extends AbstractParkourTask {
 				result.add(new ParkourRecord(rs.getString("nick"), parkourGame, rs.getFloat("time")));
 			}
 			callback.accept(result);
-			rs.close();
 		} catch (final SQLException ex) {
 			ex.printStackTrace();
 		}

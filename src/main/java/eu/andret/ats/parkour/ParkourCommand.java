@@ -286,7 +286,7 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		}
 		final Location l = ((Player) sender).getLocation();
 		parkourGame.getCheckpoints().add(new DirectionalRegion(selection, l.getYaw(), l.getPitch()));
-		return msg("setCheckpoint", false).replace("%CHECKPOINT_ID%", String.valueOf(parkourGame.getCheckpoints().size() - 1));
+		return msg("setCheckpoint", false).replace("%CHECKPOINT_ID%", String.valueOf(parkourGame.getCheckpoints().size()));
 	}
 
 	@Fallback
