@@ -1,6 +1,7 @@
 /*
- * Copyright Andret (c) 2019. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
  */
+
 import io.franzbecker.gradle.lombok.task.DelombokTask
 
 buildscript {
@@ -106,8 +107,7 @@ spigot {
 					'ats.parkour.vip'          : true,
 					'ats.parkour.spectate'     : true,
 					'ats.parkour.fix'          : true,
-					'ats.parkour.enabled'      : true,
-					'ats.parkour.fair'         : true
+					'ats.parkour.enabled'      : true
 			]
 		}
 	}

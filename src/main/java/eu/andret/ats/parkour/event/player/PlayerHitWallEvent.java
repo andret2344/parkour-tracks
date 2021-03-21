@@ -1,11 +1,12 @@
 /*
- * Copyright Andret (c) 2019. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
  */
+
 package eu.andret.ats.parkour.event.player;
 
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.player.ParkourPlayer;
-import eu.andret.ats.parkour.region.AbstractRegion;
+import eu.andret.ats.parkour.region.BasicRegion;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 
@@ -18,7 +19,7 @@ public class PlayerHitWallEvent extends AbstractParkourPlayerEvent {
 	/**
 	 * The wall the player hit.
 	 */
-	AbstractRegion wallRegion;
+	BasicRegion wallRegion;
 
 	/**
 	 * Constructor.
@@ -27,7 +28,7 @@ public class PlayerHitWallEvent extends AbstractParkourPlayerEvent {
 	 * @param parkourPlayer The player that triggers the event.
 	 * @param wallRegion The wall the player hit.
 	 */
-	public PlayerHitWallEvent(final ParkourGame parkourGame, final ParkourPlayer parkourPlayer, final AbstractRegion wallRegion) {
+	public PlayerHitWallEvent(final ParkourGame parkourGame, final ParkourPlayer parkourPlayer, final BasicRegion wallRegion) {
 		super(parkourGame, parkourPlayer);
 		this.wallRegion = wallRegion;
 	}
