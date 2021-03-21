@@ -12,9 +12,7 @@ import eu.andret.ats.parkour.region.DirectionalRegion;
 import lombok.Data;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 
 @Data
 public abstract class ParkourPlayer {
@@ -48,12 +46,9 @@ public abstract class ParkourPlayer {
 	}
 
 	public void teleportToRegion(final ParkourGame game, final DirectionalRegion region) {
-		// TODO: WHY?
-		if (inAnyParkour()) {
-			final Vector3 vector = region.getCuboidRegion().getCenter();
-			player.teleport(new Location(game.getWorld(), vector.getX() + 0.5, vector.getY(), vector.getZ() + 0.5, (float) region.getYaw(), (float) region.getPitch()));
-			Bukkit.getPluginManager().callEvent(new PlayerTeleportBackEvent(game, this, region));
-		}
+		final Vector3 vector = region.getCuboidRegion().getCenter();
+		player.teleport(new Location(game.getWorld(), vector.getX() + 0.5, vector.getY(), vector.getZ() + 0.5, (float) region.getYaw(), (float) region.getPitch()));
+		Bukkit.getPluginManager().callEvent(new PlayerTeleportBackEvent(game, this, region));
 	}
 
 	public void setSpectating(final boolean spectating) {
@@ -71,7 +66,6 @@ public abstract class ParkourPlayer {
 	}
 
 	public void teleportToLobby() {
-		player.getInventory().setItem(7, new ItemStack(Material.AIR));
 		player.teleport(ParkourManager.getLobbyLocation() == null ? Bukkit.getWorlds().get(0).getSpawnLocation() : ParkourManager.getLobbyLocation());
 	}
 }

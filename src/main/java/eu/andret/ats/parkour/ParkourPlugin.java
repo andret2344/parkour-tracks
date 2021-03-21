@@ -324,11 +324,18 @@ public class ParkourPlugin extends JavaPlugin {
 	private String replace(final String source, final ParkourRecord parkourRecord) {
 		final float time = parkourRecord.getTime();
 		final int minutes = (int) time / 60;
-		final int secs = (int) time % 60;
+		final int seconds = (int) time % 60;
 		final int milliseconds = Math.round((time % 1) * 100);
 		return source.replace("%NICK%", parkourRecord.getNick())
-				.replace("%MINUTES%", ("" + (minutes < 10 ? "0" + minutes : minutes)).substring(0, 2))
-				.replace("%SECONDS%", "" + ("" + (secs < 10 ? "0" + secs : secs)).substring(0, 2))
-				.replace("%MILLISECONDS%", "" + ("" + (milliseconds < 10 ? "0" + milliseconds : milliseconds)).substring(0, 2));
+				.replace("%MINUTES%", twoDigits(minutes))
+				.replace("%SECONDS%", twoDigits(seconds))
+				.replace("%MILLISECONDS%", twoDigits(milliseconds));
+	}
+
+	private String twoDigits(final int number) {
+		if (number < 10) {
+			return "0" + number;
+		}
+		return String.valueOf(number);
 	}
 }

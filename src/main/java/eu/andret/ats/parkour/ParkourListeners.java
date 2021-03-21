@@ -355,9 +355,6 @@ public class ParkourListeners implements Listener {
 		}
 		if (event.getParkourGame().isRunning() && !PlayerManager.getParkourSinglePlayer(player).isIgnoring()) {
 			player.getInventory().setItem(8, new ItemStack(Material.AIR));
-			for (final Entry<PotionEffectType, Integer> entry : event.getParkourGame().getOptions().getEffects().entrySet()) {
-				player.removePotionEffect(entry.getKey());
-			}
 		}
 		if (plugin.getTeleportCount().containsKey(player.getUniqueId())) {
 			player.sendMessage(plugin.msg("teleportationCanceled", false));
