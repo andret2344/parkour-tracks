@@ -18,7 +18,7 @@ public abstract class ParkourPlayer {
 	}
 
 	public void reset() {
-		lastVisitedCheckpointId = 0;
+		lastVisitedCheckpointId = -1;
 		player.setExp(0);
 		player.setLevel(0);
 	}

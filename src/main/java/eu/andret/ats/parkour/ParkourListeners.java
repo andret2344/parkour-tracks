@@ -15,9 +15,9 @@ import eu.andret.ats.parkour.event.player.PlayerLeaveRegionEvent;
 import eu.andret.ats.parkour.event.player.PlayerQuitGameEvent;
 import eu.andret.ats.parkour.event.player.PlayerTeleportBackEvent;
 import eu.andret.ats.parkour.parkour.ParkourGame;
-import eu.andret.ats.parkour.parkour.ParkourManager;
 import eu.andret.ats.parkour.parkour.ParkourRecord;
 import eu.andret.ats.parkour.player.ParkourPlayer;
+import eu.andret.ats.parkour.player.ParkourSinglePlayer;
 import eu.andret.ats.parkour.player.PlayerManager;
 import eu.andret.ats.parkour.region.BasicRegion;
 import eu.andret.ats.parkour.region.DirectionalRegion;
@@ -70,10 +70,10 @@ public class ParkourListeners implements Listener {
 	public synchronized void move(final PlayerMoveEvent event) {
 		final Player player = event.getPlayer();
 		final ParkourPlayer parkourPlayer = PlayerManager.getParkourSinglePlayer(event.getPlayer());
-		if (event.getTo() != null && event.getTo().getY() < -10 && ParkourManager.getLobbyLocation() != null) {
-			player.teleport(ParkourManager.getLobbyLocation());
+		if (event.getTo() != null && event.getTo().getY() < -10 && plugin.getParkourManager().getLobbyLocation() != null) {
+			player.teleport(plugin.getParkourManager().getLobbyLocation());
 		}
-		final ParkourGame parkour = ParkourManager.getParkour(player);
+		final ParkourGame parkour = plugin.getParkourManager().getParkour(player);
 		if (parkour != null && !parkourPlayer.isIgnoring()) {
 			if (player.getWorld().equals(parkour.getWorld()) && parkour.isRunning()) {
 				player.setFoodLevel(20);
@@ -83,8 +83,9 @@ public class ParkourListeners implements Listener {
 				for (final Entry<PotionEffectType, Integer> entry : parkour.getOptions().getEffects().entrySet()) {
 					player.addPotionEffect(new PotionEffect(entry.getKey(), 99999999, entry.getValue()));
 				}
+				final int lastVisitedCheckpointId = parkourPlayer.getLastVisitedCheckpointId();
 				if (!parkourPlayer.isIgnoring() && player.isFlying() && !parkour.getOptions().isBoat() && !parkour.getSpawn().contains(player.getLocation())) {
-					final DirectionalRegion region = parkour.getCheckpoints().get(parkourPlayer.getLastVisitedCheckpointId());
+					final DirectionalRegion region = lastVisitedCheckpointId == -1 ? parkour.getSpawn() : parkour.getCheckpoints().get(lastVisitedCheckpointId);
 					PlayerManager.teleportToRegion(parkourPlayer, region);
 					plugin.getServer().getPluginManager().callEvent(new PlayerTeleportBackEvent(parkour, parkourPlayer, region));
 				}
@@ -97,7 +98,7 @@ public class ParkourListeners implements Listener {
 								if (parkour.getOptions().isAlwaysSpawn()) {
 									region = parkour.getSpawn();
 								} else {
-									region = parkour.getCheckpoints().get(parkourPlayer.getLastVisitedCheckpointId());
+									region = parkour.getCheckpoints().get(lastVisitedCheckpointId);
 								}
 								if (region == null) {
 									return;
@@ -109,7 +110,7 @@ public class ParkourListeners implements Listener {
 			}
 
 			final PluginManager pluginManager = plugin.getServer().getPluginManager();
-			for (final ParkourGame parkourGame : ParkourManager.getAllGames()) {
+			for (final ParkourGame parkourGame : plugin.getParkourManager().getAllGames()) {
 				if (parkourGame.isRunning() && !parkourPlayer.isIgnoring() && parkourGame.getWorld().equals(parkour.getWorld())) {
 					for (final DirectionalRegion region : parkourGame.getCheckpoints()) {
 						if (region.contains(event.getFrom()) && !region.contains(event.getTo())) {
@@ -141,17 +142,17 @@ public class ParkourListeners implements Listener {
 
 		if (!event.getPlayer().getGameMode().equals(GameMode.CREATIVE)) {
 			boolean fly = false;
-			for (final ParkourGame p : ParkourManager.getAllGames()) {
+			for (final ParkourGame parkourGame : plugin.getParkourManager().getAllGames()) {
 				if (PlayerManager.getParkourSinglePlayer(player).isIgnoring()) {
-					if (p.getAllRegions().stream().filter(Objects::nonNull).anyMatch(x -> x.contains(player.getLocation()))) {
+					if (parkourGame.getAllRegions().stream().filter(Objects::nonNull).anyMatch(x -> x.contains(player.getLocation()))) {
 						fly = true;
-						for (final Entry<PotionEffectType, Integer> entry : p.getOptions().getEffects().entrySet()) {
+						for (final Entry<PotionEffectType, Integer> entry : parkourGame.getOptions().getEffects().entrySet()) {
 							event.getPlayer().addPotionEffect(new PotionEffect(entry.getKey(), 99999999, entry.getValue()));
 						}
 						player.setFoodLevel(20);
 						player.setHealth(20D);
 					} else {
-						for (final Entry<PotionEffectType, Integer> entry : p.getOptions().getEffects().entrySet()) {
+						for (final Entry<PotionEffectType, Integer> entry : parkourGame.getOptions().getEffects().entrySet()) {
 							event.getPlayer().removePotionEffect(entry.getKey());
 						}
 					}
@@ -159,7 +160,7 @@ public class ParkourListeners implements Listener {
 			}
 			player.setAllowFlight(fly);
 		}
-		ParkourManager.getAllGames()
+		plugin.getParkourManager().getAllGames()
 				.stream()
 				.filter(parkourGame -> parkourGame.isRunning() && !parkourPlayer.isIgnoring() && player.getWorld().equals(parkourGame.getWorld()))
 				.forEach(parkourGame -> {
@@ -167,7 +168,7 @@ public class ParkourListeners implements Listener {
 							.filter(Objects::nonNull)
 							.anyMatch(x -> x.contains(event.getPlayer().getLocation()));
 					if (!inAnyRegion && parkourGame.getPlayers().contains(parkourPlayer)) {
-						parkourGame.removePlayer(player);
+						parkourGame.removePlayer(parkourPlayer);
 					} else if (inAnyRegion && !parkourGame.getPlayers().contains(parkourPlayer)) {
 						parkourGame.addPlayer(player);
 					}
@@ -192,7 +193,7 @@ public class ParkourListeners implements Listener {
 				event.getParkourPlayer().getPlayer().sendMessage(plugin.msg("achieveCheckpoint", false));
 			}
 		}
-		if (checkpointId == parkourGame.getLastCheckpointId()) {
+		if (checkpointId == parkourGame.getCheckpoints().size() - 1) {
 			plugin.getServer().getPluginManager().callEvent(new PlayerCompleteParkourEvent(event.getParkourGame(), event.getParkourPlayer()));
 		}
 	}
@@ -217,7 +218,7 @@ public class ParkourListeners implements Listener {
 				() -> {
 					plugin.getServer().getScheduler().cancelTask(plugin.getTeleportCount().get(uniqueId));
 					plugin.getTeleportCount().remove(uniqueId);
-					player.teleport(ParkourManager.getLobbyLocation());
+					player.teleport(plugin.getParkourManager().getLobbyLocation());
 				});
 		final int schedulerId = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, task, 10, 20);
 		plugin.getTeleportCount().put(uniqueId, schedulerId);
@@ -269,7 +270,7 @@ public class ParkourListeners implements Listener {
 			return;
 		}
 		final Player player = (Player) event.getExited();
-		final ParkourGame parkourGame = ParkourManager.getParkour(player);
+		final ParkourGame parkourGame = plugin.getParkourManager().getParkour(player);
 		if (parkourGame == null) {
 			return;
 		}
@@ -293,10 +294,11 @@ public class ParkourListeners implements Listener {
 		final ParkourPlayer parkourPlayer = event.getParkourPlayer();
 		final ParkourGame parkourGame = event.getParkourGame();
 		final DirectionalRegion region;
-		if (parkourGame.getOptions().isAlwaysSpawn()) {
+		final int lastVisitedCheckpointId = parkourPlayer.getLastVisitedCheckpointId();
+		if (parkourGame.getOptions().isAlwaysSpawn() || lastVisitedCheckpointId == -1) {
 			region = parkourGame.getSpawn();
 		} else {
-			region = parkourGame.getCheckpoints().get(parkourPlayer.getLastVisitedCheckpointId());
+			region = parkourGame.getCheckpoints().get(lastVisitedCheckpointId);
 		}
 		if (region == null) {
 			return;
@@ -307,25 +309,26 @@ public class ParkourListeners implements Listener {
 
 	@EventHandler
 	public synchronized void joinGame(final PlayerJoinGameEvent event) {
-		if (event.getParkourGame().getOptions().isRecordsCounting() && !event.getParkourPlayer().getPlayer().getGameMode().equals(GameMode.CREATIVE)) {
-			event.getParkourPlayer().getPlayer().setLevel(0);
-			event.getParkourPlayer().getPlayer().setExp(0);
-			if (!plugin.getPlayerTimeCounters().containsKey(event.getParkourPlayer().getPlayer().getUniqueId()) && !event.getParkourPlayer().isIgnoring()) {
-				final int schedulerId = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, new PlayerTimeCounter(event.getParkourPlayer(), plugin), 1, 1);
-				plugin.getPlayerTimeCounters().put(event.getParkourPlayer().getPlayer().getUniqueId(), schedulerId);
+		final ParkourPlayer parkourPlayer = event.getParkourPlayer();
+		if (event.getParkourGame().getOptions().isRecordsCounting() && !parkourPlayer.getPlayer().getGameMode().equals(GameMode.CREATIVE)) {
+			parkourPlayer.getPlayer().setLevel(0);
+			parkourPlayer.getPlayer().setExp(0);
+			if (!plugin.getPlayerTimeCounters().containsKey(parkourPlayer.getPlayer().getUniqueId()) && !parkourPlayer.isIgnoring()) {
+				final int schedulerId = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, new PlayerTimeCounter(plugin, parkourPlayer, event.getParkourGame()), 1, 1);
+				plugin.getPlayerTimeCounters().put(parkourPlayer.getPlayer().getUniqueId(), schedulerId);
 			}
 		}
-		if (event.getParkourGame().isRunning() && !PlayerManager.getParkourSinglePlayer(event.getParkourPlayer().getPlayer()).isIgnoring() && event.getParkourGame().getOptions().isModifyInventory()) {
-			event.getParkourPlayer().getPlayer().getInventory().setItem(8, plugin.getExit());
+		if (event.getParkourGame().isRunning() && !PlayerManager.getParkourSinglePlayer(parkourPlayer.getPlayer()).isIgnoring() && event.getParkourGame().getOptions().isModifyInventory()) {
+			parkourPlayer.getPlayer().getInventory().setItem(8, plugin.getExit());
 		}
 		final String tmp = plugin.msg("joinParkour", false).split("%")[0];
 		final String color = "\u00A7" + tmp.charAt(tmp.lastIndexOf('\u00A7') + 1);
-		event.getParkourPlayer().getPlayer().sendMessage(plugin.msg("joinParkour", false).replace("%PARKOUR%", event.getParkourGame().getDisplayName().replace('&', '\u00A7') + color));
-		for (final ParkourGame p : ParkourManager.getAllGames()) {
+		parkourPlayer.getPlayer().sendMessage(plugin.msg("joinParkour", false).replace("%PARKOUR%", event.getParkourGame().getDisplayName().replace('&', '\u00A7') + color));
+		for (final ParkourGame p : plugin.getParkourManager().getAllGames()) {
 			if (!p.equals(event.getParkourGame())) {
 				for (final ParkourPlayer pl : p.getPlayers()) {
-					pl.getPlayer().hidePlayer(plugin, event.getParkourPlayer().getPlayer());
-					event.getParkourPlayer().getPlayer().hidePlayer(plugin, pl.getPlayer());
+					pl.getPlayer().hidePlayer(plugin, parkourPlayer.getPlayer());
+					parkourPlayer.getPlayer().hidePlayer(plugin, pl.getPlayer());
 				}
 			}
 		}
@@ -334,7 +337,7 @@ public class ParkourListeners implements Listener {
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void interact(final PlayerInteractEvent event) {
 		final ParkourPlayer parkourPlayer = PlayerManager.getParkourSinglePlayer(event.getPlayer());
-		for (final ParkourGame parkourGame : ParkourManager.getAllGames()) {
+		for (final ParkourGame parkourGame : plugin.getParkourManager().getAllGames()) {
 			if (!event.getAction().equals(Action.PHYSICAL) && parkourGame.getTeleportBlock() != null && event.getClickedBlock() != null && parkourGame.getTeleportBlock().equals(event.getClickedBlock().getLocation()) && !parkourPlayer.isIgnoring()) {
 				parkourGame.addPlayer(event.getPlayer());
 				final DirectionalRegion region = parkourGame.getSpawn();
@@ -348,19 +351,23 @@ public class ParkourListeners implements Listener {
 				break;
 			}
 		}
-		if (!ParkourManager.getPlayersInGames().contains(event.getPlayer())) {
+		if (!plugin.getParkourManager().getPlayersInGames().contains(event.getPlayer())) {
 			return;
 		}
 		if (event.getClickedBlock() != null && (Data.getInteractiveMaterials().contains(event.getClickedBlock().getType()))) {
 			event.setCancelled(true);
 		}
 
-		if (event.getItem() == null || (!event.getAction().equals(Action.RIGHT_CLICK_AIR) && !event.getAction().equals(Action.RIGHT_CLICK_BLOCK) && !event.getAction().equals(Action.LEFT_CLICK_AIR) && !event.getAction().equals(Action.LEFT_CLICK_BLOCK)) || !plugin.getExit().getItemMeta().getDisplayName().equals(event.getItem().getItemMeta().getDisplayName())) {
+		if (event.getItem() == null) {
+			return;
+		}
+
+		if (!plugin.getExit().getItemMeta().getDisplayName().equals(event.getItem().getItemMeta().getDisplayName())) {
 			return;
 		}
 		event.setCancelled(true);
-		if (ParkourManager.getLobbyLocation() != null) {
-			parkourPlayer.getPlayer().teleport(ParkourManager.getLobbyLocation());
+		if (plugin.getParkourManager().getLobbyLocation() != null) {
+			parkourPlayer.getPlayer().teleport(plugin.getParkourManager().getLobbyLocation());
 		}
 	}
 
@@ -386,7 +393,7 @@ public class ParkourListeners implements Listener {
 
 	@EventHandler(priority = EventPriority.LOW)
 	public void join(final PlayerJoinEvent event) {
-		for (final ParkourGame parkourGame : ParkourManager.getAllGames()) {
+		for (final ParkourGame parkourGame : plugin.getParkourManager().getAllGames()) {
 			for (final BasicRegion basicRegion : parkourGame.getAllRegions()) {
 				if (basicRegion.contains(event.getPlayer().getLocation())
 						&& parkourGame.getWorld().equals(event.getPlayer().getWorld())
@@ -400,19 +407,20 @@ public class ParkourListeners implements Listener {
 
 	@EventHandler
 	public void tp(final PlayerTeleportEvent event) {
-		for (final ParkourGame parkourGame : ParkourManager.getAllGames()) {
+		for (final ParkourGame parkourGame : plugin.getParkourManager().getAllGames()) {
 			final boolean inAnyRegion = parkourGame.getAllRegions().stream().filter(Objects::nonNull).anyMatch(x -> x.contains(event.getTo()));
-			if (inAnyRegion && !parkourGame.getPlayers().contains(PlayerManager.getParkourSinglePlayer(event.getPlayer())) && !PlayerManager.getParkourSinglePlayer(event.getPlayer()).isIgnoring()) {
+			final ParkourSinglePlayer parkourPlayer = PlayerManager.getParkourSinglePlayer(event.getPlayer());
+			if (inAnyRegion && !parkourGame.getPlayers().contains(parkourPlayer) && !parkourPlayer.isIgnoring()) {
 				parkourGame.addPlayer(event.getPlayer());
 				if (!plugin.getPlayerTimeCounters().containsKey(event.getPlayer().getUniqueId()) && parkourGame.getOptions().isRecordsCounting()) {
-					final int s = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, new PlayerTimeCounter(PlayerManager.getParkourPlayer(event.getPlayer()), plugin), 1, 1);
-					plugin.getPlayerTimeCounters().put(event.getPlayer().getUniqueId(), s);
+					final int schedulerId = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, new PlayerTimeCounter(plugin, parkourPlayer, parkourGame), 1, 1);
+					plugin.getPlayerTimeCounters().put(event.getPlayer().getUniqueId(), schedulerId);
 				}
 				continue;
 			}
 
 			if (!inAnyRegion && parkourGame.getPlayers().contains(PlayerManager.getParkourPlayer(event.getPlayer()))) {
-				parkourGame.removePlayer(event.getPlayer());
+				parkourGame.removePlayer(parkourPlayer);
 				plugin.getPlayerTimeCounters().remove(event.getPlayer().getUniqueId());
 			}
 		}
@@ -424,7 +432,7 @@ public class ParkourListeners implements Listener {
 			return;
 		}
 		final Player player = (Player) event.getEntity();
-		final ParkourGame parkourGame = ParkourManager.getParkour(player);
+		final ParkourGame parkourGame = plugin.getParkourManager().getParkour(player);
 		if (parkourGame != null && !parkourGame.getOptions().isDamageAllowed() && parkourGame.getWorld().equals(player.getWorld())) {
 			event.setCancelled(true);
 		}
@@ -447,7 +455,7 @@ public class ParkourListeners implements Listener {
 	}
 
 	private void universalBlockEventHandler(final BlockEvent event, final Player player) {
-		ParkourManager.getAllGames().stream()
+		plugin.getParkourManager().getAllGames().stream()
 				.map(ParkourGame::getAllRegions)
 				.flatMap(Collection::stream)
 				.filter(Objects::nonNull)
@@ -465,9 +473,10 @@ public class ParkourListeners implements Listener {
 
 	@EventHandler
 	public void leave(final PlayerQuitEvent event) {
-		final ParkourGame parkourGame = ParkourManager.getParkour(event.getPlayer());
+		final ParkourGame parkourGame = plugin.getParkourManager().getParkour(event.getPlayer());
+		final ParkourPlayer parkourPlayer = PlayerManager.getParkourPlayer(event.getPlayer());
 		if (parkourGame != null) {
-			parkourGame.removePlayer(event.getPlayer());
+			parkourGame.removePlayer(parkourPlayer);
 		}
 		PlayerManager.remove(event.getPlayer());
 	}

@@ -6,23 +6,23 @@ package eu.andret.ats.parkour.tasks.counter;
 
 import eu.andret.ats.parkour.ParkourPlugin;
 import eu.andret.ats.parkour.parkour.ParkourGame;
-import eu.andret.ats.parkour.parkour.ParkourManager;
 import eu.andret.ats.parkour.player.ParkourPlayer;
 import org.bukkit.Sound;
 
 public class PlayerTimeCounter implements Runnable {
-	private final ParkourPlayer parkourPlayer;
 	private final ParkourPlugin parkourPlugin;
+	private final ParkourPlayer parkourPlayer;
+	private final ParkourGame parkourGame;
 	private int counter;
 
-	public PlayerTimeCounter(final ParkourPlayer parkourPlayer, final ParkourPlugin parkourPlugin) {
-		this.parkourPlayer = parkourPlayer;
+	public PlayerTimeCounter(final ParkourPlugin parkourPlugin, final ParkourPlayer parkourPlayer, final ParkourGame parkourGame) {
 		this.parkourPlugin = parkourPlugin;
+		this.parkourPlayer = parkourPlayer;
+		this.parkourGame = parkourGame;
 	}
 
 	@Override
 	public void run() {
-		final ParkourGame parkourGame = ParkourManager.getParkour(parkourPlayer.getPlayer());
 		if (parkourPlayer.isIgnoring() || parkourGame == null || !parkourGame.isRunning()) {
 			return;
 		}

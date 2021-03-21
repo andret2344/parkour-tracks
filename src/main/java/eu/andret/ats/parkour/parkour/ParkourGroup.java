@@ -36,7 +36,7 @@ public class ParkourGroup extends ParkourGame {
 	}
 
 	@Override
-	public void addPlayer(final Player player) {
-		super.addPlayer(PlayerManager.getParkourCompetitorPlayer(player));
+	public boolean addPlayer(final Player player) {
+		return super.addPlayer(PlayerManager.getParkourCompetitorPlayer(player));
 	}
 }

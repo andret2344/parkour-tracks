@@ -20,7 +20,6 @@ import eu.andret.ats.parkour.event.game.GameStartEvent;
 import eu.andret.ats.parkour.event.game.GameStopEvent;
 import eu.andret.ats.parkour.parkour.Parkour;
 import eu.andret.ats.parkour.parkour.ParkourGame;
-import eu.andret.ats.parkour.parkour.ParkourManager;
 import eu.andret.ats.parkour.parkour.ParkourRecord;
 import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.player.PlayerManager;
@@ -55,7 +54,7 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 	@Argument(permission = "ats.parkour.lobby", executorType = ExecutorType.PLAYER, description = "Sets lobby location to executor location")
 	public String lobby() {
 		final Location l = ((Player) sender).getLocation();
-		ParkourManager.setLobbyLocation(l);
+		plugin.getParkourManager().setLobbyLocation(l);
 		return msg("setLobby", false)
 				.replace("%COORD_X%", String.valueOf(l.getX()))
 				.replace("%COORD_Y%", String.valueOf(l.getY()))
@@ -64,11 +63,11 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 
 	@Argument(permission = "ats.parkour.list", description = "Lists all parkour games", aliases = "ls")
 	public String list() {
-		if (ParkourManager.getAllGames().isEmpty()) {
+		if (plugin.getParkourManager().getAllGames().isEmpty()) {
 			return msg("noParkours", false);
 		}
-		sender.sendMessage(msg("listHeader", false).replace("%COUNT%", String.valueOf(ParkourManager.getAllGames().size())));
-		final List<ParkourGame> allGames = ParkourManager.getAllGames();
+		sender.sendMessage(msg("listHeader", false).replace("%COUNT%", String.valueOf(plugin.getParkourManager().getAllGames().size())));
+		final List<ParkourGame> allGames = plugin.getParkourManager().getAllGames();
 		for (int i = 1; i <= allGames.size(); i++) {
 			final ParkourGame parkourGame = allGames.get(i - 1);
 			final String on;
@@ -85,7 +84,7 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 	@Argument(permission = "ats.parkour.fix", description = "Fixes signs after database connection troubles.")
 	public void fix() {
 		plugin.getConnection().ifPresentOrElse(connection -> {
-			ParkourManager.getAllGames()
+			plugin.getParkourManager().getAllGames()
 					.stream()
 					.map(parkourGame -> new FetchParkourBestRecordTask(connection, parkourGame, 1, data -> plugin.updateSign(data.get(0))))
 					.forEach(fetchParkourBestRecordTask -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchParkourBestRecordTask));
@@ -99,15 +98,15 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		final ParkourPlayer parkourPlayer = PlayerManager.getParkourSinglePlayer(player);
 		if (parkourPlayer.isIgnoring()) {
 			parkourPlayer.setIgnoring(false);
-			ParkourManager.getAllGames().stream()
+			plugin.getParkourManager().getAllGames().stream()
 					.filter(p -> p.getAllRegions().stream().filter(Objects::nonNull).anyMatch(x -> x.contains(player.getLocation())))
 					.forEach(p -> p.addPlayer(player));
 			return msg("ignoreStop", false);
 		}
 		parkourPlayer.setIgnoring(true);
-		final ParkourGame parkour = ParkourManager.getParkour(player);
+		final ParkourGame parkour = plugin.getParkourManager().getParkour(player);
 		if (parkour != null) {
-			parkour.removePlayer(player);
+			parkour.removePlayer(parkourPlayer);
 		}
 		return msg("ignoreStart", false);
 	}
@@ -140,7 +139,7 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 
 	@Argument(permission = "ats.parkour.create", executorType = ExecutorType.PLAYER, description = "Creates parkour game", aliases = "c")
 	public String create(final String name) {
-		if (ParkourManager.getLobbyLocation() == null) {
+		if (plugin.getParkourManager().getLobbyLocation() == null) {
 			return msg("lobbyFirst", true);
 		}
 		final CuboidRegion selection = getRegionSelection((Player) sender);
@@ -150,18 +149,18 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		if (!name.matches("[a-zA-Z0-9_-]+")) {
 			return msg("wrongName", true);
 		}
-		final ParkourGame parkour = ParkourManager.getParkour(name);
+		final ParkourGame parkour = plugin.getParkourManager().getParkour(name);
 		if (parkour != null) {
 			return msg("gameExists", true).replace("%NAME%", name);
 		}
 		final Parkour parkourGame = new Parkour(name, new BasicRegion(selection), ((Player) sender).getLocation().getWorld());
-		ParkourManager.addParkour(parkourGame);
+		plugin.getParkourManager().addParkour(parkourGame);
 		return msg("gameCreated", false).replace("%NAME%", parkourGame.getName());
 	}
 
 	@Argument(permission = "ats.parkour.remove", description = "Removes parkour game", aliases = "r")
 	public String remove(@Param("parkourGame") final ParkourGame parkourGame) {
-		ParkourManager.removeParkour(parkourGame);
+		plugin.getParkourManager().removeParkour(parkourGame);
 		return msg("gameRemoved", false).replace("%NAME%", parkourGame.getName());
 	}
 
@@ -187,7 +186,7 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		}
 		parkourGame.setRunning(true);
 		plugin.getServer().getPluginManager().callEvent(new GameStartEvent(parkourGame));
-		ParkourManager.sortGames();
+		plugin.getParkourManager().sortGames();
 		return msg("gameStarted", false).replace("%NAME%", parkourGame.getName());
 	}
 
@@ -203,7 +202,7 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		}
 		parkourGame.setRunning(false);
 		plugin.getServer().getPluginManager().callEvent(new GameStopEvent(parkourGame));
-		ParkourManager.sortGames();
+		plugin.getParkourManager().sortGames();
 		return msg("gameStopped", false).replace("%NAME%", parkourGame.getName());
 	}
 
@@ -229,7 +228,7 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 
 	@Argument(permission = "ats.parkour.rename", description = "Sets new name for parkour game")
 	public String rename(@Param("parkourGame") final ParkourGame parkourGame, final String name) {
-		if (ParkourManager.getParkour(name) != null) {
+		if (plugin.getParkourManager().getParkour(name) != null) {
 			return msg("gameExists", true).replace("%NAME%", name);
 		}
 		parkourGame.setName(name);
@@ -304,11 +303,11 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		if (id <= 0) {
 			return msg("negativeNumber", true);
 		}
-		if (id > parkourGame.getLastCheckpointId()) {
+		if (id >= parkourGame.getCheckpoints().size()) {
 			return msg("tooLargeNumber", true);
 		}
 		final Location location = ((Player) sender).getLocation();
-		parkourGame.getCheckpoints().add(id, new DirectionalRegion(selection, location.getYaw(), location.getPitch()));
+		parkourGame.getCheckpoints().add(id - 1, new DirectionalRegion(selection, location.getYaw(), location.getPitch()));
 		return msg("setCheckpoint", false).replace("%CHECKPOINT_ID%", String.valueOf(id));
 	}
 
@@ -338,10 +337,10 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		if (selection == null) {
 			return msg("wrongSel", true);
 		}
-		if (id <= 1) {
+		if (id <= 0) {
 			return msg("negativeNumber", true);
 		}
-		if (id > parkourGame.getLastCheckpointId()) {
+		if (id >= parkourGame.getWalls().size()) {
 			return msg("tooLargeNumber", true);
 		}
 		parkourGame.getWalls().set(id - 1, new BasicRegion(selection));

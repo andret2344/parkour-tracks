@@ -54,6 +54,8 @@ public class ParkourPlugin extends JavaPlugin {
 	@Getter
 	private ItemStack exit;
 	@Getter
+	private final ParkourManager parkourManager = new ParkourManager();
+	@Getter
 	private final Map<String, String> messages = new LinkedHashMap<>();
 	private final YamlConfiguration yamlConfiguration = new YamlConfiguration();
 	private final Map<UUID, Integer> teleportCount = new HashMap<>();
@@ -75,7 +77,7 @@ public class ParkourPlugin extends JavaPlugin {
 		setupDatabase();
 		loadParkourLobby();
 		loadAllParkourGames();
-		ParkourManager.getAllGames().stream()
+		parkourManager.getAllGames().stream()
 				.filter(Objects::nonNull)
 				.forEach(p -> getServer().getOnlinePlayers().stream()
 						.filter(Objects::nonNull)
@@ -169,9 +171,9 @@ public class ParkourPlugin extends JavaPlugin {
 		final AnnotatedCommand command = CommandManager.registerCommand(ParkourCommand.class, this);
 		command.setOnInsufficientPermissionsListener(sender -> sender.sendMessage(msg("noPerms", true)));
 		command.setOnUnknownSubCommandExecutionListener(sender -> sender.sendMessage(msg("wrongArg", true)));
-		command.addArgumentMapper("parkourGame", ParkourGame.class, ParkourManager::getParkour, Fallback.ON_NULL);
+		command.addArgumentMapper("parkourGame", ParkourGame.class, parkourManager::getParkour, Fallback.ON_NULL);
 		command.addArgumentMapper("potion", PotionEffectType.class, PotionEffectType::getByName, Fallback.ON_NULL);
-		command.addTypeCompleter(ParkourGame.class, () -> ParkourManager.getAllGames().stream()
+		command.addTypeCompleter(ParkourGame.class, () -> parkourManager.getAllGames().stream()
 				.map(ParkourGame::getName)
 				.collect(Collectors.toList()));
 		command.addTypeCompleter(boolean.class, Arrays.asList("false", "true"));
@@ -221,7 +223,7 @@ public class ParkourPlugin extends JavaPlugin {
 				return;
 			}
 			final PrintWriter printWriter = new PrintWriter(lobby);
-			printWriter.write(jsonSerializer.writeLocation(ParkourManager.getLobbyLocation()).toString(4));
+			printWriter.write(jsonSerializer.writeLocation(parkourManager.getLobbyLocation()).toString(4));
 			printWriter.close();
 			System.out.println("[atsParkour] Successfully saved lobby");
 		} catch (final IOException ex) {
@@ -237,9 +239,9 @@ public class ParkourPlugin extends JavaPlugin {
 				System.out.println("[atsParkour] An error occurred when trying to create games file");
 			}
 			final PrintWriter printWriter = new PrintWriter(games);
-			printWriter.write(jsonSerializer.writeParkourGames(ParkourManager.getAllGames()).toString(4));
+			printWriter.write(jsonSerializer.writeParkourGames(parkourManager.getAllGames()).toString(4));
 			printWriter.close();
-			System.out.println("[atsParkour] Successfully saved " + ParkourManager.getAllGames() + " games");
+			System.out.println("[atsParkour] Successfully saved " + parkourManager.getAllGames() + " games");
 		} catch (final IOException ex) {
 			System.out.println("[atsParkour] An error occurred when trying to save games");
 			ex.printStackTrace();
@@ -254,7 +256,7 @@ public class ParkourPlugin extends JavaPlugin {
 		try (final Reader reader = new FileReader(lobby)) {
 			final JSONTokener jsonTokener = new JSONTokener(reader);
 			final JSONObject jsonObject = new JSONObject(jsonTokener);
-			ParkourManager.setLobbyLocation(jsonSerializer.readLocation(jsonObject));
+			parkourManager.setLobbyLocation(jsonSerializer.readLocation(jsonObject));
 			System.out.println("[atsParkour] Successfully loaded lobby");
 		} catch (final IOException ex) {
 			System.out.println("[atsParkour] An error occurred when trying to load lobby");
@@ -271,8 +273,8 @@ public class ParkourPlugin extends JavaPlugin {
 		try (final Reader reader = new FileReader(games)) {
 			final JSONTokener jsonTokener = new JSONTokener(reader);
 			final JSONArray jsonArray = new JSONArray(jsonTokener);
-			jsonSerializer.readParkourGames(jsonArray).forEach(ParkourManager::addParkour);
-			System.out.printf("[atsParkour] Successfully loaded %d parkour games", ParkourManager.getAllGames().size());
+			jsonSerializer.readParkourGames(jsonArray).forEach(parkourManager::addParkour);
+			System.out.printf("[atsParkour] Successfully loaded %d parkour games", parkourManager.getAllGames().size());
 		} catch (final IOException ex) {
 			System.out.println("[atsParkour] An error occurred when trying to load parkour");
 			ex.printStackTrace();

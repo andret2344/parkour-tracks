@@ -7,7 +7,6 @@ package eu.andret.ats.parkour.parkour;
 import eu.andret.ats.parkour.event.player.PlayerJoinGameEvent;
 import eu.andret.ats.parkour.event.player.PlayerQuitGameEvent;
 import eu.andret.ats.parkour.player.ParkourPlayer;
-import eu.andret.ats.parkour.player.PlayerManager;
 import eu.andret.ats.parkour.region.BasicRegion;
 import eu.andret.ats.parkour.region.DirectionalRegion;
 import lombok.AccessLevel;
@@ -137,27 +136,27 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 		return arr.stream().filter(Objects::nonNull).collect(Collectors.toList());
 	}
 
-	public int getLastCheckpointId() {
-		return checkpoints.size() - 1;
-	}
-
-	protected void addPlayer(final ParkourPlayer parkourPlayer) {
-		if (!players.contains(parkourPlayer) && ParkourManager.getParkour(parkourPlayer.getPlayer()) == null) {
-			players.add(parkourPlayer);
-			parkourPlayer.reset();
-			Bukkit.getPluginManager().callEvent(new PlayerJoinGameEvent(this, parkourPlayer));
-			parkourPlayer.setLastVisitedCheckpointId(0);
+	protected boolean addPlayer(final ParkourPlayer parkourPlayer) {
+		if (players.contains(parkourPlayer)) {
+			return false;
 		}
+		players.add(parkourPlayer);
+		parkourPlayer.reset();
+		Bukkit.getPluginManager().callEvent(new PlayerJoinGameEvent(this, parkourPlayer));
+		return true;
 	}
 
-	public boolean removePlayer(final Player player) {
-		final ParkourPlayer parkourPlayer = PlayerManager.getParkourSinglePlayer(player);
+	public boolean removePlayer(final ParkourPlayer parkourPlayer) {
+		if (!players.contains(parkourPlayer)) {
+			return false;
+		}
 		Bukkit.getServer().getPluginManager().callEvent(new PlayerQuitGameEvent(this, parkourPlayer));
 		parkourPlayer.reset();
-		return players.remove(parkourPlayer);
+		players.remove(parkourPlayer);
+		return true;
 	}
 
-	public abstract void addPlayer(Player player);
+	public abstract boolean addPlayer(Player player);
 
 	@Override
 	public int compareTo(@Nonnull final ParkourGame parkourGame) {
