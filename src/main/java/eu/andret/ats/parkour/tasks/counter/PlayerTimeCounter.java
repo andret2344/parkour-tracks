@@ -23,7 +23,7 @@ public class PlayerTimeCounter implements Runnable {
 	@Override
 	public void run() {
 		final ParkourGame parkourGame = ParkourManager.getParkour(parkourPlayer.getPlayer());
-		if (parkourPlayer.isIgnoring() || parkourGame == null || !parkourGame.isRunning() || parkourPlayer.isSpectating()) {
+		if (parkourPlayer.isIgnoring() || parkourGame == null || !parkourGame.isRunning()) {
 			return;
 		}
 		final boolean playerInSpawn = parkourGame.getSpawn() != null && parkourGame.getSpawn().contains(parkourPlayer.getPlayer().getLocation());

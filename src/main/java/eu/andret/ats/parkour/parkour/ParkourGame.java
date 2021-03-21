@@ -142,7 +142,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 	}
 
 	protected void addPlayer(final ParkourPlayer parkourPlayer) {
-		if (!players.contains(parkourPlayer) && !parkourPlayer.inAnyParkour()) {
+		if (!players.contains(parkourPlayer) && ParkourManager.getParkour(parkourPlayer.getPlayer()) == null) {
 			players.add(parkourPlayer);
 			parkourPlayer.reset();
 			Bukkit.getPluginManager().callEvent(new PlayerJoinGameEvent(this, parkourPlayer));

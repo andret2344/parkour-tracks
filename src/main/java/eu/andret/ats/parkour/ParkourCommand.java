@@ -112,29 +112,6 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		return msg("ignoreStart", false);
 	}
 
-	@Argument(permission = "ats.parkour.spectate", executorType = ExecutorType.PLAYER, description = "Allows sender to spectate")
-	public String spectate() {
-		// FIXME: Not working!
-		final Player player = (Player) sender;
-		final ParkourPlayer parkourPlayer = PlayerManager.getParkourSinglePlayer(player);
-		if (parkourPlayer.isSpectating()) {
-			parkourPlayer.setSpectating(false);
-			plugin.getServer().getOnlinePlayers().forEach(p -> p.showPlayer(plugin, player));
-			ParkourManager.getAllGames().stream()
-					.filter(p -> p.getAllRegions().stream().anyMatch(x -> x.contains(player.getLocation())))
-					.forEach(p -> p.addPlayer(player));
-			return msg("spectateStop", false);
-		} else {
-			parkourPlayer.setSpectating(true);
-			plugin.getServer().getOnlinePlayers().forEach(p -> p.hidePlayer(plugin, player));
-			final ParkourGame parkour = ParkourManager.getParkour(player);
-			if (parkour != null) {
-				parkour.removePlayer(player);
-			}
-			return msg("spectateStart", false);
-		}
-	}
-
 	@Argument(permission = "ats.parkour.help", description = "Shows help page", aliases = "?")
 	public void help() {
 		help(1);
@@ -269,9 +246,10 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		parkourGame.addPlayer((Player) sender);
 		final ParkourPlayer parkourPlayer = PlayerManager.getParkourSinglePlayer((Player) sender);
 		parkourPlayer.reset();
-		if (!parkourPlayer.teleportToSpawn()) {
+		if (parkourGame.getSpawn() == null) {
 			return msg("noSpawn", true);
 		}
+		PlayerManager.teleportToRegion(parkourPlayer, parkourGame.getSpawn());
 		return msg("teleported", false).replace("%NAME%", parkourGame.getName());
 	}
 

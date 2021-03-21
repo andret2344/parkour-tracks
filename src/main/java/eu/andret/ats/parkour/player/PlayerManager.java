@@ -4,11 +4,17 @@
 
 package eu.andret.ats.parkour.player;
 
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.math.Vector3;
+import eu.andret.ats.parkour.region.BasicRegion;
+import eu.andret.ats.parkour.region.DirectionalRegion;
 import lombok.experimental.UtilityClass;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @UtilityClass
 public final class PlayerManager {
@@ -49,5 +55,15 @@ public final class PlayerManager {
 			return parkourPlayer;
 		}
 		return competitorPlayers.remove(player);
+	}
+
+	public void teleportToRegion(final ParkourPlayer parkourPlayer, final DirectionalRegion basicRegion) {
+		Optional.ofNullable(basicRegion)
+				.map(BasicRegion::getCuboidRegion)
+				.filter(x -> x.getWorld() != null)
+				.ifPresent(x -> {
+					final Vector3 vector = x.getCenter();
+					parkourPlayer.getPlayer().teleport(new Location(BukkitAdapter.adapt(x.getWorld()), vector.getX() + 0.5, vector.getY(), vector.getZ() + 0.5, (float) basicRegion.getYaw(), (float) basicRegion.getPitch()));
+				});
 	}
 }
