@@ -19,17 +19,17 @@ public class PlayerHitWallEvent extends AbstractParkourPlayerEvent {
 	/**
 	 * The wall the player hit.
 	 */
-	BasicRegion wallRegion;
+	BasicRegion region;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param parkourGame The game that player is in.
-	 * @param parkourPlayer The player that triggers the event.
-	 * @param wallRegion The wall the player hit.
+	 * @param game The game that player is in.
+	 * @param player The player that triggers the event.
+	 * @param region The wall the player hit.
 	 */
-	public PlayerHitWallEvent(final ParkourGame parkourGame, final ParkourPlayer parkourPlayer, final BasicRegion wallRegion) {
-		super(parkourGame, parkourPlayer);
-		this.wallRegion = wallRegion;
+	public PlayerHitWallEvent(final ParkourGame game, final ParkourPlayer player, final BasicRegion region) {
+		super(game, player);
+		this.region = region;
 	}
 }

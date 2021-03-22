@@ -23,8 +23,8 @@ import java.util.List;
 public class ParkourGroup extends ParkourGame {
 	private final List<Parkour> parkours = new ArrayList<>();
 
-	public ParkourGroup(final String name, final BasicRegion gameRegion, final World world) {
-		super(name, gameRegion, world);
+	public ParkourGroup(final String name, final BasicRegion region, final World world) {
+		super(name, region, world);
 	}
 
 	public void addParkour(final Parkour parkour) {

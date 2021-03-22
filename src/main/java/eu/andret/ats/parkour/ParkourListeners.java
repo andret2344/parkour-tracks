@@ -23,9 +23,10 @@ import eu.andret.ats.parkour.region.BasicRegion;
 import eu.andret.ats.parkour.region.DirectionalRegion;
 import eu.andret.ats.parkour.tasks.counter.ParkourCountdown;
 import eu.andret.ats.parkour.tasks.counter.PlayerTimeCounter;
-import eu.andret.ats.parkour.tasks.database.DataBaseOperations;
+import eu.andret.ats.parkour.tasks.database.FetchAndInsertDataTask;
 import eu.andret.ats.parkour.util.Data;
 import lombok.Value;
+import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -83,7 +84,7 @@ public class ParkourListeners implements Listener {
 				for (final Entry<PotionEffectType, Integer> entry : parkour.getOptions().getEffects().entrySet()) {
 					player.addPotionEffect(new PotionEffect(entry.getKey(), 99999999, entry.getValue()));
 				}
-				final int lastVisitedCheckpointId = parkourPlayer.getLastVisitedCheckpointId();
+				final int lastVisitedCheckpointId = parkourPlayer.getLastCheckpoint();
 				if (!parkourPlayer.isIgnoring() && player.isFlying() && !parkour.getOptions().isBoat() && !parkour.getSpawn().contains(player.getLocation())) {
 					final DirectionalRegion region = lastVisitedCheckpointId == -1 ? parkour.getSpawn() : parkour.getCheckpoints().get(lastVisitedCheckpointId);
 					PlayerManager.teleportToRegion(parkourPlayer, region);
@@ -177,44 +178,44 @@ public class ParkourListeners implements Listener {
 
 	@EventHandler
 	public void checkpoint(final PlayerAchieveCheckpointEvent event) {
-		final ParkourGame parkourGame = event.getParkourGame();
-		final ParkourPlayer parkourPlayer = PlayerManager.getParkourSinglePlayer(event.getParkourPlayer().getPlayer());
-		if (!event.getParkourPlayer().getPlayer().getWorld().equals(parkourGame.getWorld())) {
+		final ParkourGame parkourGame = event.getGame();
+		final ParkourPlayer parkourPlayer = PlayerManager.getParkourSinglePlayer(event.getPlayer().getPlayer());
+		if (!event.getPlayer().getPlayer().getWorld().equals(parkourGame.getWorld())) {
 			return;
 		}
-		final int checkpointId = event.getParkourGame().getCheckpoints().indexOf(event.getCheckpointRegion());
-		if (checkpointId > parkourPlayer.getLastVisitedCheckpointId()) {
-			parkourPlayer.setLastVisitedCheckpointId(checkpointId);
-			if (checkpointId == event.getParkourGame().getCheckpoints().size() - 1) {
+		final int checkpointId = event.getGame().getCheckpoints().indexOf(event.getRegion());
+		if (checkpointId > parkourPlayer.getLastCheckpoint()) {
+			parkourPlayer.setLastCheckpoint(checkpointId);
+			if (checkpointId == event.getGame().getCheckpoints().size() - 1) {
 				if (plugin.getConfig().getBoolean("last-checkpoint-info")) {
-					event.getParkourPlayer().getPlayer().sendMessage(plugin.msg("achieveCheckpoint", false));
+					event.getPlayer().getPlayer().sendMessage(plugin.msg("achieveCheckpoint"));
 				}
 			} else {
-				event.getParkourPlayer().getPlayer().sendMessage(plugin.msg("achieveCheckpoint", false));
+				event.getPlayer().getPlayer().sendMessage(plugin.msg("achieveCheckpoint"));
 			}
 		}
 		if (checkpointId == parkourGame.getCheckpoints().size() - 1) {
-			plugin.getServer().getPluginManager().callEvent(new PlayerCompleteParkourEvent(event.getParkourGame(), event.getParkourPlayer()));
+			plugin.getServer().getPluginManager().callEvent(new PlayerCompleteParkourEvent(event.getGame(), event.getPlayer()));
 		}
 	}
 
 	@EventHandler
 	public void enterSpawn(final PlayerEnterSpawnEvent event) {
-		PlayerManager.getParkourSinglePlayer(event.getParkourPlayer().getPlayer()).reset();
+		PlayerManager.getParkourSinglePlayer(event.getPlayer().getPlayer()).reset();
 	}
 
 	@EventHandler
 	public void complete(final PlayerCompleteParkourEvent event) {
-		final Player player = event.getParkourPlayer().getPlayer();
+		final Player player = event.getPlayer().getPlayer();
 		final UUID uniqueId = player.getUniqueId();
-		final ParkourGame parkourGame = event.getParkourGame();
+		final ParkourGame parkourGame = event.getGame();
 		player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.5F, 0.5F);
 		if (plugin.getTeleportCount().containsKey(uniqueId)) {
 			return;
 		}
 		final ParkourCountdown task = new ParkourCountdown(5,
-				() -> player.sendMessage(plugin.msg("teleportingTime", false).replace("%SECONDS%", "5")),
-				i -> player.sendMessage(plugin.msg("counting", false).replace("%NUMBER%", String.valueOf(i))),
+				() -> player.sendMessage(plugin.msg("teleportingTime").replace("%SECONDS%", "5")),
+				i -> player.sendMessage(plugin.msg("counting").replace("%NUMBER%", String.valueOf(i))),
 				() -> {
 					plugin.getServer().getScheduler().cancelTask(plugin.getTeleportCount().get(uniqueId));
 					plugin.getTeleportCount().remove(uniqueId);
@@ -222,46 +223,45 @@ public class ParkourListeners implements Listener {
 				});
 		final int schedulerId = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, task, 10, 20);
 		plugin.getTeleportCount().put(uniqueId, schedulerId);
-		if (!parkourGame.getOptions().isRecordsCounting()) {
+		if (!parkourGame.getOptions().isSavingResults()) {
 			return;
 		}
-		// FIXME: FInd better way
-		final float currentTime = player.getLevel() + player.getExp();
+		final double currentTime = event.getPlayer().getTime();
 		final String time = String.valueOf(currentTime);
-		player.sendMessage(plugin.msg("finishTime", false).replace("%TIME%", Math.abs(time.lastIndexOf('.') - time.length()) == 2 ? (time + "0") : time));
+		player.sendMessage(plugin.msg("finishTime").replace("%TIME%", Math.abs(time.lastIndexOf('.') - time.length()) == 2 ? (time + "0") : time));
 		if (player.hasPermission("ats.parkour.ignoreRecords")) {
 			player.sendMessage("Your time hasn't been saved to database");
 		} else {
 			plugin.getConnection()
-					.map(connection -> new DataBaseOperations(connection, parkourGame, player, currentTime, (previousCount, previousPlayerBest, previousParkourBest) -> {
-						player.sendMessage(plugin.msg("howMany", false).replace("%COUNT%", String.valueOf(previousCount + 1)));
+					.map(connection -> new FetchAndInsertDataTask(connection, parkourGame, player, currentTime, (previousCount, previousPlayerBest, previousParkourBest) -> {
+						player.sendMessage(plugin.msg("howMany").replace("%COUNT%", String.valueOf(previousCount + 1)));
 						if (previousParkourBest > currentTime) {
-							player.sendMessage(plugin.msg("newParkourBestTime", false));
+							player.sendMessage(plugin.msg("newParkourBestTime"));
 							plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, () ->
 									plugin.updateSign(new ParkourRecord(player.getName(), parkourGame, currentTime)));
 						}
 						if (previousPlayerBest > currentTime) {
-							player.sendMessage(plugin.msg("newPersonalBestTime", false));
+							player.sendMessage(plugin.msg("newPersonalBestTime"));
 						}
 					}))
-					.ifPresent(dataBaseOperations -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, dataBaseOperations));
+					.ifPresent(fetchAndInsertDataTask -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchAndInsertDataTask));
 		}
 	}
 
 	@EventHandler
 	public void back(final PlayerTeleportBackEvent event) {
-		if (event.getCheckpointRegion() == event.getParkourGame().getSpawn()) {
-			PlayerManager.getParkourSinglePlayer(event.getParkourPlayer().getPlayer()).reset();
+		if (event.getRegion() == event.getGame().getSpawn()) {
+			PlayerManager.getParkourSinglePlayer(event.getPlayer().getPlayer()).reset();
 		}
-		if (!event.getParkourGame().getOptions().isBoat()) {
+		if (!event.getGame().getOptions().isBoat()) {
 			return;
 		}
-		final Location location = event.getParkourPlayer().getPlayer().getLocation();
+		final Location location = event.getPlayer().getPlayer().getLocation();
 		if (location.getWorld() == null) {
 			return;
 		}
 		final Boat boat = (Boat) location.getWorld().spawnEntity(location, EntityType.BOAT);
-		boat.addPassenger(event.getParkourPlayer().getPlayer());
+		boat.addPassenger(event.getPlayer().getPlayer());
 	}
 
 	@EventHandler
@@ -291,10 +291,10 @@ public class ParkourListeners implements Listener {
 
 	@EventHandler
 	public void wall(final PlayerHitWallEvent event) {
-		final ParkourPlayer parkourPlayer = event.getParkourPlayer();
-		final ParkourGame parkourGame = event.getParkourGame();
+		final ParkourPlayer parkourPlayer = event.getPlayer();
+		final ParkourGame parkourGame = event.getGame();
 		final DirectionalRegion region;
-		final int lastVisitedCheckpointId = parkourPlayer.getLastVisitedCheckpointId();
+		final int lastVisitedCheckpointId = parkourPlayer.getLastCheckpoint();
 		if (parkourGame.getOptions().isAlwaysSpawn() || lastVisitedCheckpointId == -1) {
 			region = parkourGame.getSpawn();
 		} else {
@@ -303,29 +303,27 @@ public class ParkourListeners implements Listener {
 		if (region == null) {
 			return;
 		}
-		PlayerManager.teleportToRegion(event.getParkourPlayer(), region);
+		PlayerManager.teleportToRegion(event.getPlayer(), region);
 		plugin.getServer().getPluginManager().callEvent(new PlayerTeleportBackEvent(parkourGame, parkourPlayer, region));
 	}
 
 	@EventHandler
 	public synchronized void joinGame(final PlayerJoinGameEvent event) {
-		final ParkourPlayer parkourPlayer = event.getParkourPlayer();
-		if (event.getParkourGame().getOptions().isRecordsCounting() && !parkourPlayer.getPlayer().getGameMode().equals(GameMode.CREATIVE)) {
+		final ParkourPlayer parkourPlayer = event.getPlayer();
+		if (event.getGame().getOptions().isSavingResults() && !parkourPlayer.getPlayer().getGameMode().equals(GameMode.CREATIVE)) {
 			parkourPlayer.getPlayer().setLevel(0);
 			parkourPlayer.getPlayer().setExp(0);
 			if (!plugin.getPlayerTimeCounters().containsKey(parkourPlayer.getPlayer().getUniqueId()) && !parkourPlayer.isIgnoring()) {
-				final int schedulerId = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, new PlayerTimeCounter(plugin, parkourPlayer, event.getParkourGame()), 1, 1);
+				final int schedulerId = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, new PlayerTimeCounter(plugin, parkourPlayer, event.getGame()), 1, 1);
 				plugin.getPlayerTimeCounters().put(parkourPlayer.getPlayer().getUniqueId(), schedulerId);
 			}
 		}
-		if (event.getParkourGame().isRunning() && !PlayerManager.getParkourSinglePlayer(parkourPlayer.getPlayer()).isIgnoring() && event.getParkourGame().getOptions().isModifyInventory()) {
+		if (event.getGame().isRunning() && !PlayerManager.getParkourSinglePlayer(parkourPlayer.getPlayer()).isIgnoring() && event.getGame().getOptions().isModifyInventory()) {
 			parkourPlayer.getPlayer().getInventory().setItem(8, plugin.getExit());
 		}
-		final String tmp = plugin.msg("joinParkour", false).split("%")[0];
-		final String color = "\u00A7" + tmp.charAt(tmp.lastIndexOf('\u00A7') + 1);
-		parkourPlayer.getPlayer().sendMessage(plugin.msg("joinParkour", false).replace("%PARKOUR%", event.getParkourGame().getDisplayName().replace('&', '\u00A7') + color));
+		parkourPlayer.getPlayer().sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("joinParkour").replace("%PARKOUR%", event.getGame().getDisplayName())));
 		for (final ParkourGame p : plugin.getParkourManager().getAllGames()) {
-			if (!p.equals(event.getParkourGame())) {
+			if (!p.equals(event.getGame())) {
 				for (final ParkourPlayer pl : p.getPlayers()) {
 					pl.getPlayer().hidePlayer(plugin, parkourPlayer.getPlayer());
 					parkourPlayer.getPlayer().hidePlayer(plugin, pl.getPlayer());
@@ -367,6 +365,10 @@ public class ParkourListeners implements Listener {
 			return;
 		}
 
+		if (plugin.getExit().getItemMeta() == null || event.getItem().getItemMeta() == null) {
+			return;
+		}
+
 		if (!plugin.getExit().getItemMeta().getDisplayName().equals(event.getItem().getItemMeta().getDisplayName())) {
 			return;
 		}
@@ -378,21 +380,21 @@ public class ParkourListeners implements Listener {
 
 	@EventHandler
 	public void quitGame(final PlayerQuitGameEvent event) {
-		final Player player = event.getParkourPlayer().getPlayer();
+		final Player player = event.getPlayer().getPlayer();
 		if (plugin.getPlayerTimeCounters().containsKey(player.getUniqueId())) {
 			plugin.getServer().getScheduler().cancelTask(plugin.getPlayerTimeCounters().get(player.getUniqueId()));
 			PlayerManager.getParkourSinglePlayer(player).reset();
 			plugin.getPlayerTimeCounters().remove(player.getUniqueId());
 		}
-		if (event.getParkourGame().isRunning() && !PlayerManager.getParkourSinglePlayer(player).isIgnoring()) {
+		if (event.getGame().isRunning() && !PlayerManager.getParkourSinglePlayer(player).isIgnoring()) {
 			player.getInventory().setItem(8, new ItemStack(Material.AIR));
 		}
 		if (plugin.getTeleportCount().containsKey(player.getUniqueId())) {
-			player.sendMessage(plugin.msg("teleportationCanceled", false));
+			player.sendMessage(plugin.msg("teleportationCanceled"));
 			plugin.getServer().getScheduler().cancelTask(plugin.getTeleportCount().get(player.getUniqueId()));
 			plugin.getTeleportCount().remove(player.getUniqueId());
 		}
-		event.getParkourGame().getOptions().getEffects().keySet().forEach(player::removePotionEffect);
+		event.getGame().getOptions().getEffects().keySet().forEach(player::removePotionEffect);
 		PlayerManager.remove(player);
 	}
 
@@ -417,7 +419,7 @@ public class ParkourListeners implements Listener {
 			final ParkourSinglePlayer parkourPlayer = PlayerManager.getParkourSinglePlayer(event.getPlayer());
 			if (inAnyRegion && !parkourGame.getPlayers().contains(parkourPlayer) && !parkourPlayer.isIgnoring()) {
 				parkourGame.addPlayer(event.getPlayer());
-				if (!plugin.getPlayerTimeCounters().containsKey(event.getPlayer().getUniqueId()) && parkourGame.getOptions().isRecordsCounting()) {
+				if (!plugin.getPlayerTimeCounters().containsKey(event.getPlayer().getUniqueId()) && parkourGame.getOptions().isSavingResults()) {
 					final int schedulerId = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, new PlayerTimeCounter(plugin, parkourPlayer, parkourGame), 1, 1);
 					plugin.getPlayerTimeCounters().put(event.getPlayer().getUniqueId(), schedulerId);
 				}
@@ -464,7 +466,7 @@ public class ParkourListeners implements Listener {
 				.map(ParkourGame::getAllRegions)
 				.flatMap(Collection::stream)
 				.filter(Objects::nonNull)
-				.filter(r -> r.contains(event.getBlock().getLocation()) && new BukkitWorld(player.getWorld()).equals(r.getCuboidRegion().getWorld()))
+				.filter(r -> r.contains(event.getBlock().getLocation()) && new BukkitWorld(player.getWorld()).equals(r.getRegion().getWorld()))
 				.findFirst()
 				.ifPresent(r -> ((Cancellable) event).setCancelled(true));
 	}

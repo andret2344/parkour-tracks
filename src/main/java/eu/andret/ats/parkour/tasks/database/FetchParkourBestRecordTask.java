@@ -31,12 +31,12 @@ public class FetchParkourBestRecordTask extends AbstractParkourTask {
 	@Override
 	public void run() {
 		try (final PreparedStatement stat = connection.prepareStatement("SELECT nick, time FROM ats_parkour_records WHERE parkour = ? ORDER BY `time` LIMIT ?")) {
-			stat.setString(1, parkourGame.getName());
+			stat.setString(1, game.getName());
 			stat.setInt(2, count);
 			final ResultSet rs = stat.executeQuery();
 			final List<ParkourRecord> result = new ArrayList<>();
 			for (int i = 0; i < count && rs.next(); i++) {
-				result.add(new ParkourRecord(rs.getString("nick"), parkourGame, rs.getFloat("time")));
+				result.add(new ParkourRecord(rs.getString("nick"), game, rs.getFloat("time")));
 			}
 			callback.accept(result);
 		} catch (final SQLException ex) {

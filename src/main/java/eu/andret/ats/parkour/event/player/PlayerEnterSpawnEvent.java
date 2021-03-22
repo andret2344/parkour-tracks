@@ -18,10 +18,10 @@ public class PlayerEnterSpawnEvent extends AbstractParkourPlayerEvent {
 	/**
 	 * Constructor.
 	 *
-	 * @param parkourGame The game that player is in.
-	 * @param parkourPlayer The player that triggers the event.
+	 * @param game The game that player is in.
+	 * @param player The player that triggers the event.
 	 */
-	public PlayerEnterSpawnEvent(final ParkourGame parkourGame, final ParkourPlayer parkourPlayer) {
-		super(parkourGame, parkourPlayer);
+	public PlayerEnterSpawnEvent(final ParkourGame game, final ParkourPlayer player) {
+		super(game, player);
 	}
 }

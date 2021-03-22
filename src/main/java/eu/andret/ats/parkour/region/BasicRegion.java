@@ -15,12 +15,12 @@ import org.bukkit.Location;
 @NonFinal
 @AllArgsConstructor
 public class BasicRegion {
-	CuboidRegion cuboidRegion;
+	CuboidRegion region;
 
 	public boolean contains(final Location location) {
 		if (location == null) {
 			return false;
 		}
-		return cuboidRegion.contains(BlockVector3.at(location.getX(), location.getY(), location.getZ()));
+		return region.contains(BlockVector3.at(location.getX(), location.getY(), location.getZ()));
 	}
 }
