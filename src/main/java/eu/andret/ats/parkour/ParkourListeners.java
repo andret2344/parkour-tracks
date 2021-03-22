@@ -339,18 +339,19 @@ public class ParkourListeners implements Listener {
 		final ParkourPlayer parkourPlayer = PlayerManager.getParkourSinglePlayer(event.getPlayer());
 		for (final ParkourGame parkourGame : plugin.getParkourManager().getAllGames()) {
 			if (!event.getAction().equals(Action.PHYSICAL) && parkourGame.getTeleportBlock() != null && event.getClickedBlock() != null && parkourGame.getTeleportBlock().equals(event.getClickedBlock().getLocation()) && !parkourPlayer.isIgnoring()) {
-				if (!parkourGame.getOptions().isVipOnly() || plugin.getRankProvider().map(x -> x.isVip(event.getPlayer())).isPresent()) {
+				final boolean isVip = plugin.getRankProvider().map(x -> x.isVip(event.getPlayer())).isPresent();
+				if (!parkourGame.getOptions().isVipOnly() || isVip) {
 					parkourGame.addPlayer(event.getPlayer());
 					final DirectionalRegion region = parkourGame.getSpawn();
-				if (region == null) {
-					return;
-				}
-				PlayerManager.teleportToRegion(parkourPlayer, region);
-				plugin.getServer().getPluginManager().callEvent(new PlayerTeleportBackEvent(parkourGame, parkourPlayer, region));
+					if (region == null) {
+						return;
+					}
+					PlayerManager.teleportToRegion(parkourPlayer, region);
+					plugin.getServer().getPluginManager().callEvent(new PlayerTeleportBackEvent(parkourGame, parkourPlayer, region));
 					event.setCancelled(true);
 					parkourPlayer.reset();
 				} else {
-					event.getPlayer().sendMessage("this parkour is o nly for vip");
+					event.getPlayer().sendMessage("this parkour is o only for vip");
 				}
 				break;
 			}
