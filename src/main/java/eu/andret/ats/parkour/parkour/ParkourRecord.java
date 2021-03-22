@@ -10,5 +10,5 @@ import lombok.Value;
 public class ParkourRecord {
 	String nick;
 	ParkourGame parkourGame;
-	float time;
+	double time;
 }

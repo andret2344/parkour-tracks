@@ -26,6 +26,7 @@ import eu.andret.ats.parkour.tasks.counter.PlayerTimeCounter;
 import eu.andret.ats.parkour.tasks.database.DataBaseOperations;
 import eu.andret.ats.parkour.util.Data;
 import lombok.Value;
+import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -187,10 +188,10 @@ public class ParkourListeners implements Listener {
 			parkourPlayer.setLastVisitedCheckpointId(checkpointId);
 			if (checkpointId == event.getParkourGame().getCheckpoints().size() - 1) {
 				if (plugin.getConfig().getBoolean("last-checkpoint-info")) {
-					event.getParkourPlayer().getPlayer().sendMessage(plugin.msg("achieveCheckpoint", false));
+					event.getParkourPlayer().getPlayer().sendMessage(plugin.msg("achieveCheckpoint"));
 				}
 			} else {
-				event.getParkourPlayer().getPlayer().sendMessage(plugin.msg("achieveCheckpoint", false));
+				event.getParkourPlayer().getPlayer().sendMessage(plugin.msg("achieveCheckpoint"));
 			}
 		}
 		if (checkpointId == parkourGame.getCheckpoints().size() - 1) {
@@ -213,8 +214,8 @@ public class ParkourListeners implements Listener {
 			return;
 		}
 		final ParkourCountdown task = new ParkourCountdown(5,
-				() -> player.sendMessage(plugin.msg("teleportingTime", false).replace("%SECONDS%", "5")),
-				i -> player.sendMessage(plugin.msg("counting", false).replace("%NUMBER%", String.valueOf(i))),
+				() -> player.sendMessage(plugin.msg("teleportingTime").replace("%SECONDS%", "5")),
+				i -> player.sendMessage(plugin.msg("counting").replace("%NUMBER%", String.valueOf(i))),
 				() -> {
 					plugin.getServer().getScheduler().cancelTask(plugin.getTeleportCount().get(uniqueId));
 					plugin.getTeleportCount().remove(uniqueId);
@@ -222,26 +223,25 @@ public class ParkourListeners implements Listener {
 				});
 		final int schedulerId = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, task, 10, 20);
 		plugin.getTeleportCount().put(uniqueId, schedulerId);
-		if (!parkourGame.getOptions().isRecordsCounting()) {
+		if (!parkourGame.getOptions().isSavingResults()) {
 			return;
 		}
-		// FIXME: FInd better way
-		final float currentTime = player.getLevel() + player.getExp();
+		final double currentTime = event.getParkourPlayer().getTime();
 		final String time = String.valueOf(currentTime);
-		player.sendMessage(plugin.msg("finishTime", false).replace("%TIME%", Math.abs(time.lastIndexOf('.') - time.length()) == 2 ? (time + "0") : time));
+		player.sendMessage(plugin.msg("finishTime").replace("%TIME%", Math.abs(time.lastIndexOf('.') - time.length()) == 2 ? (time + "0") : time));
 		if (player.hasPermission("ats.parkour.ignoreRecords")) {
 			player.sendMessage("Your time hasn't been saved to database");
 		} else {
 			plugin.getConnection()
 					.map(connection -> new DataBaseOperations(connection, parkourGame, player, currentTime, (previousCount, previousPlayerBest, previousParkourBest) -> {
-						player.sendMessage(plugin.msg("howMany", false).replace("%COUNT%", String.valueOf(previousCount + 1)));
+						player.sendMessage(plugin.msg("howMany").replace("%COUNT%", String.valueOf(previousCount + 1)));
 						if (previousParkourBest > currentTime) {
-							player.sendMessage(plugin.msg("newParkourBestTime", false));
+							player.sendMessage(plugin.msg("newParkourBestTime"));
 							plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, () ->
 									plugin.updateSign(new ParkourRecord(player.getName(), parkourGame, currentTime)));
 						}
 						if (previousPlayerBest > currentTime) {
-							player.sendMessage(plugin.msg("newPersonalBestTime", false));
+							player.sendMessage(plugin.msg("newPersonalBestTime"));
 						}
 					}))
 					.ifPresent(dataBaseOperations -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, dataBaseOperations));
@@ -310,7 +310,7 @@ public class ParkourListeners implements Listener {
 	@EventHandler
 	public synchronized void joinGame(final PlayerJoinGameEvent event) {
 		final ParkourPlayer parkourPlayer = event.getParkourPlayer();
-		if (event.getParkourGame().getOptions().isRecordsCounting() && !parkourPlayer.getPlayer().getGameMode().equals(GameMode.CREATIVE)) {
+		if (event.getParkourGame().getOptions().isSavingResults() && !parkourPlayer.getPlayer().getGameMode().equals(GameMode.CREATIVE)) {
 			parkourPlayer.getPlayer().setLevel(0);
 			parkourPlayer.getPlayer().setExp(0);
 			if (!plugin.getPlayerTimeCounters().containsKey(parkourPlayer.getPlayer().getUniqueId()) && !parkourPlayer.isIgnoring()) {
@@ -321,9 +321,7 @@ public class ParkourListeners implements Listener {
 		if (event.getParkourGame().isRunning() && !PlayerManager.getParkourSinglePlayer(parkourPlayer.getPlayer()).isIgnoring() && event.getParkourGame().getOptions().isModifyInventory()) {
 			parkourPlayer.getPlayer().getInventory().setItem(8, plugin.getExit());
 		}
-		final String tmp = plugin.msg("joinParkour", false).split("%")[0];
-		final String color = "\u00A7" + tmp.charAt(tmp.lastIndexOf('\u00A7') + 1);
-		parkourPlayer.getPlayer().sendMessage(plugin.msg("joinParkour", false).replace("%PARKOUR%", event.getParkourGame().getDisplayName().replace('&', '\u00A7') + color));
+		parkourPlayer.getPlayer().sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("joinParkour").replace("%PARKOUR%", event.getParkourGame().getDisplayName())));
 		for (final ParkourGame p : plugin.getParkourManager().getAllGames()) {
 			if (!p.equals(event.getParkourGame())) {
 				for (final ParkourPlayer pl : p.getPlayers()) {
@@ -362,6 +360,10 @@ public class ParkourListeners implements Listener {
 			return;
 		}
 
+		if (plugin.getExit().getItemMeta() == null || event.getItem().getItemMeta() == null) {
+			return;
+		}
+
 		if (!plugin.getExit().getItemMeta().getDisplayName().equals(event.getItem().getItemMeta().getDisplayName())) {
 			return;
 		}
@@ -383,7 +385,7 @@ public class ParkourListeners implements Listener {
 			player.getInventory().setItem(8, new ItemStack(Material.AIR));
 		}
 		if (plugin.getTeleportCount().containsKey(player.getUniqueId())) {
-			player.sendMessage(plugin.msg("teleportationCanceled", false));
+			player.sendMessage(plugin.msg("teleportationCanceled"));
 			plugin.getServer().getScheduler().cancelTask(plugin.getTeleportCount().get(player.getUniqueId()));
 			plugin.getTeleportCount().remove(player.getUniqueId());
 		}
@@ -412,7 +414,7 @@ public class ParkourListeners implements Listener {
 			final ParkourSinglePlayer parkourPlayer = PlayerManager.getParkourSinglePlayer(event.getPlayer());
 			if (inAnyRegion && !parkourGame.getPlayers().contains(parkourPlayer) && !parkourPlayer.isIgnoring()) {
 				parkourGame.addPlayer(event.getPlayer());
-				if (!plugin.getPlayerTimeCounters().containsKey(event.getPlayer().getUniqueId()) && parkourGame.getOptions().isRecordsCounting()) {
+				if (!plugin.getPlayerTimeCounters().containsKey(event.getPlayer().getUniqueId()) && parkourGame.getOptions().isSavingResults()) {
 					final int schedulerId = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, new PlayerTimeCounter(plugin, parkourPlayer, parkourGame), 1, 1);
 					plugin.getPlayerTimeCounters().put(event.getPlayer().getUniqueId(), schedulerId);
 				}

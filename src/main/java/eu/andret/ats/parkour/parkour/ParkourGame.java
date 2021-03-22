@@ -13,6 +13,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
+import lombok.ToString;
 import org.bukkit.Bukkit;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
@@ -31,6 +32,7 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 @Data
+@ToString
 public abstract class ParkourGame implements Comparable<ParkourGame> {
 	private boolean running;
 	private String name;
@@ -64,15 +66,13 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 		@Builder.Default
 		private boolean alwaysSpawn = false;
 		@Builder.Default
-		private boolean recordsCounting = true;
+		private boolean savingResults = true;
 		@Builder.Default
 		private boolean damageAllowed = false;
 		@Builder.Default
 		private boolean boat = false;
 		@Builder.Default
 		private boolean modifyInventory = true;
-		@Builder.Default
-		private boolean available = false;
 		@Builder.Default
 		private boolean vipOnly = false;
 		@Builder.Default

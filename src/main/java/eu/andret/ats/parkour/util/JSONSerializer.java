@@ -122,7 +122,7 @@ public class JSONSerializer {
 		final ParkourGame.Options parkourOptions = ParkourGame.Options.builder()
 				.alwaysSpawn(jsonObject1.getBoolean("alwaysSpawn"))
 				.boat(jsonObject1.getBoolean("boat"))
-				.recordsCounting(jsonObject1.getBoolean("recordsCounting"))
+				.savingResults(jsonObject1.getBoolean("savingResults"))
 				.damageAllowed(jsonObject1.getBoolean("damageAllowed"))
 				.sprintForced(jsonObject1.getBoolean("sprintForced"))
 				.modifyInventory(jsonObject1.getBoolean("modifyInventory"))
@@ -132,7 +132,6 @@ public class JSONSerializer {
 				.platinum(jsonObject1.getDouble("platinum"))
 				.color(DyeColor.valueOf(jsonObject1.getString("color")))
 				.difficulty(jsonObject1.getInt("difficulty"))
-				.available(jsonObject1.getBoolean("available"))
 				.type(ParkourGame.ParkourType.valueOf(jsonObject1.getString("type")))
 				.vipOnly(jsonObject1.getBoolean("vipOnly"))
 				.enabled(jsonObject1.getBoolean("enabled"))
@@ -315,7 +314,7 @@ public class JSONSerializer {
 		final JSONObject jsonObject1 = new JSONObject();
 		jsonObject1.put("alwaysSpawn", options.isAlwaysSpawn());
 		jsonObject1.put("boat", options.isBoat());
-		jsonObject1.put("recordsCounting", options.isRecordsCounting());
+		jsonObject1.put("savingResults", options.isSavingResults());
 		jsonObject1.put("damageAllowed", options.isDamageAllowed());
 		jsonObject1.put("sprintForced", options.isSprintForced());
 		jsonObject1.put("modifyInventory", options.isModifyInventory());
@@ -323,7 +322,6 @@ public class JSONSerializer {
 		jsonObject1.put("silver", options.getSilver());
 		jsonObject1.put("gold", options.getGold());
 		jsonObject1.put("platinum", options.getPlatinum());
-		jsonObject1.put("available", options.isAvailable());
 		jsonObject1.put("color", options.getColor().name());
 		jsonObject1.put("difficulty", options.getDifficulty());
 		jsonObject1.put("vipOnly", options.isVipOnly());

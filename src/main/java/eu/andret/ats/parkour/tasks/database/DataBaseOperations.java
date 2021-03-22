@@ -15,14 +15,14 @@ import java.sql.Timestamp;
 
 public class DataBaseOperations extends AbstractParkourTask {
 	Player player;
-	float time;
+	double time;
 	DataBaseOperationListener dataBaseOperationListener;
 
 	public interface DataBaseOperationListener {
 		void onDataBaseOperation(int previousCount, double previousPlayerBest, double previousParkourBest);
 	}
 
-	public DataBaseOperations(final Connection connection, final ParkourGame parkourGame, final Player player, final float time, final DataBaseOperationListener dataBaseOperationListener) {
+	public DataBaseOperations(final Connection connection, final ParkourGame parkourGame, final Player player, final double time, final DataBaseOperationListener dataBaseOperationListener) {
 		super(connection, parkourGame);
 		this.player = player;
 		this.time = time;
@@ -87,7 +87,7 @@ public class DataBaseOperations extends AbstractParkourTask {
 			stat.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
 			stat.setString(2, player.getName());
 			stat.setString(3, parkourGame.getName());
-			stat.setFloat(4, time);
+			stat.setDouble(4, time);
 			stat.execute();
 		} catch (final SQLException ex) {
 			ex.printStackTrace();

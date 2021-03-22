@@ -41,6 +41,7 @@ public class PlayerTimeCounter implements Runnable {
 		if (counter == 1) {
 			parkourPlayer.getPlayer().playSound(parkourPlayer.getPlayer().getLocation(), Sound.BLOCK_LEVER_CLICK, 0.5F, 0.5F);
 		}
+		parkourPlayer.setTime(time);
 		parkourPlayer.getPlayer().setLevel((int) time);
 		parkourPlayer.getPlayer().setExp((float) time % 1);
 	}

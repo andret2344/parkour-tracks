@@ -12,6 +12,7 @@ public abstract class ParkourPlayer {
 	protected final Player player;
 	protected int lastVisitedCheckpointId = -1;
 	protected boolean ignoring = false;
+	protected double time = 0;
 
 	ParkourPlayer(final Player player) {
 		this.player = player;
@@ -19,6 +20,7 @@ public abstract class ParkourPlayer {
 
 	public void reset() {
 		lastVisitedCheckpointId = -1;
+		time = 0;
 		player.setExp(0);
 		player.setLevel(0);
 	}
