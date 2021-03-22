@@ -53,16 +53,17 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class ParkourPlugin extends JavaPlugin {
+public final class ParkourPlugin extends JavaPlugin {
 	@Getter
 	private final Map<String, String> helpDescription = new LinkedHashMap<>();
 	private final YamlConfiguration messages = new YamlConfiguration();
 	private final YamlConfiguration commands = new YamlConfiguration();
-	private final Map<UUID, Integer> teleportCount = new HashMap<>();
-	private final Map<UUID, Integer> playerTimeCounters = new HashMap<>();
-	private Connection connection;
 	@Getter
-	private ItemStack exit;
+	private final Map<UUID, Integer> teleportCountdown = new HashMap<>();
+	@Getter
+	private final Map<UUID, Integer> timeCounter = new HashMap<>();
+	private Connection connection;
+	private ItemStack exitItem;
 	@Getter
 	private final ParkourManager parkourManager = new ParkourManager();
 	@Setter
@@ -80,7 +81,7 @@ public class ParkourPlugin extends JavaPlugin {
 			return;
 		}
 		setupConfigFiles();
-		createDoors();
+		exitItem = createDoors();
 		getServer().getPluginManager().registerEvents(new ParkourListeners(this), this);
 		setupCommand();
 		setupDatabase();
@@ -114,7 +115,11 @@ public class ParkourPlugin extends JavaPlugin {
 	}
 
 	public String msg(final M.Message message) {
-		return commands.getString(message.toString());
+		final StringBuilder result = new StringBuilder();
+		if (message.isError()) {
+			result.append(commands.getString("misc.error-prefix"));
+		}
+		return ChatColor.translateAlternateColorCodes('&', result.append(commands.getString(message.toString())).toString());
 	}
 
 	public Optional<Connection> getConnection() {
@@ -141,12 +146,8 @@ public class ParkourPlugin extends JavaPlugin {
 				});
 	}
 
-	public Map<UUID, Integer> getTeleportCount() {
-		return teleportCount;
-	}
-
-	public Map<UUID, Integer> getPlayerTimeCounters() {
-		return playerTimeCounters;
+	public Optional<ItemStack> getExitItem() {
+		return Optional.of(exitItem);
 	}
 
 	private void setupConfigFiles() {
@@ -164,13 +165,14 @@ public class ParkourPlugin extends JavaPlugin {
 		generate();
 	}
 
-	private void createDoors() {
-		exit = new ItemStack(Material.IRON_DOOR);
-		Optional.ofNullable(exit.getItemMeta())
+	private ItemStack createDoors() {
+		final ItemStack result = new ItemStack(Material.IRON_DOOR);
+		Optional.ofNullable(result.getItemMeta())
 				.ifPresent(meta -> {
 					meta.setDisplayName("§r" + ChatColor.translateAlternateColorCodes('&', String.valueOf(getConfig().getString("door.name"))));
-					exit.setItemMeta(meta);
+					result.setItemMeta(meta);
 				});
+		return result;
 	}
 
 	private void setupCommand() {
@@ -248,7 +250,7 @@ public class ParkourPlugin extends JavaPlugin {
 			final PrintWriter printWriter = new PrintWriter(games);
 			printWriter.write(jsonSerializer.writeParkourGames(parkourManager.getAllGames()).toString(4));
 			printWriter.close();
-			System.out.println("[atsParkour] Successfully saved " + parkourManager.getAllGames() + " games");
+			System.out.printf("[atsParkour] Successfully saved %d parkour games", parkourManager.getAllGames().size());
 		} catch (final IOException ex) {
 			System.out.println("[atsParkour] An error occurred when trying to save games");
 			ex.printStackTrace();

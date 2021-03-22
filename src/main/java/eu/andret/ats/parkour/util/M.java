@@ -137,28 +137,28 @@ public class M {
 
 	public static final class Region {
 		public static final class Checkpoint extends Section {
-			public static final Checkpoint ADD = new Checkpoint("region.checkpoint.add");
-			public static final Checkpoint SET = new Checkpoint("region.checkpoint.set");
+			public static final Checkpoint ADD = new Checkpoint("add");
+			public static final Checkpoint SET = new Checkpoint("set");
 
 			public final Message help = new Message(this, "help");
 			public final Message usage = new Message(this, "usage");
 			public final Message success = new Message(this, "success");
 
 			public Checkpoint(final String key) {
-				super(key);
+				super("region.checkpoint." + key);
 			}
 		}
 
 		public static final class Wall extends Section {
-			public static final Checkpoint ADD = new Checkpoint("region.checkpoint.add");
-			public static final Checkpoint SET = new Checkpoint("region.checkpoint.set");
+			public static final Wall ADD = new Wall("add");
+			public static final Wall SET = new Wall("set");
 
 			public final Message help = new Message(this, "help");
 			public final Message usage = new Message(this, "usage");
 			public final Message success = new Message(this, "success");
 
 			public Wall(final String key) {
-				super(key);
+				super("region.wall." + key);
 			}
 		}
 	}
@@ -179,27 +179,28 @@ public class M {
 	public static final class Error extends Section {
 		public static final Error DEFAULT = new Error("error");
 
-		public final Message alreadyExists = new Message(this, "already-exists");
-		public final Message alreadyStarted = new Message(this, "already-started");
-		public final Message alreadyStopped = new Message(this, "already-stopped");
-		public final Message insufficientPermissions = new Message(this, "insufficient-permissions");
-		public final Message invalidArgument = new Message(this, "invalid-argument");
-		public final Message invalidColor = new Message(this, "invalid-color");
-		public final Message invalidEffect = new Message(this, "invalid-effect");
-		public final Message invalidGame = new Message(this, "invalid-game");
-		public final Message invalidName = new Message(this, "invalid-name");
-		public final Message invalidSelection = new Message(this, "invalid-selection");
-		public final Message invalidType = new Message(this, "invalid-type");
-		public final Message missingCheckpoint = new Message(this, "missing-checkpoint");
-		public final Message missingLobby = new Message(this, "missing-lobby");
-		public final Message missingMedals = new Message(this, "missing-medals");
-		public final Message missingSpawn = new Message(this, "missing-spawn");
-		public final Message negativeNumber = new Message(this, "negative-number");
-		public final Message notConnected = new Message(this, "not-connected");
-		public final Message notNumber = new Message(this, "not-number");
-		public final Message notSign = new Message(this, "not-sign");
-		public final Message notVip = new Message(this, "not-vip");
-		public final Message tooLargeNumber = new Message(this, "too-large-number");
+		public final Message alreadyExists = new Message(this, "already-exists", true);
+		public final Message alreadyStarted = new Message(this, "already-started", true);
+		public final Message alreadyStopped = new Message(this, "already-stopped", true);
+		public final Message forbiddenFlying = new Message(this, "forbidden-flying", true);
+		public final Message insufficientPermissions = new Message(this, "insufficient-permissions", true);
+		public final Message invalidArgument = new Message(this, "invalid-argument", true);
+		public final Message invalidColor = new Message(this, "invalid-color", true);
+		public final Message invalidEffect = new Message(this, "invalid-effect", true);
+		public final Message invalidGame = new Message(this, "invalid-game", true);
+		public final Message invalidName = new Message(this, "invalid-name", true);
+		public final Message invalidSelection = new Message(this, "invalid-selection", true);
+		public final Message invalidType = new Message(this, "invalid-type", true);
+		public final Message missingCheckpoint = new Message(this, "missing-checkpoint", true);
+		public final Message missingLobby = new Message(this, "missing-lobby", true);
+		public final Message missingMedals = new Message(this, "missing-medals", true);
+		public final Message missingSpawn = new Message(this, "missing-spawn", true);
+		public final Message negativeNumber = new Message(this, "negative-number", true);
+		public final Message notBlock = new Message(this, "not-block", true);
+		public final Message notConnected = new Message(this, "not-connected", true);
+		public final Message notSign = new Message(this, "not-sign", true);
+		public final Message notVip = new Message(this, "not-vip", true);
+		public final Message tooLargeNumber = new Message(this, "too-large-number", true);
 
 		public Error(final String key) {
 			super(key);

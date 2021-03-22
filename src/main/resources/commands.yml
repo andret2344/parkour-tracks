@@ -25,7 +25,7 @@ executive:
   create:
     help: '&eCreate new parkour game.'
     usage: '&cCorrect usage: /parkour create <name>'
-    success: '&aSuccessfully created &6%NAME%&b game.'
+    success: '&aSuccessfully created &6%NAME%&a game.'
   info:
     help: '&eShows information about specific parkour game.'
     usage: '&cCorrect usage: /parkour info <name>'
@@ -57,7 +57,7 @@ executive:
   stop:
     help: '&eStop a parkour game.'
     usage: '&cCorrect usage: /parkour stop <name>'
-    success: '&aThe game &6%NAME%&b has been stopped.'
+    success: '&aThe game &6%NAME%&a has been stopped.'
   teleport:
     help: '&eTeleport sender to spawn of a parkour'
     usage: '&cCorrect usage: /parkour teleport <name>'
@@ -65,7 +65,7 @@ executive:
   teleport-block:
     help: '&eSet a block, which interact teleport player to spawn of a parkour'
     usage: '&cCorrect usage: /parkour teleportBlock <name>'
-    success: '&aSuccessfully set up teleport block of &6%PARKOUR%&b parkour.'
+    success: '&aSuccessfully set up teleport block of &6%PARKOUR%&a parkour.'
 
 amplifier:
   effect:
@@ -206,6 +206,7 @@ error:
   already-exists: '&cGame with name "%NAME%" already exists.'
   already-started: '&cThis game has been already started.'
   already-stopped: '&cThis game has been already stopped.'
+  forbidden-flying: '&cNo flying is allowed in running parkour. Turn off parkour using &6/parkour stop <name>&c or start ignoring parkours using &6/parkour ignore&c.'
   insufficient-permissions: '&cSorry, you do not have permissions to do that.'
   invalid-argument: '&cWrong argument.'
   invalid-color: '&cColor "%VALUE%" is invalid. Use dye color.'
@@ -218,9 +219,9 @@ error:
   missing-lobby: '&cYou must set lobby up first.'
   missing-medals: '&cYou must set all medals up until you start the game.'
   missing-spawn: '&cThis game has no spawn. Set it up first.'
-  negative-number: '&cNumber must be positive. (more than 0)'
+  negative-number: '&cNumber must be positive (more than 0).'
+  not-block: '&cYou have to target correct block.'
   not-connected: '&cDatabase is inactive, did nothing.'
-  not-number: '&cThis is not a number.'
   not-sign: '&cThis block is not a sign.'
   not-vip: '&cYou are not a vip.'
   too-large-number: '&cNumber is too large.'

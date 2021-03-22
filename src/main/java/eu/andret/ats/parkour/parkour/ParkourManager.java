@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public final class ParkourManager {
@@ -58,5 +59,27 @@ public final class ParkourManager {
 
 	public void removeParkour(final ParkourGame parkourGame) {
 		parkourGames.remove(parkourGame);
+	}
+
+	public void teleportToLobby(final ParkourPlayer player) {
+		teleportToLobby(player.getPlayer());
+	}
+
+	public void teleportToLobby(final Player player) {
+		player.teleport(lobbyLocation);
+	}
+
+	public boolean inAnyRegion(final ParkourGame parkourGame, final ParkourPlayer parkourPlayer) {
+		return inAnyRegion(parkourGame, parkourPlayer.getPlayer());
+	}
+
+	public boolean inAnyRegion(final ParkourGame parkourGame, final Player player) {
+		return inAnyRegion(parkourGame, player.getLocation());
+	}
+
+	public boolean inAnyRegion(final ParkourGame parkourGame, final Location location) {
+		return parkourGame.getAllRegions().stream()
+				.filter(Objects::nonNull)
+				.anyMatch(region -> region.contains(location));
 	}
 }

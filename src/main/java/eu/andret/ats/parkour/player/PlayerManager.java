@@ -60,10 +60,10 @@ public final class PlayerManager {
 	public void teleportToRegion(final ParkourPlayer parkourPlayer, final DirectionalRegion basicRegion) {
 		Optional.ofNullable(basicRegion)
 				.map(BasicRegion::getRegion)
-				.filter(x -> x.getWorld() != null)
-				.ifPresent(x -> {
-					final Vector3 vector = x.getCenter();
-					parkourPlayer.getPlayer().teleport(new Location(BukkitAdapter.adapt(x.getWorld()), vector.getX() + 0.5, vector.getY(), vector.getZ() + 0.5, (float) basicRegion.getYaw(), (float) basicRegion.getPitch()));
+				.filter(region -> region.getWorld() != null)
+				.ifPresent(region -> {
+					final Vector3 center = region.getCenter();
+					parkourPlayer.getPlayer().teleport(new Location(BukkitAdapter.adapt(region.getWorld()), center.getX() + 0.5, center.getY(), center.getZ() + 0.5, (float) basicRegion.getYaw(), (float) basicRegion.getPitch()));
 				});
 	}
 }

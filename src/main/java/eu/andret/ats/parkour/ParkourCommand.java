@@ -6,10 +6,10 @@ package eu.andret.ats.parkour;
 
 import com.sk89q.worldedit.IncompleteRegionException;
 import com.sk89q.worldedit.LocalSession;
-import com.sk89q.worldedit.bukkit.BukkitWorld;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import com.sk89q.worldedit.regions.Region;
-import com.sk89q.worldedit.world.AbstractWorld;
+import com.sk89q.worldedit.world.World;
 import eu.andret.arguments.AnnotatedCommandExecutor;
 import eu.andret.arguments.api.annotation.Argument;
 import eu.andret.arguments.api.annotation.BaseCommand;
@@ -33,6 +33,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
@@ -41,10 +42,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 @BaseCommand("parkour")
 @EqualsAndHashCode(callSuper = true)
-public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
+public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 	private static final String VALUE = "%VALUE%";
 	private static final String NAME = "%NAME%";
 	private static final String EFFECT = "%EFFECT%";
@@ -198,7 +200,6 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		}
 		parkourGame.setRunning(true);
 		plugin.getServer().getPluginManager().callEvent(new GameStartEvent(parkourGame));
-		plugin.getParkourManager().sortGames();
 		return plugin.msg(M.Executive.START.success).replace(NAME, parkourGame.getName());
 	}
 
@@ -214,7 +215,6 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		}
 		parkourGame.setRunning(false);
 		plugin.getServer().getPluginManager().callEvent(new GameStopEvent(parkourGame));
-		plugin.getParkourManager().sortGames();
 		return plugin.msg(M.Executive.STOP.success).replace(NAME, parkourGame.getName());
 	}
 
@@ -332,11 +332,12 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 
 	@Argument(permission = "ats.parkour.addWall", description = "Adds wall to parkour game", executorType = ExecutorType.PLAYER, aliases = "aw")
 	public String addWall(@Param("parkourGame") final ParkourGame parkourGame) {
-		final CuboidRegion selection = getRegionSelection((Player) sender);
+		final Player player = (Player) sender;
+		final CuboidRegion selection = getRegionSelection(player);
 		if (selection == null) {
 			return plugin.msg(M.Error.DEFAULT.invalidSelection);
 		}
-		parkourGame.getWalls().add(new BasicRegion(new CuboidRegion(selection.getMaximumPoint(), selection.getMinimumPoint())));
+		parkourGame.getWalls().add(new BasicRegion(selection));
 		return plugin.msg(M.Region.Wall.ADD.success).replace("%ID%", String.valueOf(parkourGame.getWalls().size()));
 	}
 
@@ -620,9 +621,15 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 	}
 
 	@Argument(permission = "ats.parkour.teleportBlock", description = "Sets parkour teleportBlock")
-	public String teleportBlock(@Param("parkourGame") final ParkourGame parkourGame) {
-		parkourGame.setTeleportBlock(((Player) sender).getTargetBlock(null, 5).getLocation());
-		return plugin.msg(M.Executive.TELEPORT_BLOCK.success).replace("%PARKOUR%", parkourGame.getName());
+	public void teleportBlock(@Param("parkourGame") final ParkourGame parkourGame) {
+		Optional.of(sender)
+				.map(Player.class::cast)
+				.map(x -> x.getTargetBlockExact(5))
+				.map(Block::getLocation)
+				.ifPresentOrElse(x -> {
+					parkourGame.setTeleportBlock(x);
+					sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.Executive.TELEPORT_BLOCK.success).replace("%PARKOUR%", parkourGame.getName())));
+				}, () -> sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.Error.DEFAULT.notBlock))));
 	}
 
 	@Fallback
@@ -753,12 +760,12 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 	private CuboidRegion getRegionSelection(final Player player) {
 		final LocalSession session = plugin.getWorldEdit().getSession(player);
 		try {
-			final Region sel = session.getSelection(new BukkitWorld(((Player) sender).getWorld()));
-			if (sel == null) {
+			final World world = BukkitAdapter.adapt(player.getWorld());
+			final Region region = session.getSelection(world);
+			if (region == null) {
 				return null;
 			}
-			final AbstractWorld abstractWorld = new BukkitWorld(((Player) sender).getWorld());
-			return new CuboidRegion(abstractWorld, sel.getMaximumPoint(), sel.getMinimumPoint());
+			return new CuboidRegion(world, region.getMaximumPoint(), region.getMinimumPoint());
 		} catch (final IncompleteRegionException e) {
 			// Do nothing
 		}

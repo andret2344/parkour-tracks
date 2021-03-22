@@ -7,14 +7,18 @@ package eu.andret.ats.parkour.region;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 import lombok.Value;
 import lombok.experimental.NonFinal;
 import org.bukkit.Location;
+import org.jetbrains.annotations.NotNull;
 
 @Value
 @NonFinal
 @AllArgsConstructor
 public class BasicRegion {
+	@NotNull
+	@NonNull
 	CuboidRegion region;
 
 	public boolean contains(final Location location) {
