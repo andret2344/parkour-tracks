@@ -60,12 +60,12 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@Argument(permission = "ats.parkour.lobby", executorType = ExecutorType.PLAYER, description = "Sets lobby location to executor location")
 	public String lobby() {
-		final Location l = ((Player) sender).getLocation();
-		plugin.getParkourManager().setLobbyLocation(l);
+		final Location location = ((Player) sender).getLocation();
+		plugin.getParkourManager().setLobbyLocation(location);
 		return plugin.msg(M.General.LOBBY.success)
-				.replace("%COORD_X%", String.valueOf(l.getX()))
-				.replace("%COORD_Y%", String.valueOf(l.getY()))
-				.replace("%COORD_Z%", String.valueOf(l.getZ()));
+				.replace("%COORD_X%", String.valueOf(location.getX()))
+				.replace("%COORD_Y%", String.valueOf(location.getY()))
+				.replace("%COORD_Z%", String.valueOf(location.getZ()));
 	}
 
 	@Argument(permission = "ats.parkour.list", description = "Lists all parkour games", aliases = "ls")
@@ -317,8 +317,8 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (parkourGame.getSpawn() == null) {
 			return plugin.msg(M.Error.DEFAULT.missingSpawn);
 		}
-		final Location l = ((Player) sender).getLocation();
-		parkourGame.getCheckpoints().add(new DirectionalRegion(selection, l.getYaw(), l.getPitch()));
+		final Location location = ((Player) sender).getLocation();
+		parkourGame.getCheckpoints().add(new DirectionalRegion(selection, location.getYaw(), location.getPitch()));
 		return plugin.msg(M.Region.Checkpoint.ADD.success).replace("%ID%", String.valueOf(parkourGame.getCheckpoints().size()));
 	}
 

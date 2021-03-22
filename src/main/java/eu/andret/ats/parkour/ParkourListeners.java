@@ -15,9 +15,11 @@ import eu.andret.ats.parkour.event.player.PlayerJoinGameEvent;
 import eu.andret.ats.parkour.event.player.PlayerLeaveRegionEvent;
 import eu.andret.ats.parkour.event.player.PlayerQuitGameEvent;
 import eu.andret.ats.parkour.event.player.PlayerTeleportBackEvent;
+import eu.andret.ats.parkour.parkour.Medal;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourManager;
 import eu.andret.ats.parkour.parkour.ParkourRecord;
+import eu.andret.ats.parkour.parkour.ParkourScoreboard;
 import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.player.ParkourSinglePlayer;
 import eu.andret.ats.parkour.player.PlayerManager;
@@ -353,6 +355,19 @@ public class ParkourListeners implements Listener {
 					player.hidePlayer(plugin, joiningPlayer);
 					joiningPlayer.hidePlayer(plugin, player);
 				});
+		parkourPlayer.setParkourScoreboard(ParkourScoreboard.builder()
+				.authors(event.getGame().getAuthors().toString())
+				.bestTime(1.23)
+				.count(1)
+				.parkourType(event.getGame().getOptions().getType())
+				.displayName(event.getGame().getDisplayName())
+				.medal(Medal.BRONZE)
+				.pattern(new ArrayList<>())
+				.playerTime(2.22)
+				.time(1.11)
+				.player(event.getPlayer().getPlayer().getName())
+				.build()
+		);
 	}
 
 	@EventHandler
@@ -437,6 +452,7 @@ public class ParkourListeners implements Listener {
 			plugin.getServer().getScheduler().cancelTask(plugin.getTeleportCountdown().get(uniqueId));
 			plugin.getTeleportCountdown().remove(uniqueId);
 		}
+		event.getPlayer().setParkourScoreboard(null);
 		event.getGame().getOptions().getEffects().keySet().forEach(player::removePotionEffect);
 		PlayerManager.remove(player);
 	}

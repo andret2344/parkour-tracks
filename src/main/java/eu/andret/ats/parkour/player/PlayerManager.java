@@ -25,18 +25,18 @@ public final class PlayerManager {
 		if (singlePlayers.containsKey(player)) {
 			return singlePlayers.get(player);
 		}
-		final ParkourSinglePlayer p = new ParkourSinglePlayer(player);
-		singlePlayers.put(player, p);
-		return p;
+		final ParkourSinglePlayer parkourSinglePlayer = new ParkourSinglePlayer(player);
+		singlePlayers.put(player, parkourSinglePlayer);
+		return parkourSinglePlayer;
 	}
 
 	public ParkourCompetitorPlayer getParkourCompetitorPlayer(final Player player) {
 		if (competitorPlayers.containsKey(player)) {
 			return competitorPlayers.get(player);
 		}
-		final ParkourCompetitorPlayer p = new ParkourCompetitorPlayer(player);
-		competitorPlayers.put(player, p);
-		return p;
+		final ParkourCompetitorPlayer parkourCompetitorPlayer = new ParkourCompetitorPlayer(player);
+		competitorPlayers.put(player, parkourCompetitorPlayer);
+		return parkourCompetitorPlayer;
 	}
 
 	public ParkourPlayer getParkourPlayer(final Player player) {

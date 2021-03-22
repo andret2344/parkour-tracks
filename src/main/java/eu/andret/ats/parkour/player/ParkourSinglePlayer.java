@@ -6,13 +6,11 @@ package eu.andret.ats.parkour.player;
 
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import lombok.Value;
 import org.bukkit.entity.Player;
 
-@Value
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-public class ParkourSinglePlayer extends ParkourPlayer {
+public final class ParkourSinglePlayer extends ParkourPlayer {
 	ParkourSinglePlayer(final Player player) {
 		super(player);
 	}
