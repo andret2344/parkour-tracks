@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2019. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
  */
 package eu.andret.ats.parkour;
 
@@ -8,6 +8,7 @@ import eu.andret.arguments.AnnotatedCommand;
 import eu.andret.arguments.CommandManager;
 import eu.andret.arguments.api.annotation.Fallback;
 import eu.andret.ats.parkour.api.FinancialProvider;
+import eu.andret.ats.parkour.api.RankProvider;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourManager;
 import eu.andret.ats.parkour.tasks.KeepConnection;
@@ -19,7 +20,6 @@ import org.bstats.bukkit.Metrics;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
@@ -50,9 +50,10 @@ public class ParkourPlugin extends JavaPlugin {
 	private Connection conn;
 	private ItemStack exit;
 	private ParkourListeners listeners;
-	@Getter
 	@Setter
 	private FinancialProvider financialProvider;
+	@Setter
+	private RankProvider rankProvider;
 	@Getter
 	private final Map<String, String> messages = new LinkedHashMap<>();
 	private final YamlConfiguration yamlConfiguration = new YamlConfiguration();
@@ -70,17 +71,6 @@ public class ParkourPlugin extends JavaPlugin {
 			setEnabled(false);
 			return;
 		}
-		financialProvider = new FinancialProvider() {
-			@Override
-			public void addMoney(final OfflinePlayer player, final double amount) {
-				// do nothing
-			}
-
-			@Override
-			public double getMoney(final OfflinePlayer player) {
-				return 0;
-			}
-		};
 		listeners = new ParkourListeners(this);
 		getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
 		if (!new File(getDataFolder(), "config.yml").exists()) {
@@ -229,6 +219,14 @@ public class ParkourPlugin extends JavaPlugin {
 
 	public Connection getConnection() {
 		return conn;
+	}
+
+	public Optional<FinancialProvider> getFinancialProvider() {
+		return Optional.ofNullable(financialProvider);
+	}
+
+	public Optional<RankProvider> getRankProvider() {
+		return Optional.ofNullable(rankProvider);
 	}
 
 	private void generate() {

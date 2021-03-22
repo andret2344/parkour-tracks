@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2019. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
  */
 package eu.andret.ats.parkour;
 
@@ -268,10 +268,14 @@ public class ParkourListeners implements Listener {
 		final ParkourPlayer parkourPlayer = PlayerManager.getParkourSinglePlayer(event.getPlayer());
 		for (final ParkourGame parkourGame : ParkourManager.getAllGames()) {
 			if (!event.getAction().equals(Action.PHYSICAL) && parkourGame.getTeleportBlock() != null && event.getClickedBlock() != null && parkourGame.getTeleportBlock().equals(event.getClickedBlock().getLocation()) && !parkourPlayer.isIgnoring()) {
-				parkourGame.addPlayer(event.getPlayer());
-				parkourPlayer.teleportToSpawn();
-				event.setCancelled(true);
-				parkourPlayer.reset();
+				if (!parkourGame.getOptions().isVipOnly() || plugin.getRankProvider().map(x -> x.isVip(event.getPlayer())).isPresent()) {
+					parkourGame.addPlayer(event.getPlayer());
+					parkourPlayer.teleportToSpawn();
+					event.setCancelled(true);
+					parkourPlayer.reset();
+				} else {
+					event.getPlayer().sendMessage("this parkour is o nly for vip");
+				}
 				break;
 			}
 		}

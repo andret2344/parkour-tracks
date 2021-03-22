@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2019. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
  */
 package eu.andret.ats.parkour.tasks;
 
@@ -95,7 +95,7 @@ public class DataBaseOperations implements Runnable {
 			if (lastMedal.ordinal() > current.ordinal()) {
 				// How much does it cost?
 				final int price = Arrays.stream(Medal.values()).mapToInt(Medal::getPrice).sum();
-				plugin.getFinancialProvider().addMoney(player, price);
+				plugin.getFinancialProvider().ifPresent(x -> x.addMoney(player, price));
 				player.sendMessage(plugin.msg("achieveMedal", false).replace("%MEDAL%", current.name()).replace("%PRICE%", "" + price));
 			}
 			rs.close();
