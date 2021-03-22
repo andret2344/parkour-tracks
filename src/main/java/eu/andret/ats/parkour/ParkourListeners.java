@@ -151,7 +151,7 @@ public class ParkourListeners implements Listener {
 							pluginManager.callEvent(new PlayerLeaveRegionEvent(parkourGame, player, region));
 						} else if (!region.contains(event.getFrom()) && region.contains(event.getTo())) {
 							pluginManager.callEvent(new PlayerEnterRegionEvent(parkourGame, player, region));
-							pluginManager.callEvent(new PlayerAchieveCheckpointEvent(parkourGame, PlayerManager.getParkourPlayer(player), region));
+							pluginManager.callEvent(new PlayerAchieveCheckpointEvent(parkourGame, parkourPlayer, region));
 						}
 					}
 
@@ -160,7 +160,7 @@ public class ParkourListeners implements Listener {
 							pluginManager.callEvent(new PlayerLeaveRegionEvent(parkourGame, player, region));
 						} else if (!region.contains(event.getFrom()) && region.contains(event.getTo())) {
 							pluginManager.callEvent(new PlayerEnterRegionEvent(parkourGame, player, region));
-							pluginManager.callEvent(new PlayerHitWallEvent(parkourGame, PlayerManager.getParkourPlayer(player), region));
+							pluginManager.callEvent(new PlayerHitWallEvent(parkourGame, parkourPlayer, region));
 						}
 					}
 
@@ -168,7 +168,7 @@ public class ParkourListeners implements Listener {
 						pluginManager.callEvent(new PlayerLeaveRegionEvent(parkourGame, player, parkourGame.getSpawn()));
 					} else if (!parkourGame.getSpawn().contains(event.getFrom()) && parkourGame.getSpawn().contains(event.getTo())) {
 						pluginManager.callEvent(new PlayerEnterRegionEvent(parkourGame, player, parkourGame.getSpawn()));
-						pluginManager.callEvent(new PlayerEnterSpawnEvent(parkourGame, PlayerManager.getParkourPlayer(player)));
+						pluginManager.callEvent(new PlayerEnterSpawnEvent(parkourGame, parkourPlayer));
 					}
 				});
 	}
@@ -204,14 +204,13 @@ public class ParkourListeners implements Listener {
 		if (!event.getPlayer().getPlayer().getWorld().equals(parkourGame.getWorld())) {
 			return;
 		}
+		if (parkourPlayer.getLastCheckpoint() == parkourGame.getCheckpoints().size() - 1) {
+			return;
+		}
 		final int checkpointId = event.getGame().getCheckpoints().indexOf(event.getRegion());
 		if (checkpointId > parkourPlayer.getLastCheckpoint()) {
 			parkourPlayer.setLastCheckpoint(checkpointId);
-			if (checkpointId == event.getGame().getCheckpoints().size() - 1) {
-				if (plugin.getConfig().getBoolean("last-checkpoint-info")) {
-					event.getPlayer().getPlayer().sendMessage(plugin.msg("achieveCheckpoint"));
-				}
-			} else {
+			if (checkpointId != event.getGame().getCheckpoints().size() - 1) {
 				event.getPlayer().getPlayer().sendMessage(plugin.msg("achieveCheckpoint"));
 			}
 		}
@@ -222,7 +221,7 @@ public class ParkourListeners implements Listener {
 
 	@EventHandler
 	public void enterSpawn(final PlayerEnterSpawnEvent event) {
-		PlayerManager.getParkourSinglePlayer(event.getPlayer().getPlayer()).reset();
+		event.getPlayer().reset();
 	}
 
 	@EventHandler
@@ -262,8 +261,7 @@ public class ParkourListeners implements Listener {
 						player.sendMessage(plugin.msg("howMany").replace("%COUNT%", String.valueOf(previousCount + 1)));
 						if (previousParkourBest > currentTime) {
 							player.sendMessage(plugin.msg("newParkourBestTime"));
-							plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, () ->
-									plugin.updateSign(new ParkourRecord(player.getName(), parkourGame, currentTime)));
+							plugin.updateSyncSign(new ParkourRecord(player.getName(), parkourGame, currentTime));
 						}
 						if (previousPlayerBest > currentTime) {
 							player.sendMessage(plugin.msg("newPersonalBestTime"));
@@ -383,7 +381,7 @@ public class ParkourListeners implements Listener {
 							return;
 						}
 						PlayerManager.teleportToRegion(parkourPlayer, parkourSpawn);
-						plugin.getServer().getPluginManager().callEvent(new PlayerTeleportBackEvent(parkourGame, parkourPlayer, parkourSpawn));
+						plugin.getServer().getPluginManager().callEvent(new PlayerJoinGameEvent(parkourGame, parkourPlayer));
 						event.setCancelled(true);
 						parkourPlayer.reset();
 					} else {
@@ -489,13 +487,13 @@ public class ParkourListeners implements Listener {
 			return;
 		}
 		for (final ParkourGame parkourGame : plugin.getParkourManager().getAllGames()) {
-			final boolean inParkour = plugin.getParkourManager().inAnyRegion(parkourGame, event.getTo());
-			if (inParkour && !parkourGame.getPlayers().contains(parkourPlayer)) {
+			final boolean destinationInParkour = plugin.getParkourManager().inAnyRegion(parkourGame, event.getTo());
+			if (destinationInParkour && !parkourGame.getPlayers().contains(parkourPlayer)) {
 				parkourGame.addPlayer(event.getPlayer());
 				plugin.getServer().getPluginManager().callEvent(new PlayerJoinGameEvent(parkourGame, parkourPlayer));
 			}
 
-			if (!inParkour && parkourGame.getPlayers().contains(PlayerManager.getParkourPlayer(event.getPlayer()))) {
+			if (!destinationInParkour && parkourGame.getPlayers().contains(parkourPlayer)) {
 				parkourGame.removePlayer(parkourPlayer);
 				plugin.getServer().getPluginManager().callEvent(new PlayerQuitGameEvent(parkourGame, parkourPlayer));
 			}

@@ -97,7 +97,11 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		plugin.getConnection().ifPresentOrElse(connection -> {
 			plugin.getParkourManager().getAllGames()
 					.stream()
-					.map(parkourGame -> new FetchParkourBestRecordTask(connection, parkourGame, 1, data -> plugin.updateSign(data.get(0))))
+					.map(parkourGame -> new FetchParkourBestRecordTask(connection, parkourGame, 1, data -> {
+						final ParkourRecord record = data.isEmpty() ? new ParkourRecord("========", parkourGame, 0) : data.get(0);
+						plugin.updateSyncSign(record);
+					}
+					))
 					.forEach(fetchParkourBestRecordTask -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchParkourBestRecordTask));
 			sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.General.FIX.success)));
 		}, () -> sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.Error.DEFAULT.notConnected))));
@@ -676,8 +680,10 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 				.replace("%COORD_Z%", String.valueOf(location.getZ()))));
 
 		plugin.getConnection()
-				.map(connection -> new FetchParkourBestRecordTask(connection, parkourGame, 1, data ->
-						plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, () -> plugin.updateSign(data.get(0)))))
+				.map(connection -> new FetchParkourBestRecordTask(connection, parkourGame, 1, data -> {
+					final ParkourRecord record = data.isEmpty() ? new ParkourRecord("========", parkourGame, 0) : data.get(0);
+					plugin.updateSyncSign(record);
+				}))
 				.ifPresentOrElse(
 						fetchParkourBestRecordTask -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchParkourBestRecordTask),
 						() -> sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.Error.DEFAULT.notConnected))));

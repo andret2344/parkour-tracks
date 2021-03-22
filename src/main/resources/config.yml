@@ -14,7 +14,7 @@ recordSign:
   line2: '%MINUTES%:%SECONDS%.%MILLISECONDS%'
   line3: '%NICK%'
   line4: ''
-last-checkpoint-info: false
+
 medal:
   platinum: 'platinum'
   gold: 'gold'

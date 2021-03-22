@@ -130,6 +130,10 @@ public final class ParkourPlugin extends JavaPlugin {
 		return (WorldEditPlugin) getServer().getPluginManager().getPlugin("WorldEdit");
 	}
 
+	public void updateSyncSign(final ParkourRecord parkourRecord) {
+		getServer().getScheduler().scheduleSyncDelayedTask(this, () -> updateSign(parkourRecord));
+	}
+
 	public void updateSign(final ParkourRecord parkourRecord) {
 		Optional.of(parkourRecord.getGame())
 				.map(ParkourGame::getRecordsBlock)

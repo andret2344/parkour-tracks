@@ -44,7 +44,7 @@ public class FetchAndInsertDataTask extends AbstractParkourTask {
 			stat.setString(2, game.getName());
 			final ResultSet rs = stat.executeQuery();
 			if (!rs.next()) {
-				return -1;
+				return 0;
 			}
 			return rs.getInt("result");
 		} catch (final SQLException ex) {
@@ -59,7 +59,7 @@ public class FetchAndInsertDataTask extends AbstractParkourTask {
 			stat.setString(2, game.getName());
 			final ResultSet rs = stat.executeQuery();
 			if (!rs.next()) {
-				return -1;
+				return Double.POSITIVE_INFINITY;
 			}
 			return rs.getFloat("time");
 		} catch (final SQLException ex) {
@@ -73,7 +73,7 @@ public class FetchAndInsertDataTask extends AbstractParkourTask {
 			stat.setString(1, game.getName());
 			final ResultSet rs = stat.executeQuery();
 			if (!rs.next()) {
-				return -1;
+				return Double.POSITIVE_INFINITY;
 			}
 			return rs.getFloat("time");
 		} catch (final SQLException ex) {
