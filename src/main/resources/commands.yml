@@ -207,6 +207,7 @@ error:
   already-started: '&cThis game has been already started.'
   already-stopped: '&cThis game has been already stopped.'
   forbidden-flying: '&cNo flying is allowed in running parkour. Turn off parkour using &6/parkour stop <name>&c or start ignoring parkours using &6/parkour ignore&c.'
+  forbidden-modification: '&c&lEdit lock&r&c is active! In order to modify parkour game, stop it first using &6/parkour stop <name>&c.'
   insufficient-permissions: '&cSorry, you do not have permissions to do that.'
   invalid-argument: '&cWrong argument.'
   invalid-color: '&cColor "%VALUE%" is invalid. Use dye color.'

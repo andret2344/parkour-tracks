@@ -183,6 +183,7 @@ public class M {
 		public final Message alreadyStarted = new Message(this, "already-started", true);
 		public final Message alreadyStopped = new Message(this, "already-stopped", true);
 		public final Message forbiddenFlying = new Message(this, "forbidden-flying", true);
+		public final Message forbiddenModification = new Message(this, "forbidden-modification", true);
 		public final Message insufficientPermissions = new Message(this, "insufficient-permissions", true);
 		public final Message invalidArgument = new Message(this, "invalid-argument", true);
 		public final Message invalidColor = new Message(this, "invalid-color", true);

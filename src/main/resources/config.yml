@@ -21,3 +21,10 @@ medal:
   silver: 'silver'
   bronze: 'bronze'
   none: 'none'
+
+# It it should be forbidden to everyone to edit running parkour games.
+# Forbids any terrain changes and game modification via commends.
+# If set to true, you need to stop the game in order to apply any modification it.
+# There's no bypass permission for it.
+# Default: true
+edit-lock: true

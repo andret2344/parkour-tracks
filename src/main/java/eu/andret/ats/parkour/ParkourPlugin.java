@@ -195,6 +195,10 @@ public final class ParkourPlugin extends JavaPlugin {
 				.collect(Collectors.toList()));
 	}
 
+	public boolean isEditLocked() {
+		return getConfig().getBoolean("edit-lock", true);
+	}
+
 	private void setupDatabase() {
 		final boolean databaseEnabled = getConfig().getBoolean("database.enabled", false);
 		if (!databaseEnabled) {
