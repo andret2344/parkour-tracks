@@ -4,7 +4,6 @@
 
 package eu.andret.ats.parkour;
 
-import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import eu.andret.ats.parkour.event.game.GameStartEvent;
 import eu.andret.ats.parkour.event.game.GameStopEvent;
 import eu.andret.ats.parkour.event.player.PlayerAchieveCheckpointEvent;
@@ -514,35 +513,24 @@ public class ParkourListeners implements Listener {
 
 	@EventHandler
 	public void destroy(final BlockBreakEvent event) {
-		if (event.getPlayer().hasPermission("ats.parkour.modify")) {
-			return;
-		}
 		universalBlockEventHandler(event, event.getPlayer());
 	}
 
 	@EventHandler
 	public void place(final BlockPlaceEvent event) {
-		if (event.getPlayer().hasPermission("ats.parkour.modify")) {
-			return;
-		}
 		universalBlockEventHandler(event, event.getPlayer());
-	}
-
-	private void universalBlockEventHandler(final BlockEvent event, final Player player) {
-		plugin.getParkourManager().getAllGames().stream()
-				.map(ParkourGame::getAllRegions)
-				.flatMap(Collection::stream)
-				.filter(Objects::nonNull)
-				.filter(r -> r.contains(event.getBlock().getLocation()) && BukkitAdapter.adapt(player.getWorld()).equals(r.getRegion().getWorld()))
-				.findFirst()
-				.ifPresent(r -> ((Cancellable) event).setCancelled(true));
 	}
 
 	@EventHandler
 	public void drop(final PlayerDropItemEvent event) {
-		if (!PlayerManager.getParkourSinglePlayer(event.getPlayer()).isIgnoring()) {
-			event.setCancelled(true);
-		}
+		final ParkourPlayer parkourPlayer = PlayerManager.getParkourSinglePlayer(event.getPlayer());
+		plugin.getParkourManager().getAllGames().stream()
+				.filter(parkourGame -> plugin.getParkourManager().inAnyRegion(parkourGame, parkourPlayer))
+				.forEach(parkourGame -> {
+					if (!parkourPlayer.isIgnoring()) {
+						event.setCancelled(true);
+					}
+				});
 	}
 
 	@EventHandler
@@ -568,5 +556,22 @@ public class ParkourListeners implements Listener {
 				event.getPlayer().sendMessage("Destroyed records block!");
 			}
 		});
+	}
+
+	private void universalBlockEventHandler(final BlockEvent event, final Player player) {
+		plugin.getParkourManager().getAllGames()
+				.stream()
+				.filter(parkourGame -> plugin.getParkourManager().inAnyRegion(parkourGame, event.getBlock().getLocation()))
+				.forEach(parkourGame -> {
+					final Cancellable cancellableEvent = (Cancellable) event;
+					if (!player.hasPermission("ats.parkour.modify")) {
+						cancellableEvent.setCancelled(true);
+						return;
+					}
+					if (parkourGame.isRunning() && plugin.isEditLocked()) {
+						player.sendMessage(plugin.msg(M.Error.DEFAULT.forbiddenModification));
+						cancellableEvent.setCancelled(true);
+					}
+				});
 	}
 }
