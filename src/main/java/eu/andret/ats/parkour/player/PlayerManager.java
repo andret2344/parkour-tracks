@@ -59,7 +59,7 @@ public final class PlayerManager {
 
 	public void teleportToRegion(final ParkourPlayer parkourPlayer, final DirectionalRegion basicRegion) {
 		Optional.ofNullable(basicRegion)
-				.map(BasicRegion::getCuboidRegion)
+				.map(BasicRegion::getRegion)
 				.filter(x -> x.getWorld() != null)
 				.ifPresent(x -> {
 					final Vector3 vector = x.getCenter();

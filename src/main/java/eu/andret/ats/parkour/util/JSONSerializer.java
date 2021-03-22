@@ -225,7 +225,7 @@ public class JSONSerializer {
 		final JSONObject jsonObject = new JSONObject();
 		jsonObject.put(NAME, parkourGame.getName());
 		jsonObject.put(WORLD, parkourGame.getWorld().getName());
-		jsonObject.put(REGION, writeAbstractRegion(parkourGame.getGameRegion()));
+		jsonObject.put(REGION, writeAbstractRegion(parkourGame.getRegion()));
 		jsonObject.put(SPAWN, writeDirectionalRegion(parkourGame.getSpawn()));
 		jsonObject.put(CHECKPOINTS, writeDirectionalRegions(parkourGame.getCheckpoints()));
 		jsonObject.put(WALLS, writeAbstractRegions(parkourGame.getWalls()));
@@ -264,7 +264,7 @@ public class JSONSerializer {
 		if (basicRegion == null) {
 			return null;
 		}
-		return writeCuboidRegion(basicRegion.getCuboidRegion());
+		return writeCuboidRegion(basicRegion.getRegion());
 	}
 
 	public JSONObject writeLocation(final Location location) {

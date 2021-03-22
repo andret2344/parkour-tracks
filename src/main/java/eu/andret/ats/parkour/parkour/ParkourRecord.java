@@ -9,6 +9,6 @@ import lombok.Value;
 @Value
 public class ParkourRecord {
 	String nick;
-	ParkourGame parkourGame;
+	ParkourGame game;
 	double time;
 }

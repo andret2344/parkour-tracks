@@ -229,7 +229,7 @@ public class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 		if (selection == null) {
 			return plugin.msg(M.Error.DEFAULT.invalidSelection);
 		}
-		parkourGame.setGameRegion(new BasicRegion(selection));
+		parkourGame.setRegion(new BasicRegion(selection));
 		return plugin.msg(M.Executive.RECREATE.success);
 	}
 

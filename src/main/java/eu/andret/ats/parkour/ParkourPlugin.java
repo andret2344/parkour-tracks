@@ -119,7 +119,7 @@ public class ParkourPlugin extends JavaPlugin {
 	}
 
 	public void updateSign(final ParkourRecord parkourRecord) {
-		Optional.of(parkourRecord.getParkourGame())
+		Optional.of(parkourRecord.getGame())
 				.map(ParkourGame::getRecordsBlock)
 				.map(Location::getBlock)
 				.map(Block::getState)

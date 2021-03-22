@@ -27,7 +27,7 @@ public class AbstractGameEvent extends Event {
 	/**
 	 * The Parkour that has been started.
 	 */
-	private ParkourGame parkour;
+	private ParkourGame game;
 
 	@NotNull
 	@Override

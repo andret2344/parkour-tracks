@@ -37,7 +37,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 	private boolean running;
 	private String name;
 	private World world;
-	private BasicRegion gameRegion;
+	private BasicRegion region;
 	private Location recordsBlock;
 	private Location teleportBlock;
 	private DirectionalRegion spawn;
@@ -121,15 +121,15 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 		}
 	}
 
-	protected ParkourGame(final String name, final BasicRegion gameRegion, final World world) {
+	protected ParkourGame(final String name, final BasicRegion region, final World world) {
 		this.name = displayName = name;
-		this.gameRegion = gameRegion;
+		this.region = region;
 		this.world = world;
 	}
 
 	public List<BasicRegion> getAllRegions() {
 		final List<BasicRegion> arr = new ArrayList<>();
-		arr.add(gameRegion);
+		arr.add(region);
 		arr.add(spawn);
 		arr.addAll(walls);
 		arr.addAll(checkpoints);

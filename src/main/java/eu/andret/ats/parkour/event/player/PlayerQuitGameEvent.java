@@ -18,10 +18,10 @@ public class PlayerQuitGameEvent extends AbstractParkourPlayerEvent {
 	/**
 	 * Constructor.
 	 *
-	 * @param parkourGame The game that player is in.
-	 * @param parkourPlayer The player that triggers the event.
+	 * @param game The game that player is in.
+	 * @param player The player that triggers the event.
 	 */
-	public PlayerQuitGameEvent(final ParkourGame parkourGame, final ParkourPlayer parkourPlayer) {
-		super(parkourGame, parkourPlayer);
+	public PlayerQuitGameEvent(final ParkourGame game, final ParkourPlayer player) {
+		super(game, player);
 	}
 }
