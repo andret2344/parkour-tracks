@@ -4,8 +4,6 @@
 
 package eu.andret.ats.parkour.parkour;
 
-import eu.andret.ats.parkour.event.player.PlayerJoinGameEvent;
-import eu.andret.ats.parkour.event.player.PlayerQuitGameEvent;
 import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.region.BasicRegion;
 import eu.andret.ats.parkour.region.DirectionalRegion;
@@ -14,7 +12,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 import lombok.ToString;
-import org.bukkit.Bukkit;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -141,8 +138,6 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 			return false;
 		}
 		players.add(parkourPlayer);
-		parkourPlayer.reset();
-		Bukkit.getPluginManager().callEvent(new PlayerJoinGameEvent(this, parkourPlayer));
 		return true;
 	}
 
@@ -150,8 +145,6 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 		if (!players.contains(parkourPlayer)) {
 			return false;
 		}
-		Bukkit.getServer().getPluginManager().callEvent(new PlayerQuitGameEvent(this, parkourPlayer));
-		parkourPlayer.reset();
 		players.remove(parkourPlayer);
 		return true;
 	}

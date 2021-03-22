@@ -10,7 +10,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 
 /**
- * The event that is called when player joins the parkour game.
+ * The event that is called when player joins the parkour game. Event is not called if player ignores parkours.
  */
 @Value
 @EqualsAndHashCode(callSuper = true)
