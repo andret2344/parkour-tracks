@@ -1,10 +1,11 @@
 /*
- * Copyright Andret (c) 2019. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
  */
+
 package eu.andret.ats.parkour.parkour;
 
 import eu.andret.ats.parkour.player.PlayerManager;
-import eu.andret.ats.parkour.region.AbstractRegion;
+import eu.andret.ats.parkour.region.BasicRegion;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -22,7 +23,7 @@ import java.util.List;
 public class ParkourGroup extends ParkourGame {
 	private final List<Parkour> parkours = new ArrayList<>();
 
-	public ParkourGroup(final String name, final AbstractRegion gameRegion, final World world) {
+	public ParkourGroup(final String name, final BasicRegion gameRegion, final World world) {
 		super(name, gameRegion, world);
 	}
 
@@ -35,7 +36,7 @@ public class ParkourGroup extends ParkourGame {
 	}
 
 	@Override
-	public void addPlayer(final Player player) {
-		super.addPlayer(PlayerManager.getParkourCompetitorPlayer(player));
+	public boolean addPlayer(final Player player) {
+		return super.addPlayer(PlayerManager.getParkourCompetitorPlayer(player));
 	}
 }

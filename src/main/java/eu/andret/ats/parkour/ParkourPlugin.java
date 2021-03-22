@@ -1,6 +1,7 @@
 /*
  * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
  */
+
 package eu.andret.ats.parkour;
 
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
@@ -11,7 +12,8 @@ import eu.andret.ats.parkour.api.FinancialProvider;
 import eu.andret.ats.parkour.api.RankProvider;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourManager;
-import eu.andret.ats.parkour.tasks.KeepConnection;
+import eu.andret.ats.parkour.parkour.ParkourRecord;
+import eu.andret.ats.parkour.tasks.database.KeepAliveTask;
 import eu.andret.ats.parkour.util.Data;
 import eu.andret.ats.parkour.util.JSONSerializer;
 import lombok.Getter;
@@ -20,11 +22,14 @@ import org.bstats.bukkit.Metrics;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.block.Sign;
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffectType;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
@@ -38,18 +43,21 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.logging.Level;
+import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.stream.IntStream;
 
 public class ParkourPlugin extends JavaPlugin {
-	private Connection conn;
+	private Connection connection;
+	@Getter
 	private ItemStack exit;
-	private ParkourListeners listeners;
+	@Getter
+	private final ParkourManager parkourManager = new ParkourManager();
 	@Setter
 	private FinancialProvider financialProvider;
 	@Setter
@@ -57,168 +65,227 @@ public class ParkourPlugin extends JavaPlugin {
 	@Getter
 	private final Map<String, String> messages = new LinkedHashMap<>();
 	private final YamlConfiguration yamlConfiguration = new YamlConfiguration();
-	private final String url = getConfig().getString("connection.url");
-	private final String user = getConfig().getString("connection.user");
-	private final String pass = getConfig().getString("connection.pass");
-	private final String database = getConfig().getString("connection.dbname");
+	private final Map<UUID, Integer> teleportCount = new HashMap<>();
+	private final Map<UUID, Integer> playerTimeCounters = new HashMap<>();
 
 	private final JSONSerializer jsonSerializer = new JSONSerializer(this);
 
 	@Override
 	public void onEnable() {
-		if (getServer().getPluginManager().getPlugin("WorldEdit") == null) {
-			getServer().getLogger().log(Level.SEVERE, "Could not find WorldEdit plugin. Disabling.");
+		if (getWorldEdit() == null) {
+			System.out.println("[atsParkour] CRITICAL! Cannot find WorldEdit plugin! Disabling...");
 			setEnabled(false);
 			return;
 		}
-		listeners = new ParkourListeners(this);
-		getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
-		if (!new File(getDataFolder(), "config.yml").exists()) {
-			saveDefaultConfig();
-		}
-		saveResource("scoreboard.yml", false);
-		saveResource("messages.yml", false);
+		setupConfigFiles();
 		createDoors();
-		getServer().getPluginManager().registerEvents(listeners, this);
-		final AnnotatedCommand command = CommandManager.registerCommand(ParkourCommand.class, this);
-		command.setOnInsufficientPermissionsListener(sender -> sender.sendMessage(msg("noPerms", true)));
-		command.setOnUnknownSubCommandExecutionListener(sender -> sender.sendMessage(msg("wrongArg", true)));
-		command.addArgumentMapper("parkourGame", ParkourGame.class, ParkourManager::getParkour, Fallback.ON_NULL);
-		command.addArgumentMapper("potion", PotionEffectType.class, PotionEffectType::getByName, Fallback.ON_NULL);
-		command.addTypeCompleter(ParkourGame.class, () -> ParkourManager.getAllGames().stream()
-				.map(ParkourGame::getName)
-				.collect(Collectors.toList()));
-		command.addTypeCompleter(boolean.class, Arrays.asList("false", "true"));
-		command.addTypeCompleter(PotionEffectType.class, () -> Data.ALLOWED_EFFECTS.stream()
-				.map(PotionEffectType::getName)
-				.collect(Collectors.toList()));
-		try {
-			yamlConfiguration.load(new File(getDataFolder().getAbsolutePath(), "messages.yml"));
-			load();
-			connect();
-		} catch (final Exception ex) {
-			ex.printStackTrace();
-			getServer().getLogger().throwing(getClass().getName(), "onEnable", ex);
-		}
-		generate();
-		ParkourManager.getAllGames().forEach(p -> getServer().getOnlinePlayers().stream()
-				.filter(pl -> p.getAllRegions().stream().filter(Objects::nonNull).anyMatch(r -> r.contains(pl.getLocation())))
-				.forEach(p::addPlayer));
-		getServer().getScheduler().scheduleSyncRepeatingTask(this, new KeepConnection(this), 36_000, 36_000);
+		getServer().getPluginManager().registerEvents(new ParkourListeners(this), this);
+		setupCommand();
+		setupDatabase();
+		loadParkourLobby();
+		loadAllParkourGames();
+		parkourManager.getAllGames().stream()
+				.filter(Objects::nonNull)
+				.forEach(p -> getServer().getOnlinePlayers().stream()
+						.filter(Objects::nonNull)
+						.filter(pl -> p.getAllRegions().stream().filter(Objects::nonNull).anyMatch(r -> r.contains(pl.getLocation())))
+						.forEach(p::addPlayer));
+		getConnection()
+				.map(KeepAliveTask::new)
+				.ifPresent(keepAliveTask -> getServer().getScheduler().scheduleSyncRepeatingTask(this, keepAliveTask, 20_000, 20_000));
+
 		new Metrics(this, 10700);
 	}
 
 	@Override
 	public void onDisable() {
-		try {
-			if (!save()) {
-				getLogger().log(Level.WARNING, "Problem with saving");
-			}
-		} catch (final IOException e) {
-			e.printStackTrace();
-		}
+		saveParkourLobby();
+		saveAllGames();
 		getServer().getScheduler().cancelTasks(this);
 	}
 
-	private void createDoors() {
-		exit = new ItemStack(Material.IRON_DOOR);
-		Optional.ofNullable(exit.getItemMeta())
-				.stream()
-				.peek(im -> im.setDisplayName("§r" + ChatColor.translateAlternateColorCodes('&', getConfig().getString("door.name"))))
-				.findAny()
-				.ifPresent(exit::setItemMeta);
-	}
-
-	private void connect() throws SQLException {
-		conn = DriverManager.getConnection("jdbc:mysql://" + url + "?autoReconnect=true&useSSL=false", user, pass);
-		try (final Statement stat = conn.createStatement()) {
-			stat.execute("CREATE DATABASE IF NOT EXISTS `" + database + "`;");
-			stat.execute("USE " + database + ";");
-			stat.execute("CREATE TABLE IF NOT EXISTS ats_parkour_records(id INT PRIMARY KEY AUTO_INCREMENT, date DATETIME, nick VARCHAR(64), parkour VARCHAR(64), time FLOAT, count INT);");
-		}
-	}
-
-	public String msg(final String path, final boolean err) {
+	public String msg(final String path, final boolean isError) {
 		final String here;
 		if (yamlConfiguration.getString("player." + path) != null) {
 			here = "player.";
 		} else if (yamlConfiguration.getString("admin." + path) != null) {
 			here = "admin.";
 		} else {
-			throw new NullPointerException("Invalid message: " + path + " (should be error: " + err + ")");
+			throw new NullPointerException("Invalid message: " + path + " (should be error: " + isError + ")");
 		}
 		String result = "";
-		if (err) {
+		if (isError) {
 			result += yamlConfiguration.getString(here + "errorMsg");
 		}
 		return (result + yamlConfiguration.getString(here + path)).replace('&', '\u00A7');
 	}
 
-	private boolean save() throws IOException {
-		for (final ParkourGame parkourGame : ParkourManager.getAllGames()) {
-			final File path = new File(getDataFolder(), "games");
-			if (!path.exists() && !path.mkdirs()) {
-				return false;
-			}
-			final File file = new File(path.getAbsolutePath(), parkourGame.getName() + ".json");
-			if (!file.exists() && !file.createNewFile()) {
-				return false;
-			}
-			final PrintWriter printWriter = new PrintWriter(file);
-			printWriter.write(jsonSerializer.writeParkourGame(parkourGame).toString(4));
-			printWriter.close();
-		}
-		return true;
+	public Optional<Connection> getConnection() {
+		return Optional.ofNullable(connection);
 	}
 
-	public void saveLobbyLoc(final Location l) {
-		getConfig().set("lobby.world", l.getWorld().getName());
-		getConfig().set("lobby.x", l.getX());
-		getConfig().set("lobby.y", l.getY());
-		getConfig().set("lobby.z", l.getZ());
-		getConfig().set("lobby.yaw", l.getYaw());
-		getConfig().set("lobby.pitch", l.getPitch());
-		saveConfig();
+	public WorldEditPlugin getWorldEdit() {
+		return (WorldEditPlugin) getServer().getPluginManager().getPlugin("WorldEdit");
 	}
 
-	private void load() {
-		final String worldName = getConfig().getString("lobby.world");
-		if (!"-1".equals(worldName) && worldName != null) {
-			final World world = getServer().getWorld(worldName);
-			if (world == null) {
-				return;
-			}
-			final Location location = new Location(world, getConfig().getDouble("lobby.x"), getConfig().getDouble("lobby.y"), getConfig().getDouble("lobby.z"));
-			location.setPitch((float) getConfig().getDouble("lobby.pitch"));
-			location.setYaw((float) getConfig().getDouble("lobby.yaw"));
-			ParkourManager.setLobbyLocation(location);
-			System.out.println("[atsParkour] Loaded lobby location successfully!");
+	public void updateSign(final ParkourRecord parkourRecord) {
+		Optional.of(parkourRecord.getParkourGame())
+				.map(ParkourGame::getRecordsBlock)
+				.map(Location::getBlock)
+				.map(Block::getState)
+				.filter(x -> x instanceof Sign)
+				.map(Sign.class::cast)
+				.ifPresent(sign -> {
+					IntStream.of(0, 1, 2, 3).forEach(x -> {
+						final String lineText = getConfig().getString("recordSign.line" + (x + 1));
+						sign.setLine(x, replace(String.valueOf(lineText), parkourRecord).replace('&', '\u00A7'));
+					});
+					sign.update();
+				});
+	}
+
+	public Map<UUID, Integer> getTeleportCount() {
+		return teleportCount;
+	}
+
+	public Map<UUID, Integer> getPlayerTimeCounters() {
+		return playerTimeCounters;
+	}
+
+	private void setupConfigFiles() {
+		saveDefaultConfig();
+		saveResource("scoreboard.yml", false);
+		saveResource("messages.yml", false);
+		try {
+			yamlConfiguration.load(new File(getDataFolder(), "messages.yml"));
+		} catch (final IOException | InvalidConfigurationException ex) {
+			System.out.println("[atsParkour] An error occurred when loading messages");
+			ex.printStackTrace();
 		}
-		final File folder = new File(getDataFolder(), "games");
-		if (!folder.exists() || folder.listFiles() == null) {
+		generate();
+	}
+
+	private void createDoors() {
+		exit = new ItemStack(Material.IRON_DOOR);
+		Optional.ofNullable(exit.getItemMeta())
+				.ifPresent(meta -> {
+					meta.setDisplayName("§r" + ChatColor.translateAlternateColorCodes('&', String.valueOf(getConfig().getString("door.name"))));
+					exit.setItemMeta(meta);
+				});
+	}
+
+	private void setupCommand() {
+		final AnnotatedCommand command = CommandManager.registerCommand(ParkourCommand.class, this);
+		command.setOnInsufficientPermissionsListener(sender -> sender.sendMessage(msg("noPerms", true)));
+		command.setOnUnknownSubCommandExecutionListener(sender -> sender.sendMessage(msg("wrongArg", true)));
+		command.addArgumentMapper("parkourGame", ParkourGame.class, parkourManager::getParkour, Fallback.ON_NULL);
+		command.addArgumentMapper("potion", PotionEffectType.class, PotionEffectType::getByName, Fallback.ON_NULL);
+		command.addTypeCompleter(ParkourGame.class, () -> parkourManager.getAllGames().stream()
+				.map(ParkourGame::getName)
+				.collect(Collectors.toList()));
+		command.addTypeCompleter(boolean.class, Arrays.asList("false", "true"));
+		command.addTypeCompleter(PotionEffectType.class, () -> Data.ALLOWED_EFFECTS.stream()
+				.map(PotionEffectType::getName)
+				.collect(Collectors.toList()));
+	}
+
+	private void setupDatabase() {
+		final boolean databaseEnabled = getConfig().getBoolean("database.enabled", false);
+		if (!databaseEnabled) {
+			System.out.println("[atsParkour] Database is disabled. In order to save records, enable it in config.");
 			return;
 		}
-		Stream.of(folder.listFiles())
-				.filter(File::isFile)
-				.filter(file -> file.getName().endsWith("json"))
-				.forEach(file -> {
-					final String name = file.getName().substring(0, file.getName().lastIndexOf('.'));
-					getServer().getLogger().log(Level.INFO, "[atsParkour] Loading parkour \"{0}\"", name);
-					try (final Reader reader = new FileReader(file)) {
-						final JSONTokener jsonTokener = new JSONTokener(reader);
-						final JSONObject jsonObject = new JSONObject(jsonTokener);
-						final ParkourGame parkourGame = jsonSerializer.readParkourGame(name, jsonObject);
-						ParkourManager.addParkour(parkourGame);
-						getServer().getLogger().log(Level.INFO, "[atsParkour] Loaded parkour \"{0}\" in world \"{1}\"", new String[]{parkourGame.getName(), parkourGame.getWorld().getName()});
-					} catch (final IOException e) {
-						e.printStackTrace();
-					}
-				});
-		getServer().getLogger().log(Level.INFO, "[atsParkour] Successfully loaded all parkours.");
+		try {
+			connection = createConnection();
+			connect();
+			System.out.println("[atsParkour] Database connection established.");
+		} catch (final SQLException ex) {
+			System.out.println("[atsParkour] An error occurred when trying to connect to database.");
+			connection = null;
+			ex.printStackTrace();
+		}
 	}
 
-	public Connection getConnection() {
-		return conn;
+	private Connection createConnection() throws SQLException {
+		final String url = getConfig().getString("database.url");
+		final String user = getConfig().getString("database.user");
+		final String pass = getConfig().getString("database.pass");
+		return DriverManager.getConnection("jdbc:mysql://" + url + "?autoReconnect=true&useSSL=false", user, pass);
+	}
+
+	private void connect() throws SQLException {
+		final String database = getConfig().getString("database.dbname");
+		try (final Statement stat = connection.createStatement()) {
+			stat.execute("CREATE DATABASE IF NOT EXISTS `" + database + "`;");
+			stat.execute("USE " + database + ";");
+			stat.execute("CREATE TABLE IF NOT EXISTS ats_parkour_records(id INT PRIMARY KEY AUTO_INCREMENT, date DATETIME, nick VARCHAR(64), parkour VARCHAR(64), time FLOAT);");
+		}
+	}
+
+	private void saveParkourLobby() {
+		try {
+			final File lobby = new File(getDataFolder(), "lobby.json");
+			if (!lobby.exists() && !lobby.createNewFile()) {
+				System.out.println("[atsParkour] An error occurred when trying to create lobby file");
+				return;
+			}
+			final PrintWriter printWriter = new PrintWriter(lobby);
+			printWriter.write(jsonSerializer.writeLocation(parkourManager.getLobbyLocation()).toString(4));
+			printWriter.close();
+			System.out.println("[atsParkour] Successfully saved lobby");
+		} catch (final IOException ex) {
+			System.out.println("[atsParkour] An error occurred when trying to save lobby");
+			ex.printStackTrace();
+		}
+	}
+
+	private void saveAllGames() {
+		try {
+			final File games = new File(getDataFolder(), "games.json");
+			if (!games.exists() && !games.createNewFile()) {
+				System.out.println("[atsParkour] An error occurred when trying to create games file");
+			}
+			final PrintWriter printWriter = new PrintWriter(games);
+			printWriter.write(jsonSerializer.writeParkourGames(parkourManager.getAllGames()).toString(4));
+			printWriter.close();
+			System.out.println("[atsParkour] Successfully saved " + parkourManager.getAllGames() + " games");
+		} catch (final IOException ex) {
+			System.out.println("[atsParkour] An error occurred when trying to save games");
+			ex.printStackTrace();
+		}
+	}
+
+	private void loadParkourLobby() {
+		final File lobby = new File(getDataFolder(), "lobby.json");
+		if (!lobby.exists()) {
+			return;
+		}
+		try (final Reader reader = new FileReader(lobby)) {
+			final JSONTokener jsonTokener = new JSONTokener(reader);
+			final JSONObject jsonObject = new JSONObject(jsonTokener);
+			parkourManager.setLobbyLocation(jsonSerializer.readLocation(jsonObject));
+			System.out.println("[atsParkour] Successfully loaded lobby");
+		} catch (final IOException ex) {
+			System.out.println("[atsParkour] An error occurred when trying to load lobby");
+			ex.printStackTrace();
+		}
+	}
+
+	private void loadAllParkourGames() {
+		final File games = new File(getDataFolder(), "games.json");
+		if (!games.exists()) {
+			System.out.println("[atsParkour] No games.json file found");
+			return;
+		}
+		try (final Reader reader = new FileReader(games)) {
+			final JSONTokener jsonTokener = new JSONTokener(reader);
+			final JSONArray jsonArray = new JSONArray(jsonTokener);
+			jsonSerializer.readParkourGames(jsonArray).forEach(parkourManager::addParkour);
+			System.out.printf("[atsParkour] Successfully loaded %d parkour games", parkourManager.getAllGames().size());
+		} catch (final IOException ex) {
+			System.out.println("[atsParkour] An error occurred when trying to load parkour");
+			ex.printStackTrace();
+		}
 	}
 
 	public Optional<FinancialProvider> getFinancialProvider() {
@@ -252,10 +319,9 @@ public class ParkourPlugin extends JavaPlugin {
 		messages.put("damageAllowed|dmg", msg("cmdDamage", false));
 		messages.put("effect|e", msg("cmdEffect", false));
 		messages.put("boat|b", msg("cmdBoats", false));
-		messages.put("fair", msg("cmdFair", false));
 		messages.put("enabled", msg("cmdEnabled", false));
 		messages.put("modifyInventory|eq", msg("cmdModifyInventory", false));
-		messages.put("bestRecord|br", msg("cmdBestRecord", false));
+		messages.put("recordsBlock|rb", msg("cmdRecordsBlock", false));
 		messages.put("teleportBlock|tb", msg("cmdTeleportBlock", false));
 		messages.put("teleport|tp", msg("cmdTeleport", false));
 		messages.put("fix", msg("cmdFix", false));
@@ -272,15 +338,21 @@ public class ParkourPlugin extends JavaPlugin {
 		messages.put("platinum", msg("cmdPlatinum", false));
 	}
 
-	ItemStack getExit() {
-		return exit;
+	private String replace(final String source, final ParkourRecord parkourRecord) {
+		final float time = parkourRecord.getTime();
+		final int minutes = (int) time / 60;
+		final int seconds = (int) time % 60;
+		final int milliseconds = Math.round((time % 1) * 100);
+		return source.replace("%NICK%", parkourRecord.getNick())
+				.replace("%MINUTES%", twoDigits(minutes))
+				.replace("%SECONDS%", twoDigits(seconds))
+				.replace("%MILLISECONDS%", twoDigits(milliseconds));
 	}
 
-	public ParkourListeners getListeners() {
-		return listeners;
-	}
-
-	public WorldEditPlugin getWorldEdit() {
-		return (WorldEditPlugin) getServer().getPluginManager().getPlugin("WorldEdit");
+	private String twoDigits(final int number) {
+		if (number < 10) {
+			return "0" + number;
+		}
+		return String.valueOf(number);
 	}
 }
