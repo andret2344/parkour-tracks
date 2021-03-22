@@ -216,7 +216,7 @@ error:
   invalid-name: '&cThis name is wrong.'
   invalid-selection: '&cIncorrect selection.'
   invalid-type: '&cIncorrect type.'
-  missing-checkpoint: '&cAt least one checkpoint is required.'
+  missing-checkpoint: '&cAt least one checkpoint is required.i'
   missing-lobby: '&cYou must set lobby up first.'
   missing-medals: '&cYou must set all medals up until you start the game.'
   missing-spawn: '&cThis game has no spawn. Set it up first.'
