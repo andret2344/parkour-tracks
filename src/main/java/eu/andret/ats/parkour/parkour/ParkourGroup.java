@@ -18,7 +18,7 @@ import java.util.List;
 
 @Getter
 @Setter
-@ToString
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public class ParkourGroup extends ParkourGame {
 	private final List<Parkour> parkours = new ArrayList<>();

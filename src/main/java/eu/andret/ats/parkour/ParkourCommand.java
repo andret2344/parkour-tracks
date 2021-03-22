@@ -593,6 +593,11 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		return parkourGame.toString();
 	}
 
+	@Fallback
+	public String info(final String parkourGame) {
+		return plugin.msg(M.Error.DEFAULT.invalidGame);
+	}
+
 	@Argument(permission = "ats.parkour.difficulty", description = "Shows parkour game difficulty")
 	public String difficulty(@Param("parkourGame") final ParkourGame parkourGame) {
 		return plugin.msg(M.Option.DIFFICULTY.get).replace(VALUE, String.valueOf(parkourGame.getOptions().getDifficulty()));
