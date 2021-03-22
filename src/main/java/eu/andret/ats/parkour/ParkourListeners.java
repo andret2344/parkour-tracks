@@ -450,6 +450,9 @@ public class ParkourListeners implements Listener {
 		final ParkourManager parkourManager = plugin.getParkourManager();
 		new ArrayList<>(parkourGame.getPlayers()).forEach(parkourPlayer -> {
 			plugin.getServer().getPluginManager().callEvent(new PlayerQuitGameEvent(parkourGame, parkourPlayer));
+			if (event.getGame().getOptions().isModifyInventory()) {
+				parkourPlayer.getPlayer().getInventory().setItem(8, new ItemStack(Material.AIR));
+			}
 			parkourManager.teleportToLobby(parkourPlayer);
 			parkourGame.getPlayers().remove(parkourPlayer);
 		});
