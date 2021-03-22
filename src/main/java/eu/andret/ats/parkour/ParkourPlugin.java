@@ -14,6 +14,7 @@ import eu.andret.ats.parkour.parkour.ParkourRecord;
 import eu.andret.ats.parkour.tasks.database.KeepAliveTask;
 import eu.andret.ats.parkour.util.Data;
 import eu.andret.ats.parkour.util.JSONSerializer;
+import eu.andret.ats.parkour.util.M;
 import lombok.Getter;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.ChatColor;
@@ -50,16 +51,17 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class ParkourPlugin extends JavaPlugin {
+	@Getter
+	private final Map<String, String> helpDescription = new LinkedHashMap<>();
+	private final YamlConfiguration messages = new YamlConfiguration();
+	private final YamlConfiguration commands = new YamlConfiguration();
+	private final Map<UUID, Integer> teleportCount = new HashMap<>();
+	private final Map<UUID, Integer> playerTimeCounters = new HashMap<>();
 	private Connection connection;
 	@Getter
 	private ItemStack exit;
 	@Getter
 	private final ParkourManager parkourManager = new ParkourManager();
-	@Getter
-	private final Map<String, String> messages = new LinkedHashMap<>();
-	private final YamlConfiguration yamlConfiguration = new YamlConfiguration();
-	private final Map<UUID, Integer> teleportCount = new HashMap<>();
-	private final Map<UUID, Integer> playerTimeCounters = new HashMap<>();
 
 	private final JSONSerializer jsonSerializer = new JSONSerializer(this);
 
@@ -97,20 +99,15 @@ public class ParkourPlugin extends JavaPlugin {
 		getServer().getScheduler().cancelTasks(this);
 	}
 
-	public String msg(final String path, final boolean isError) {
-		final String here;
-		if (yamlConfiguration.getString("player." + path) != null) {
-			here = "player.";
-		} else if (yamlConfiguration.getString("admin." + path) != null) {
-			here = "admin.";
-		} else {
-			throw new NullPointerException("Invalid message: " + path + " (should be error: " + isError + ")");
-		}
-		String result = "";
-		if (isError) {
-			result += yamlConfiguration.getString(here + "errorMsg");
-		}
-		return (result + yamlConfiguration.getString(here + path)).replace('&', '\u00A7');
+	public String msg(final String path) {
+		return Optional.ofNullable(path)
+				.map(messages::getString)
+				.map(text -> ChatColor.translateAlternateColorCodes('&', text))
+				.orElse(null);
+	}
+
+	public String msg(final M.Message message) {
+		return commands.getString(message.toString());
 	}
 
 	public Optional<Connection> getConnection() {
@@ -122,7 +119,7 @@ public class ParkourPlugin extends JavaPlugin {
 	}
 
 	public void updateSign(final ParkourRecord parkourRecord) {
-		Optional.of(parkourRecord.getParkourGame())
+		Optional.of(parkourRecord.getGame())
 				.map(ParkourGame::getRecordsBlock)
 				.map(Location::getBlock)
 				.map(Block::getState)
@@ -131,7 +128,7 @@ public class ParkourPlugin extends JavaPlugin {
 				.ifPresent(sign -> {
 					IntStream.of(0, 1, 2, 3).forEach(x -> {
 						final String lineText = getConfig().getString("recordSign.line" + (x + 1));
-						sign.setLine(x, replace(String.valueOf(lineText), parkourRecord).replace('&', '\u00A7'));
+						sign.setLine(x, ChatColor.translateAlternateColorCodes('&', replace(String.valueOf(lineText), parkourRecord)));
 					});
 					sign.update();
 				});
@@ -147,10 +144,12 @@ public class ParkourPlugin extends JavaPlugin {
 
 	private void setupConfigFiles() {
 		saveDefaultConfig();
+		saveResource("commands.yml", false);
 		saveResource("scoreboard.yml", false);
 		saveResource("messages.yml", false);
 		try {
-			yamlConfiguration.load(new File(getDataFolder(), "messages.yml"));
+			commands.load(new File(getDataFolder(), "commands.yml"));
+			messages.load(new File(getDataFolder(), "messages.yml"));
 		} catch (final IOException | InvalidConfigurationException ex) {
 			System.out.println("[atsParkour] An error occurred when loading messages");
 			ex.printStackTrace();
@@ -169,8 +168,9 @@ public class ParkourPlugin extends JavaPlugin {
 
 	private void setupCommand() {
 		final AnnotatedCommand command = CommandManager.registerCommand(ParkourCommand.class, this);
-		command.setOnInsufficientPermissionsListener(sender -> sender.sendMessage(msg("noPerms", true)));
-		command.setOnUnknownSubCommandExecutionListener(sender -> sender.sendMessage(msg("wrongArg", true)));
+		command.setOnInsufficientPermissionsListener(sender -> sender.sendMessage(msg(M.Error.DEFAULT.insufficientPermissions)));
+		command.setOnUnknownSubCommandExecutionListener(sender -> sender.sendMessage(msg(M.Error.DEFAULT.invalidArgument)));
+		command.getOptions().setAutoTranslateColors(true);
 		command.addArgumentMapper("parkourGame", ParkourGame.class, parkourManager::getParkour, Fallback.ON_NULL);
 		command.addArgumentMapper("potion", PotionEffectType.class, PotionEffectType::getByName, Fallback.ON_NULL);
 		command.addTypeCompleter(ParkourGame.class, () -> parkourManager.getAllGames().stream()
@@ -282,52 +282,52 @@ public class ParkourPlugin extends JavaPlugin {
 	}
 
 	private void generate() {
-		messages.put("help|?", msg("cmdHelp", false));
-		messages.put("lobby", msg("cmdLobby", false));
-		messages.put("create|c", msg("cmdCreate", false));
-		messages.put("remove|r", msg("cmdRemove", false));
-		messages.put("info", msg("cmdInfo", false));
-		messages.put("setSpawn|ss", msg("cmdSetSpawn", false));
-		messages.put("recreate|rc", msg("cmdRecreate", false));
-		messages.put("start|s", msg("cmdStart", false));
-		messages.put("stop", msg("cmdStop", false));
-		messages.put("addCheckpoint|ac", msg("cmdAddCheckpoint", false));
-		messages.put("setCheckpoint|sc", msg("cmdSetCheckpoint", false));
-		messages.put("addWall|aw", msg("cmdAddWall", false));
-		messages.put("setWall|sw", msg("cmdSetWall", false));
-		messages.put("list|ls", msg("cmdList", false));
-		messages.put("ignore|i", msg("cmdIgnore", false));
-		messages.put("reload|rl", msg("cmdReload", false));
-		messages.put("sprintForced|sp", msg("cmdSprintForced", false));
-		messages.put("alwaysSpawn|as", msg("cmdAlwaysSpawn", false));
-		messages.put("recordCounting|cr", msg("cmdRecordCounting", false));
-		messages.put("damageAllowed|dmg", msg("cmdDamage", false));
-		messages.put("effect|e", msg("cmdEffect", false));
-		messages.put("boat|b", msg("cmdBoats", false));
-		messages.put("enabled", msg("cmdEnabled", false));
-		messages.put("modifyInventory|eq", msg("cmdModifyInventory", false));
-		messages.put("recordsBlock|rb", msg("cmdRecordsBlock", false));
-		messages.put("teleportBlock|tb", msg("cmdTeleportBlock", false));
-		messages.put("teleport|tp", msg("cmdTeleport", false));
-		messages.put("fix", msg("cmdFix", false));
-		messages.put("color", msg("cmdColor", false));
-		messages.put("difficulty|d", msg("cmdDifficulty", false));
-		messages.put("available|a", msg("cmdAvailable", false));
-		messages.put("type", msg("cmdType", false));
-		messages.put("displayName|dn", msg("cmdDisplayName", false));
-		messages.put("authors", msg("cmdAuthors", false));
-		messages.put("vip", msg("cmdVip", false));
-		messages.put("bronze", msg("cmdBronze", false));
-		messages.put("silver", msg("cmdSilver", false));
-		messages.put("gold", msg("cmdGold", false));
-		messages.put("platinum", msg("cmdPlatinum", false));
+		helpDescription.put("help|?", msg(M.List.HELP.help));
+		helpDescription.put("lobby", msg(M.General.LOBBY.help));
+		helpDescription.put("create|c", msg(M.Executive.CREATE.help));
+		helpDescription.put("remove|r", msg(M.Executive.REMOVE.help));
+		helpDescription.put("rename|rn", msg(M.Executive.RENAME.help));
+		helpDescription.put("info", msg(M.Executive.INFO.help));
+		helpDescription.put("setSpawn|ss", msg(M.Executive.SPAWN.help));
+		helpDescription.put("recreate", msg(M.Executive.RECREATE.help));
+		helpDescription.put("start", msg(M.Executive.START.help));
+		helpDescription.put("stop", msg(M.Executive.STOP.help));
+		helpDescription.put("addCheckpoint|ac", msg(M.Region.Checkpoint.ADD.help));
+		helpDescription.put("setCheckpoint|sc", msg(M.Region.Checkpoint.SET.help));
+		helpDescription.put("addWall|aw", msg(M.Region.Wall.ADD.help));
+		helpDescription.put("setWall|sw", msg(M.Region.Wall.SET.help));
+		helpDescription.put("list|ls", msg(M.List.GAMES.help));
+		helpDescription.put("ignore|i", msg(M.General.IGNORE.help));
+		helpDescription.put("sprintForced", msg(M.Option.SPRINT_FORCED.help));
+		helpDescription.put("alwaysSpawn", msg(M.Option.ALWAYS_SPAWN.help));
+		helpDescription.put("savingResults", msg(M.Option.SAVING_RESULTS.help));
+		helpDescription.put("damageAllowed", msg(M.Option.DAMAGE_ALLOWED.help));
+		helpDescription.put("effects", msg(M.List.EFFECT.help));
+		helpDescription.put("setEffect", msg(M.Amplifier.EFFECT.help));
+		helpDescription.put("boat", msg(M.Option.BOAT.help));
+		helpDescription.put("enabled", msg(M.Option.ENABLED.help));
+		helpDescription.put("modifyInventory", msg(M.Option.MODIFY_INVENTORY.help));
+		helpDescription.put("recordsBlock", msg(M.Executive.RECORDS_BLOCK.help));
+		helpDescription.put("teleportBlock", msg(M.Executive.TELEPORT_BLOCK.help));
+		helpDescription.put("teleport|tp", msg(M.Executive.TELEPORT.help));
+		helpDescription.put("fix", msg(M.General.FIX.help));
+		helpDescription.put("color", msg(M.Option.COLOR.help));
+		helpDescription.put("difficulty", msg(M.Option.DIFFICULTY.help));
+		helpDescription.put("type", msg(M.Option.TYPE.help));
+		helpDescription.put("displayName", msg(M.Parkour.DISPLAY_NAME.help));
+		helpDescription.put("authors", msg(M.Parkour.AUTHORS.help));
+		helpDescription.put("vip", msg(M.Option.VIP_ONLY.help));
+		helpDescription.put("bronze", msg(M.Medal.BRONZE.help));
+		helpDescription.put("silver", msg(M.Medal.SILVER.help));
+		helpDescription.put("gold", msg(M.Medal.GOLD.help));
+		helpDescription.put("platinum", msg(M.Medal.PLATINUM.help));
 	}
 
 	private String replace(final String source, final ParkourRecord parkourRecord) {
-		final float time = parkourRecord.getTime();
+		final double time = parkourRecord.getTime();
 		final int minutes = (int) time / 60;
 		final int seconds = (int) time % 60;
-		final int milliseconds = Math.round((time % 1) * 100);
+		final int milliseconds = (int) Math.round((time % 1) * 100);
 		return source.replace("%NICK%", parkourRecord.getNick())
 				.replace("%MINUTES%", twoDigits(minutes))
 				.replace("%SECONDS%", twoDigits(seconds))

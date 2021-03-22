@@ -19,17 +19,17 @@ public class PlayerTeleportBackEvent extends AbstractParkourPlayerEvent {
 	/**
 	 * The checkpoint the player was teleported to.
 	 */
-	DirectionalRegion checkpointRegion;
+	DirectionalRegion region;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param parkourGame The game that player is in.
-	 * @param parkourPlayer The player that triggers the event.
-	 * @param checkpointRegion The checkpoint the player is teleported to.
+	 * @param game The game that player is in.
+	 * @param player The player that triggers the event.
+	 * @param region The checkpoint the player is teleported to.
 	 */
-	public PlayerTeleportBackEvent(final ParkourGame parkourGame, final ParkourPlayer parkourPlayer, final DirectionalRegion checkpointRegion) {
-		super(parkourGame, parkourPlayer);
-		this.checkpointRegion = checkpointRegion;
+	public PlayerTeleportBackEvent(final ParkourGame game, final ParkourPlayer player, final DirectionalRegion region) {
+		super(game, player);
+		this.region = region;
 	}
 }

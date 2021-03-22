@@ -9,10 +9,10 @@ import eu.andret.ats.parkour.parkour.ParkourGame;
 import java.sql.Connection;
 
 public abstract class AbstractParkourTask extends AbstractTask {
-	protected final ParkourGame parkourGame;
+	protected final ParkourGame game;
 
-	protected AbstractParkourTask(final Connection connection, final ParkourGame parkourGame) {
+	protected AbstractParkourTask(final Connection connection, final ParkourGame game) {
 		super(connection);
-		this.parkourGame = parkourGame;
+		this.game = game;
 	}
 }

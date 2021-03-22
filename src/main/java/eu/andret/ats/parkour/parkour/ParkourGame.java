@@ -13,6 +13,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
+import lombok.ToString;
 import org.bukkit.Bukkit;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
@@ -31,11 +32,12 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 @Data
+@ToString
 public abstract class ParkourGame implements Comparable<ParkourGame> {
 	private boolean running;
 	private String name;
 	private World world;
-	private BasicRegion gameRegion;
+	private BasicRegion region;
 	private Location recordsBlock;
 	private Location teleportBlock;
 	private DirectionalRegion spawn;
@@ -64,15 +66,13 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 		@Builder.Default
 		private boolean alwaysSpawn = false;
 		@Builder.Default
-		private boolean recordsCounting = true;
+		private boolean savingResults = true;
 		@Builder.Default
 		private boolean damageAllowed = false;
 		@Builder.Default
 		private boolean boat = false;
 		@Builder.Default
 		private boolean modifyInventory = true;
-		@Builder.Default
-		private boolean available = false;
 		@Builder.Default
 		private boolean vipOnly = false;
 		@Builder.Default
@@ -121,15 +121,15 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 		}
 	}
 
-	protected ParkourGame(final String name, final BasicRegion gameRegion, final World world) {
+	protected ParkourGame(final String name, final BasicRegion region, final World world) {
 		this.name = displayName = name;
-		this.gameRegion = gameRegion;
+		this.region = region;
 		this.world = world;
 	}
 
 	public List<BasicRegion> getAllRegions() {
 		final List<BasicRegion> arr = new ArrayList<>();
-		arr.add(gameRegion);
+		arr.add(region);
 		arr.add(spawn);
 		arr.addAll(walls);
 		arr.addAll(checkpoints);

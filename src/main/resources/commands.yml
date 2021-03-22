@@ -1,0 +1,226 @@
+general:
+  fix:
+    help: '&eFixes parkours.'
+    success: '&aSuccessfully fixed all available parkours signs.'
+  ignore:
+    help: '&eTurn on or off parkour games interaction.'
+    success: '&aYour ignoring has been switched to &6%VALUE%&a.'
+  lobby:
+    help: '&eSet lobby location.'
+    success: '&aSuccessfully set lobby up to coords &6%COORD_X%&a, &6%COORD_Y%&a, &6%COORD_Z%&a.'
+
+parkour:
+  authors:
+    help: '&eShow or set authors of parkour.'
+    usage: '&cCorrect usage: /parkour authors <name> [<add|remove> <authors>]'
+    get: '&bCurrent authors are set to &6%VALUE%&b.'
+    set: '&aSuccessfully set authors to &6%VALUE%&a.'
+  display-name:
+    help: '&eShow or set parkour display name.'
+    usage: '&cCorrect usage: /parkour displayName <name> [value]'
+    get: '&bCurrent display name is set to &6%VALUE%&b.'
+    set: '&aSuccessfully set display name to &6%VALUE%&a.'
+
+executive:
+  create:
+    help: '&eCreate new parkour game.'
+    usage: '&cCorrect usage: /parkour create <name>'
+    success: '&aSuccessfully created &6%NAME%&b game.'
+  info:
+    help: '&eShows information about specific parkour game.'
+    usage: '&cCorrect usage: /parkour info <name>'
+    success: '%VALUE%'
+  recreate:
+    help: '&eSet new region for a parkour game.'
+    usage: '&cCorrect usage: /parkour recreate <name>'
+    success: '&aSuccessfully recreated parkour game.'
+  records-block:
+    help: '&eSet best record sign location.'
+    usage: '&cCorrect usage: /parkour recordsBlock <name>'
+    success: '&aSuccessfully set best record location up to coords &6%COORD_X%&a, &6%COORD_Y%&a, &6%COORD_Z%&a.'
+  remove:
+    help: '&eRemove an existing parkour game.'
+    usage: '&cCorrect usage: /parkour remove <name>'
+    success: '&aSuccessfully removed game &6%NAME%&a.'
+  rename:
+    help: '&eSets a new parkour name.'
+    usage: '&cCorrect usage: /parkour rename <name> <new>'
+    success: '&aSuccessfully renamed &6%OLD_NAME%&a game to &6%NEW_NAME%&a.'
+  spawn:
+    help: '&eSet spawn for the game.'
+    usage: '&cCorrect usage: /parkour setSpawn <name>'
+    success: '&aSuccessfully set up spawn region.'
+  start:
+    help: '&eStart a parkour game.'
+    usage: '&cCorrect usage: /parkour start <name>'
+    success: '&aThe game &6%NAME%&a has been started.'
+  stop:
+    help: '&eStop a parkour game.'
+    usage: '&cCorrect usage: /parkour stop <name>'
+    success: '&aThe game &6%NAME%&b has been stopped.'
+  teleport:
+    help: '&eTeleport sender to spawn of a parkour'
+    usage: '&cCorrect usage: /parkour teleport <name>'
+    success: '&aTeleported to &6%NAME%&a.'
+  teleport-block:
+    help: '&eSet a block, which interact teleport player to spawn of a parkour'
+    usage: '&cCorrect usage: /parkour teleportBlock <name>'
+    success: '&aSuccessfully set up teleport block of &6%PARKOUR%&b parkour.'
+
+amplifier:
+  effect:
+    help: '&eSets potion effect applied on parkour game with specified amplifier'
+    usage: '&cCorrect usage: /parkour effect <name> [effect] [value]'
+    added: '&aSuccessfully set &6%EFFECT%&a effect to &6%AMPLIFIER%&a.'
+    removed: '&bEffect &6%EFFECT%&b has just been removed from game.'
+
+region:
+  checkpoint:
+    add:
+      help: '&eAdd checkpoint to parkour game.'
+      usage: '&cCorrect usage: /parkour addCheckpoint <name>'
+      success: '&aSuccessfully added checkpoint &6%ID%&a.'
+    set:
+      help: '&eReplace a checkpoint of SpedRun game.'
+      usage: '&cCorrect usage: /parkour setCheckpoint <id> <name>'
+      success: '&aSuccessfully set checkpoint &6%ID%&a.'
+  wall:
+    add:
+      help: '&eAdd wall to parkour game.'
+      usage: '&cCorrect usage: /parkour addWall <name>'
+      success: '&aSuccessfully added wall &6%ID%&a.'
+    set:
+      help: '&eReplace a wall of parkour game.'
+      usage: '&cCorrect usage: /parkour setWall <id> <name>'
+      success: '&aSuccessfully set wall &6%ID%&a.'
+
+option:
+  always-spawn:
+    help: '&eCheck or set always spawn option.'
+    usage: '&cCorrect usage: /parkour alwaysSpawn <name> [value]'
+    get: '&bCurrent always spawn option is set to &6%VALUE%&b.'
+    set: '&aSuccessfully set always spawn option to &6%VALUE%&a.'
+  boat:
+    help: '&eShow or set in-boat spawning.'
+    usage: '&cCorrect usage: /parkour boat <name> [value]'
+    get: '&bCurrent in-boat spawning is set to &6%VALUE%&b.'
+    set: '&aSuccessfully set in-boat spawning to &6%VALUE%&a.'
+  color:
+    help: '&eShow or set color of parkour.'
+    usage: '&cCorrect usage: /parkour color <name> [value]'
+    get: '&bCurrent color is set to &6%VALUE%&b.'
+    set: '&aSuccessfully set up parkour color to &6%VALUE%&a.'
+  damage-allowed:
+    help: '&eShow or set if damage is allowed during parkour.'
+    usage: '&cCorrect usage: /parkour damageAllowed <name> [value]'
+    get: '&bCurrent state of damage allowed is set to &6%VALUE%&a.'
+    set: '&aSuccessfully set state of damage allowed to &6%VALUE%&b.'
+  difficulty:
+    help: '&eShow or set parkour difficulty level.'
+    usage: '&cCorrect usage: /parkour difficulty <name> [value]'
+    get: '&bCurrent difficulty level is set to &6%VALUE%&b.'
+    set: '&aSuccessfully set difficulty level to &6%VALUE%&a.'
+  enabled:
+    help: '&eShow or set ability to use the parkour.'
+    usage: '&cCorrect usage: /parkour enabled <name> [value]'
+    get: '&bCurrent ability to use the parkour is set to &6%VALUE%&b.'
+    set: '&aSuccessfully set ability to use the parkour to &6%VALUE%&a.'
+  modify-inventory:
+    help: '&eTurn inventory modifying on or off.'
+    usage: '&cCorrect usage: /parkour modifyInventory <name> [value]'
+    get: '&bCurrent inventory modifying is set to &6%VALUE%&b.'
+    set: '&aSuccessfully set inventory modifying to &6%VALUE%&a.'
+  saving-results:
+    help: '&eShow or set saving records to database.'
+    usage: '&cCorrect usage: /parkour savingResults <name> [value]'
+    get: '&bCurrent saving results option is set to &6%VALUE%&b.'
+    set: '&aSuccessfully set saving results option to &6%VALUE%&a.'
+  sprint-forced:
+    help: '&eShow or set forced sprint option.'
+    usage: '&cCorrect usage: /parkour sprint <name> [value]'
+    get: '&bCurrent forced sprint option is set to &6%VALUE%&b.'
+    set: '&aSuccessfully set forced sprint option to &6%VALUE%&a.'
+  type:
+    help: '&eShow or set type of parkour.'
+    usage: '&cCorrect usage: /parkour type <name> [value]'
+    get: '&bCurrent type is set to &6%VALUE%&b.'
+    set: '&aSuccessfully set type to &6%VALUE%&a.'
+  vip-only:
+    help: '&eShow or set vip rank requirement of parkour.'
+    usage: '&cCorrect usage: /parkour vip <name> [value]'
+    get: '&bCurrent vip rank requirement is set to &6%VALUE%&b.'
+    set: '&aSuccessfully set up parkour vip rank requirement to &6%VALUE%&a.'
+
+medal:
+  bronze:
+    help: '&eShow or set bronze medal time.'
+    usage: '&cCorrect usage: /parkour bronze <name> [value]'
+    get: '&bCurrent bronze medal time is set to &6%VALUE%&b.'
+    set: '&aSuccessfully set bronze medal time to &6%VALUE%&a.'
+  silver:
+    help: '&eShow or set silver medal time.'
+    usage: '&cCorrect usage: /parkour silver <name> [value]'
+    get: '&bCurrent silver medal time is set to &6%VALUE%&b.'
+    set: '&aSuccessfully set silver medal time to &6%VALUE%&a.'
+  gold:
+    help: '&eShow or set gold medal time.'
+    usage: '&cCorrect usage: /parkour gold <name> [value]'
+    get: '&bCurrent gold medal time is set to &6%VALUE%&b.'
+    set: '&aSuccessfully set gold medal time to &6%VALUE%&a.'
+  platinum:
+    help: '&eShow or set platinum medal time.'
+    usage: '&cCorrect usage: /parkour platinum <name> [value]'
+    get: '&bCurrent platinum medal time is set to &6%VALUE%&b.'
+    set: '&aSuccessfully set platinum medal time to &6%VALUE%&a.'
+
+list:
+  effect:
+    help: '&eShows currently applied effects'
+    usage: '&cCorrect usage: /parkour effects <name>'
+    empty: '&bThis parkour has no applied effects'
+    header: '&bParkour has following effects applied:'
+    item: '&b- &6%EFFECT%&b: &6%AMPLIFIER%&b'
+  top:
+    help: '&eShows top times on specified parkour game'
+    usage: '&cCorrect usage: /parkour top <name>'
+    empty: '&bNobody has passwd this parkour yet.'
+    header: '&b=== RECORDS ==='
+    item: '&b%NUMBER%. &6%PLAYER%&b - &6%TIME%&b'
+  game:
+    help: '&eShow all games'
+    usage: '&cCorrect usage: /parkour list'
+    empty: '&bThere are no created parkour games.'
+    header: '&bThere are %COUNT% parkour games.'
+    item: '&b%ID%. &6%NAME%&b %RUNNING%'
+  help:
+    help: '&eShow help'
+    usage: '&cCorrect usage: /parkour help [page]'
+    empty: '&bNo commands.'
+    header: '&bShowing help page %PAGE% of %PAGES%.'
+    item: '&2/parkour &6%ARGUMENT%&r - %DESCRIPTION%'
+
+misc:
+  error-prefix: '&4Error: &r'
+
+error:
+  already-exists: '&cGame with name "%NAME%" already exists.'
+  already-started: '&cThis game has been already started.'
+  already-stopped: '&cThis game has been already stopped.'
+  insufficient-permissions: '&cSorry, you do not have permissions to do that.'
+  invalid-argument: '&cWrong argument.'
+  invalid-color: '&cColor "%VALUE%" is invalid. Use dye color.'
+  invalid-effect: '&cEffect invalid or disallowed.'
+  invalid-game: '&cGame with this name does not exists.'
+  invalid-name: '&cThis name is wrong.'
+  invalid-selection: '&cIncorrect selection.'
+  invalid-type: '&cIncorrect type.'
+  missing-checkpoint: '&cAt least one checkpoint is required.'
+  missing-lobby: '&cYou must set lobby up first.'
+  missing-medals: '&cYou must set all medals up until you start the game.'
+  missing-spawn: '&cThis game has no spawn. Set it up first.'
+  negative-number: '&cNumber must be positive. (more than 0)'
+  not-connected: '&cDatabase is inactive, did nothing.'
+  not-number: '&cThis is not a number.'
+  not-sign: '&cThis block is not a sign.'
+  not-vip: '&cYou are not a vip.'
+  too-large-number: '&cNumber is too large.'
