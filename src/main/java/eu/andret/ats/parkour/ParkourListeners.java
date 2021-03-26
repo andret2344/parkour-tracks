@@ -61,6 +61,7 @@ import org.bukkit.potion.PotionEffect;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -234,13 +235,17 @@ public class ParkourListeners implements Listener {
 			return;
 		}
 		final ParkourCountdown task = new ParkourCountdown(5,
-				() -> player.sendMessage(plugin.msg("teleportingTime").replace("%SECONDS%", "5")),
+				() -> {
+					final Map<UUID, Integer> timeCounter = plugin.getTimeCounter();
+					plugin.getServer().getScheduler().cancelTask(timeCounter.get(uniqueId));
+					timeCounter.remove(uniqueId);
+					player.sendMessage(plugin.msg("teleportingTime").replace("%SECONDS%", "5"));
+				},
 				i -> player.sendMessage(plugin.msg("counting").replace("%NUMBER%", String.valueOf(i))),
 				() -> {
-					plugin.getServer().getScheduler().cancelTask(plugin.getTeleportCountdown().get(uniqueId));
-					plugin.getServer().getScheduler().cancelTask(plugin.getTimeCounter().get(uniqueId));
-					plugin.getTeleportCountdown().remove(uniqueId);
-					plugin.getTimeCounter().remove(uniqueId);
+					final Map<UUID, Integer> teleportCountdown = plugin.getTeleportCountdown();
+					plugin.getServer().getScheduler().cancelTask(teleportCountdown.get(uniqueId));
+					teleportCountdown.remove(uniqueId);
 					plugin.getParkourManager().teleportToLobby(parkourPlayer);
 					plugin.getServer().getPluginManager().callEvent(new PlayerQuitGameEvent(event.getGame(), event.getPlayer()));
 				});
