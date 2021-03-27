@@ -105,7 +105,7 @@ public final class ParkourPlugin extends JavaPlugin {
 					throw new UnsupportedOperationException("An error occurred when trying to create backup folder!");
 				}
 				final LocalDateTime now = LocalDateTime.now();
-				final String name = String.format("backup_%d%d%d_%d%d%d.json", now.getYear(), now.getMonth().getValue(), now.getDayOfMonth(), now.getHour(), now.getMinute(), now.getSecond());
+				final String name = String.format("backup_%02d%02d%02d_%02d%02d%02d.json", now.getYear(), now.getMonth().getValue(), now.getDayOfMonth(), now.getHour(), now.getMinute(), now.getSecond());
 				final File target = new File(backups.getPath(), name);
 				try {
 					final PrintWriter printWriter = new PrintWriter(target);
