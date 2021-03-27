@@ -15,8 +15,8 @@ import eu.andret.ats.parkour.parkour.ParkourManager;
 import eu.andret.ats.parkour.parkour.ParkourRecord;
 import eu.andret.ats.parkour.tasks.database.KeepAliveTask;
 import eu.andret.ats.parkour.util.Data;
-import eu.andret.ats.parkour.util.JSONSerializer;
 import eu.andret.ats.parkour.util.M;
+import eu.andret.ats.parkour.util.serializer.JSONSerializer;
 import lombok.Getter;
 import lombok.Setter;
 import org.bstats.bukkit.Metrics;
@@ -31,11 +31,11 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffectType;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -44,6 +44,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -65,19 +66,18 @@ public final class ParkourPlugin extends JavaPlugin {
 	private final Map<UUID, Integer> timeCounter = new HashMap<>();
 	private Connection connection;
 	private ItemStack exitItem;
+	private final JSONSerializer jsonSerializer = new JSONSerializer(this);
 	@Getter
-	private final ParkourManager parkourManager = new ParkourManager();
+	private final ParkourManager<JSONObject> parkourManager = new ParkourManager<>(jsonSerializer);
 	@Setter
 	private FinancialProvider financialProvider;
 	@Setter
 	private RankProvider rankProvider;
 
-	private final JSONSerializer jsonSerializer = new JSONSerializer(this);
-
 	@Override
 	public void onEnable() {
 		if (getWorldEdit() == null) {
-			System.out.println("[atsParkour] CRITICAL! Cannot find WorldEdit plugin! Disabling...");
+			System.out.println("CRITICAL! Cannot find WorldEdit plugin! Disabling...");
 			setEnabled(false);
 			return;
 		}
@@ -86,8 +86,7 @@ public final class ParkourPlugin extends JavaPlugin {
 		getServer().getPluginManager().registerEvents(new ParkourListeners(this), this);
 		setupCommand();
 		setupDatabase();
-		loadParkourLobby();
-		loadAllParkourGames();
+		load();
 		parkourManager.getAllGames().stream()
 				.filter(Objects::nonNull)
 				.forEach(p -> getServer().getOnlinePlayers().stream()
@@ -98,13 +97,34 @@ public final class ParkourPlugin extends JavaPlugin {
 				.map(KeepAliveTask::new)
 				.ifPresent(keepAliveTask -> getServer().getScheduler().scheduleSyncRepeatingTask(this, keepAliveTask, 20_000, 20_000));
 
+		final long backupFrequency = getConfig().getLong("backup-frequency", 1440L);
+		if (backupFrequency > 0) {
+			getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
+				final File backups = new File(getDataFolder(), "backups");
+				if (!backups.exists() && !backups.mkdirs()) {
+					throw new UnsupportedOperationException("An error occurred when trying to create backup folder!");
+				}
+				final LocalDateTime now = LocalDateTime.now();
+				final String name = String.format("backup_%d%d%d_%d%d%d.json", now.getYear(), now.getMonth().getValue(), now.getDayOfMonth(), now.getHour(), now.getMinute(), now.getSecond());
+				final File target = new File(backups.getPath(), name);
+				try {
+					final PrintWriter printWriter = new PrintWriter(target);
+					printWriter.write(parkourManager.serialize().toString(4));
+					printWriter.close();
+					System.out.println("Successfully created \"backups/" + name + "\" file!");
+				} catch (final FileNotFoundException ex) {
+					System.out.println("An error occurred when trying to backup parkours!");
+					ex.printStackTrace();
+				}
+			}, 6000, 1200L * backupFrequency);
+		}
+
 		new Metrics(this, 10700);
 	}
 
 	@Override
 	public void onDisable() {
-		saveParkourLobby();
-		saveAllGames();
+		save();
 		getServer().getScheduler().cancelTasks(this);
 	}
 
@@ -164,7 +184,7 @@ public final class ParkourPlugin extends JavaPlugin {
 			commands.load(new File(getDataFolder(), "commands.yml"));
 			messages.load(new File(getDataFolder(), "messages.yml"));
 		} catch (final IOException | InvalidConfigurationException ex) {
-			System.out.println("[atsParkour] An error occurred when loading messages");
+			System.out.println("An error occurred when loading messages");
 			ex.printStackTrace();
 		}
 		generate();
@@ -174,7 +194,10 @@ public final class ParkourPlugin extends JavaPlugin {
 		final ItemStack result = new ItemStack(Material.IRON_DOOR);
 		Optional.ofNullable(result.getItemMeta())
 				.ifPresent(meta -> {
-					meta.setDisplayName("§r" + ChatColor.translateAlternateColorCodes('&', String.valueOf(getConfig().getString("door.name"))));
+					meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&r" + getConfig().getString("door.name")));
+					meta.setLore(getConfig().getStringList("door.lore").stream()
+							.map(line -> ChatColor.translateAlternateColorCodes('&', line))
+							.collect(Collectors.toList()));
 					result.setItemMeta(meta);
 				});
 		return result;
@@ -203,29 +226,29 @@ public final class ParkourPlugin extends JavaPlugin {
 	private void setupDatabase() {
 		final boolean databaseEnabled = getConfig().getBoolean("database.enabled", false);
 		if (!databaseEnabled) {
-			System.out.println("[atsParkour] Database is disabled. In order to save records, enable it in config.");
+			System.out.println("Database is disabled. In order to save records, enable it in config.");
 			return;
 		}
 		try {
 			connection = createConnection();
 			connect();
-			System.out.println("[atsParkour] Database connection established.");
+			System.out.println("Database connection established.");
 		} catch (final SQLException ex) {
-			System.out.println("[atsParkour] An error occurred when trying to connect to database.");
+			System.out.println("An error occurred when trying to connect to database.");
 			connection = null;
 			ex.printStackTrace();
 		}
 	}
 
 	private Connection createConnection() throws SQLException {
-		final String url = getConfig().getString("database.url");
-		final String user = getConfig().getString("database.user");
-		final String pass = getConfig().getString("database.pass");
+		final String url = getConfig().getString("database.url", "localhost");
+		final String user = getConfig().getString("database.user", "root");
+		final String pass = getConfig().getString("database.pass", "");
 		return DriverManager.getConnection("jdbc:mysql://" + url + "?autoReconnect=true&useSSL=false", user, pass);
 	}
 
 	private void connect() throws SQLException {
-		final String database = getConfig().getString("database.dbname");
+		final String database = getConfig().getString("database.dbname", "ats_parkour");
 		try (final Statement stat = connection.createStatement()) {
 			stat.execute("CREATE DATABASE IF NOT EXISTS `" + database + "`;");
 			stat.execute("USE " + database + ";");
@@ -233,68 +256,35 @@ public final class ParkourPlugin extends JavaPlugin {
 		}
 	}
 
-	private void saveParkourLobby() {
+	private void save() {
 		try {
-			final File lobby = new File(getDataFolder(), "lobby.json");
+			final File lobby = new File(getDataFolder(), "setting.json");
 			if (!lobby.exists() && !lobby.createNewFile()) {
-				System.out.println("[atsParkour] An error occurred when trying to create lobby file");
+				System.out.println("An error occurred when trying to create parkour setting file");
 				return;
 			}
 			final PrintWriter printWriter = new PrintWriter(lobby);
-			printWriter.write(jsonSerializer.writeLocation(parkourManager.getLobbyLocation()).toString(4));
+			printWriter.write(parkourManager.serialize().toString(4));
 			printWriter.close();
-			System.out.println("[atsParkour] Successfully saved lobby");
+			System.out.println("Successfully saved parkour setting");
 		} catch (final IOException ex) {
-			System.out.println("[atsParkour] An error occurred when trying to save lobby");
+			System.out.println("An error occurred when trying to save parkour setting");
 			ex.printStackTrace();
 		}
 	}
 
-	private void saveAllGames() {
-		try {
-			final File games = new File(getDataFolder(), "games.json");
-			if (!games.exists() && !games.createNewFile()) {
-				System.out.println("[atsParkour] An error occurred when trying to create games file");
-			}
-			final PrintWriter printWriter = new PrintWriter(games);
-			printWriter.write(jsonSerializer.writeParkourGames(parkourManager.getAllGames()).toString(4));
-			printWriter.close();
-			System.out.printf("[atsParkour] Successfully saved %d parkour games", parkourManager.getAllGames().size());
-		} catch (final IOException ex) {
-			System.out.println("[atsParkour] An error occurred when trying to save games");
-			ex.printStackTrace();
-		}
-	}
-
-	private void loadParkourLobby() {
-		final File lobby = new File(getDataFolder(), "lobby.json");
+	private void load() {
+		final File lobby = new File(getDataFolder(), "setting.json");
 		if (!lobby.exists()) {
 			return;
 		}
 		try (final Reader reader = new FileReader(lobby)) {
 			final JSONTokener jsonTokener = new JSONTokener(reader);
 			final JSONObject jsonObject = new JSONObject(jsonTokener);
-			parkourManager.setLobbyLocation(jsonSerializer.readLocation(jsonObject));
-			System.out.println("[atsParkour] Successfully loaded lobby");
+			parkourManager.deserialize(jsonObject);
+			System.out.println("Successfully loaded parkour setting");
 		} catch (final IOException ex) {
-			System.out.println("[atsParkour] An error occurred when trying to load lobby");
-			ex.printStackTrace();
-		}
-	}
-
-	private void loadAllParkourGames() {
-		final File games = new File(getDataFolder(), "games.json");
-		if (!games.exists()) {
-			System.out.println("[atsParkour] No games.json file found");
-			return;
-		}
-		try (final Reader reader = new FileReader(games)) {
-			final JSONTokener jsonTokener = new JSONTokener(reader);
-			final JSONArray jsonArray = new JSONArray(jsonTokener);
-			jsonSerializer.readParkourGames(jsonArray).forEach(parkourManager::addParkour);
-			System.out.printf("[atsParkour] Successfully loaded %d parkour games", parkourManager.getAllGames().size());
-		} catch (final IOException ex) {
-			System.out.println("[atsParkour] An error occurred when trying to load parkour");
+			System.out.println("An error occurred when trying to load parkour setting");
 			ex.printStackTrace();
 		}
 	}

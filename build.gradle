@@ -60,6 +60,7 @@ spigot {
 	version = project.version
 	depends = ['WorldEdit']
 	softDepends = ['Multiverse']
+	prefix = 'atsParkour'
 
 	//noinspection GroovyAssignabilityCheck
 	commands {

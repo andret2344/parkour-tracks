@@ -2,7 +2,7 @@
  * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
  */
 
-package eu.andret.ats.parkour.util;
+package eu.andret.ats.parkour.util.serializer;
 
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.math.BlockVector3;
@@ -11,12 +11,14 @@ import eu.andret.ats.parkour.ParkourPlugin;
 import eu.andret.ats.parkour.event.game.GameStartEvent;
 import eu.andret.ats.parkour.parkour.Parkour;
 import eu.andret.ats.parkour.parkour.ParkourGame;
+import eu.andret.ats.parkour.parkour.ParkourManager;
 import eu.andret.ats.parkour.region.BasicRegion;
 import eu.andret.ats.parkour.region.DirectionalRegion;
 import lombok.AllArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.potion.PotionEffectType;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -28,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 @AllArgsConstructor
-public class JSONSerializer {
+public class JSONSerializer implements Serializer<JSONObject> {
 	private static final String NAME = "name";
 	private static final String WORLD = "world";
 	private static final String STARTED = "started";
@@ -48,12 +50,26 @@ public class JSONSerializer {
 	private static final String YAW = "yaw";
 	private static final String PITCH = "pitch";
 	private static final String SPAWN = "spawn";
+	public static final String LOBBY = "lobby";
+	public static final String GAMES = "games";
 
 	ParkourPlugin plugin;
 
 	// === READING ===
 
-	public List<ParkourGame> readParkourGames(final JSONArray jsonArray) {
+	@Override
+	public ParkourManager.ParkourSetting readParkourSetting(final JSONObject jsonObject) {
+		final ParkourManager.ParkourSetting setting = new ParkourManager.ParkourSetting();
+		if (jsonObject.has(LOBBY)) {
+			setting.setLobbyLocation(readLocation(jsonObject.getJSONObject(LOBBY)));
+		}
+		if (jsonObject.has(GAMES)) {
+			setting.getParkourGames().addAll(readParkourGames(jsonObject.getJSONArray(GAMES)));
+		}
+		return setting;
+	}
+
+	private List<ParkourGame> readParkourGames(final JSONArray jsonArray) {
 		final List<ParkourGame> list = new ArrayList<>();
 		for (int i = 0; i < jsonArray.length(); i++) {
 			list.add(readParkourGame(jsonArray.getJSONObject(i)));
@@ -62,8 +78,7 @@ public class JSONSerializer {
 	}
 
 	private ParkourGame readParkourGame(final JSONObject jsonObject) {
-		final String world = jsonObject.getString(WORLD);
-		if (world == null) {
+		if (!jsonObject.has(WORLD)) {
 			return null;
 		}
 		if (!jsonObject.has(REGION)) {
@@ -72,6 +87,7 @@ public class JSONSerializer {
 		if (!jsonObject.has(NAME)) {
 			return null;
 		}
+		final String world = jsonObject.getString(WORLD);
 		final BasicRegion gameRegion = readBasicRegion(jsonObject.getJSONObject(REGION));
 		final ParkourGame parkourGame = new Parkour(jsonObject.getString(NAME), gameRegion, plugin.getServer().getWorld(world));
 		if (jsonObject.has(SPAWN)) {
@@ -181,7 +197,11 @@ public class JSONSerializer {
 		final double y2 = jsonObject.getDouble("y2");
 		final double z2 = jsonObject.getDouble("z2");
 		final String world = jsonObject.getString(WORLD);
-		return new CuboidRegion(BukkitAdapter.adapt(plugin.getServer().getWorld(world)), BlockVector3.at(x1, y1, z1), BlockVector3.at(x2, y2, z2));
+		final World serverWorld = plugin.getServer().getWorld(world);
+		if (serverWorld == null) {
+			throw new UnsupportedOperationException("The world tried to load (" + world + ") doesn't exist!");
+		}
+		return new CuboidRegion(BukkitAdapter.adapt(serverWorld), BlockVector3.at(x1, y1, z1), BlockVector3.at(x2, y2, z2));
 	}
 
 	private BasicRegion readBasicRegion(final JSONObject jsonObject) {
@@ -201,8 +221,11 @@ public class JSONSerializer {
 		return new DirectionalRegion(cuboidRegion, yaw, pitch);
 	}
 
-	public Location readLocation(final JSONObject jsonObject) {
+	private Location readLocation(final JSONObject jsonObject) {
 		if (jsonObject == null) {
+			return null;
+		}
+		if (!jsonObject.has(WORLD)) {
 			return null;
 		}
 		final String world = jsonObject.getString(WORLD);
@@ -214,7 +237,15 @@ public class JSONSerializer {
 
 	// === WRITING ===
 
-	public JSONArray writeParkourGames(final List<ParkourGame> list) {
+	@Override
+	public JSONObject writeParkourSetting(final ParkourManager.ParkourSetting setting) {
+		final JSONObject result = new JSONObject();
+		result.put(LOBBY, writeLocation(setting.getLobbyLocation()));
+		result.put(GAMES, writeParkourGames(setting.getParkourGames()));
+		return result;
+	}
+
+	private JSONArray writeParkourGames(final List<ParkourGame> list) {
 		final JSONArray jsonArray = new JSONArray();
 		list.stream().map(this::writeParkourGame).forEach(jsonArray::put);
 		return jsonArray;
@@ -270,9 +301,9 @@ public class JSONSerializer {
 		return writeCuboidRegion(basicRegion.getRegion());
 	}
 
-	public JSONObject writeLocation(final Location location) {
+	private JSONObject writeLocation(final Location location) {
 		if (location == null || location.getWorld() == null) {
-			return null;
+			return new JSONObject();
 		}
 		final JSONObject jsonObject = new JSONObject();
 		jsonObject.put(WORLD, location.getWorld().getName());
@@ -303,7 +334,7 @@ public class JSONSerializer {
 	private JSONObject writeDirectionalRegion(final DirectionalRegion directionalRegion) {
 		final JSONObject jsonObject = writeBasicRegion(directionalRegion);
 		if (jsonObject == null) {
-			return null;
+			return new JSONObject();
 		}
 		jsonObject.put(YAW, directionalRegion.getYaw());
 		jsonObject.put(PITCH, directionalRegion.getPitch());
@@ -312,7 +343,7 @@ public class JSONSerializer {
 
 	private JSONObject writeOptions(final ParkourGame.Options options) {
 		if (options == null) {
-			return null;
+			return new JSONObject();
 		}
 		final JSONObject jsonObject1 = new JSONObject();
 		jsonObject1.put("alwaysSpawn", options.isAlwaysSpawn());

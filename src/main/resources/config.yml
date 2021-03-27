@@ -1,20 +1,47 @@
+# Database connection details, it's required to store times on parkour games
 database:
+  # If any connection to database should be established.
+  # Type: Boolean
+  # Default: false
   enabled: false
+  # The url of database
+  # Type: String
+  # Default: ''
   url: localhost
+  # The username to use the database
+  # Type: String
+  # Default: root
   user: root
+  # The password for user to database
+  # Type: String
+  # Default: ''
   pass: ''
+  # Database name
+  # Type: String
+  # Default: ats_parkour
   dbname: ats_parkour
 
+# The details of exit door item
 door:
   name: 'Exit!'
-  lore: 'Click it/nto exit.'
+  lore:
+    - 'Click it'
+    - 'to exit.'
 
+# The details of sign with parkour game best record template text
+# Every line has the same rules.
+# Type: String
+# Default: ''
 recordSign:
   line1: '&2&lRECORD'
   line2: '%PERSONAL_TIME%'
   line3: '%NICK%'
   line4: ''
 
+# The names of medals
+# Every medal has the same rules.
+# Type: String
+# Default: null
 medal:
   platinum: 'platinum'
   gold: 'gold'
@@ -22,9 +49,18 @@ medal:
   bronze: 'bronze'
   none: 'none'
 
-# It it should be forbidden to everyone to edit running parkour games.
-# Forbids any terrain changes and game modification via commends.
+# Should it be forbidden to everyone to edit running parkour games?
+# This settings forbids any terrain changes and game modification via commends.
 # If set to true, you need to stop the game in order to apply any modification it.
 # There's no bypass permission for it.
+# Type: Boolean
 # Default: true
 edit-lock: true
+
+# To prevent data loss, its highly recommended to set backup frequency.
+# Configure every how many minutes the backup should be created.
+# Time is counted since every server start.
+# Any non-positive (lower or equal to 0) number is treated as no backups.
+# Type: Long
+# Default: 1440 (24 hours)
+backup-frequency: 1440
