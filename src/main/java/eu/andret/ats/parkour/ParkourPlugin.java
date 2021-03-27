@@ -23,6 +23,7 @@ import org.bstats.bukkit.Metrics;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -349,20 +350,19 @@ public final class ParkourPlugin extends JavaPlugin {
 	}
 
 	private String replace(final String source, final ParkourRecord parkourRecord) {
-		final double time = parkourRecord.getTime();
+		final String name = Optional.of(parkourRecord)
+				.map(ParkourRecord::getUuid)
+				.map(x -> getServer().getOfflinePlayer(x))
+				.map(OfflinePlayer::getName)
+				.orElse("========");
+		return source.replace("%NICK%", name)
+				.replace("%PERSONAL_TIME%", formatTime(parkourRecord.getTime()));
+	}
+
+	public String formatTime(final double time) {
 		final int minutes = (int) time / 60;
 		final int seconds = (int) time % 60;
 		final int milliseconds = (int) Math.round((time % 1) * 100);
-		return source.replace("%NICK%", parkourRecord.getNick())
-				.replace("%MINUTES%", twoDigits(minutes))
-				.replace("%SECONDS%", twoDigits(seconds))
-				.replace("%MILLISECONDS%", twoDigits(milliseconds));
-	}
-
-	private String twoDigits(final int number) {
-		if (number < 10) {
-			return "0" + number;
-		}
-		return String.valueOf(number);
+		return String.format("%02d:%02d.%02d", minutes, seconds, milliseconds);
 	}
 }

@@ -6,9 +6,11 @@ package eu.andret.ats.parkour.parkour;
 
 import lombok.Value;
 
+import java.util.UUID;
+
 @Value
 public class ParkourRecord {
-	String nick;
+	UUID uuid;
 	ParkourGame game;
 	double time;
 }

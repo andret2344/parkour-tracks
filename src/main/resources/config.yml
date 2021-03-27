@@ -11,7 +11,7 @@ door:
 
 recordSign:
   line1: '&2&lRECORD'
-  line2: '%MINUTES%:%SECONDS%.%MILLISECONDS%'
+  line2: '%PERSONAL_TIME%'
   line3: '%NICK%'
   line4: ''
 

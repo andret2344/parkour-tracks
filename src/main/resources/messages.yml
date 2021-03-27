@@ -1,7 +1,7 @@
 achieveCheckpoint: '&3&lCheckpoint achieved!'
 achieveMedal: '&dSuper! You have just achieved a &6%MEDAL%&d medal!'
 counting: '&7%NUMBER%...'
-finishTime: '&aYour time is &e%TIME%&a.'
+finishTime: '&aYour time is &e%PERSONAL_TIME%&a.'
 howMany: '&9You have completed this parkour &6%COUNT%&9 time.'
 joinParkour: '&3Joined &6%PARKOUR%&3 parkour.'
 newPersonalBestTime: '&6Congratulations! You have beaten own record on this parkour!'

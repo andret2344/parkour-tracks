@@ -255,17 +255,16 @@ public class ParkourListeners implements Listener {
 			return;
 		}
 		final double currentTime = parkourPlayer.getTime();
-		final String time = String.valueOf(currentTime);
-		player.sendMessage(plugin.msg("finishTime").replace("%TIME%", Math.abs(time.lastIndexOf('.') - time.length()) == 2 ? (time + "0") : time));
+		player.sendMessage(plugin.msg("finishTime").replace("%PERSONAL_TIME%", plugin.formatTime(currentTime)));
 		if (player.hasPermission("ats.parkour.ignoreRecords")) {
 			player.sendMessage("Your time hasn't been saved to database");
 		} else {
 			plugin.getConnection()
-					.map(connection -> new FetchAndInsertDataTask(connection, parkourGame, player, currentTime, (previousCount, previousPlayerBest, previousParkourBest) -> {
+					.map(connection -> new FetchAndInsertDataTask(connection, parkourGame, player.getUniqueId(), currentTime, (previousCount, previousPlayerBest, previousParkourBest) -> {
 						player.sendMessage(plugin.msg("howMany").replace("%COUNT%", String.valueOf(previousCount + 1)));
 						if (previousParkourBest > currentTime) {
 							player.sendMessage(plugin.msg("newParkourBestTime"));
-							plugin.updateSyncSign(new ParkourRecord(player.getName(), parkourGame, currentTime));
+							plugin.updateSyncSign(new ParkourRecord(player.getUniqueId(), parkourGame, currentTime));
 						}
 						if (previousPlayerBest > currentTime) {
 							player.sendMessage(plugin.msg("newPersonalBestTime"));
