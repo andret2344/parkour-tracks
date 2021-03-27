@@ -47,6 +47,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -331,6 +332,23 @@ public class ParkourListeners implements Listener {
 		}
 		PlayerManager.teleportToRegion(event.getPlayer(), region);
 		plugin.getServer().getPluginManager().callEvent(new PlayerTeleportBackEvent(parkourGame, parkourPlayer, region));
+	}
+
+	@EventHandler
+	public void inventoryClick(final InventoryClickEvent event) {
+		if (!(event.getWhoClicked() instanceof Player)) {
+			return;
+		}
+		System.out.println(event.getCurrentItem());
+		System.out.println(event.getCursor());
+		plugin.getExitItem()
+				.filter(x -> x.equals(event.getCurrentItem()))
+				.ifPresent(ignored -> {
+					final Player player = (Player) event.getWhoClicked();
+					plugin.getParkourManager().teleportToLobby(player);
+					event.setCancelled(true);
+					player.closeInventory();
+				});
 	}
 
 	@EventHandler
