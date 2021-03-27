@@ -5,9 +5,12 @@ general:
   ignore:
     help: '&eTurn on or off parkour games interaction.'
     success: '&aYour ignoring has been switched to &6%VALUE%&a.'
-  lobby:
+  set-lobby:
     help: '&eSet lobby location.'
     success: '&aSuccessfully set lobby up to coords &6%COORD_X%&a, &6%COORD_Y%&a, &6%COORD_Z%&a.'
+  lobby:
+    help: '&eTeleports to lobby location.'
+    success: '&aSuccessfully teleported to lobby at &6%COORD_X%&a, &6%COORD_Y%&a, &6%COORD_Z%&a.'
 
 parkour:
   authors:

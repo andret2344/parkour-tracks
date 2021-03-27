@@ -76,6 +76,7 @@ public class M {
 	private static final String NOT_SIGN = "not-sign";
 	private static final String NOT_VIP = "not-vip";
 	private static final String TOO_LARGE_NUMBER = "too-large-number";
+	public static final String SET_LOBBY = "set-lobby";
 
 	@AllArgsConstructor
 	private static class Section {
@@ -103,6 +104,7 @@ public class M {
 		public static final General FIX = new General(M.FIX);
 		public static final General IGNORE = new General(M.IGNORE);
 		public static final General LOBBY = new General(M.LOBBY);
+		public static final General SET_LOBBY = new General(M.SET_LOBBY);
 
 		public final Message help = new Message(this, HELP);
 		public final Message success = new Message(this, SUCCESS);

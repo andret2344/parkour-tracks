@@ -51,6 +51,9 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 	private static final String NAME = "%NAME%";
 	private static final String EFFECT = "%EFFECT%";
 	private static final String AMPLIFIER = "%AMPLIFIER%";
+	public static final String COORD_X = "%COORD_X%";
+	public static final String COORD_Y = "%COORD_Y%";
+	public static final String COORD_Z = "%COORD_Z%";
 
 	public ParkourCommand(final CommandSender sender, final ParkourPlugin plugin) {
 		super(sender, plugin);
@@ -58,14 +61,24 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	// === UNIVERSAL ===
 
-	@Argument(permission = "ats.parkour.lobby", executorType = ExecutorType.PLAYER, description = "Sets lobby location to executor location")
+	@Argument(permission = "ats.parkour.lobby", executorType = ExecutorType.PLAYER, description = "Teleports to lobby")
 	public String lobby() {
-		final Location l = ((Player) sender).getLocation();
-		plugin.getParkourManager().setLobbyLocation(l);
+		plugin.getParkourManager().teleportToLobby((Player) sender);
+		final Location location = plugin.getParkourManager().getLobbyLocation();
 		return plugin.msg(M.General.LOBBY.success)
-				.replace("%COORD_X%", String.valueOf(l.getX()))
-				.replace("%COORD_Y%", String.valueOf(l.getY()))
-				.replace("%COORD_Z%", String.valueOf(l.getZ()));
+				.replace(COORD_X, String.valueOf(location.getBlockX()))
+				.replace(COORD_Y, String.valueOf(location.getBlockY()))
+				.replace(COORD_Z, String.valueOf(location.getBlockZ()));
+	}
+
+	@Argument(permission = "ats.parkour.setLobby", executorType = ExecutorType.PLAYER, description = "Sets lobby location to player's location")
+	public String setLobby() {
+		final Location location = ((Player) sender).getLocation();
+		plugin.getParkourManager().setLobbyLocation(location);
+		return plugin.msg(M.General.SET_LOBBY.success)
+				.replace(COORD_X, String.valueOf(location.getBlockX()))
+				.replace(COORD_Y, String.valueOf(location.getBlockY()))
+				.replace(COORD_Z, String.valueOf(location.getBlockZ()));
 	}
 
 	@Argument(permission = "ats.parkour.list", description = "Lists all parkour games", aliases = "ls")
@@ -757,9 +770,9 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		}
 		parkourGame.setRecordsBlock(location);
 		sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.Executive.RECORDS_BLOCK.success)
-				.replace("%COORD_X%", String.valueOf(location.getX()))
-				.replace("%COORD_Y%", String.valueOf(location.getY()))
-				.replace("%COORD_Z%", String.valueOf(location.getZ()))));
+				.replace(COORD_X, String.valueOf(location.getX()))
+				.replace(COORD_Y, String.valueOf(location.getY()))
+				.replace(COORD_Z, String.valueOf(location.getZ()))));
 
 		plugin.getConnection()
 				.map(connection -> new FetchParkourBestRecordTask(connection, parkourGame, 1, data -> {

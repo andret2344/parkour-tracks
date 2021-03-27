@@ -339,8 +339,6 @@ public class ParkourListeners implements Listener {
 		if (!(event.getWhoClicked() instanceof Player)) {
 			return;
 		}
-		System.out.println(event.getCurrentItem());
-		System.out.println(event.getCursor());
 		plugin.getExitItem()
 				.filter(x -> x.equals(event.getCurrentItem()))
 				.ifPresent(ignored -> {
