@@ -183,9 +183,9 @@ list:
   top:
     help: '&eShows top times on specified parkour game'
     usage: '&cCorrect usage: /parkour top <name>'
-    empty: '&bNobody has passwd this parkour yet.'
+    empty: '&bNobody has passed this parkour yet.'
     header: '&b=== RECORDS ==='
-    item: '&b%NUMBER%. &6%PLAYER%&b - &6%TIME%&b'
+    item: '&b%NUMBER%. &6%PLAYER%&b - &6%PERSONAL_TIME%&b'
   game:
     help: '&eShow all games'
     usage: '&cCorrect usage: /parkour list'

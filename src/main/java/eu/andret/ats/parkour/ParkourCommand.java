@@ -98,7 +98,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			plugin.getParkourManager().getAllGames()
 					.stream()
 					.map(parkourGame -> new FetchParkourBestRecordTask(connection, parkourGame, 1, data -> {
-						final ParkourRecord record = data.isEmpty() ? new ParkourRecord("========", parkourGame, 0) : data.get(0);
+						final ParkourRecord record = data.isEmpty() ? new ParkourRecord(null, parkourGame, 0) : data.get(0);
 						plugin.updateSyncSign(record);
 					}
 					))
@@ -727,10 +727,14 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 					sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.List.TOP.header)));
 					for (int i = 0; i < result.size(); i++) {
 						final ParkourRecord parkourRecord = result.get(i);
+						final String name = plugin.getServer().getOfflinePlayer(parkourRecord.getUuid()).getName();
+						if (name == null) {
+							continue;
+						}
 						sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.List.TOP.item)
 								.replace("%NUMBER%", String.valueOf(i + 1))
-								.replace("%PLAYER%", parkourRecord.getNick())
-								.replace("%TIME%", String.valueOf(parkourRecord.getTime()))));
+								.replace("%PLAYER%", name)
+								.replace("%PERSONAL_TIME%", plugin.formatTime(parkourRecord.getTime()))));
 					}
 				}))
 				.ifPresent(topPlayersDataOperations -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, topPlayersDataOperations));
@@ -759,7 +763,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 		plugin.getConnection()
 				.map(connection -> new FetchParkourBestRecordTask(connection, parkourGame, 1, data -> {
-					final ParkourRecord record = data.isEmpty() ? new ParkourRecord("========", parkourGame, 0) : data.get(0);
+					final ParkourRecord record = data.isEmpty() ? new ParkourRecord(null, parkourGame, 0) : data.get(0);
 					plugin.updateSyncSign(record);
 				}))
 				.ifPresentOrElse(

@@ -5,16 +5,16 @@
 package eu.andret.ats.parkour.tasks.database;
 
 import eu.andret.ats.parkour.parkour.ParkourGame;
-import org.bukkit.entity.Player;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.UUID;
 
 public class FetchAndInsertDataTask extends AbstractParkourTask {
-	Player player;
+	UUID uuid;
 	double time;
 	FetchDataCallback fetchDataCallback;
 
@@ -22,9 +22,9 @@ public class FetchAndInsertDataTask extends AbstractParkourTask {
 		void onFetchData(int previousCount, double previousPlayerBest, double previousParkourBest);
 	}
 
-	public FetchAndInsertDataTask(final Connection connection, final ParkourGame parkourGame, final Player player, final double time, final FetchDataCallback fetchDataCallback) {
-		super(connection, parkourGame);
-		this.player = player;
+	public FetchAndInsertDataTask(final Connection connection, final ParkourGame game, final UUID uuid, final double time, final FetchDataCallback fetchDataCallback) {
+		super(connection, game);
+		this.uuid = uuid;
 		this.time = time;
 		this.fetchDataCallback = fetchDataCallback;
 	}
@@ -39,8 +39,8 @@ public class FetchAndInsertDataTask extends AbstractParkourTask {
 	}
 
 	private int getPlayerPassCount() {
-		try (final PreparedStatement stat = connection.prepareStatement("SELECT COUNT(*) AS result FROM ats_parkour_records WHERE nick = ? AND parkour = ?")) {
-			stat.setString(1, player.getName());
+		try (final PreparedStatement stat = connection.prepareStatement("SELECT COUNT(*) AS result FROM ats_parkour_records WHERE uuid = ? AND parkour = ?")) {
+			stat.setString(1, uuid.toString());
 			stat.setString(2, game.getName());
 			final ResultSet rs = stat.executeQuery();
 			if (!rs.next()) {
@@ -54,8 +54,8 @@ public class FetchAndInsertDataTask extends AbstractParkourTask {
 	}
 
 	private double getPlayerBestTime() {
-		try (final PreparedStatement stat = connection.prepareStatement("SELECT time FROM ats_parkour_records WHERE nick = ? AND parkour = ? ORDER BY time LIMIT 1")) {
-			stat.setString(1, player.getName());
+		try (final PreparedStatement stat = connection.prepareStatement("SELECT time FROM ats_parkour_records WHERE uuid = ? AND parkour = ? ORDER BY time LIMIT 1")) {
+			stat.setString(1, uuid.toString());
 			stat.setString(2, game.getName());
 			final ResultSet rs = stat.executeQuery();
 			if (!rs.next()) {
@@ -83,9 +83,9 @@ public class FetchAndInsertDataTask extends AbstractParkourTask {
 	}
 
 	private void insertNewTime() {
-		try (final PreparedStatement stat = connection.prepareStatement("INSERT INTO ats_parkour_records VALUES(null, ?, ?, ?, ?)")) {
+		try (final PreparedStatement stat = connection.prepareStatement("INSERT INTO ats_parkour_records VALUES(NULL, ?, ?, ?, ?)")) {
 			stat.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
-			stat.setString(2, player.getName());
+			stat.setString(2, uuid.toString());
 			stat.setString(3, game.getName());
 			stat.setDouble(4, time);
 			stat.execute();
