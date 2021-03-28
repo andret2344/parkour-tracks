@@ -59,6 +59,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.potion.PotionEffect;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -464,7 +465,7 @@ public class ParkourListeners implements Listener {
 	@EventHandler
 	public void gameStop(final GameStopEvent event) {
 		final ParkourGame parkourGame = event.getGame();
-		final ParkourManager parkourManager = plugin.getParkourManager();
+		final ParkourManager<JSONObject> parkourManager = plugin.getParkourManager();
 		new ArrayList<>(parkourGame.getPlayers()).forEach(parkourPlayer -> {
 			plugin.getServer().getPluginManager().callEvent(new PlayerQuitGameEvent(parkourGame, parkourPlayer));
 			if (event.getGame().getOptions().isModifyInventory()) {
@@ -478,7 +479,7 @@ public class ParkourListeners implements Listener {
 
 	@EventHandler
 	public void gameStart(final GameStartEvent event) {
-		final ParkourManager parkourManager = plugin.getParkourManager();
+		final ParkourManager<JSONObject> parkourManager = plugin.getParkourManager();
 		event.getGame().getWorld().getPlayers().stream()
 				.filter(player -> parkourManager.inAnyRegion(event.getGame(), player))
 				.forEach(parkourManager::teleportToLobby);
@@ -568,12 +569,22 @@ public class ParkourListeners implements Listener {
 		final Location brokenBlockLocation = event.getBlock().getLocation();
 		plugin.getParkourManager().getAllGames().forEach(parkourGame -> {
 			if (parkourGame.getTeleportBlock() != null && parkourGame.getTeleportBlock().getBlock().getLocation().equals(brokenBlockLocation)) {
+				if (parkourGame.isRunning() && plugin.isEditLocked()) {
+					event.getPlayer().sendMessage(plugin.msg(M.Error.DEFAULT.forbiddenModification));
+					event.setCancelled(true);
+					return;
+				}
 				parkourGame.setTeleportBlock(null);
-				event.getPlayer().sendMessage("Destroyed teleport block!");
+				event.getPlayer().sendMessage(plugin.msg("destroyedTeleportBlock"));
 			}
 			if (parkourGame.getRecordsBlock() != null && parkourGame.getRecordsBlock().getBlock().getLocation().equals(brokenBlockLocation)) {
+				if (parkourGame.isRunning() && plugin.isEditLocked()) {
+					event.getPlayer().sendMessage(plugin.msg(M.Error.DEFAULT.forbiddenModification));
+					event.setCancelled(true);
+					return;
+				}
 				parkourGame.setRecordsBlock(null);
-				event.getPlayer().sendMessage("Destroyed records block!");
+				event.getPlayer().sendMessage(plugin.msg("destroyedRecordsBlock"));
 			}
 		});
 	}
