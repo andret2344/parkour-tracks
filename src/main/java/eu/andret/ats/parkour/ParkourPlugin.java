@@ -217,6 +217,7 @@ public final class ParkourPlugin extends JavaPlugin {
 		command.addTypeCompleter(PotionEffectType.class, () -> Data.ALLOWED_EFFECTS.stream()
 				.map(PotionEffectType::getName)
 				.collect(Collectors.toList()));
+		command.addArgumentCompleter("startStop", Arrays.asList("start", "stop"));
 	}
 
 	public boolean isEditLocked() {
