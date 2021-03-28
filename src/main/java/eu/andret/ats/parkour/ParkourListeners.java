@@ -496,6 +496,7 @@ public class ParkourListeners implements Listener {
 				.ifPresent(ignored -> {
 					player.setLevel(0);
 					player.setExp(0);
+					plugin.getExitItem().ifPresent(itemStack -> player.getInventory().remove(itemStack));
 					plugin.getParkourManager().teleportToLobby(player);
 				});
 	}
