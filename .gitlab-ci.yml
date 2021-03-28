@@ -70,6 +70,7 @@ publish:
   cache:
     <<: *wrapper
     policy: pull
+  allow_failure: true
 
 jar:
   stage: deploy
