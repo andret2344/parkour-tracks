@@ -384,20 +384,22 @@ public class ParkourListeners implements Listener {
 		if (event.getClickedBlock() == null) {
 			return;
 		}
-		final ParkourPlayer parkourPlayer = PlayerManager.getParkourSinglePlayer(event.getPlayer());
-		if (parkourPlayer.isIgnoring()) {
-			return;
-		}
 		plugin.getParkourManager().getAllGames().stream()
 				.filter(parkourGame -> parkourGame.getTeleportBlock() != null)
 				.filter(parkourGame -> parkourGame.getTeleportBlock().equals(event.getClickedBlock().getLocation()))
 				.findAny()
 				.ifPresent(parkourGame -> {
-					final boolean isVip = plugin.getRankProvider().map(x -> x.isVip(event.getPlayer())).isPresent();
+					final Player player = event.getPlayer();
+					final boolean isVip = plugin.getRankProvider().map(x -> x.isVip(player)).isPresent();
 					if (!parkourGame.getOptions().isVipOnly() || isVip) {
-						parkourGame.addPlayer(event.getPlayer());
+						parkourGame.addPlayer(player);
 						final DirectionalRegion parkourSpawn = parkourGame.getSpawn();
 						if (parkourSpawn == null) {
+							return;
+						}
+						final ParkourPlayer parkourPlayer = PlayerManager.getParkourSinglePlayer(player);
+						if (parkourPlayer.isIgnoring()) {
+							player.sendMessage(plugin.msg("ignoring"));
 							return;
 						}
 						PlayerManager.teleportToRegion(parkourPlayer, parkourSpawn);
@@ -405,7 +407,7 @@ public class ParkourListeners implements Listener {
 						event.setCancelled(true);
 						parkourPlayer.reset();
 					} else {
-						event.getPlayer().sendMessage(plugin.msg(M.Error.DEFAULT.notVip));
+						player.sendMessage(plugin.msg(M.Error.DEFAULT.notVip));
 					}
 				});
 	}
