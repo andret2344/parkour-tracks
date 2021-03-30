@@ -1,0 +1,18 @@
+# Items visible only in parkour games
+game:
+  exit:
+    material: IRON_DOOR
+    name: Exit
+    position: 8
+    lore:
+      - Click it
+      - to exit.
+
+  hiding:
+    material: CLOCK
+    name: Hide/show players
+    position: 7
+    lore:
+      - Click to hide/show players!
+
+world:

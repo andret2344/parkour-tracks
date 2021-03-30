@@ -13,6 +13,7 @@ public abstract class ParkourPlayer {
 	protected int lastCheckpoint = -1;
 	protected boolean ignoring = false;
 	protected double time = 0;
+	protected boolean hidden = false;
 
 	ParkourPlayer(final Player player) {
 		this.player = player;

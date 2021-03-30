@@ -21,13 +21,6 @@ database:
   # Default: ats_parkour
   dbname: ats_parkour
 
-# The details of exit door item
-door:
-  name: 'Exit!'
-  lore:
-    - 'Click it'
-    - 'to exit.'
-
 # The details of sign with parkour game best record template text
 # Every line has the same rules.
 # Type: String
@@ -43,11 +36,11 @@ recordSign:
 # Type: String
 # Default: null
 medal:
-  platinum: 'platinum'
-  gold: 'gold'
-  silver: 'silver'
-  bronze: 'bronze'
-  none: 'none'
+  platinum: platinum
+  gold: gold
+  silver: silver
+  bronze: bronze
+  none: none
 
 # Should it be forbidden to everyone to edit running parkour games?
 # This settings forbids any terrain changes and game modification via commends.
