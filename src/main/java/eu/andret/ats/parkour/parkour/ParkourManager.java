@@ -4,6 +4,7 @@
 
 package eu.andret.ats.parkour.parkour;
 
+import eu.andret.ats.parkour.ParkourPlugin;
 import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.util.serializer.Serializer;
 import lombok.Data;
@@ -106,5 +107,20 @@ public final class ParkourManager<E> {
 
 	public E serialize() {
 		return serializer.writeParkourSetting(setting);
+	}
+
+	public void setHidden(final Player player, final ParkourPlugin plugin, final boolean state) {
+		getAllGames()
+				.stream()
+				.map(ParkourGame::getPlayers)
+				.flatMap(Collection::stream)
+				.map(ParkourPlayer::getPlayer)
+				.forEach(p -> {
+					if (state) {
+						player.showPlayer(plugin, p);
+					} else {
+						player.hidePlayer(plugin, p);
+					}
+				});
 	}
 }

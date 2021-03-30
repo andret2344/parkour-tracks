@@ -16,8 +16,11 @@ import eu.andret.ats.parkour.parkour.ParkourRecord;
 import eu.andret.ats.parkour.tasks.database.KeepAliveTask;
 import eu.andret.ats.parkour.util.Data;
 import eu.andret.ats.parkour.util.M;
+import eu.andret.ats.parkour.util.ParkourItem;
+import eu.andret.ats.parkour.util.ParkourItemMap;
 import eu.andret.ats.parkour.util.serializer.JSONSerializer;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.ChatColor;
@@ -26,11 +29,13 @@ import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffectType;
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
@@ -48,6 +53,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -60,12 +66,14 @@ public final class ParkourPlugin extends JavaPlugin {
 	private final Map<String, String> helpDescription = new LinkedHashMap<>();
 	private final YamlConfiguration messages = new YamlConfiguration();
 	private final YamlConfiguration commands = new YamlConfiguration();
+	private final YamlConfiguration inventory = new YamlConfiguration();
 	@Getter
 	private final Map<UUID, Integer> teleportCountdown = new HashMap<>();
 	@Getter
 	private final Map<UUID, Integer> timeCounter = new HashMap<>();
 	private Connection connection;
 	private ItemStack exitItem;
+	private ItemStack hidingItem;
 	private final JSONSerializer jsonSerializer = new JSONSerializer(this);
 	@Getter
 	private final ParkourManager<JSONObject> parkourManager = new ParkourManager<>(jsonSerializer);
@@ -73,16 +81,16 @@ public final class ParkourPlugin extends JavaPlugin {
 	private FinancialProvider financialProvider;
 	@Setter
 	private RankProvider rankProvider;
+	@Getter
+	private final ParkourItemMap gameItemMap = new ParkourItemMap();
+	@Getter
+	private final ParkourItemMap worldItemMap = new ParkourItemMap();
 
 	@Override
 	public void onEnable() {
-		if (getWorldEdit() == null) {
-			System.out.println("CRITICAL! Cannot find WorldEdit plugin! Disabling...");
-			setEnabled(false);
-			return;
-		}
 		setupConfigFiles();
-		exitItem = createDoors();
+		exitItem = createItem("game", "exit");
+		hidingItem = createItem("game", "hiding");
 		getServer().getPluginManager().registerEvents(new ParkourListeners(this), this);
 		setupCommand();
 		setupDatabase();
@@ -148,7 +156,7 @@ public final class ParkourPlugin extends JavaPlugin {
 	}
 
 	public WorldEditPlugin getWorldEdit() {
-		return (WorldEditPlugin) getServer().getPluginManager().getPlugin("WorldEdit");
+		return getPlugin(WorldEditPlugin.class);
 	}
 
 	public void updateSyncSign(final ParkourRecord parkourRecord) {
@@ -171,8 +179,16 @@ public final class ParkourPlugin extends JavaPlugin {
 				});
 	}
 
-	public Optional<ItemStack> getExitItem() {
-		return Optional.of(exitItem);
+	@NonNull
+	@NotNull
+	public ItemStack getExitItem() {
+		return exitItem;
+	}
+
+	@NonNull
+	@NotNull
+	public ItemStack getHidingItem() {
+		return hidingItem;
 	}
 
 	private void setupConfigFiles() {
@@ -180,9 +196,11 @@ public final class ParkourPlugin extends JavaPlugin {
 		saveResource("commands.yml", false);
 		saveResource("scoreboard.yml", false);
 		saveResource("messages.yml", false);
+		saveResource("inventory.yml", false);
 		try {
 			commands.load(new File(getDataFolder(), "commands.yml"));
 			messages.load(new File(getDataFolder(), "messages.yml"));
+			inventory.load(new File(getDataFolder(), "inventory.yml"));
 		} catch (final IOException | InvalidConfigurationException ex) {
 			System.out.println("An error occurred when loading messages");
 			ex.printStackTrace();
@@ -190,17 +208,19 @@ public final class ParkourPlugin extends JavaPlugin {
 		generate();
 	}
 
-	private ItemStack createDoors() {
-		final ItemStack result = new ItemStack(Material.IRON_DOOR);
-		Optional.ofNullable(result.getItemMeta())
-				.ifPresent(meta -> {
-					meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&r" + getConfig().getString("door.name")));
-					meta.setLore(getConfig().getStringList("door.lore").stream()
-							.map(line -> ChatColor.translateAlternateColorCodes('&', line))
-							.collect(Collectors.toList()));
-					result.setItemMeta(meta);
-				});
-		return result;
+	private ItemStack createItem(final String group, final String path) {
+		final ConfigurationSection section = inventory.getConfigurationSection(String.join(".", group, path));
+		if (section == null) {
+			throw new NullPointerException("Section " + path + " doesn't exist in config file!");
+		}
+		final Material material = Material.valueOf(section.getString("material"));
+		final String name = ChatColor.translateAlternateColorCodes('&', "&r" + section.getString("name"));
+		final List<String> lore = section.getStringList("lore").stream()
+				.map(x -> ChatColor.translateAlternateColorCodes('&', "&r" + x))
+				.collect(Collectors.toList());
+		final ParkourItem parkourItem = new ParkourItem(material, name, lore);
+		gameItemMap.setItem(section.getInt("position"), parkourItem);
+		return parkourItem.toItemStack();
 	}
 
 	private void setupCommand() {
