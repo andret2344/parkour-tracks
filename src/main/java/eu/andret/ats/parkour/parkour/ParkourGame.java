@@ -149,6 +149,23 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 		return true;
 	}
 
+	public boolean inSpawn(final ParkourPlayer player) {
+		if (player == null) {
+			return false;
+		}
+		if (spawn == null) {
+			return false;
+		}
+		return spawn.contains(player);
+	}
+
+	public boolean inCheckpoint(final ParkourPlayer player) {
+		if (player == null) {
+			return false;
+		}
+		return checkpoints.stream().anyMatch(checkpoint -> checkpoint.contains(player));
+	}
+
 	public abstract boolean addPlayer(Player player);
 
 	@Override

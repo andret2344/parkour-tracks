@@ -24,9 +24,6 @@ public class TutorialPlayer {
 	}
 
 	public boolean done(final int i, final boolean mistakeInformation) {
-		System.out.println("[before done] step: " + step);
-		System.out.println("[before done] i: " + i);
-		System.out.println("[before done] mistakeInformation: " + mistakeInformation);
 		if (i == step) {
 			last = step;
 			return true;

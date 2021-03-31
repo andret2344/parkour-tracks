@@ -57,3 +57,12 @@ edit-lock: true
 # Type: Long
 # Default: 1440 (24 hours)
 backup-frequency: 1440
+
+# All possible sounds are listed here:
+# https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html
+sound:
+  join: NONE
+  start: BLOCK_LEVER_CLICK
+  checkpoint: NONE
+  complete: ENTITY_PLAYER_LEVELUP
+  left: NONE

@@ -32,7 +32,6 @@ import lombok.Value;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.Boat;
@@ -205,6 +204,8 @@ public class ParkourListeners implements Listener {
 			parkourPlayer.setLastCheckpoint(checkpointId);
 			if (checkpointId != parkourGame.getCheckpoints().size() - 1) {
 				parkourPlayer.getPlayer().sendMessage(plugin.msg("achieveCheckpoint"));
+				plugin.getSound("complete")
+						.ifPresent(sound -> parkourPlayer.getPlayer().playSound(parkourPlayer.getPlayer().getLocation(), sound, 0.5F, 0.5F));
 			}
 		}
 		if (checkpointId == parkourGame.getCheckpoints().size() - 1) {
@@ -223,7 +224,8 @@ public class ParkourListeners implements Listener {
 		final Player player = parkourPlayer.getPlayer();
 		final UUID uniqueId = player.getUniqueId();
 		final ParkourGame parkourGame = event.getGame();
-		player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.5F, 0.5F);
+		plugin.getSound("complete")
+				.ifPresent(sound -> player.playSound(player.getLocation(), sound, 0.5F, 0.5F));
 		if (plugin.getTeleportCountdown().containsKey(uniqueId)) {
 			return;
 		}
@@ -354,18 +356,40 @@ public class ParkourListeners implements Listener {
 	public void joinGame(final PlayerJoinGameEvent event) {
 		final ParkourPlayer parkourPlayer = event.getPlayer();
 		final Player player = parkourPlayer.getPlayer();
-		if (event.getGame().getOptions().isSavingResults()) {
-			final int schedulerId = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, new TimeCounter(parkourPlayer, event.getGame()), 1, 1);
+		plugin.getSound("join")
+				.ifPresent(sound -> player.playSound(player.getLocation(), sound, 0.5F, 0.5F));
+		final ParkourGame parkourGame = event.getGame();
+		if (parkourGame.getOptions().isSavingResults()) {
+			final int schedulerId = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, new TimeCounter(
+							() -> parkourGame.inSpawn(parkourPlayer),
+							i -> {
+								if (i == 0) {
+									plugin.getSound("start")
+											.ifPresent(sound -> {
+												player.playSound(player.getLocation(), sound, 0.5F, 0.5F);
+											});
+								}
+
+								final double time = i / 20.;
+								parkourPlayer.setTime(time);
+								parkourPlayer.getPlayer().setLevel((int) time);
+								parkourPlayer.getPlayer().setExp((float) time % 1);
+							},
+							() -> !parkourPlayer.isIgnoring()
+									&& parkourGame.isRunning()
+									&& !parkourGame.inCheckpoint(parkourPlayer)
+									&& !parkourGame.inSpawn(parkourPlayer)),
+					1, 1);
 			plugin.getTimeCounter().put(player.getUniqueId(), schedulerId);
 		}
-		if (event.getGame().getOptions().isModifyInventory()) {
+		if (parkourGame.getOptions().isModifyInventory()) {
 			plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, () ->
 					plugin.getGameItemMap().iterate(player.getInventory()::setItem), 2);
 		}
-		event.getGame().getOptions().getEffects().entrySet().stream()
+		parkourGame.getOptions().getEffects().entrySet().stream()
 				.map(entry -> new PotionEffect(entry.getKey(), 99999999, entry.getValue()))
 				.forEach(player::addPotionEffect);
-		player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("joinParkour").replace("%PARKOUR%", event.getGame().getDisplayName())));
+		player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("joinParkour").replace("%PARKOUR%", parkourGame.getDisplayName())));
 	}
 
 	@EventHandler
@@ -457,6 +481,8 @@ public class ParkourListeners implements Listener {
 		final ParkourPlayer parkourPlayer = event.getPlayer();
 		final Player player = parkourPlayer.getPlayer();
 		final UUID uniqueId = player.getUniqueId();
+		plugin.getSound("leave")
+				.ifPresent(sound -> player.playSound(player.getLocation(), sound, 0.5F, 0.5F));
 		parkourPlayer.reset();
 		if (plugin.getTimeCounter().containsKey(uniqueId)) {
 			plugin.getServer().getScheduler().cancelTask(plugin.getTimeCounter().get(uniqueId));

@@ -27,6 +27,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.configuration.ConfigurationSection;
@@ -157,6 +158,13 @@ public final class ParkourPlugin extends JavaPlugin {
 
 	public WorldEditPlugin getWorldEdit() {
 		return getPlugin(WorldEditPlugin.class);
+	}
+
+	public Optional<Sound> getSound(final String name) {
+		return Optional.of(getConfig())
+				.map(configuration -> configuration.getString("sound." + name))
+				.filter(sound -> !sound.equals("NONE"))
+				.map(Sound::valueOf);
 	}
 
 	public void updateSyncSign(final ParkourRecord parkourRecord) {
