@@ -19,6 +19,7 @@ import eu.andret.arguments.api.annotation.Param;
 import eu.andret.arguments.api.entity.ExecutorType;
 import eu.andret.ats.parkour.event.game.GameStartEvent;
 import eu.andret.ats.parkour.event.game.GameStopEvent;
+import eu.andret.ats.parkour.event.player.PlayerQuitGameEvent;
 import eu.andret.ats.parkour.parkour.Parkour;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourRecord;
@@ -42,7 +43,6 @@ import org.bukkit.potion.PotionEffectType;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 @BaseCommand("parkour")
@@ -172,13 +172,14 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (parkourPlayer.isIgnoring()) {
 			parkourPlayer.setIgnoring(false);
 			plugin.getParkourManager().getAllGames().stream()
-					.filter(p -> p.getAllRegions().stream().filter(Objects::nonNull).anyMatch(x -> x.contains(player.getLocation())))
-					.forEach(p -> p.addPlayer(player));
+					.filter(parkourGame -> plugin.getParkourManager().inAnyRegion(parkourGame, player))
+					.forEach(parkourGame -> plugin.getParkourManager().teleportToLobby(player));
 			return plugin.msg(M.General.IGNORE.success).replace(VALUE, "false");
 		}
 		parkourPlayer.setIgnoring(true);
 		final ParkourGame parkour = plugin.getParkourManager().getParkour(player);
 		if (parkour != null) {
+			plugin.getServer().getPluginManager().callEvent(new PlayerQuitGameEvent(parkour, parkourPlayer));
 			parkour.removePlayer(parkourPlayer);
 		}
 		return plugin.msg(M.General.IGNORE.success).replace(VALUE, "true");
