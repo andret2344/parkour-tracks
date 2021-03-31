@@ -409,7 +409,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (id <= 0) {
 			return plugin.msg(M.Error.DEFAULT.negativeNumber);
 		}
-		if (id >= parkourGame.getCheckpoints().size()) {
+		if (id > parkourGame.getCheckpoints().size()) {
 			return plugin.msg(M.Error.DEFAULT.tooLargeNumber);
 		}
 		final Location location = ((Player) sender).getLocation();
@@ -453,7 +453,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (id <= 0) {
 			return plugin.msg(M.Error.DEFAULT.negativeNumber);
 		}
-		if (id >= parkourGame.getWalls().size()) {
+		if (id > parkourGame.getWalls().size()) {
 			return plugin.msg(M.Error.DEFAULT.tooLargeNumber);
 		}
 		parkourGame.getWalls().set(id - 1, new BasicRegion(selection));
