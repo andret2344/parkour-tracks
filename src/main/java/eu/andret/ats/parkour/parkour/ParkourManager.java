@@ -24,7 +24,6 @@ public final class ParkourManager<E> {
 
 	@Data
 	public static class ParkourSetting {
-
 		private final List<ParkourGame> parkourGames = new ArrayList<>();
 		private Location lobbyLocation;
 	}

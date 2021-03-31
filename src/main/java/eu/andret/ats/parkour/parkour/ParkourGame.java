@@ -15,7 +15,6 @@ import lombok.ToString;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
 
 import javax.annotation.Nonnull;
@@ -89,22 +88,6 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 		@Builder.Default
 		private ParkourType type = ParkourType.SERVER;
 
-		public Medal getMedalByTime(final double time) {
-			if (platinum >= time) {
-				return Medal.PLATINUM;
-			}
-			if (gold >= time) {
-				return Medal.GOLD;
-			}
-			if (silver >= time) {
-				return Medal.SILVER;
-			}
-			if (bronze >= time) {
-				return Medal.BRONZE;
-			}
-			return Medal.NONE;
-		}
-
 		public void setEffect(final PotionEffectType effect, final int amplifier) {
 			effects.put(effect, amplifier);
 		}
@@ -133,7 +116,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 		return arr.stream().filter(Objects::nonNull).collect(Collectors.toList());
 	}
 
-	protected boolean addPlayer(final ParkourPlayer parkourPlayer) {
+	public boolean addPlayer(final ParkourPlayer parkourPlayer) {
 		if (players.contains(parkourPlayer)) {
 			return false;
 		}
@@ -165,8 +148,6 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 		}
 		return checkpoints.stream().anyMatch(checkpoint -> checkpoint.contains(player));
 	}
-
-	public abstract boolean addPlayer(Player player);
 
 	@Override
 	public int compareTo(@Nonnull final ParkourGame parkourGame) {

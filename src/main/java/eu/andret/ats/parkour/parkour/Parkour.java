@@ -4,13 +4,11 @@
 
 package eu.andret.ats.parkour.parkour;
 
-import eu.andret.ats.parkour.player.PlayerManager;
 import eu.andret.ats.parkour.region.BasicRegion;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.Value;
 import org.bukkit.World;
-import org.bukkit.entity.Player;
 
 @Value
 @ToString(callSuper = true)
@@ -18,10 +16,5 @@ import org.bukkit.entity.Player;
 public class Parkour extends ParkourGame {
 	public Parkour(final String name, final BasicRegion region, final World world) {
 		super(name, region, world);
-	}
-
-	@Override
-	public boolean addPlayer(final Player player) {
-		return super.addPlayer(PlayerManager.getParkourSinglePlayer(player));
 	}
 }
