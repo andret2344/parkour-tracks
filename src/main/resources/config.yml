@@ -58,7 +58,6 @@ edit-lock: true
 # Default: 1440 (24 hours)
 backup-frequency: 1440
 
-
 # All possible sounds are listed here:
 # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html
 sound:
