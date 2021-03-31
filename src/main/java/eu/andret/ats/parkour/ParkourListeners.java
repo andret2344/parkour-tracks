@@ -366,7 +366,6 @@ public class ParkourListeners implements Listener {
 								if (i == 0) {
 									plugin.getSound("start")
 											.ifPresent(sound -> {
-												System.out.println(sound);
 												player.playSound(player.getLocation(), sound, 0.5F, 0.5F);
 											});
 								}
