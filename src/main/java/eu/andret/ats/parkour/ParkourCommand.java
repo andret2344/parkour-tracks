@@ -24,7 +24,6 @@ import eu.andret.ats.parkour.parkour.Parkour;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourRecord;
 import eu.andret.ats.parkour.player.ParkourPlayer;
-import eu.andret.ats.parkour.player.PlayerManager;
 import eu.andret.ats.parkour.region.BasicRegion;
 import eu.andret.ats.parkour.region.DirectionalRegion;
 import eu.andret.ats.parkour.tasks.database.FetchParkourBestRecordTask;
@@ -168,7 +167,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 	@Argument(permission = "ats.parkour.ignore", executorType = ExecutorType.PLAYER, description = "Allows sender to ignore parkour regions interaction", aliases = "i")
 	public String ignore() {
 		final Player player = (Player) sender;
-		final ParkourPlayer parkourPlayer = PlayerManager.getParkourSinglePlayer(player);
+		final ParkourPlayer parkourPlayer = plugin.getPlayerManager().getParkourPlayer(player);
 		if (parkourPlayer.isIgnoring()) {
 			parkourPlayer.setIgnoring(false);
 			plugin.getParkourManager().getAllGames().stream()
@@ -336,13 +335,13 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@Argument(permission = "ats.parkour.teleport", executorType = ExecutorType.PLAYER, description = "Teleports sender to parkours spawn region", aliases = "tp")
 	public String teleport(@Param("parkourGame") final ParkourGame parkourGame) {
-		parkourGame.addPlayer((Player) sender);
-		final ParkourPlayer parkourPlayer = PlayerManager.getParkourSinglePlayer((Player) sender);
+		final ParkourPlayer parkourPlayer = plugin.getPlayerManager().getParkourPlayer((Player) sender);
+		parkourGame.addPlayer(parkourPlayer);
 		parkourPlayer.reset();
 		if (parkourGame.getSpawn() == null) {
 			return plugin.msg(M.Error.DEFAULT.missingSpawn);
 		}
-		PlayerManager.teleportToRegion(parkourPlayer, parkourGame.getSpawn());
+		plugin.getPlayerManager().teleportToRegion(parkourPlayer, parkourGame.getSpawn());
 		return plugin.msg(M.Executive.TELEPORT.success).replace(NAME, parkourGame.getName());
 	}
 

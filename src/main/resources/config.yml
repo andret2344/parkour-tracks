@@ -31,17 +31,6 @@ recordSign:
   line3: '%NICK%'
   line4: ''
 
-# The names of medals
-# Every medal has the same rules.
-# Type: String
-# Default: null
-medal:
-  platinum: platinum
-  gold: gold
-  silver: silver
-  bronze: bronze
-  none: none
-
 # Should it be forbidden to everyone to edit running parkour games?
 # This settings forbids any terrain changes and game modification via commends.
 # If set to true, you need to stop the game in order to apply any modification it.

@@ -12,7 +12,7 @@ import org.bukkit.entity.Player;
 @Value
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-public class ParkourSinglePlayer extends ParkourPlayer {
+class ParkourSinglePlayer extends ParkourPlayer {
 	ParkourSinglePlayer(final Player player) {
 		super(player);
 	}

@@ -13,6 +13,7 @@ import eu.andret.ats.parkour.api.RankProvider;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourManager;
 import eu.andret.ats.parkour.parkour.ParkourRecord;
+import eu.andret.ats.parkour.player.PlayerManager;
 import eu.andret.ats.parkour.tasks.database.KeepAliveTask;
 import eu.andret.ats.parkour.util.Data;
 import eu.andret.ats.parkour.util.M;
@@ -78,6 +79,8 @@ public final class ParkourPlugin extends JavaPlugin {
 	private final JSONSerializer jsonSerializer = new JSONSerializer(this);
 	@Getter
 	private final ParkourManager<JSONObject> parkourManager = new ParkourManager<>(jsonSerializer);
+	@Getter
+	private final PlayerManager playerManager = new PlayerManager();
 	@Setter
 	private FinancialProvider financialProvider;
 	@Setter
@@ -90,8 +93,8 @@ public final class ParkourPlugin extends JavaPlugin {
 	@Override
 	public void onEnable() {
 		setupConfigFiles();
-		exitItem = createItem("game", "exit");
-		hidingItem = createItem("game", "hiding");
+		exitItem = createItem("exit");
+		hidingItem = createItem("hiding");
 		getServer().getPluginManager().registerEvents(new ParkourListeners(this), this);
 		setupCommand();
 		setupDatabase();
@@ -101,6 +104,7 @@ public final class ParkourPlugin extends JavaPlugin {
 				.forEach(p -> getServer().getOnlinePlayers().stream()
 						.filter(Objects::nonNull)
 						.filter(pl -> p.getAllRegions().stream().filter(Objects::nonNull).anyMatch(r -> r.contains(pl.getLocation())))
+						.map(playerManager::getParkourPlayer)
 						.forEach(p::addPlayer));
 		getConnection()
 				.map(KeepAliveTask::new)
@@ -216,8 +220,8 @@ public final class ParkourPlugin extends JavaPlugin {
 		generate();
 	}
 
-	private ItemStack createItem(final String group, final String path) {
-		final ConfigurationSection section = inventory.getConfigurationSection(String.join(".", group, path));
+	private ItemStack createItem(final String path) {
+		final ConfigurationSection section = inventory.getConfigurationSection(String.join(".", "game", path));
 		if (section == null) {
 			throw new NullPointerException("Section " + path + " doesn't exist in config file!");
 		}

@@ -9,62 +9,32 @@ import com.sk89q.worldedit.math.Vector3;
 import eu.andret.ats.parkour.region.BasicRegion;
 import eu.andret.ats.parkour.region.DirectionalRegion;
 import lombok.NonNull;
-import lombok.experimental.UtilityClass;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-@UtilityClass
 public final class PlayerManager {
 	private final Map<Player, ParkourSinglePlayer> singlePlayers = new HashMap<>();
-	private final Map<Player, ParkourCompetitorPlayer> competitorPlayers = new HashMap<>();
 
 	@NonNull
 	@NotNull
-	public ParkourSinglePlayer getParkourSinglePlayer(final Player player) {
-		if (singlePlayers.containsKey(player)) {
-			return singlePlayers.get(player);
-		}
-		final ParkourSinglePlayer p = new ParkourSinglePlayer(player);
-		singlePlayers.put(player, p);
-		return p;
-	}
-
-	@NonNull
-	@NotNull
-	public ParkourCompetitorPlayer getParkourCompetitorPlayer(final Player player) {
-		if (competitorPlayers.containsKey(player)) {
-			return competitorPlayers.get(player);
-		}
-		final ParkourCompetitorPlayer p = new ParkourCompetitorPlayer(player);
-		competitorPlayers.put(player, p);
-		return p;
-	}
-
-	@Nullable
 	public ParkourPlayer getParkourPlayer(final Player player) {
 		if (singlePlayers.containsKey(player)) {
 			return singlePlayers.get(player);
 		}
-		if (competitorPlayers.containsKey(player)) {
-			return competitorPlayers.get(player);
-		}
-		return null;
+		final ParkourSinglePlayer parkourPlayer = new ParkourSinglePlayer(player);
+		singlePlayers.put(player, parkourPlayer);
+		return parkourPlayer;
 	}
 
 	@NonNull
 	@NotNull
 	public ParkourPlayer remove(final Player player) {
-		final ParkourPlayer parkourPlayer = singlePlayers.remove(player);
-		if (parkourPlayer != null) {
-			return parkourPlayer;
-		}
-		return competitorPlayers.remove(player);
+		return singlePlayers.remove(player);
 	}
 
 	public void teleportToRegion(final ParkourPlayer parkourPlayer, final DirectionalRegion basicRegion) {
