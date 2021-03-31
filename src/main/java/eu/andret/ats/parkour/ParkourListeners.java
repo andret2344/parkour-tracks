@@ -31,6 +31,7 @@ import eu.andret.ats.parkour.util.M;
 import lombok.Value;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
@@ -46,6 +47,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntitySpawnEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -411,11 +413,29 @@ public class ParkourListeners implements Listener {
 	}
 
 	@EventHandler
+	public void entitySpawnInGame(final EntitySpawnEvent event) {
+		plugin.getParkourManager().getAllGames()
+				.stream()
+				.filter(game -> plugin.getParkourManager().inAnyRegion(game, event.getLocation()))
+				.findAny()
+				.ifPresent(x -> event.setCancelled(true));
+	}
+
+	@EventHandler
 	public void clickInsideGame(final PlayerInteractEvent event) {
 		if (!plugin.getParkourManager().getPlayersInGames().contains(event.getPlayer())) {
 			return;
 		}
-		if (event.getClickedBlock() != null && Data.getInteractiveMaterials().contains(event.getClickedBlock().getType())) {
+		if (event.getClickedBlock() == null) {
+			return;
+		}
+		if (!plugin.isEditLocked()) {
+			return;
+		}
+		if (Data.getInteractiveMaterials().contains(event.getClickedBlock().getType())
+				|| Data.BOATS.contains(event.getMaterial())
+				|| event.getMaterial().equals(Material.ARMOR_STAND)) {
+			event.getPlayer().sendMessage(plugin.msg(M.Error.DEFAULT.forbiddenModification));
 			event.setCancelled(true);
 		}
 	}

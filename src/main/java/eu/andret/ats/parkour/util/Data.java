@@ -122,6 +122,18 @@ public final class Data {
 	);
 
 	/**
+	 * List of all available boats variations.
+	 */
+	public static final List<Material> BOATS = List.of(
+			Material.ACACIA_BOAT,
+			Material.BIRCH_BOAT,
+			Material.DARK_OAK_BOAT,
+			Material.JUNGLE_BOAT,
+			Material.OAK_BOAT,
+			Material.SPRUCE_BOAT
+	);
+
+	/**
 	 * @return {@code List<Material>} of all available interactive blocks.
 	 */
 	public static List<Material> getInteractiveMaterials() {
