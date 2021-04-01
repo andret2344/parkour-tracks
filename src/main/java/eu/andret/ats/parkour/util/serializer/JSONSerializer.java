@@ -54,9 +54,9 @@ public class JSONSerializer implements Serializer<JSONObject> {
 	private static final String SPAWN = "spawn";
 	private static final String LOBBY = "lobby";
 	private static final String GAMES = "games";
-	public static final String MEDALS = "medals";
-	public static final String TIME = "time";
-	public static final String REWARD = "reward";
+	private static final String MEDALS = "medals";
+	private static final String TIME = "time";
+	private static final String REWARD = "reward";
 
 	ParkourPlugin plugin;
 
