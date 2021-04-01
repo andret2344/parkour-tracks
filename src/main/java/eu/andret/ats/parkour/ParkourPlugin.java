@@ -38,7 +38,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
@@ -139,14 +138,6 @@ public final class ParkourPlugin extends JavaPlugin {
 	public void onDisable() {
 		save();
 		getServer().getScheduler().cancelTasks(this);
-	}
-
-	@Nullable
-	public ParkourMedal getMedal(final String name) {
-		return medals.stream()
-				.filter(x -> x.getName().equals(name))
-				.findAny()
-				.orElse(null);
 	}
 
 	public String msg(final String path) {
@@ -282,7 +273,7 @@ public final class ParkourPlugin extends JavaPlugin {
 				.collect(Collectors.toList()));
 		command.addArgumentCompleter("medalOption", Arrays.asList("time", "reward"));
 		command.addArgumentMapper(MEDAL, ParkourMedal.class, name -> medals.stream()
-						.filter(x -> x.getName().equals(name))
+						.filter(medal -> medal.getName().equals(name))
 						.findAny()
 						.orElse(null),
 				Fallback.ON_NULL);

@@ -982,10 +982,10 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 	}
 
 	private boolean verify(final ParkourMedal medal, final ParkourGame parkourGame, final double value, final ToDoubleFunction<ParkourMedalData> function) {
-		final Optional<ParkourMedal> better = parkourGame.getMedals().keySet().stream().filter(x -> x.getImportance() < medal.getImportance()).findAny();
-		final Optional<ParkourMedal> worse = parkourGame.getMedals().keySet().stream().filter(x -> x.getImportance() > medal.getImportance()).findAny();
-		final boolean betterIsOk = better.map(parkourGame.getMedals()::get).filter(x -> function.applyAsDouble(x) > value).isEmpty();
-		final boolean worseIsOk = worse.map(parkourGame.getMedals()::get).filter(x -> function.applyAsDouble(x) < value).isEmpty();
+		final Optional<ParkourMedal> better = parkourGame.getMedals().keySet().stream().filter(parkourMedal -> parkourMedal.getImportance() < medal.getImportance()).findAny();
+		final Optional<ParkourMedal> worse = parkourGame.getMedals().keySet().stream().filter(parkourMedal -> parkourMedal.getImportance() > medal.getImportance()).findAny();
+		final boolean betterIsOk = better.map(parkourGame.getMedals()::get).filter(data -> function.applyAsDouble(data) > value).isEmpty();
+		final boolean worseIsOk = worse.map(parkourGame.getMedals()::get).filter(data -> function.applyAsDouble(data) < value).isEmpty();
 		return betterIsOk && worseIsOk;
 	}
 }
