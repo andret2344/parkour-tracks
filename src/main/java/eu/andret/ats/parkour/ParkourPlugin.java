@@ -10,6 +10,9 @@ import eu.andret.arguments.CommandManager;
 import eu.andret.arguments.api.annotation.Fallback;
 import eu.andret.ats.parkour.api.FinancialProvider;
 import eu.andret.ats.parkour.api.RankProvider;
+import eu.andret.ats.parkour.item.ParkourInteractiveItem;
+import eu.andret.ats.parkour.item.ParkourItem;
+import eu.andret.ats.parkour.item.ParkourItemMap;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourManager;
 import eu.andret.ats.parkour.parkour.ParkourMedal;
@@ -18,8 +21,6 @@ import eu.andret.ats.parkour.player.PlayerManager;
 import eu.andret.ats.parkour.tasks.database.KeepAliveTask;
 import eu.andret.ats.parkour.util.Data;
 import eu.andret.ats.parkour.util.M;
-import eu.andret.ats.parkour.util.ParkourItem;
-import eu.andret.ats.parkour.util.ParkourItemMap;
 import eu.andret.ats.parkour.util.serializer.JSONSerializer;
 import lombok.Getter;
 import lombok.Setter;
@@ -248,7 +249,7 @@ public final class ParkourPlugin extends JavaPlugin {
 		final List<String> lore = section.getStringList("lore").stream()
 				.map(line -> ChatColor.translateAlternateColorCodes('&', "&r" + line))
 				.collect(Collectors.toList());
-		final ParkourItem parkourItem = new ParkourItem(material, name, lore);
+		final ParkourItem parkourItem = new ParkourInteractiveItem(material, name, lore);
 		gameItemMap.setItem(section.getInt("position"), parkourItem);
 		return parkourItem.toItemStack();
 	}
