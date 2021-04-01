@@ -8,7 +8,6 @@ import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.math.Vector3;
 import eu.andret.ats.parkour.region.BasicRegion;
 import eu.andret.ats.parkour.region.DirectionalRegion;
-import lombok.NonNull;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -18,23 +17,21 @@ import java.util.Map;
 import java.util.Optional;
 
 public final class PlayerManager {
-	private final Map<Player, ParkourSinglePlayer> singlePlayers = new HashMap<>();
+	private final Map<Player, ParkourSinglePlayer> players = new HashMap<>();
 
-	@NonNull
 	@NotNull
 	public ParkourPlayer getParkourPlayer(final Player player) {
-		if (singlePlayers.containsKey(player)) {
-			return singlePlayers.get(player);
+		if (players.containsKey(player)) {
+			return players.get(player);
 		}
 		final ParkourSinglePlayer parkourPlayer = new ParkourSinglePlayer(player);
-		singlePlayers.put(player, parkourPlayer);
+		players.put(player, parkourPlayer);
 		return parkourPlayer;
 	}
 
-	@NonNull
 	@NotNull
 	public ParkourPlayer remove(final Player player) {
-		return singlePlayers.remove(player);
+		return players.remove(player);
 	}
 
 	public void teleportToRegion(final ParkourPlayer parkourPlayer, final DirectionalRegion basicRegion) {

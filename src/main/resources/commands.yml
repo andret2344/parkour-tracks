@@ -15,7 +15,7 @@ general:
 parkour:
   authors:
     help: '&eShow or set authors of parkour.'
-    usage: '&cCorrect usage: /parkour authors <name> [<add|remove> <authors>]'
+    usage: '&cCorrect usage: /parkour authors <name> <authors...>'
     get: '&bCurrent authors are set to &6%VALUE%&b.'
     set: '&aSuccessfully set authors to &6%VALUE%&a.'
   display-name:
@@ -153,28 +153,11 @@ option:
     usage: '&cCorrect usage: /parkour vip <name> [value]'
     get: '&bCurrent vip rank requirement is set to &6%VALUE%&b.'
     set: '&aSuccessfully set up parkour vip rank requirement to &6%VALUE%&a.'
-
-medal:
-  bronze:
-    help: '&eShow or set bronze medal time.'
-    usage: '&cCorrect usage: /parkour bronze <name> [value]'
-    get: '&bCurrent bronze medal time is set to &6%VALUE%&b.'
-    set: '&aSuccessfully set bronze medal time to &6%VALUE%&a.'
-  silver:
-    help: '&eShow or set silver medal time.'
-    usage: '&cCorrect usage: /parkour silver <name> [value]'
-    get: '&bCurrent silver medal time is set to &6%VALUE%&b.'
-    set: '&aSuccessfully set silver medal time to &6%VALUE%&a.'
-  gold:
-    help: '&eShow or set gold medal time.'
-    usage: '&cCorrect usage: /parkour gold <name> [value]'
-    get: '&bCurrent gold medal time is set to &6%VALUE%&b.'
-    set: '&aSuccessfully set gold medal time to &6%VALUE%&a.'
-  platinum:
-    help: '&eShow or set platinum medal time.'
-    usage: '&cCorrect usage: /parkour platinum <name> [value]'
-    get: '&bCurrent platinum medal time is set to &6%VALUE%&b.'
-    set: '&aSuccessfully set platinum medal time to &6%VALUE%&a.'
+  medal:
+    help: '&eShow or set specified medal data.'
+    usage: '&cCorrect usage: /parkour medal <name> [medal [data [value]]]'
+    get: '&bCurrent %OPTION% for %MEDAL%&b medal is set to &6%VALUE%&b.'
+    set: '&aSuccessfully set %OPTION% for %MEDAL%&a medal time to &6%VALUE%&a.'
 
 list:
   effect:
@@ -201,6 +184,12 @@ list:
     empty: '&bNo commands.'
     header: '&bShowing help page %PAGE% of %PAGES%.'
     item: '&2/parkour &6%ARGUMENT%&r - %DESCRIPTION%'
+  medal:
+    help: '&eShows all medals data'
+    usage: '&cCorrect usage: /parkour medal <name> [medal]'
+    empty: '&bThis parkour has no medals configured'
+    header: '&bParkour has following medals:'
+    item: '&b- &6%MEDAL%&b - time: &6%TIME%&b, reward: &6%REWARD%&b.'
 
 misc:
   error-prefix: '&4Error: &r'
@@ -209,6 +198,7 @@ error:
   already-exists: '&cGame with name "%NAME%" already exists.'
   already-started: '&cThis game has been already started.'
   already-stopped: '&cThis game has been already stopped.'
+  bounds-exceeded: '&cThe value you provided exceeds bounds set due to other medals, they have to be ordered.'
   forbidden-flying: '&cNo flying is allowed in running parkour. Turn off parkour using &6/parkour stop <name>&c or start ignoring parkours using &6/parkour ignore&c.'
   forbidden-modification: '&c&lEdit lock&r&c is active! In order to modify parkour game, stop it first using &6/parkour stop <name>&c.'
   insufficient-permissions: '&cSorry, you do not have permissions to do that.'
@@ -224,6 +214,9 @@ error:
   missing-medals: '&cYou must set all medals up until you start the game.'
   missing-spawn: '&cThis game has no spawn. Set it up first.'
   negative-number: '&cNumber must be positive (more than 0).'
+  no-economy: '&cNo financial provider is configured. Cannot set reward.'
+  no-medal: '&cThere is no such a medal. Choose one of: %MEDALS%.'
+  no-medal-data: '&cOnly time or reward can be configured.'
   not-block: '&cYou have to target correct block.'
   not-connected: '&cDatabase is inactive, did nothing.'
   not-sign: '&cThis block is not a sign.'

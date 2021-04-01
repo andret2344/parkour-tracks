@@ -6,9 +6,11 @@ package eu.andret.ats.parkour.parkour;
 
 import eu.andret.ats.parkour.ParkourPlugin;
 import eu.andret.ats.parkour.player.ParkourPlayer;
+import eu.andret.ats.parkour.region.BasicRegion;
 import eu.andret.ats.parkour.util.serializer.Serializer;
 import lombok.Data;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -30,6 +32,12 @@ public final class ParkourManager<E> {
 
 	public ParkourManager(final Serializer<E> serializer) {
 		this.serializer = serializer;
+	}
+
+	public ParkourGame createParkour(final String name, final BasicRegion region, final World world) {
+		final ParkourGame game = new Parkour(name, region, world);
+		setting.parkourGames.add(game);
+		return game;
 	}
 
 	public void addParkour(final ParkourGame parkourGame) {
@@ -114,11 +122,11 @@ public final class ParkourManager<E> {
 				.map(ParkourGame::getPlayers)
 				.flatMap(Collection::stream)
 				.map(ParkourPlayer::getPlayer)
-				.forEach(p -> {
+				.forEach(hiddingPlayer -> {
 					if (state) {
-						player.showPlayer(plugin, p);
+						player.showPlayer(plugin, hiddingPlayer);
 					} else {
-						player.hidePlayer(plugin, p);
+						player.hidePlayer(plugin, hiddingPlayer);
 					}
 				});
 	}

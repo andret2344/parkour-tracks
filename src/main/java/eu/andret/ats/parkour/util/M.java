@@ -38,10 +38,6 @@ public class M {
 	private static final String VIP_ONLY = "vip-only";
 	private static final String GET = "get";
 	private static final String SET = "set";
-	private static final String BRONZE = "bronze";
-	private static final String SILVER = "silver";
-	private static final String GOLD = "gold";
-	private static final String PLATINUM = "platinum";
 	private static final String AUTHORS = "authors";
 	private static final String DISPLAY_NAME = "display-name";
 	private static final String EFFECT = "effect";
@@ -76,7 +72,12 @@ public class M {
 	private static final String NOT_SIGN = "not-sign";
 	private static final String NOT_VIP = "not-vip";
 	private static final String TOO_LARGE_NUMBER = "too-large-number";
-	public static final String SET_LOBBY = "set-lobby";
+	private static final String SET_LOBBY = "set-lobby";
+	private static final String NO_ECONOMY = "no-economy";
+	private static final String NO_MEDAL = "no-medal";
+	private static final String NO_MEDAL_DATA = "no-medal-data";
+	private static final String MEDAL = "medal";
+	private static final String BOUNDS_EXCEEDED = "bounds-exceeded";
 
 	@AllArgsConstructor
 	private static class Section {
@@ -143,6 +144,7 @@ public class M {
 		public static final Option DAMAGE_ALLOWED = new Option(M.DAMAGE_ALLOWED);
 		public static final Option DIFFICULTY = new Option(M.DIFFICULTY);
 		public static final Option ENABLED = new Option(M.ENABLED);
+		public static final Option MEDAL = new Option(M.MEDAL);
 		public static final Option MODIFY_INVENTORY = new Option(M.MODIFY_INVENTORY);
 		public static final Option SAVING_RESULTS = new Option(M.SAVING_RESULTS);
 		public static final Option SPRINT_FORCED = new Option(M.SPRINT_FORCED);
@@ -156,22 +158,6 @@ public class M {
 
 		public Option(final String key) {
 			super("option." + key);
-		}
-	}
-
-	public static final class Medal extends Section {
-		public static final Medal BRONZE = new Medal(M.BRONZE);
-		public static final Medal SILVER = new Medal(M.SILVER);
-		public static final Medal GOLD = new Medal(M.GOLD);
-		public static final Medal PLATINUM = new Medal(M.PLATINUM);
-
-		public final Message help = new Message(this, HELP);
-		public final Message usage = new Message(this, USAGE);
-		public final Message get = new Message(this, GET);
-		public final Message set = new Message(this, SET);
-
-		public Medal(final String key) {
-			super("medal." + key);
 		}
 	}
 
@@ -194,6 +180,7 @@ public class M {
 		public static final List TOP = new List(M.TOP);
 		public static final List GAMES = new List(GAME);
 		public static final List HELP = new List(M.HELP);
+		public static final List MEDAL = new List(M.MEDAL);
 
 		public final Message help = new Message(this, M.HELP);
 		public final Message usage = new Message(this, USAGE);
@@ -253,6 +240,7 @@ public class M {
 		public final Message alreadyExists = new Message(this, ALREADY_EXISTS, true);
 		public final Message alreadyStarted = new Message(this, ALREADY_STARTED, true);
 		public final Message alreadyStopped = new Message(this, ALREADY_STOPPED, true);
+		public final Message boundsExceeded = new Message(this, BOUNDS_EXCEEDED, true);
 		public final Message forbiddenFlying = new Message(this, FORBIDDEN_FLYING, true);
 		public final Message forbiddenModification = new Message(this, FORBIDDEN_MODIFICATION, true);
 		public final Message insufficientPermissions = new Message(this, INSUFFICIENT_PERMISSIONS, true);
@@ -268,6 +256,9 @@ public class M {
 		public final Message missingMedals = new Message(this, MISSING_MEDALS, true);
 		public final Message missingSpawn = new Message(this, MISSING_SPAWN, true);
 		public final Message negativeNumber = new Message(this, NEGATIVE_NUMBER, true);
+		public final Message noEconomy = new Message(this, NO_ECONOMY, true);
+		public final Message noMedal = new Message(this, NO_MEDAL, true);
+		public final Message noMedalData = new Message(this, NO_MEDAL_DATA, true);
 		public final Message notBlock = new Message(this, NOT_BLOCK, true);
 		public final Message notConnected = new Message(this, NOT_CONNECTED, true);
 		public final Message notSign = new Message(this, NOT_SIGN, true);

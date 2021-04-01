@@ -222,11 +222,11 @@ public class ParkourListeners implements Listener {
 		final Player player = parkourPlayer.getPlayer();
 		final UUID uniqueId = player.getUniqueId();
 		final ParkourGame parkourGame = event.getGame();
-		plugin.getSound("complete")
-				.ifPresent(sound -> player.playSound(player.getLocation(), sound, 0.5F, 0.5F));
 		if (plugin.getTeleportCountdown().containsKey(uniqueId)) {
 			return;
 		}
+		plugin.getSound("complete")
+				.ifPresent(sound -> player.playSound(player.getLocation(), sound, 0.5F, 0.5F));
 		final ParkourCountdown task = new ParkourCountdown(5,
 				() -> {
 					final Map<UUID, Integer> timeCounter = plugin.getTimeCounter();
@@ -244,27 +244,40 @@ public class ParkourListeners implements Listener {
 				});
 		final int schedulerId = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, task, 10, 20);
 		plugin.getTeleportCountdown().put(uniqueId, schedulerId);
+		final double currentTime = parkourPlayer.getTime();
 		if (!parkourGame.getOptions().isSavingResults()) {
 			return;
 		}
-		final double currentTime = parkourPlayer.getTime();
 		player.sendMessage(plugin.msg("finishTime").replace("%PERSONAL_TIME%", plugin.formatTime(currentTime)));
 		if (player.hasPermission("ats.parkour.ignoreRecords")) {
 			player.sendMessage("Your time hasn't been saved to database");
-		} else {
-			plugin.getConnection()
-					.map(connection -> new FetchAndInsertDataTask(connection, parkourGame, player.getUniqueId(), currentTime, (previousCount, previousPlayerBest, previousParkourBest) -> {
-						player.sendMessage(plugin.msg("howMany").replace("%COUNT%", String.valueOf(previousCount + 1)));
-						if (previousParkourBest > currentTime) {
-							player.sendMessage(plugin.msg("newParkourBestTime"));
-							plugin.updateSyncSign(new ParkourRecord(player.getUniqueId(), parkourGame, currentTime));
-						}
-						if (previousPlayerBest > currentTime) {
-							player.sendMessage(plugin.msg("newPersonalBestTime"));
-						}
-					}))
-					.ifPresent(fetchAndInsertDataTask -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchAndInsertDataTask));
+			return;
 		}
+		plugin.getConnection()
+				.map(connection -> new FetchAndInsertDataTask(connection, parkourGame, player.getUniqueId(), currentTime, (previousCount, previousPlayerBest, previousParkourBest) -> {
+					player.sendMessage(plugin.msg("howMany").replace("%COUNT%", String.valueOf(previousCount + 1)));
+					if (previousParkourBest > currentTime) {
+						player.sendMessage(plugin.msg("newParkourBestTime"));
+						plugin.updateSyncSign(new ParkourRecord(player.getUniqueId(), parkourGame, currentTime));
+					}
+					if (previousPlayerBest > currentTime) {
+						player.sendMessage(plugin.msg("newPersonalBestTime"));
+					}
+					final ParkourGame.Result previousResult = parkourGame.getResult(previousPlayerBest);
+					final ParkourGame.Result result = parkourGame.getResult(currentTime);
+					if (result.getMedal() == null || result.getMedal().equals(previousResult.getMedal())) {
+						return;
+					}
+					player.sendMessage(plugin.msg("achieveMedal").replace("%MEDAL%", result.getMedal().getDisplay()));
+					plugin.getFinancialProvider().ifPresent(financialProvider -> {
+						final double finalReward = result.getReward() - previousResult.getReward();
+						if (finalReward > 0) {
+							financialProvider.addMoney(player, finalReward);
+							player.sendMessage(plugin.msg("reward").replace("%REWARD%", String.valueOf(finalReward)));
+						}
+					});
+				}))
+				.ifPresent(fetchAndInsertDataTask -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchAndInsertDataTask));
 	}
 
 	@EventHandler
@@ -379,7 +392,7 @@ public class ParkourListeners implements Listener {
 			plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, () ->
 					plugin.getGameItemMap().iterate(player.getInventory()::setItem), 2);
 		}
-		parkourGame.getOptions().getEffects().entrySet().stream()
+		parkourGame.getEffects().entrySet().stream()
 				.map(entry -> new PotionEffect(entry.getKey(), 99999999, entry.getValue()))
 				.forEach(player::addPotionEffect);
 		player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("joinParkour").replace("%PARKOUR%", parkourGame.getDisplayName())));
@@ -399,7 +412,7 @@ public class ParkourListeners implements Listener {
 				.findAny()
 				.ifPresent(parkourGame -> {
 					final Player player = event.getPlayer();
-					final boolean isVip = plugin.getRankProvider().map(x -> x.isVip(player)).isPresent();
+					final boolean isVip = plugin.getRankProvider().map(rankProvider -> rankProvider.isVip(player)).isPresent();
 					if (!parkourGame.getOptions().isVipOnly() || isVip) {
 						final DirectionalRegion parkourSpawn = parkourGame.getSpawn();
 						if (parkourSpawn == null) {
@@ -435,7 +448,7 @@ public class ParkourListeners implements Listener {
 				.stream()
 				.filter(game -> plugin.getParkourManager().inAnyRegion(game, event.getLocation()))
 				.findAny()
-				.ifPresent(x -> event.setCancelled(true));
+				.ifPresent(ignored -> event.setCancelled(true));
 	}
 
 	@EventHandler
@@ -490,7 +503,7 @@ public class ParkourListeners implements Listener {
 			plugin.getServer().getScheduler().cancelTask(plugin.getTeleportCountdown().get(uniqueId));
 			plugin.getTeleportCountdown().remove(uniqueId);
 		}
-		event.getGame().getOptions().getEffects().keySet().forEach(player::removePotionEffect);
+		event.getGame().getEffects().keySet().forEach(player::removePotionEffect);
 		plugin.getPlayerManager().remove(player);
 	}
 
@@ -522,7 +535,11 @@ public class ParkourListeners implements Listener {
 				.filter(parkourGame -> plugin.getParkourManager().inAnyRegion(parkourGame, player))
 				.filter(parkourGame -> parkourGame.getWorld().equals(player.getWorld()))
 				.findAny()
-				.ifPresent(ignored -> plugin.getParkourManager().teleportToLobby(player));
+				.ifPresent(ignored -> {
+					player.setLevel(0);
+					player.setExp(0);
+					plugin.getParkourManager().teleportToLobby(player);
+				});
 	}
 
 	@EventHandler
