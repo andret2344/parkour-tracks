@@ -123,9 +123,9 @@ public final class ParkourPlugin extends JavaPlugin {
 					final PrintWriter printWriter = new PrintWriter(target);
 					printWriter.write(parkourManager.serialize().toString(4));
 					printWriter.close();
-					System.out.println("Successfully created \"backups/" + name + "\" file!");
+					getLogger().info("Successfully created \"backups/" + name + "\" file!");
 				} catch (final FileNotFoundException ex) {
-					System.out.println("An error occurred when trying to backup parkours!");
+					getLogger().severe("An error occurred when trying to backup parkours!");
 					ex.printStackTrace();
 				}
 			}, 6000, 1200L * backupFrequency);
@@ -204,7 +204,7 @@ public final class ParkourPlugin extends JavaPlugin {
 	private List<ParkourMedal> loadMedals() {
 		final ConfigurationSection medalsSection = getConfig().getConfigurationSection(MEDAL);
 		if (medalsSection == null) {
-			System.out.println("No medals loaded!");
+			getLogger().info("No medals loaded!");
 			return Collections.emptyList();
 		}
 		return medalsSection.getKeys(false).stream()
@@ -231,7 +231,7 @@ public final class ParkourPlugin extends JavaPlugin {
 			messages.load(new File(getDataFolder(), "messages.yml"));
 			inventory.load(new File(getDataFolder(), "inventory.yml"));
 		} catch (final IOException | InvalidConfigurationException ex) {
-			System.out.println("An error occurred when loading messages");
+			getLogger().info("An error occurred when loading messages");
 			ex.printStackTrace();
 		}
 		generate();
@@ -286,15 +286,15 @@ public final class ParkourPlugin extends JavaPlugin {
 	private void setupDatabase() {
 		final boolean databaseEnabled = getConfig().getBoolean("database.enabled", false);
 		if (!databaseEnabled) {
-			System.out.println("Database is disabled. In order to save records, enable it in config.");
+			getLogger().warning("Database is disabled. In order to save records, enable it in config.");
 			return;
 		}
 		try {
 			connection = createConnection();
 			connect();
-			System.out.println("Database connection established.");
+			getLogger().info("Database connection established.");
 		} catch (final SQLException ex) {
-			System.out.println("An error occurred when trying to connect to database.");
+			getLogger().severe("An error occurred when trying to connect to database.");
 			connection = null;
 			ex.printStackTrace();
 		}
@@ -321,15 +321,15 @@ public final class ParkourPlugin extends JavaPlugin {
 		try {
 			final File lobby = new File(getDataFolder(), "setting.json");
 			if (!lobby.exists() && !lobby.createNewFile()) {
-				System.out.println("An error occurred when trying to create parkour setting file");
+				getLogger().severe("An error occurred when trying to create parkour setting file");
 				return;
 			}
 			final PrintWriter printWriter = new PrintWriter(lobby);
 			printWriter.write(parkourManager.serialize().toString(4));
 			printWriter.close();
-			System.out.println("Successfully saved parkour setting");
+			getLogger().info("Successfully saved parkour setting");
 		} catch (final IOException ex) {
-			System.out.println("An error occurred when trying to save parkour setting");
+			getLogger().severe("An error occurred when trying to save parkour setting");
 			ex.printStackTrace();
 		}
 	}
@@ -343,9 +343,9 @@ public final class ParkourPlugin extends JavaPlugin {
 			final JSONTokener jsonTokener = new JSONTokener(reader);
 			final JSONObject jsonObject = new JSONObject(jsonTokener);
 			parkourManager.deserialize(jsonObject);
-			System.out.println("Successfully loaded parkour setting");
+			getLogger().info("Successfully loaded parkour setting");
 		} catch (final IOException ex) {
-			System.out.println("An error occurred when trying to load parkour setting");
+			getLogger().severe("An error occurred when trying to load parkour setting");
 			ex.printStackTrace();
 		}
 	}
