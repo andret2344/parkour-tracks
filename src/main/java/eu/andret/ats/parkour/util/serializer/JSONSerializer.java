@@ -9,9 +9,10 @@ import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import eu.andret.ats.parkour.ParkourPlugin;
 import eu.andret.ats.parkour.event.game.GameStartEvent;
-import eu.andret.ats.parkour.parkour.Parkour;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourManager;
+import eu.andret.ats.parkour.parkour.ParkourMedal;
+import eu.andret.ats.parkour.parkour.ParkourMedalData;
 import eu.andret.ats.parkour.region.BasicRegion;
 import eu.andret.ats.parkour.region.DirectionalRegion;
 import lombok.AllArgsConstructor;
@@ -26,6 +27,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -50,8 +52,11 @@ public class JSONSerializer implements Serializer<JSONObject> {
 	private static final String YAW = "yaw";
 	private static final String PITCH = "pitch";
 	private static final String SPAWN = "spawn";
-	public static final String LOBBY = "lobby";
-	public static final String GAMES = "games";
+	private static final String LOBBY = "lobby";
+	private static final String GAMES = "games";
+	public static final String MEDALS = "medals";
+	public static final String TIME = "time";
+	public static final String REWARD = "reward";
 
 	ParkourPlugin plugin;
 
@@ -89,15 +94,15 @@ public class JSONSerializer implements Serializer<JSONObject> {
 		}
 		final String world = jsonObject.getString(WORLD);
 		final BasicRegion gameRegion = readBasicRegion(jsonObject.getJSONObject(REGION));
-		final ParkourGame parkourGame = new Parkour(jsonObject.getString(NAME), gameRegion, plugin.getServer().getWorld(world));
+		final ParkourGame parkourGame = plugin.getParkourManager().createParkour(jsonObject.getString(NAME), gameRegion, plugin.getServer().getWorld(world));
 		if (jsonObject.has(SPAWN)) {
 			parkourGame.setSpawn(readDirectionalRegion(jsonObject.getJSONObject(SPAWN)));
 		}
 		if (jsonObject.has(CHECKPOINTS)) {
-			readDirectionalRegions(jsonObject.getJSONArray(CHECKPOINTS)).forEach(x -> parkourGame.getCheckpoints().add(x));
+			readDirectionalRegions(jsonObject.getJSONArray(CHECKPOINTS)).forEach(parkourGame.getCheckpoints()::add);
 		}
 		if (jsonObject.has(WALLS)) {
-			readBasicRegions(jsonObject.getJSONArray(WALLS)).forEach(x -> parkourGame.getWalls().add(x));
+			readBasicRegions(jsonObject.getJSONArray(WALLS)).forEach(parkourGame.getWalls()::add);
 		}
 		if (jsonObject.has(OPTIONS)) {
 			parkourGame.setOptions(readOptions(jsonObject.getJSONObject(OPTIONS)));
@@ -118,7 +123,34 @@ public class JSONSerializer implements Serializer<JSONObject> {
 		if (jsonObject.has(DISPLAY_NAME)) {
 			parkourGame.setDisplayName(jsonObject.getString(DISPLAY_NAME));
 		}
+		if (jsonObject.has(EFFECTS)) {
+			final JSONArray effects = jsonObject.getJSONArray(EFFECTS);
+			for (int i = 0; i < effects.length(); i++) {
+				final JSONObject effect = effects.getJSONObject(i);
+				final String name = effect.getString(NAME);
+				final int amplifier = effect.getInt(AMPLIFIER);
+				if (amplifier <= 0) {
+					continue;
+				}
+				parkourGame.getEffects().put(PotionEffectType.getByName(name), amplifier);
+			}
+		}
+		if (jsonObject.has(MEDALS)) {
+			parkourGame.getMedals().putAll(readMedals(jsonObject.getJSONObject(MEDALS)));
+		}
 		return parkourGame;
+	}
+
+	private Map<ParkourMedal, ParkourMedalData> readMedals(final JSONObject object) {
+		final Map<ParkourMedal, ParkourMedalData> result = new HashMap<>();
+		plugin.getMedals()
+				.stream()
+				.filter(medal -> object.has(medal.getName()))
+				.forEach(medal -> {
+					final JSONObject data = object.getJSONObject(medal.getName());
+					result.put(medal, new ParkourMedalData(data.getDouble(TIME), data.getDouble(REWARD)));
+				});
+		return result;
 	}
 
 	private List<String> readStringList(final JSONArray jsonArray) {
@@ -136,34 +168,19 @@ public class JSONSerializer implements Serializer<JSONObject> {
 		if (jsonObject1 == null) {
 			return ParkourGame.Options.builder().build();
 		}
-		final ParkourGame.Options parkourOptions = ParkourGame.Options.builder()
+		return ParkourGame.Options.builder()
 				.alwaysSpawn(jsonObject1.getBoolean("alwaysSpawn"))
 				.boat(jsonObject1.getBoolean("boat"))
 				.savingResults(jsonObject1.getBoolean("savingResults"))
 				.damageAllowed(jsonObject1.getBoolean("damageAllowed"))
 				.sprintForced(jsonObject1.getBoolean("sprintForced"))
 				.modifyInventory(jsonObject1.getBoolean("modifyInventory"))
-				.bronze(jsonObject1.getDouble("bronze"))
-				.silver(jsonObject1.getDouble("silver"))
-				.gold(jsonObject1.getDouble("gold"))
-				.platinum(jsonObject1.getDouble("platinum"))
 				.color(DyeColor.valueOf(jsonObject1.getString("color")))
 				.difficulty(jsonObject1.getInt("difficulty"))
-				.type(ParkourGame.ParkourType.valueOf(jsonObject1.getString("type")))
+				.type(ParkourGame.Type.valueOf(jsonObject1.getString("type")))
 				.vipOnly(jsonObject1.getBoolean("vipOnly"))
 				.enabled(jsonObject1.getBoolean("enabled"))
 				.build();
-		final JSONArray effects = jsonObject1.getJSONArray(EFFECTS);
-		for (int i = 0; i < effects.length(); i++) {
-			final JSONObject jsonObject = effects.getJSONObject(i);
-			final String name = jsonObject.getString(NAME);
-			final int amplifier = jsonObject.getInt(AMPLIFIER);
-			if (amplifier <= 0) {
-				continue;
-			}
-			parkourOptions.setEffect(PotionEffectType.getByName(name), amplifier);
-		}
-		return parkourOptions;
 	}
 
 	private List<DirectionalRegion> readDirectionalRegions(final JSONArray jsonArray) {
@@ -268,7 +285,27 @@ public class JSONSerializer implements Serializer<JSONObject> {
 		jsonObject.put(STARTED, parkourGame.isRunning());
 		jsonObject.put(AUTHORS, writeStringCollection(parkourGame.getAuthors()));
 		jsonObject.put(DISPLAY_NAME, parkourGame.getDisplayName());
+		final JSONArray effects = new JSONArray();
+		for (final Map.Entry<PotionEffectType, Integer> entry : parkourGame.getEffects().entrySet()) {
+			final JSONObject effect = new JSONObject();
+			effect.put(NAME, entry.getKey().getName());
+			effect.put(AMPLIFIER, entry.getValue());
+			effects.put(effect);
+		}
+		jsonObject.put(EFFECTS, effects);
+		jsonObject.put(MEDALS, writeMedals(parkourGame.getMedals()));
 		return jsonObject;
+	}
+
+	private JSONObject writeMedals(final Map<ParkourMedal, ParkourMedalData> medals) {
+		final JSONObject result = new JSONObject();
+		medals.forEach((medal, parkourMedalData) -> {
+			final JSONObject data = new JSONObject();
+			data.put(TIME, parkourMedalData.getTime());
+			data.put(REWARD, parkourMedalData.getReward());
+			result.put(medal.getName(), data);
+		});
+		return result;
 	}
 
 	private JSONArray writeStringCollection(final Collection<String> list) {
@@ -352,23 +389,11 @@ public class JSONSerializer implements Serializer<JSONObject> {
 		jsonObject1.put("damageAllowed", options.isDamageAllowed());
 		jsonObject1.put("sprintForced", options.isSprintForced());
 		jsonObject1.put("modifyInventory", options.isModifyInventory());
-		jsonObject1.put("bronze", options.getBronze());
-		jsonObject1.put("silver", options.getSilver());
-		jsonObject1.put("gold", options.getGold());
-		jsonObject1.put("platinum", options.getPlatinum());
 		jsonObject1.put("color", options.getColor().name());
 		jsonObject1.put("difficulty", options.getDifficulty());
 		jsonObject1.put("vipOnly", options.isVipOnly());
 		jsonObject1.put("enabled", options.isEnabled());
 		jsonObject1.put("type", options.getType().name());
-		final JSONArray effects = new JSONArray();
-		for (final Map.Entry<PotionEffectType, Integer> entry : options.getEffects().entrySet()) {
-			final JSONObject jsonObject = new JSONObject();
-			jsonObject.put(NAME, entry.getKey().getName());
-			jsonObject.put(AMPLIFIER, entry.getValue());
-			effects.put(jsonObject);
-		}
-		jsonObject1.put(EFFECTS, effects);
 		return jsonObject1;
 	}
 }

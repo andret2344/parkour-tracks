@@ -31,6 +31,30 @@ recordSign:
   line3: '%NICK%'
   line4: ''
 
+# Configurable medals for every parkour
+# Type: List of medals
+# Default: []
+medal:
+  # The key is used in commands, etc
+  platinum:
+    # The display is used on chat for players and admins
+    # Type string
+    # Default: key equivalent
+    display: '&fplatinum'
+    # The lowest importance, the "better" medal is. Paradoxically, 1 > 2 > 3 > 4!
+    # Type: Integer
+    # Default: 1
+    importance: 1
+  gold:
+    display: '&egold'
+    importance: 2
+  silver:
+    display: '&7silver'
+    importance: 3
+  bronze:
+    display: '&4bronze'
+    importance: 4
+
 # Should it be forbidden to everyone to edit running parkour games?
 # This settings forbids any terrain changes and game modification via commends.
 # If set to true, you need to stop the game in order to apply any modification it.
