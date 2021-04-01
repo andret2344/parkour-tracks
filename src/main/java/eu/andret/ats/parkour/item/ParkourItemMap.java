@@ -2,7 +2,7 @@
  * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
  */
 
-package eu.andret.ats.parkour.util;
+package eu.andret.ats.parkour.item;
 
 import lombok.NonNull;
 import org.bukkit.inventory.ItemStack;
