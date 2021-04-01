@@ -15,7 +15,7 @@ general:
 parkour:
   authors:
     help: '&eShow or set authors of parkour.'
-    usage: '&cCorrect usage: /parkour authors <name> [<add|remove> <authors>]'
+    usage: '&cCorrect usage: /parkour authors <name> <authors...>'
     get: '&bCurrent authors are set to &6%VALUE%&b.'
     set: '&aSuccessfully set authors to &6%VALUE%&a.'
   display-name:

@@ -361,18 +361,18 @@ public final class ParkourPlugin extends JavaPlugin {
 	private void generate() {
 		helpDescription.put("help|?", msg(M.List.HELP.help));
 		helpDescription.put("lobby", msg(M.General.LOBBY.help));
-		helpDescription.put("create|c", msg(M.Executive.CREATE.help));
-		helpDescription.put("remove|r", msg(M.Executive.REMOVE.help));
-		helpDescription.put("rename|rn", msg(M.Executive.RENAME.help));
+		helpDescription.put("create", msg(M.Executive.CREATE.help));
+		helpDescription.put("remove", msg(M.Executive.REMOVE.help));
+		helpDescription.put("rename", msg(M.Executive.RENAME.help));
 		helpDescription.put("info", msg(M.Executive.INFO.help));
-		helpDescription.put("setSpawn|ss", msg(M.Executive.SPAWN.help));
+		helpDescription.put("setSpawns", msg(M.Executive.SPAWN.help));
 		helpDescription.put("recreate", msg(M.Executive.RECREATE.help));
 		helpDescription.put("start", msg(M.Executive.START.help));
 		helpDescription.put("stop", msg(M.Executive.STOP.help));
-		helpDescription.put("addCheckpoint|ac", msg(M.Region.Checkpoint.ADD.help));
-		helpDescription.put("setCheckpoint|sc", msg(M.Region.Checkpoint.SET.help));
-		helpDescription.put("addWall|aw", msg(M.Region.Wall.ADD.help));
-		helpDescription.put("setWall|sw", msg(M.Region.Wall.SET.help));
+		helpDescription.put("addCheckpoint", msg(M.Region.Checkpoint.ADD.help));
+		helpDescription.put("setCheckpoint", msg(M.Region.Checkpoint.SET.help));
+		helpDescription.put("addWall", msg(M.Region.Wall.ADD.help));
+		helpDescription.put("setWall", msg(M.Region.Wall.SET.help));
 		helpDescription.put("list|ls", msg(M.List.GAMES.help));
 		helpDescription.put("ignore|i", msg(M.General.IGNORE.help));
 		helpDescription.put("sprintForced", msg(M.Option.SPRINT_FORCED.help));
