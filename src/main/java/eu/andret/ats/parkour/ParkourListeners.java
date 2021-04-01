@@ -270,9 +270,9 @@ public class ParkourListeners implements Listener {
 					}
 					player.sendMessage(plugin.msg("achieveMedal").replace("%MEDAL%", result.getMedal().getDisplay()));
 					plugin.getFinancialProvider().ifPresent(financialProvider -> {
-						financialProvider.addMoney(player, result.getReward());
 						final double finalReward = result.getReward() - previousResult.getReward();
 						if (finalReward > 0) {
+							financialProvider.addMoney(player, finalReward);
 							player.sendMessage(plugin.msg("reward").replace("%REWARD%", String.valueOf(finalReward)));
 						}
 					});
