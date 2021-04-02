@@ -319,7 +319,7 @@ public final class ParkourPlugin extends JavaPlugin {
 		try (final Statement stat = connection.createStatement()) {
 			stat.execute("CREATE DATABASE IF NOT EXISTS `" + database + "`;");
 			stat.execute("USE " + database + ";");
-			stat.execute("CREATE TABLE IF NOT EXISTS ats_parkour_records(id INT PRIMARY KEY AUTO_INCREMENT, date DATETIME, uuid VARCHAR(64), parkour VARCHAR(64), time FLOAT);");
+			stat.execute("CREATE TABLE IF NOT EXISTS ats_parkour_records(id INT PRIMARY KEY AUTO_INCREMENT, date DATETIME, uuid VARCHAR(64), parkour VARCHAR(64), time DECIMAL(8, 2));");
 		}
 	}
 
