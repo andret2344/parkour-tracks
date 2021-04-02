@@ -80,6 +80,8 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 		@Builder.Default
 		private boolean vipOnly = false;
 		@Builder.Default
+		private double fee = 0;
+		@Builder.Default
 		private int difficulty = 1;
 		@Builder.Default
 		private DyeColor color = DyeColor.WHITE;

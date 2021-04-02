@@ -709,13 +709,8 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		return plugin.msg(M.Error.DEFAULT.invalidGame);
 	}
 
-	@Argument(permission = "ats.parkour.color", description = "Shows value of parkour color")
-	public String color(@Param("parkourGame") final ParkourGame parkourGame) {
-		return plugin.msg(M.Option.COLOR.get).replace(VALUE, parkourGame.getOptions().getColor().name());
-	}
-
 	@Argument(permission = "ats.parkour.color", description = "Sets value of parkour color")
-	public String color(@Param("parkourGame") final ParkourGame parkourGame, final DyeColor color) {
+	public String color(@Param("parkourGame") final ParkourGame parkourGame, @Param("color") final DyeColor color) {
 		if (parkourGame.isRunning() && plugin.isEditLocked()) {
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
@@ -723,8 +718,38 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		return plugin.msg(M.Option.COLOR.set).replace(VALUE, color.name());
 	}
 
+	@Argument(permission = "ats.parkour.color", description = "Shows value of parkour color")
+	public String color(@Param("parkourGame") final ParkourGame parkourGame) {
+		return plugin.msg(M.Option.COLOR.get).replace(VALUE, parkourGame.getOptions().getColor().name());
+	}
+
 	@Fallback
 	public String color() {
+		return plugin.msg(M.Error.DEFAULT.invalidGame);
+	}
+
+	@Argument(permission = "ats.parkour.fee", description = "Sets value of parkour entrance fee")
+	public String fee(@Param("parkourGame") final ParkourGame parkourGame, final double fee) {
+		if (parkourGame.isRunning() && plugin.isEditLocked()) {
+			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
+		}
+		if (fee < 0) {
+			return plugin.msg(M.Error.DEFAULT.negativeNumber);
+		}
+		if (plugin.getFinancialProvider().isEmpty()) {
+			return plugin.msg(M.Error.DEFAULT.noEconomy);
+		}
+		parkourGame.getOptions().setFee(fee);
+		return plugin.msg(M.Option.FEE.set).replace(VALUE, String.valueOf(fee));
+	}
+
+	@Argument(permission = "ats.parkour.fee", description = "Shows value of parkour entrance fee")
+	public String fee(@Param("parkourGame") final ParkourGame parkourGame) {
+		return plugin.msg(M.Option.FEE.get).replace(VALUE, String.valueOf(parkourGame.getOptions().getFee()));
+	}
+
+	@Fallback
+	public String fee() {
 		return plugin.msg(M.Error.DEFAULT.invalidGame);
 	}
 

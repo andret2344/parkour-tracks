@@ -79,7 +79,7 @@ public class ParkourListeners implements Listener {
 		if (!parkour.isRunning()) {
 			return;
 		}
-		final ParkourPlayer parkourPlayer = plugin.getPlayerManager().getParkourPlayer(event.getPlayer());
+		final ParkourPlayer parkourPlayer = plugin.getPlayerManager().getParkourPlayer(player);
 		if (parkourPlayer.isIgnoring()) {
 			return;
 		}
@@ -105,20 +105,23 @@ public class ParkourListeners implements Listener {
 		Optional.ofNullable(player.getAttribute(Attribute.GENERIC_MAX_HEALTH))
 				.map(AttributeInstance::getValue)
 				.ifPresent(player::setHealth);
+		player.setExhaustion(0);
+		player.setSaturation(20);
 		final int lastVisitedCheckpointId = parkourPlayer.getLastCheckpoint();
-		if (!parkourPlayer.isIgnoring() && parkour.getOptions().isSprintForced() && !player.isSprinting()) {
-			parkour.getCheckpoints().stream()
-					.filter(region -> region.contains(player.getLocation()))
-					.findAny()
-					.ifPresent(directionalRegion -> {
-						final DirectionalRegion region = parkour.getOptions().isAlwaysSpawn() ? parkour.getSpawn() : parkour.getCheckpoints().get(lastVisitedCheckpointId);
-						if (region == null) {
-							return;
-						}
-						plugin.getPlayerManager().teleportToRegion(parkourPlayer, region);
-						plugin.getServer().getPluginManager().callEvent(new PlayerTeleportBackEvent(parkour, parkourPlayer, region));
-					});
+		if (!parkour.getOptions().isSprintForced() || player.isSprinting()) {
+			return;
 		}
+		parkour.getCheckpoints().stream()
+				.filter(region -> region.contains(player.getLocation()))
+				.findAny()
+				.ifPresent(directionalRegion -> {
+					final DirectionalRegion region = parkour.getOptions().isAlwaysSpawn() ? parkour.getSpawn() : parkour.getCheckpoints().get(lastVisitedCheckpointId);
+					if (region == null) {
+						return;
+					}
+					plugin.getPlayerManager().teleportToRegion(parkourPlayer, region);
+					plugin.getServer().getPluginManager().callEvent(new PlayerTeleportBackEvent(parkour, parkourPlayer, region));
+				});
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST)
@@ -409,25 +412,40 @@ public class ParkourListeners implements Listener {
 		plugin.getParkourManager().getAllGames().stream()
 				.filter(parkourGame -> parkourGame.getTeleportBlock() != null)
 				.filter(parkourGame -> parkourGame.getTeleportBlock().equals(event.getClickedBlock().getLocation()))
+				.filter(ParkourGame::isRunning)
 				.findAny()
 				.ifPresent(parkourGame -> {
 					final Player player = event.getPlayer();
-					final boolean isVip = plugin.getRankProvider().map(rankProvider -> rankProvider.isVip(player)).isPresent();
-					if (!parkourGame.getOptions().isVipOnly() || isVip) {
-						final DirectionalRegion parkourSpawn = parkourGame.getSpawn();
-						if (parkourSpawn == null) {
-							return;
-						}
-						final ParkourPlayer parkourPlayer = plugin.getPlayerManager().getParkourPlayer(player);
-						if (parkourPlayer.isIgnoring()) {
-							player.sendMessage(plugin.msg("ignoring"));
-							return;
-						}
-						plugin.getPlayerManager().teleportToRegion(parkourPlayer, parkourSpawn);
-					} else {
-						player.sendMessage(plugin.msg(M.Error.DEFAULT.notVip));
+					final DirectionalRegion parkourSpawn = parkourGame.getSpawn();
+					if (parkourSpawn == null) {
+						return;
+					}
+					final ParkourPlayer parkourPlayer = plugin.getPlayerManager().getParkourPlayer(player);
+					if (parkourPlayer.isIgnoring()) {
+						player.sendMessage(plugin.msg("ignoring"));
+						return;
 					}
 					event.setCancelled(true);
+					final boolean isVip = plugin.getRankProvider().map(rankProvider -> rankProvider.isVip(player)).isPresent();
+					if (parkourGame.getOptions().isVipOnly() && !isVip) {
+						player.sendMessage(plugin.msg(M.Error.DEFAULT.notVip));
+						return;
+					}
+					if (plugin.getFinancialProvider().isEmpty()) {
+						plugin.getPlayerManager().teleportToRegion(parkourPlayer, parkourSpawn);
+						return;
+					}
+					final double fee = parkourGame.getOptions().getFee();
+					plugin.getFinancialProvider().ifPresent(financialProvider -> {
+						final double money = financialProvider.getMoney(player);
+						if (money < fee) {
+							player.sendMessage("You are too poor");
+							return;
+						}
+						player.sendMessage("You have paid " + fee + " for joining.");
+						financialProvider.addMoney(player, -fee);
+						plugin.getPlayerManager().teleportToRegion(parkourPlayer, parkourSpawn);
+					});
 				});
 	}
 

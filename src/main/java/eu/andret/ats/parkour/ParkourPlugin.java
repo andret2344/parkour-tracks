@@ -26,6 +26,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.ChatColor;
+import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -278,6 +279,10 @@ public final class ParkourPlugin extends JavaPlugin {
 						.findAny()
 						.orElse(null),
 				Fallback.ON_NULL);
+		command.addTypeCompleter(DyeColor.class, Arrays.stream(DyeColor.values())
+				.map(Enum::name)
+				.collect(Collectors.toList()));
+		command.addArgumentMapper("color", DyeColor.class, DyeColor::valueOf, Fallback.ON_NULL);
 	}
 
 	public boolean isEditLocked() {

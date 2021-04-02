@@ -164,22 +164,23 @@ public class JSONSerializer implements Serializer<JSONObject> {
 		return list;
 	}
 
-	private ParkourGame.Options readOptions(final JSONObject jsonObject1) {
-		if (jsonObject1 == null) {
+	private ParkourGame.Options readOptions(final JSONObject jsonObject) {
+		if (jsonObject == null) {
 			return ParkourGame.Options.builder().build();
 		}
 		return ParkourGame.Options.builder()
-				.alwaysSpawn(jsonObject1.getBoolean("alwaysSpawn"))
-				.boat(jsonObject1.getBoolean("boat"))
-				.savingResults(jsonObject1.getBoolean("savingResults"))
-				.damageAllowed(jsonObject1.getBoolean("damageAllowed"))
-				.sprintForced(jsonObject1.getBoolean("sprintForced"))
-				.modifyInventory(jsonObject1.getBoolean("modifyInventory"))
-				.color(DyeColor.valueOf(jsonObject1.getString("color")))
-				.difficulty(jsonObject1.getInt("difficulty"))
-				.type(ParkourGame.Type.valueOf(jsonObject1.getString("type")))
-				.vipOnly(jsonObject1.getBoolean("vipOnly"))
-				.enabled(jsonObject1.getBoolean("enabled"))
+				.alwaysSpawn(jsonObject.getBoolean("alwaysSpawn"))
+				.boat(jsonObject.getBoolean("boat"))
+				.savingResults(jsonObject.getBoolean("savingResults"))
+				.damageAllowed(jsonObject.getBoolean("damageAllowed"))
+				.sprintForced(jsonObject.getBoolean("sprintForced"))
+				.modifyInventory(jsonObject.getBoolean("modifyInventory"))
+				.color(DyeColor.valueOf(jsonObject.getString("color")))
+				.difficulty(jsonObject.getInt("difficulty"))
+				.type(ParkourGame.Type.valueOf(jsonObject.getString("type")))
+				.vipOnly(jsonObject.getBoolean("vipOnly"))
+				.enabled(jsonObject.getBoolean("enabled"))
+				.fee(jsonObject.getDouble("fee"))
 				.build();
 	}
 
@@ -394,6 +395,7 @@ public class JSONSerializer implements Serializer<JSONObject> {
 		jsonObject1.put("vipOnly", options.isVipOnly());
 		jsonObject1.put("enabled", options.isEnabled());
 		jsonObject1.put("type", options.getType().name());
+		jsonObject1.put("fee", options.getFee());
 		return jsonObject1;
 	}
 }
