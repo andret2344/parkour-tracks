@@ -128,6 +128,11 @@ option:
     usage: '&cCorrect usage: /parkour enabled <name> [value]'
     get: '&bCurrent ability to use the parkour is set to &6%VALUE%&b.'
     set: '&aSuccessfully set ability to use the parkour to &6%VALUE%&a.'
+  fee:
+    help: '&eShow or set parkour fee.'
+    usage: '&cCorrect usage: /parkour fee <name> [value]'
+    get: '&bCurrent fee is set to &6%VALUE%&a.'
+    set: '&aSuccessfully set fee to &6%VALUE%&b.'
   modify-inventory:
     help: '&eTurn inventory modifying on or off.'
     usage: '&cCorrect usage: /parkour modifyInventory <name> [value]'

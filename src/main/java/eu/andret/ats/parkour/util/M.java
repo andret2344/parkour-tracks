@@ -78,6 +78,7 @@ public class M {
 	private static final String NO_MEDAL_DATA = "no-medal-data";
 	private static final String MEDAL = "medal";
 	private static final String BOUNDS_EXCEEDED = "bounds-exceeded";
+	private static final String FEE = "fee";
 
 	@AllArgsConstructor
 	private static class Section {
@@ -144,6 +145,7 @@ public class M {
 		public static final Option DAMAGE_ALLOWED = new Option(M.DAMAGE_ALLOWED);
 		public static final Option DIFFICULTY = new Option(M.DIFFICULTY);
 		public static final Option ENABLED = new Option(M.ENABLED);
+		public static final Option FEE = new Option(M.FEE);
 		public static final Option MEDAL = new Option(M.MEDAL);
 		public static final Option MODIFY_INVENTORY = new Option(M.MODIFY_INVENTORY);
 		public static final Option SAVING_RESULTS = new Option(M.SAVING_RESULTS);

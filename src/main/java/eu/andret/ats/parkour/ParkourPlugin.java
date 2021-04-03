@@ -26,6 +26,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.ChatColor;
+import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -278,6 +279,10 @@ public final class ParkourPlugin extends JavaPlugin {
 						.findAny()
 						.orElse(null),
 				Fallback.ON_NULL);
+		command.addTypeCompleter(DyeColor.class, Arrays.stream(DyeColor.values())
+				.map(Enum::name)
+				.collect(Collectors.toList()));
+		command.addArgumentMapper("color", DyeColor.class, DyeColor::valueOf, Fallback.ON_NULL);
 	}
 
 	public boolean isEditLocked() {
@@ -314,7 +319,7 @@ public final class ParkourPlugin extends JavaPlugin {
 		try (final Statement stat = connection.createStatement()) {
 			stat.execute("CREATE DATABASE IF NOT EXISTS `" + database + "`;");
 			stat.execute("USE " + database + ";");
-			stat.execute("CREATE TABLE IF NOT EXISTS ats_parkour_records(id INT PRIMARY KEY AUTO_INCREMENT, date DATETIME, uuid VARCHAR(64), parkour VARCHAR(64), time FLOAT);");
+			stat.execute("CREATE TABLE IF NOT EXISTS ats_parkour_records(id INT PRIMARY KEY AUTO_INCREMENT, date DATETIME, uuid VARCHAR(64), parkour VARCHAR(64), time DECIMAL(8, 2));");
 		}
 	}
 
