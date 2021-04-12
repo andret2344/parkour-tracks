@@ -62,7 +62,7 @@ publish:
   stage: deploy
   script:
     - ./gradlew clean
-    - ./gradlew publish
+    - ./gradlew publish --debug
   rules:
     - if: '$CI_COMMIT_BRANCH == "master"'
       when: manual
