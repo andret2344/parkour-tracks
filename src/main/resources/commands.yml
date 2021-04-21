@@ -138,6 +138,11 @@ option:
     usage: '&cCorrect usage: /parkour modifyInventory <name> [value]'
     get: '&bCurrent inventory modifying is set to &6%VALUE%&b.'
     set: '&aSuccessfully set inventory modifying to &6%VALUE%&a.'
+  reward:
+    help: '&eShow or set reward.'
+    usage: '&cCorrect usage: /parkour reward <name> [value]'
+    get: '&bCurrent reward is set to &6%VALUE%&a.'
+    set: '&aSuccessfully set reward to &6%VALUE%&b.'
   saving-results:
     help: '&eShow or set saving records to database.'
     usage: '&cCorrect usage: /parkour savingResults <name> [value]'

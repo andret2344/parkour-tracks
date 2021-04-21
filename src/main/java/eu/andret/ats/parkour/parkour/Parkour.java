@@ -14,7 +14,7 @@ import org.bukkit.World;
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 class Parkour extends ParkourGame {
-	public Parkour(final String name, final BasicRegion region, final World world) {
+	Parkour(final String name, final BasicRegion region, final World world) {
 		super(name, region, world);
 	}
 }

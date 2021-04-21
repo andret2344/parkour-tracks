@@ -9,6 +9,8 @@ ignoring: '&bYou are ignoring games, no interaction is possible! Change it using
 joinParkour: '&3Joined &6%PARKOUR%&3 parkour.'
 newPersonalBestTime: '&6Congratulations! You have beaten own record on this parkour!'
 newParkourBestTime: '&5&lCongratulations!!!&r&5 You have new record on this parkour!'
+playersHidden: '&3Hidden players!'
+playersShown: '&3Shown players!'
 reward: '&bBecause of medal, you have earned &6%REWARD%&b.'
 teleportationCanceled: '&3Teleportation counting has been just&c cancelled&3.'
 teleportingTime: '&3You are being teleported in &7%SECONDS%&3 seconds.'

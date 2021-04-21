@@ -230,6 +230,7 @@ public class ParkourListeners implements Listener {
 		}
 		plugin.getSound("complete")
 				.ifPresent(sound -> player.playSound(player.getLocation(), sound, 0.5F, 0.5F));
+		plugin.getFinancialProvider().ifPresent(financialProvider -> financialProvider.addMoney(player, parkourGame.getOptions().getReward()));
 		final ParkourCountdown task = new ParkourCountdown(5,
 				() -> {
 					final Map<UUID, Integer> timeCounter = plugin.getTimeCounter();
@@ -650,12 +651,12 @@ public class ParkourListeners implements Listener {
 	}
 
 	private void switchHiddenState(final ParkourPlayer parkourPlayer) {
-		plugin.getParkourManager().setHidden(parkourPlayer.getPlayer(), plugin, !parkourPlayer.isHidden());
 		if (parkourPlayer.isHidden()) {
-			parkourPlayer.getPlayer().sendMessage("Shown players");
+			parkourPlayer.getPlayer().sendMessage(plugin.msg("playersShown"));
 		} else {
-			parkourPlayer.getPlayer().sendMessage("Hidden players");
+			parkourPlayer.getPlayer().sendMessage(plugin.msg("playersHidden"));
 		}
+		plugin.getParkourManager().setHidden(parkourPlayer.getPlayer(), plugin, !parkourPlayer.isHidden());
 		parkourPlayer.setHidden(!parkourPlayer.isHidden());
 	}
 

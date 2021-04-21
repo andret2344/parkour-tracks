@@ -79,6 +79,7 @@ public class M {
 	private static final String MEDAL = "medal";
 	private static final String BOUNDS_EXCEEDED = "bounds-exceeded";
 	private static final String FEE = "fee";
+	private static final String REWARD = "reward";
 
 	@AllArgsConstructor
 	private static class Section {
@@ -148,6 +149,7 @@ public class M {
 		public static final Option FEE = new Option(M.FEE);
 		public static final Option MEDAL = new Option(M.MEDAL);
 		public static final Option MODIFY_INVENTORY = new Option(M.MODIFY_INVENTORY);
+		public static final Option REWARD = new Option(M.REWARD);
 		public static final Option SAVING_RESULTS = new Option(M.SAVING_RESULTS);
 		public static final Option SPRINT_FORCED = new Option(M.SPRINT_FORCED);
 		public static final Option TYPE = new Option(M.TYPE);
