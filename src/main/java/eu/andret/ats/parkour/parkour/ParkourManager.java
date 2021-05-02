@@ -12,53 +12,58 @@ import lombok.Data;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public final class ParkourManager<E> {
+	@NotNull
 	private final Serializer<E> serializer;
+	@NotNull
 	private ParkourSetting setting = new ParkourSetting();
 
 	@Data
 	public static class ParkourSetting {
+		@NotNull
 		private final List<ParkourGame> parkourGames = new ArrayList<>();
+		@Nullable
 		private Location lobbyLocation;
 	}
 
-	public ParkourManager(final Serializer<E> serializer) {
+	public ParkourManager(@NotNull final Serializer<E> serializer) {
 		this.serializer = serializer;
 	}
 
-	public ParkourGame createParkour(final String name, final BasicRegion region, final World world) {
+	@NotNull
+	public ParkourGame createParkour(@NotNull final String name, @NotNull final BasicRegion region, @Nullable final World world) {
+		if (world == null) {
+			throw new IllegalArgumentException("World cannot be null!");
+		}
 		final ParkourGame game = new Parkour(name, region, world);
 		setting.parkourGames.add(game);
 		return game;
 	}
 
-	public void addParkour(final ParkourGame parkourGame) {
-		setting.parkourGames.add(parkourGame);
-	}
-
-	public void sortGames() {
-		Collections.sort(setting.parkourGames);
-	}
-
+	@NotNull
 	public List<ParkourGame> getAllGames() {
 		return new ArrayList<>(setting.parkourGames);
 	}
 
-	public ParkourGame getParkour(final Player player) {
+	@Nullable
+	public ParkourGame getParkour(@NotNull final Player player) {
 		return setting.parkourGames.stream()
 				.filter(parkour -> parkour.getPlayers().stream().map(ParkourPlayer::getPlayer).anyMatch(player::equals))
 				.findAny()
 				.orElse(null);
 	}
 
+	@NotNull
 	public List<Player> getPlayersInGames() {
 		return setting.parkourGames.stream()
 				.map(ParkourGame::getPlayers)
@@ -67,66 +72,77 @@ public final class ParkourManager<E> {
 				.collect(Collectors.toList());
 	}
 
-	public ParkourGame getParkour(final String name) {
+	@Nullable
+	public ParkourGame getParkour(@NotNull final String name) {
 		return setting.parkourGames.stream()
 				.filter(game -> game.getName().equals(name))
 				.findAny()
 				.orElse(null);
 	}
 
-	public void removeParkour(final ParkourGame parkourGame) {
+	public void removeParkour(@NotNull final ParkourGame parkourGame) {
 		setting.parkourGames.remove(parkourGame);
 	}
 
-	public void teleportToLobby(final ParkourPlayer player) {
+	public void teleportToLobby(@NotNull final ParkourPlayer player) {
 		teleportToLobby(player.getPlayer());
 	}
 
-	public void teleportToLobby(final Player player) {
-		player.teleport(setting.lobbyLocation);
+	public void teleportToLobby(@NotNull final Player player) {
+		Optional.of(setting)
+				.map(ParkourSetting::getLobbyLocation)
+				.ifPresent(player::teleport);
 	}
 
-	public boolean inAnyRegion(final ParkourGame parkourGame, final ParkourPlayer parkourPlayer) {
-		return inAnyRegion(parkourGame, parkourPlayer.getPlayer());
+	public boolean inAnyRegion(@NotNull final ParkourGame parkourGame, @Nullable final ParkourPlayer parkourPlayer) {
+		return Optional.ofNullable(parkourPlayer)
+				.map(ParkourPlayer::getPlayer)
+				.filter(player -> inAnyRegion(parkourGame, player))
+				.isPresent();
 	}
 
-	public boolean inAnyRegion(final ParkourGame parkourGame, final Player player) {
-		return inAnyRegion(parkourGame, player.getLocation());
+	public boolean inAnyRegion(@NotNull final ParkourGame parkourGame, @Nullable final Player player) {
+		return Optional.ofNullable(player)
+				.map(Player::getLocation)
+				.filter(location -> inAnyRegion(parkourGame, location))
+				.isPresent();
 	}
 
-	public boolean inAnyRegion(final ParkourGame parkourGame, final Location location) {
+	public boolean inAnyRegion(@NotNull final ParkourGame parkourGame, @Nullable final Location location) {
 		return parkourGame.getAllRegions().stream()
 				.filter(Objects::nonNull)
 				.anyMatch(region -> region.contains(location));
 	}
 
+	@Nullable
 	public Location getLobbyLocation() {
 		return setting.getLobbyLocation();
 	}
 
-	public void setLobbyLocation(final Location location) {
+	public void setLobbyLocation(@NotNull final Location location) {
 		setting.setLobbyLocation(location);
 	}
 
-	public void deserialize(final E e) {
+	public void deserialize(@NotNull final E e) {
 		setting = serializer.readParkourSetting(e);
 	}
 
+	@NotNull
 	public E serialize() {
 		return serializer.writeParkourSetting(setting);
 	}
 
-	public void setHidden(final Player player, final ParkourPlugin plugin, final boolean state) {
+	public void setHidden(@NotNull final Player player, @NotNull final ParkourPlugin plugin, final boolean state) {
 		getAllGames()
 				.stream()
 				.map(ParkourGame::getPlayers)
 				.flatMap(Collection::stream)
 				.map(ParkourPlayer::getPlayer)
-				.forEach(hiddingPlayer -> {
+				.forEach(hidingPlayer -> {
 					if (state) {
-						player.showPlayer(plugin, hiddingPlayer);
+						player.showPlayer(plugin, hidingPlayer);
 					} else {
-						player.hidePlayer(plugin, hiddingPlayer);
+						player.hidePlayer(plugin, hidingPlayer);
 					}
 				});
 	}

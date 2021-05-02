@@ -28,9 +28,12 @@ import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.region.BasicRegion;
 import eu.andret.ats.parkour.region.DirectionalRegion;
 import eu.andret.ats.parkour.tasks.database.FetchParkourBestRecordTask;
+import eu.andret.ats.parkour.util.Constants;
 import eu.andret.ats.parkour.util.Data;
 import eu.andret.ats.parkour.util.M;
+import eu.andret.ats.parkour.util.MedalSetupOption;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.bukkit.ChatColor;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
@@ -39,29 +42,23 @@ import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiPredicate;
+import java.util.function.DoubleFunction;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 
 @BaseCommand("parkour")
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
-	private static final String VALUE = "%VALUE%";
-	private static final String NAME = "%NAME%";
-	private static final String EFFECT = "%EFFECT%";
-	private static final String AMPLIFIER = "%AMPLIFIER%";
-	private static final String COORD_X = "%COORD_X%";
-	private static final String COORD_Y = "%COORD_Y%";
-	private static final String COORD_Z = "%COORD_Z%";
-	private static final String MEDALS = "%MEDALS%";
-	private static final String OPTION = "%OPTION%";
-	private static final String MEDAL_PLACEHOLDER = "%MEDAL%";
 
-	public ParkourCommand(final CommandSender sender, final ParkourPlugin plugin) {
+	public ParkourCommand(@NotNull final CommandSender sender, @NotNull final ParkourPlugin plugin) {
 		super(sender, plugin);
 	}
 
@@ -71,20 +68,20 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 	public void tutorial(@Completer("startStop") final String state) {
 		final Player player = (Player) sender;
 		if (state.equals("start")) {
-			if (TutorialManager.hasPlayer(player)) {
+			if (plugin.getTutorialManager().hasPlayer(player)) {
 				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&dYou are already in tutorial... Be polite!"));
 				return;
 			}
-			final TutorialPlayer tutorialPlayer = TutorialManager.getPlayer(player);
+			final TutorialPlayer tutorialPlayer = plugin.getTutorialManager().getPlayer(player);
 			tutorialPlayer.sendMessage();
 			return;
 		}
 		if (state.equals("stop")) {
-			if (!TutorialManager.hasPlayer(player)) {
+			if (!plugin.getTutorialManager().hasPlayer(player)) {
 				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&dYou aren't in in tutorial... Be polite!"));
 				return;
 			}
-			TutorialManager.removePlayer(player);
+			plugin.getTutorialManager().removePlayer(player);
 			sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&dOh, that's sad you don't want to learn anymore, but I appreciate your knowledge. Bye!"));
 			return;
 		}
@@ -96,22 +93,24 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 	@Argument(permission = "ats.parkour.lobby", executorType = ExecutorType.PLAYER, description = "Teleports to lobby")
 	public String lobby() {
 		final Player player = (Player) sender;
-		plugin.getParkourManager().teleportToLobby(player);
 		final Location location = plugin.getParkourManager().getLobbyLocation();
 		if (location == null) {
 			executeTutorial(player, 0);
 			return "No lobby!";
 		}
-		if (TutorialManager.hasPlayer(player)) {
-			final TutorialPlayer tutorialPlayer = TutorialManager.getPlayer(player);
+		plugin.getParkourManager().teleportToLobby(player);
+		if (plugin.getTutorialManager().hasPlayer(player)) {
+			final TutorialPlayer tutorialPlayer = plugin.getTutorialManager().getPlayer(player);
 			if (tutorialPlayer.done(0, true)) {
 				tutorialPlayer.next().next().sendMessage().next().next().sendMessage();
 			}
 		}
 		return plugin.msg(M.General.LOBBY.success)
-				.replace(COORD_X, String.valueOf(location.getBlockX()))
-				.replace(COORD_Y, String.valueOf(location.getBlockY()))
-				.replace(COORD_Z, String.valueOf(location.getBlockZ()));
+				.replace(Constants.COORD_X, plugin.formatCoord(location.getX()))
+				.replace(Constants.COORD_Y, plugin.formatCoord(location.getY()))
+				.replace(Constants.COORD_Z, plugin.formatCoord(location.getZ()))
+				.replace(Constants.COORD_YAW, plugin.formatCoord(location.getYaw()))
+				.replace(Constants.COORD_PITCH, plugin.formatCoord(location.getPitch()));
 	}
 
 	@Argument(permission = "ats.parkour.setLobby", executorType = ExecutorType.PLAYER, description = "Sets lobby location to player's location")
@@ -119,16 +118,18 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		final Player player = (Player) sender;
 		final Location location = player.getLocation();
 		plugin.getParkourManager().setLobbyLocation(location);
-		if (TutorialManager.hasPlayer(player)) {
-			final TutorialPlayer tutorialPlayer = TutorialManager.getPlayer(player);
-			if (tutorialPlayer.done(1, true)) {
-				tutorialPlayer.next().next().next().sendMessage().next().sendMessage();
+		if (plugin.getTutorialManager().hasPlayer(player)) {
+			final TutorialPlayer tutorialPlayer = plugin.getTutorialManager().getPlayer(player);
+			if (tutorialPlayer.done(1)) {
+				tutorialPlayer.next().next().sendMessage().next().sendMessage();
 			}
 		}
 		return plugin.msg(M.General.SET_LOBBY.success)
-				.replace(COORD_X, String.valueOf(location.getBlockX()))
-				.replace(COORD_Y, String.valueOf(location.getBlockY()))
-				.replace(COORD_Z, String.valueOf(location.getBlockZ()));
+				.replace(Constants.COORD_X, plugin.formatCoord(location.getX()))
+				.replace(Constants.COORD_Y, plugin.formatCoord(location.getY()))
+				.replace(Constants.COORD_Z, plugin.formatCoord(location.getZ()))
+				.replace(Constants.COORD_YAW, plugin.formatCoord(location.getYaw()))
+				.replace(Constants.COORD_PITCH, plugin.formatCoord(location.getPitch()));
 	}
 
 	@Argument(permission = "ats.parkour.list", description = "Lists all parkour games", aliases = "ls")
@@ -137,10 +138,12 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.List.GAMES.empty);
 		}
 		sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.List.GAMES.header)
-				.replace("%COUNT%", String.valueOf(plugin.getParkourManager().getAllGames().size()))));
+				.replace(Constants.COUNT, String.valueOf(plugin.getParkourManager().getAllGames().size()))));
 		final List<ParkourGame> allGames = plugin.getParkourManager().getAllGames();
-		for (int i = 0; i < allGames.size(); i++) {
-			final ParkourGame parkourGame = allGames.get(i);
+		if (sender instanceof Player) {
+			executeTutorial((Player) sender, 11);
+		}
+		for (final ParkourGame parkourGame : allGames) {
 			final String running;
 			if (parkourGame.isRunning()) {
 				running = ChatColor.GREEN + "" + ChatColor.ITALIC + "[Started]";
@@ -148,9 +151,9 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 				running = ChatColor.RED + "" + ChatColor.ITALIC + "[Stopped]";
 			}
 			sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.List.GAMES.item)
-					.replace("%ID%", String.valueOf(i + 1))
-					.replace(NAME, parkourGame.getName())
-					.replace("%RUNNING%", running)));
+					.replace(Constants.NAME, parkourGame.getName())
+					.replace(Constants.DISPLAY_NAME, parkourGame.getDisplayName())
+					.replace(Constants.RUNNING, running)));
 		}
 		return null;
 	}
@@ -160,10 +163,8 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		plugin.getConnection().ifPresentOrElse(connection -> {
 			plugin.getParkourManager().getAllGames()
 					.stream()
-					.map(parkourGame -> new FetchParkourBestRecordTask(connection, parkourGame, 1, data -> {
-						final ParkourRecord record = data.isEmpty() ? new ParkourRecord(null, parkourGame, 0) : data.get(0);
-						plugin.updateSyncSign(record);
-					}
+					.map(parkourGame -> new FetchParkourBestRecordTask(connection, parkourGame, 1, data -> data.stream().findFirst()
+							.ifPresentOrElse(plugin::updateSyncSign, () -> plugin.updateSyncSign(parkourGame))
 					))
 					.forEach(fetchParkourBestRecordTask -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchParkourBestRecordTask));
 			sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.General.FIX.success)));
@@ -179,7 +180,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			plugin.getParkourManager().getAllGames().stream()
 					.filter(parkourGame -> plugin.getParkourManager().inAnyRegion(parkourGame, player))
 					.forEach(parkourGame -> plugin.getParkourManager().teleportToLobby(player));
-			return plugin.msg(M.General.IGNORE.success).replace(VALUE, "false");
+			return plugin.msg(M.General.IGNORE.success).replace(Constants.VALUE, "false");
 		}
 		parkourPlayer.setIgnoring(true);
 		final ParkourGame parkour = plugin.getParkourManager().getParkour(player);
@@ -187,7 +188,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			plugin.getServer().getPluginManager().callEvent(new PlayerQuitGameEvent(parkour, parkourPlayer));
 			parkour.removePlayer(parkourPlayer);
 		}
-		return plugin.msg(M.General.IGNORE.success).replace(VALUE, "true");
+		return plugin.msg(M.General.IGNORE.success).replace(Constants.VALUE, "true");
 	}
 
 	@Argument(permission = "ats.parkour.help", description = "Shows help page", aliases = "?")
@@ -204,15 +205,15 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return;
 		}
 		sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.List.HELP.header)
-				.replace("%PAGE%", String.valueOf(page))
-				.replace("%PAGES%", String.valueOf(maxPages))));
+				.replace(Constants.PAGE, String.valueOf(page))
+				.replace(Constants.PAGES, String.valueOf(maxPages))));
 		messages.entrySet()
 				.stream()
 				.skip(skip)
 				.limit(5)
 				.map(command -> plugin.msg(M.List.HELP.item)
-						.replace("%ARGUMENT%", command.getKey())
-						.replace("%DESCRIPTION%", command.getValue()))
+						.replace(Constants.ARGUMENT, command.getKey())
+						.replace(Constants.DESCRIPTION, command.getValue()))
 				.map(text -> ChatColor.translateAlternateColorCodes('&', text))
 				.forEach(sender::sendMessage);
 	}
@@ -234,12 +235,15 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		}
 		final ParkourGame parkour = plugin.getParkourManager().getParkour(name);
 		if (parkour != null) {
-			return plugin.msg(M.Error.DEFAULT.alreadyExists).replace(NAME, name);
+			return plugin.msg(M.Error.DEFAULT.alreadyExists).replace(Constants.NAME, name);
 		}
 		executeTutorial(player, 4);
-		final ParkourGame parkourGame = plugin.getParkourManager().createParkour(name, new BasicRegion(selection), player.getLocation().getWorld());
-		plugin.getParkourManager().addParkour(parkourGame);
-		return plugin.msg(M.Executive.CREATE.success).replace(NAME, parkourGame.getName());
+		final org.bukkit.World world = player.getLocation().getWorld();
+		if (world == null) {
+			return plugin.msg(M.Error.DEFAULT.invalidGame);
+		}
+		final ParkourGame parkourGame = plugin.getParkourManager().createParkour(name, new BasicRegion(selection), world);
+		return plugin.msg(M.Executive.CREATE.success).replace(Constants.NAME, parkourGame.getName());
 	}
 
 	@Argument(permission = "ats.parkour.remove", description = "Removes parkour game")
@@ -248,7 +252,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
 		plugin.getParkourManager().removeParkour(parkourGame);
-		return plugin.msg(M.Executive.REMOVE.success).replace(NAME, parkourGame.getName());
+		return plugin.msg(M.Executive.REMOVE.success).replace(Constants.NAME, parkourGame.getName());
 	}
 
 	@Fallback
@@ -269,13 +273,13 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		}
 		if (sender instanceof Player) {
 			final Player player = (Player) sender;
-			if (executeTutorial(player, 11)) {
-				TutorialManager.removePlayer(player);
+			if (executeTutorial(player, 12)) {
+				plugin.getTutorialManager().removePlayer(player);
 			}
 		}
 		parkourGame.setRunning(true);
 		plugin.getServer().getPluginManager().callEvent(new GameStartEvent(parkourGame));
-		return plugin.msg(M.Executive.START.success).replace(NAME, parkourGame.getName());
+		return plugin.msg(M.Executive.START.success).replace(Constants.NAME, parkourGame.getName());
 	}
 
 	@Fallback
@@ -290,7 +294,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		}
 		parkourGame.setRunning(false);
 		plugin.getServer().getPluginManager().callEvent(new GameStopEvent(parkourGame));
-		return plugin.msg(M.Executive.STOP.success).replace(NAME, parkourGame.getName());
+		return plugin.msg(M.Executive.STOP.success).replace(Constants.NAME, parkourGame.getName());
 	}
 
 	@Fallback
@@ -322,12 +326,12 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
 		if (plugin.getParkourManager().getParkour(name) != null) {
-			return plugin.msg(M.Error.DEFAULT.alreadyExists).replace(NAME, name);
+			return plugin.msg(M.Error.DEFAULT.alreadyExists).replace(Constants.NAME, name);
 		}
 		parkourGame.setName(name);
 		return plugin.msg(M.Executive.RENAME.success)
-				.replace("%OLD_NAME%", parkourGame.getName())
-				.replace("%NEW_NAME%", name);
+				.replace(Constants.OLD_NAME, parkourGame.getName())
+				.replace(Constants.NEW_NAME, name);
 	}
 
 	@Fallback
@@ -344,7 +348,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Error.DEFAULT.missingSpawn);
 		}
 		plugin.getPlayerManager().teleportToRegion(parkourPlayer, parkourGame.getSpawn());
-		return plugin.msg(M.Executive.TELEPORT.success).replace(NAME, parkourGame.getName());
+		return plugin.msg(M.Executive.TELEPORT.success).replace(Constants.NAME, parkourGame.getName());
 	}
 
 	@Fallback
@@ -391,7 +395,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		executeTutorial(player, 6, false);
 		final Location location = player.getLocation();
 		parkourGame.getCheckpoints().add(new DirectionalRegion(selection, location.getYaw(), location.getPitch()));
-		return plugin.msg(M.Region.Checkpoint.ADD.success).replace("%ID%", String.valueOf(parkourGame.getCheckpoints().size()));
+		return plugin.msg(M.Region.Checkpoint.ADD.success).replace(Constants.ID, String.valueOf(parkourGame.getCheckpoints().size()));
 	}
 
 	@Fallback
@@ -404,7 +408,8 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (parkourGame.isRunning() && plugin.isEditLocked()) {
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
-		final CuboidRegion selection = getRegionSelection((Player) sender);
+		final Player player = (Player) sender;
+		final CuboidRegion selection = getRegionSelection(player);
 		if (selection == null) {
 			return plugin.msg(M.Error.DEFAULT.invalidSelection);
 		}
@@ -414,9 +419,10 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (id > parkourGame.getCheckpoints().size()) {
 			return plugin.msg(M.Error.DEFAULT.tooLargeNumber);
 		}
-		final Location location = ((Player) sender).getLocation();
+		final Location location = player.getLocation();
 		parkourGame.getCheckpoints().add(id - 1, new DirectionalRegion(selection, location.getYaw(), location.getPitch()));
-		return plugin.msg(M.Region.Checkpoint.SET.success).replace("%ID%", String.valueOf(id));
+		executeTutorial(player, 6, false);
+		return plugin.msg(M.Region.Checkpoint.SET.success).replace(Constants.ID, String.valueOf(id));
 	}
 
 	@Fallback
@@ -435,7 +441,8 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Error.DEFAULT.invalidSelection);
 		}
 		parkourGame.getWalls().add(new BasicRegion(selection));
-		return plugin.msg(M.Region.Wall.ADD.success).replace("%ID%", String.valueOf(parkourGame.getWalls().size()));
+		executeTutorial(player, 9, false);
+		return plugin.msg(M.Region.Wall.ADD.success).replace(Constants.ID, String.valueOf(parkourGame.getWalls().size()));
 	}
 
 	@Fallback
@@ -448,7 +455,8 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (parkourGame.isRunning() && plugin.isEditLocked()) {
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
-		final CuboidRegion selection = getRegionSelection((Player) sender);
+		final Player player = (Player) sender;
+		final CuboidRegion selection = getRegionSelection(player);
 		if (selection == null) {
 			return plugin.msg(M.Error.DEFAULT.invalidSelection);
 		}
@@ -459,7 +467,8 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Error.DEFAULT.tooLargeNumber);
 		}
 		parkourGame.getWalls().set(id - 1, new BasicRegion(selection));
-		return plugin.msg(M.Region.Wall.SET.success).replace("%ID%", String.valueOf(id));
+		executeTutorial(player, 9, false);
+		return plugin.msg(M.Region.Wall.SET.success).replace(Constants.ID, String.valueOf(id));
 	}
 
 	@Fallback
@@ -476,8 +485,8 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		parkourGame.getEffects().entrySet()
 				.stream()
 				.map(entry -> plugin.msg(M.List.EFFECT.item)
-						.replace(EFFECT, entry.getKey().getName())
-						.replace(AMPLIFIER, String.valueOf(entry.getValue())))
+						.replace(Constants.EFFECT, entry.getKey().getName())
+						.replace(Constants.AMPLIFIER, String.valueOf(entry.getValue())))
 				.map(text -> ChatColor.translateAlternateColorCodes('&', text))
 				.forEach(sender::sendMessage);
 		return null;
@@ -495,10 +504,10 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		}
 		if (power <= 0) {
 			parkourGame.getEffects().remove(type);
-			return plugin.msg(M.Amplifier.EFFECT.removed).replace(EFFECT, type.getName());
+			return plugin.msg(M.Amplifier.EFFECT.removed).replace(Constants.EFFECT, type.getName());
 		}
 		parkourGame.getEffects().put(type, power);
-		return plugin.msg(M.Amplifier.EFFECT.added).replace(EFFECT, type.getName()).replace(AMPLIFIER, String.valueOf(power));
+		return plugin.msg(M.Amplifier.EFFECT.added).replace(Constants.EFFECT, type.getName()).replace(Constants.AMPLIFIER, String.valueOf(power));
 	}
 
 	@Fallback
@@ -510,7 +519,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@Argument(permission = "ats.parkour.sprintForced", description = "Shows value of sprintForced flag")
 	public String sprintForced(@Param("parkourGame") final ParkourGame parkourGame) {
-		return plugin.msg(M.Option.SPRINT_FORCED.get).replace(VALUE, String.valueOf(parkourGame.getOptions().isSprintForced()));
+		return plugin.msg(M.Option.SPRINT_FORCED.get).replace(Constants.VALUE, String.valueOf(parkourGame.getOptions().isSprintForced()));
 	}
 
 	@Argument(permission = "ats.parkour.sprintForced", description = "Sets value of sprintForced flag")
@@ -519,7 +528,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
 		parkourGame.getOptions().setSprintForced(sprintForced);
-		return plugin.msg(M.Option.SPRINT_FORCED.set).replace(VALUE, String.valueOf(sprintForced));
+		return plugin.msg(M.Option.SPRINT_FORCED.set).replace(Constants.VALUE, String.valueOf(sprintForced));
 	}
 
 	@Fallback
@@ -529,7 +538,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@Argument(permission = "ats.parkour.alwaysSpawn", description = "Shows value of alwaysSpawn flag")
 	public String alwaysSpawn(@Param("parkourGame") final ParkourGame parkourGame) {
-		return plugin.msg(M.Option.ALWAYS_SPAWN.get).replace(VALUE, String.valueOf(parkourGame.getOptions().isAlwaysSpawn()));
+		return plugin.msg(M.Option.ALWAYS_SPAWN.get).replace(Constants.VALUE, String.valueOf(parkourGame.getOptions().isAlwaysSpawn()));
 	}
 
 	@Argument(permission = "ats.parkour.alwaysSpawn", description = "Sets value of alwaysSpawn flag")
@@ -538,7 +547,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
 		parkourGame.getOptions().setAlwaysSpawn(alwaysSpawn);
-		return plugin.msg(M.Option.ALWAYS_SPAWN.set).replace(VALUE, String.valueOf(alwaysSpawn));
+		return plugin.msg(M.Option.ALWAYS_SPAWN.set).replace(Constants.VALUE, String.valueOf(alwaysSpawn));
 	}
 
 	@Fallback
@@ -548,16 +557,22 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@Argument(permission = "ats.parkour.reward", description = "Shows value of reward")
 	public String reward(@Param("parkourGame") final ParkourGame parkourGame) {
-		return plugin.msg(M.Option.REWARD.get).replace(VALUE, String.valueOf(parkourGame.getOptions().getReward()));
+		if (plugin.getFinancialProvider().isEmpty()) {
+			return plugin.msg(M.Error.DEFAULT.noEconomy);
+		}
+		return plugin.msg(M.Option.REWARD.get).replace(Constants.VALUE, plugin.formatMoney(parkourGame.getOptions().getReward()));
 	}
 
 	@Argument(permission = "ats.parkour.reward", description = "Sets value of reward")
 	public String reward(@Param("parkourGame") final ParkourGame parkourGame, final double reward) {
+		if (plugin.getFinancialProvider().isEmpty()) {
+			return plugin.msg(M.Error.DEFAULT.noEconomy);
+		}
 		if (parkourGame.isRunning() && plugin.isEditLocked()) {
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
 		parkourGame.getOptions().setReward(reward);
-		return plugin.msg(M.Option.REWARD.set).replace(VALUE, String.valueOf(reward));
+		return plugin.msg(M.Option.REWARD.set).replace(Constants.VALUE, plugin.formatMoney(reward));
 	}
 
 	@Fallback
@@ -567,7 +582,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@Argument(permission = "ats.parkour.savingResults", description = "Shows value of savingResults flag")
 	public String savingResults(@Param("parkourGame") final ParkourGame parkourGame) {
-		return plugin.msg(M.Option.SAVING_RESULTS.get).replace(VALUE, String.valueOf(parkourGame.getOptions().isSavingResults()));
+		return plugin.msg(M.Option.SAVING_RESULTS.get).replace(Constants.VALUE, String.valueOf(parkourGame.getOptions().isSavingResults()));
 	}
 
 	@Argument(permission = "ats.parkour.savingResults", description = "Sets value of savingResults flag")
@@ -576,7 +591,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
 		parkourGame.getOptions().setSavingResults(savingResults);
-		return plugin.msg(M.Option.SAVING_RESULTS.set).replace(VALUE, String.valueOf(savingResults));
+		return plugin.msg(M.Option.SAVING_RESULTS.set).replace(Constants.VALUE, String.valueOf(savingResults));
 	}
 
 	@Fallback
@@ -586,7 +601,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@Argument(permission = "ats.parkour.vipOnly", description = "Shows value of vipOnly flag")
 	public String vipOnly(@Param("parkourGame") final ParkourGame parkourGame) {
-		return plugin.msg(M.Option.VIP_ONLY.get).replace("%VIP_ONLY%", String.valueOf(parkourGame.getOptions().isVipOnly()));
+		return plugin.msg(M.Option.VIP_ONLY.get).replace(Constants.VIP_ONLY, String.valueOf(parkourGame.getOptions().isVipOnly()));
 	}
 
 	@Argument(permission = "ats.parkour.vipOnly", description = "Sets value of vipOnly flag")
@@ -595,7 +610,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
 		parkourGame.getOptions().setVipOnly(vipOnly);
-		return plugin.msg(M.Option.VIP_ONLY.set).replace(VALUE, String.valueOf(vipOnly));
+		return plugin.msg(M.Option.VIP_ONLY.set).replace(Constants.VALUE, String.valueOf(vipOnly));
 	}
 
 	@Fallback
@@ -605,7 +620,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@Argument(permission = "ats.parkour.damageAllowed", description = "Shows value of damageAllowed flag")
 	public String damageAllowed(@Param("parkourGame") final ParkourGame parkourGame) {
-		return plugin.msg(M.Option.DAMAGE_ALLOWED.get).replace(VALUE, String.valueOf(parkourGame.getOptions().isDamageAllowed()));
+		return plugin.msg(M.Option.DAMAGE_ALLOWED.get).replace(Constants.VALUE, String.valueOf(parkourGame.getOptions().isDamageAllowed()));
 	}
 
 	@Argument(permission = "ats.parkour.damageAllowed", description = "Sets value of damageAllowed flag")
@@ -614,7 +629,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
 		parkourGame.getOptions().setDamageAllowed(damageAllowed);
-		return plugin.msg(M.Option.DAMAGE_ALLOWED.set).replace(VALUE, String.valueOf(damageAllowed));
+		return plugin.msg(M.Option.DAMAGE_ALLOWED.set).replace(Constants.VALUE, String.valueOf(damageAllowed));
 	}
 
 	@Fallback
@@ -624,7 +639,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@Argument(permission = "ats.parkour.boat", description = "Shows value of boat flag")
 	public String boat(@Param("parkourGame") final ParkourGame parkourGame) {
-		return plugin.msg(M.Option.BOAT.get).replace(VALUE, String.valueOf(parkourGame.getOptions().isBoat()));
+		return plugin.msg(M.Option.BOAT.get).replace(Constants.VALUE, String.valueOf(parkourGame.getOptions().isBoat()));
 	}
 
 	@Argument(permission = "ats.parkour.boat", description = "Sets value of boat flag")
@@ -633,7 +648,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
 		parkourGame.getOptions().setBoat(boat);
-		return plugin.msg(M.Option.BOAT.set).replace(VALUE, String.valueOf(boat));
+		return plugin.msg(M.Option.BOAT.set).replace(Constants.VALUE, String.valueOf(boat));
 	}
 
 	@Fallback
@@ -643,7 +658,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@Argument(permission = "ats.parkour.enabled", description = "Shows value of enabled flag")
 	public String enabled(@Param("parkourGame") final ParkourGame parkourGame) {
-		return plugin.msg(M.Option.ENABLED.get).replace("%ENABLED%", String.valueOf(parkourGame.getOptions().isEnabled()));
+		return plugin.msg(M.Option.ENABLED.get).replace(Constants.ENABLED, String.valueOf(parkourGame.getOptions().isEnabled()));
 	}
 
 	@Argument(permission = "ats.parkour.enabled", description = "Sets value of enabled flag")
@@ -652,7 +667,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
 		parkourGame.getOptions().setEnabled(enabled);
-		return plugin.msg(M.Option.ENABLED.set).replace("%ENABLED%", String.valueOf(enabled));
+		return plugin.msg(M.Option.ENABLED.set).replace(Constants.ENABLED, String.valueOf(enabled));
 	}
 
 	@Fallback
@@ -662,7 +677,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@Argument(permission = "ats.parkour.modifyInventory", description = "Shows value of modifyInventory flag")
 	public String modifyInventory(@Param("parkourGame") final ParkourGame parkourGame) {
-		return plugin.msg(M.Option.MODIFY_INVENTORY.get).replace(VALUE, String.valueOf(parkourGame.getOptions().isModifyInventory()));
+		return plugin.msg(M.Option.MODIFY_INVENTORY.get).replace(Constants.VALUE, String.valueOf(parkourGame.getOptions().isModifyInventory()));
 	}
 
 	@Argument(permission = "ats.parkour.modifyInventory", description = "Sets value of modifyInventory flag")
@@ -671,7 +686,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
 		parkourGame.getOptions().setModifyInventory(modifyInventory);
-		return plugin.msg(M.Option.MODIFY_INVENTORY.set).replace(VALUE, String.valueOf(modifyInventory));
+		return plugin.msg(M.Option.MODIFY_INVENTORY.set).replace(Constants.VALUE, String.valueOf(modifyInventory));
 	}
 
 	@Fallback
@@ -691,7 +706,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@Argument(permission = "ats.parkour.difficulty", description = "Shows parkour game difficulty")
 	public String difficulty(@Param("parkourGame") final ParkourGame parkourGame) {
-		return plugin.msg(M.Option.DIFFICULTY.get).replace(VALUE, String.valueOf(parkourGame.getOptions().getDifficulty()));
+		return plugin.msg(M.Option.DIFFICULTY.get).replace(Constants.VALUE, String.valueOf(parkourGame.getOptions().getDifficulty()));
 	}
 
 	@Argument(permission = "ats.parkour.difficulty", description = "Sets parkour game difficulty")
@@ -700,7 +715,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
 		parkourGame.getOptions().setDifficulty(difficulty);
-		return plugin.msg(M.Option.DIFFICULTY.set).replace(VALUE, String.valueOf(difficulty));
+		return plugin.msg(M.Option.DIFFICULTY.set).replace(Constants.VALUE, String.valueOf(difficulty));
 	}
 
 	@Fallback
@@ -710,7 +725,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@Argument(permission = "ats.parkour.displayName", description = "Shows parkour game displayName")
 	public String displayName(@Param("parkourGame") final ParkourGame parkourGame) {
-		return plugin.msg(M.Parkour.DISPLAY_NAME.get).replace(VALUE, parkourGame.getDisplayName());
+		return plugin.msg(M.Parkour.DISPLAY_NAME.get).replace(Constants.VALUE, parkourGame.getDisplayName());
 	}
 
 	@Argument(permission = "ats.parkour.displayName", description = "Sets parkour game displayName")
@@ -718,9 +733,11 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (parkourGame.isRunning() && plugin.isEditLocked()) {
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
-		final String name = String.join(" ", newName);
+		// Adding &r to reset colors in huge texts, e.g. `/pk info <name>`
+		final String name = String.join(" ", newName) + "&r";
 		parkourGame.setDisplayName(name);
-		return plugin.msg(M.Parkour.DISPLAY_NAME.set).replace(VALUE, name);
+		executeTutorial((Player) sender, 10, false);
+		return plugin.msg(M.Parkour.DISPLAY_NAME.set).replace(Constants.VALUE, name);
 	}
 
 	@Fallback
@@ -734,12 +751,12 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
 		parkourGame.getOptions().setColor(color);
-		return plugin.msg(M.Option.COLOR.set).replace(VALUE, color.name());
+		return plugin.msg(M.Option.COLOR.set).replace(Constants.VALUE, color.name());
 	}
 
 	@Argument(permission = "ats.parkour.color", description = "Shows value of parkour color")
 	public String color(@Param("parkourGame") final ParkourGame parkourGame) {
-		return plugin.msg(M.Option.COLOR.get).replace(VALUE, parkourGame.getOptions().getColor().name());
+		return plugin.msg(M.Option.COLOR.get).replace(Constants.VALUE, parkourGame.getOptions().getColor().name());
 	}
 
 	@Fallback
@@ -749,22 +766,25 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@Argument(permission = "ats.parkour.fee", description = "Sets value of parkour entrance fee")
 	public String fee(@Param("parkourGame") final ParkourGame parkourGame, final double fee) {
+		if (plugin.getFinancialProvider().isEmpty()) {
+			return plugin.msg(M.Error.DEFAULT.noEconomy);
+		}
 		if (parkourGame.isRunning() && plugin.isEditLocked()) {
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
 		if (fee < 0) {
 			return plugin.msg(M.Error.DEFAULT.negativeNumber);
 		}
-		if (plugin.getFinancialProvider().isEmpty()) {
-			return plugin.msg(M.Error.DEFAULT.noEconomy);
-		}
 		parkourGame.getOptions().setFee(fee);
-		return plugin.msg(M.Option.FEE.set).replace(VALUE, String.valueOf(fee));
+		return plugin.msg(M.Option.FEE.set).replace(Constants.VALUE, plugin.formatMoney(fee));
 	}
 
 	@Argument(permission = "ats.parkour.fee", description = "Shows value of parkour entrance fee")
 	public String fee(@Param("parkourGame") final ParkourGame parkourGame) {
-		return plugin.msg(M.Option.FEE.get).replace(VALUE, String.valueOf(parkourGame.getOptions().getFee()));
+		if (plugin.getFinancialProvider().isEmpty()) {
+			return plugin.msg(M.Error.DEFAULT.noEconomy);
+		}
+		return plugin.msg(M.Option.FEE.get).replace(Constants.VALUE, plugin.formatMoney(parkourGame.getOptions().getFee()));
 	}
 
 	@Fallback
@@ -774,7 +794,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@Argument(permission = "ats.parkour.authors", description = "Shows parkour authors")
 	public String authors(@Param("parkourGame") final ParkourGame parkourGame) {
-		return plugin.msg(M.Parkour.AUTHORS.get).replace(VALUE, parkourGame.getAuthors().toString());
+		return plugin.msg(M.Parkour.AUTHORS.get).replace(Constants.VALUE, parkourGame.getAuthors().toString());
 	}
 
 	@Argument(permission = "ats.parkour.authors", description = "Sets parkour authors")
@@ -784,7 +804,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		}
 		parkourGame.getAuthors().clear();
 		parkourGame.getAuthors().addAll(Arrays.asList(authors));
-		return plugin.msg(M.Parkour.AUTHORS.set).replace(VALUE, Arrays.toString(authors));
+		return plugin.msg(M.Parkour.AUTHORS.set).replace(Constants.VALUE, Arrays.toString(authors));
 	}
 
 	@Fallback
@@ -794,7 +814,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@Argument(permission = "ats.parkour.type", description = "Shows parkour type")
 	public String type(@Param("parkourGame") final ParkourGame parkourGame) {
-		return plugin.msg(M.Option.TYPE.get).replace(VALUE, parkourGame.getOptions().getType().name());
+		return plugin.msg(M.Option.TYPE.get).replace(Constants.VALUE, parkourGame.getOptions().getType().name());
 	}
 
 	@Argument(permission = "ats.parkour.type", description = "Sets parkour type")
@@ -803,7 +823,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
 		parkourGame.getOptions().setType(type);
-		return plugin.msg(M.Option.TYPE.set).replace(VALUE, type.name());
+		return plugin.msg(M.Option.TYPE.set).replace(Constants.VALUE, type.name());
 	}
 
 	@Fallback
@@ -822,7 +842,13 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 				.map(Block::getLocation)
 				.ifPresentOrElse(location -> {
 					parkourGame.setTeleportBlock(location);
-					sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.Executive.TELEPORT_BLOCK.success).replace("%PARKOUR%", parkourGame.getName())));
+					sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.Executive.TELEPORT_BLOCK.success)
+							.replace(Constants.NAME, parkourGame.getName())
+							.replace(Constants.COORD_X, plugin.formatCoord(location.getX()))
+							.replace(Constants.COORD_Y, plugin.formatCoord(location.getY()))
+							.replace(Constants.COORD_Z, plugin.formatCoord(location.getZ()))
+							.replace(Constants.COORD_YAW, plugin.formatCoord(location.getYaw()))
+							.replace(Constants.COORD_PITCH, plugin.formatCoord(location.getPitch()))));
 				}, () -> sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.Error.DEFAULT.notBlock))));
 		return null;
 	}
@@ -848,9 +874,9 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 							continue;
 						}
 						sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.List.TOP.item)
-								.replace("%NUMBER%", String.valueOf(i + 1))
-								.replace("%PLAYER%", name)
-								.replace("%PERSONAL_TIME%", plugin.formatTime(parkourRecord.getTime()))));
+								.replace(Constants.NUMBER, String.valueOf(i + 1))
+								.replace(Constants.PLAYER, name)
+								.replace(Constants.PERSONAL_TIME, plugin.formatTime(parkourRecord.getTime()))));
 					}
 				}))
 				.ifPresent(topPlayersDataOperations -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, topPlayersDataOperations));
@@ -873,15 +899,16 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		}
 		parkourGame.setRecordsBlock(location);
 		sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.Executive.RECORDS_BLOCK.success)
-				.replace(COORD_X, String.valueOf(location.getX()))
-				.replace(COORD_Y, String.valueOf(location.getY()))
-				.replace(COORD_Z, String.valueOf(location.getZ()))));
+				.replace(Constants.NAME, parkourGame.getName())
+				.replace(Constants.COORD_X, plugin.formatCoord(location.getX()))
+				.replace(Constants.COORD_Y, plugin.formatCoord(location.getY()))
+				.replace(Constants.COORD_Z, plugin.formatCoord(location.getZ()))
+				.replace(Constants.COORD_YAW, plugin.formatCoord(location.getYaw()))
+				.replace(Constants.COORD_PITCH, plugin.formatCoord(location.getPitch()))));
 
 		plugin.getConnection()
-				.map(connection -> new FetchParkourBestRecordTask(connection, parkourGame, 1, data -> {
-					final ParkourRecord record = data.isEmpty() ? new ParkourRecord(null, parkourGame, 0) : data.get(0);
-					plugin.updateSyncSign(record);
-				}))
+				.map(connection -> new FetchParkourBestRecordTask(connection, parkourGame, 1, data -> data.stream().findFirst()
+						.ifPresentOrElse(plugin::updateSyncSign, () -> plugin.updateSyncSign(parkourGame))))
 				.ifPresentOrElse(
 						fetchParkourBestRecordTask -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchParkourBestRecordTask),
 						() -> sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.Error.DEFAULT.notConnected))));
@@ -896,68 +923,71 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 	// === MEDALS ===
 
 	@Argument(permission = "ats.parkour.medal", description = "Sets parkour medal data")
-	public String medal(@Param("parkourGame") final ParkourGame parkourGame, @Completer("medal") @Param("medal") final ParkourMedal medal, @Completer("medalOption") final String option, final double value) {
+	public String medal(@Param("parkourGame") final ParkourGame parkourGame, @Param("medal") final ParkourMedal medal, @Param("option") final MedalSetupOption option, final double value) {
+		if (option.isFinancialProviderRequired() && plugin.getFinancialProvider().isEmpty()) {
+			return plugin.msg(M.Error.DEFAULT.noEconomy);
+		}
 		if (!plugin.getMedals().contains(medal)) {
-			return plugin.msg(M.Error.DEFAULT.noMedal).replace(MEDALS, plugin.getMedals().stream().map(ParkourMedal::getDisplay).collect(Collectors.joining("&r, ")));
+			return plugin.msg(M.Error.DEFAULT.noMedal).replace(Constants.MEDALS, plugin.getMedals().stream().map(ParkourMedal::getDisplayName).collect(Collectors.joining("&r, ")));
 		}
 		if (value < 0) {
 			return plugin.msg(M.Error.DEFAULT.negativeNumber);
 		}
 		final Map<ParkourMedal, ParkourMedalData> medals = parkourGame.getMedals();
 		final ParkourMedalData medalData = medals.getOrDefault(medal, new ParkourMedalData());
-		if (option.equals("reward")) {
-			if (plugin.getFinancialProvider().isEmpty()) {
-				return plugin.msg(M.Error.DEFAULT.noEconomy);
-			}
-			if (!verify(medal, parkourGame, value, ParkourMedalData::getReward)) {
-				return plugin.msg(M.Error.DEFAULT.boundsExceeded);
-			}
-			medalData.setReward(value);
-		} else if (option.equals("time")) {
-			if (!verify(medal, parkourGame, value, ParkourMedalData::getTime)) {
-				return plugin.msg(M.Error.DEFAULT.boundsExceeded);
-			}
-			medalData.setTime(value);
-		} else {
-			return plugin.msg(M.Error.DEFAULT.noMedalData);
+
+		if (!verify(medal, parkourGame, value, option.getGetterFunction(), option.getRelation())) {
+			return plugin.msg(M.Error.DEFAULT.boundsExceeded);
 		}
+		option.getSetterFunction().accept(medalData, value);
+
+		final Player player = (Player) sender;
+		if (option.equals(MedalSetupOption.TIME)) {
+			plugin.getFinancialProvider().ifPresentOrElse(
+					ignored -> executeTutorial(player, 7, false),
+					() -> {
+						final TutorialPlayer tutorialPlayer = plugin.getTutorialManager().getPlayer(player);
+						tutorialPlayer.done(7, false);
+						tutorialPlayer.next().next().sendMessage();
+					});
+		}
+		if (option.equals(MedalSetupOption.REWARD)) {
+			executeTutorial(player, 8, false);
+		}
+
+		final DoubleFunction<String> resultFunction = option.equals(MedalSetupOption.TIME) ? plugin::formatTime : plugin::formatMoney;
 
 		medals.put(medal, medalData);
 		return plugin.msg(M.Option.MEDAL.set)
-				.replace(OPTION, option)
-				.replace(MEDAL_PLACEHOLDER, medal.getDisplay())
-				.replace(VALUE, String.valueOf(value));
+				.replace(Constants.OPTION, option.toString().toLowerCase())
+				.replace(Constants.MEDAL_PLACEHOLDER, medal.getDisplayName())
+				.replace(Constants.VALUE, resultFunction.apply(value));
 	}
 
 	@Argument(permission = "ats.parkour.medal", description = "Gets specified medal data for specified parkour")
-	public String medal(@Param("parkourGame") final ParkourGame parkourGame, @Completer("medal") @Param("medal") final ParkourMedal medal, @Completer("medalOption") final String option) {
+	public String medal(@Param("parkourGame") final ParkourGame parkourGame, @Param("medal") final ParkourMedal medal, final MedalSetupOption option) {
+		if (option.isFinancialProviderRequired() && plugin.getFinancialProvider().isEmpty()) {
+			return plugin.msg(M.Error.DEFAULT.noEconomy);
+		}
 		if (!plugin.getMedals().contains(medal)) {
-			return plugin.msg(M.Error.DEFAULT.noMedal).replace(MEDALS, plugin.getMedals().stream().map(ParkourMedal::getDisplay).collect(Collectors.joining("&r, ")));
+			return plugin.msg(M.Error.DEFAULT.noMedal).replace(Constants.MEDALS, plugin.getFormattedMedals());
 		}
 		final Map<ParkourMedal, ParkourMedalData> medals = parkourGame.getMedals();
 		if (!medals.containsKey(medal)) {
 			return plugin.msg(M.Error.DEFAULT.noMedal);
 		}
 		final ParkourMedalData data = medals.get(medal);
-		if (option.equals("reward")) {
-			return plugin.msg(M.Option.MEDAL.get)
-					.replace(OPTION, option)
-					.replace(MEDAL_PLACEHOLDER, medal.getDisplay())
-					.replace(VALUE, String.valueOf(data.getReward()));
-		}
-		if (option.equals("time")) {
-			return plugin.msg(M.Option.MEDAL.get)
-					.replace(OPTION, option)
-					.replace(MEDAL_PLACEHOLDER, medal.getDisplay())
-					.replace(VALUE, String.valueOf(data.getTime()));
-		}
-		return plugin.msg(M.Error.DEFAULT.noMedalData);
+		final DoubleFunction<String> resultFunction = option.equals(MedalSetupOption.TIME) ? plugin::formatTime : plugin::formatMoney;
+		return plugin.msg(M.Option.MEDAL.get)
+				.replace(Constants.OPTION, option.toString())
+				.replace(Constants.MEDAL_PLACEHOLDER, medal.getDisplayName())
+				.replace(Constants.VALUE, resultFunction.apply(option.getGetterFunction().applyAsDouble(data)));
 	}
 
 	@Argument(permission = "ats.parkour.medal", description = "Gets medal data for specified parkour")
-	public String medal(@Param("parkourGame") final ParkourGame parkourGame, @Completer("medal") @Param("medal") final ParkourMedal medal) {
+	public String medal(@Param("parkourGame") final ParkourGame parkourGame, @Param("medal") final ParkourMedal medal) {
 		if (!plugin.getMedals().contains(medal)) {
-			return plugin.msg(M.Error.DEFAULT.noMedal).replace(MEDALS, plugin.getMedals().stream().map(ParkourMedal::getDisplay).collect(Collectors.joining("&r, ")));
+			return plugin.msg(M.Error.DEFAULT.noMedal).replace(Constants.MEDALS, plugin.getMedals().stream().map(ParkourMedal::getDisplayName).collect(Collectors.joining("&r, ")));
 		}
 		final Map<ParkourMedal, ParkourMedalData> medals = parkourGame.getMedals();
 		if (!medals.containsKey(medal)) {
@@ -965,9 +995,9 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		}
 		final ParkourMedalData data = medals.get(medal);
 		return plugin.msg(M.List.MEDAL.item)
-				.replace(MEDAL_PLACEHOLDER, medal.getDisplay())
-				.replace("%TIME%", String.valueOf(data.getTime()))
-				.replace("%REWARD%", String.valueOf(data.getReward()));
+				.replace(Constants.MEDAL_PLACEHOLDER, medal.getDisplayName())
+				.replace(Constants.TIME, plugin.formatTime(data.getTime()))
+				.replace(Constants.REWARD, plugin.formatMoney(data.getReward()));
 	}
 
 	@Argument(permission = "ats.parkour.medal", description = "Gets all medal data for parkour")
@@ -980,9 +1010,9 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		medals.entrySet().stream()
 				.sorted((o1, o2) -> o2.getKey().compareTo(o1.getKey()))
 				.map(medalEntry -> plugin.msg(M.List.MEDAL.item)
-						.replace(MEDAL_PLACEHOLDER, medalEntry.getKey().getDisplay())
-						.replace("%TIME%", String.valueOf(medalEntry.getValue().getTime()))
-						.replace("%REWARD%", String.valueOf(medalEntry.getValue().getReward())))
+						.replace(Constants.MEDAL_PLACEHOLDER, medalEntry.getKey().getDisplayName())
+						.replace(Constants.TIME, plugin.formatTime(medalEntry.getValue().getTime()))
+						.replace(Constants.REWARD, plugin.formatMoney(medalEntry.getValue().getReward())))
 				.forEach(sender::sendMessage);
 		return null;
 	}
@@ -1009,27 +1039,27 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		return null;
 	}
 
-	private boolean executeTutorial(final Player player, final int i) {
-		return executeTutorial(player, i, true);
+	private boolean executeTutorial(final Player player, final int id) {
+		return executeTutorial(player, id, true);
 	}
 
-	private boolean executeTutorial(final Player player, final int i, final boolean mistakeInformation) {
-		if (!TutorialManager.hasPlayer(player)) {
+	private boolean executeTutorial(final Player player, final int id, final boolean mistakeInformation) {
+		if (!plugin.getTutorialManager().hasPlayer(player)) {
 			return false;
 		}
-		final TutorialPlayer tutorialPlayer = TutorialManager.getPlayer(player);
-		if (!tutorialPlayer.done(i, mistakeInformation)) {
+		final TutorialPlayer tutorialPlayer = plugin.getTutorialManager().getPlayer(player);
+		if (!tutorialPlayer.done(id, mistakeInformation)) {
 			return false;
 		}
 		tutorialPlayer.next().sendMessage();
 		return true;
 	}
 
-	private boolean verify(final ParkourMedal medal, final ParkourGame parkourGame, final double value, final ToDoubleFunction<ParkourMedalData> function) {
+	private boolean verify(final ParkourMedal medal, final ParkourGame parkourGame, final double value, final ToDoubleFunction<ParkourMedalData> function, final BiPredicate<Double, Double> relation) {
 		final Optional<ParkourMedal> better = parkourGame.getMedals().keySet().stream().filter(parkourMedal -> parkourMedal.getImportance() < medal.getImportance()).findAny();
 		final Optional<ParkourMedal> worse = parkourGame.getMedals().keySet().stream().filter(parkourMedal -> parkourMedal.getImportance() > medal.getImportance()).findAny();
-		final boolean betterIsOk = better.map(parkourGame.getMedals()::get).filter(data -> function.applyAsDouble(data) > value).isEmpty();
-		final boolean worseIsOk = worse.map(parkourGame.getMedals()::get).filter(data -> function.applyAsDouble(data) < value).isEmpty();
+		final boolean betterIsOk = better.map(parkourGame.getMedals()::get).filter(data -> relation.test(function.applyAsDouble(data), value)).isEmpty();
+		final boolean worseIsOk = worse.map(parkourGame.getMedals()::get).filter(data -> !relation.test(function.applyAsDouble(data), value)).isEmpty();
 		return betterIsOk && worseIsOk;
 	}
 }

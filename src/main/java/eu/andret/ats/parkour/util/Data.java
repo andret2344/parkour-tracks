@@ -7,6 +7,7 @@ package eu.andret.ats.parkour.util;
 import lombok.experimental.UtilityClass;
 import org.bukkit.Material;
 import org.bukkit.potion.PotionEffectType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +21,7 @@ public final class Data {
 	/**
 	 * List of potion effects that can be applied to a region.
 	 */
+	@NotNull
 	public static final List<PotionEffectType> ALLOWED_EFFECTS = List.of(
 			PotionEffectType.SPEED,
 			PotionEffectType.SLOW,
@@ -35,6 +37,7 @@ public final class Data {
 	/**
 	 * List of all available signs variations.
 	 */
+	@NotNull
 	public static final List<Material> SIGNS = List.of(
 			Material.ACACIA_SIGN,
 			Material.ACACIA_WALL_SIGN,
@@ -57,11 +60,13 @@ public final class Data {
 	/**
 	 * List of all available levers variations.
 	 */
+	@NotNull
 	public static final List<Material> LEVERS = List.of(Material.LEVER);
 
 	/**
 	 * List of all available doors variations.
 	 */
+	@NotNull
 	public static final List<Material> DOORS = List.of(
 			Material.ACACIA_DOOR,
 			Material.BIRCH_DOOR,
@@ -76,6 +81,7 @@ public final class Data {
 	/**
 	 * List of all available buttons variations.
 	 */
+	@NotNull
 	public static final List<Material> BUTTONS = List.of(
 			Material.STONE_BUTTON,
 			Material.ACACIA_BUTTON,
@@ -91,6 +97,7 @@ public final class Data {
 	/**
 	 * List of all available trapdoors variations.
 	 */
+	@NotNull
 	public static final List<Material> TRAPDOORS = List.of(
 			Material.ACACIA_TRAPDOOR,
 			Material.BIRCH_TRAPDOOR,
@@ -105,11 +112,13 @@ public final class Data {
 	/**
 	 * List of all available chests variations.
 	 */
+	@NotNull
 	public static final List<Material> CHESTS = List.of(Material.CHEST);
 
 	/**
 	 * List of all available gates variations.
 	 */
+	@NotNull
 	public static final List<Material> GATES = List.of(
 			Material.ACACIA_FENCE_GATE,
 			Material.BIRCH_FENCE_GATE,
@@ -124,6 +133,7 @@ public final class Data {
 	/**
 	 * List of all available boats variations.
 	 */
+	@NotNull
 	public static final List<Material> BOATS = List.of(
 			Material.ACACIA_BOAT,
 			Material.BIRCH_BOAT,
@@ -136,6 +146,7 @@ public final class Data {
 	/**
 	 * @return {@code List<Material>} of all available interactive blocks.
 	 */
+	@NotNull
 	public static List<Material> getInteractiveMaterials() {
 		final List<Material> result = new ArrayList<>();
 		Stream.of(LEVERS, DOORS, BUTTONS, TRAPDOORS, CHESTS, GATES).forEach(result::addAll);

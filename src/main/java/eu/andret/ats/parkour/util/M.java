@@ -6,6 +6,7 @@ package eu.andret.ats.parkour.util;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 
 public class M {
 	private static final String FIX = "fix";
@@ -74,6 +75,7 @@ public class M {
 	private static final String TOO_LARGE_NUMBER = "too-large-number";
 	private static final String SET_LOBBY = "set-lobby";
 	private static final String NO_ECONOMY = "no-economy";
+	private static final String NO_RANKS = "no-economy";
 	private static final String NO_MEDAL = "no-medal";
 	private static final String NO_MEDAL_DATA = "no-medal-data";
 	private static final String MEDAL = "medal";
@@ -83,20 +85,24 @@ public class M {
 
 	@AllArgsConstructor
 	private static class Section {
+		@NotNull
 		protected final String key;
 	}
 
 	@AllArgsConstructor
 	public static class Message {
+		@NotNull
 		private final Section parent;
+		@NotNull
 		private final String key;
 		@Getter
 		private final boolean error;
 
-		public Message(final Section parent, final String key) {
+		public Message(@NotNull final Section parent, @NotNull final String key) {
 			this(parent, key, false);
 		}
 
+		@NotNull
 		@Override
 		public String toString() {
 			return parent.key + "." + key;
@@ -109,10 +115,10 @@ public class M {
 		public static final General LOBBY = new General(M.LOBBY);
 		public static final General SET_LOBBY = new General(M.SET_LOBBY);
 
-		public final Message help = new Message(this, HELP);
+		public final Message helpMessage = new Message(this, HELP);
 		public final Message success = new Message(this, SUCCESS);
 
-		public General(final String key) {
+		public General(@NotNull final String key) {
 			super("general." + key);
 		}
 	}
@@ -130,11 +136,11 @@ public class M {
 		public static final Executive TELEPORT = new Executive(M.TELEPORT);
 		public static final Executive TELEPORT_BLOCK = new Executive(M.TELEPORT_BLOCK);
 
-		public final Message help = new Message(this, HELP);
+		public final Message helpMessage = new Message(this, HELP);
 		public final Message usage = new Message(this, USAGE);
 		public final Message success = new Message(this, SUCCESS);
 
-		public Executive(final String key) {
+		public Executive(@NotNull final String key) {
 			super("executive." + key);
 		}
 	}
@@ -155,12 +161,12 @@ public class M {
 		public static final Option TYPE = new Option(M.TYPE);
 		public static final Option VIP_ONLY = new Option(M.VIP_ONLY);
 
-		public final Message help = new Message(this, HELP);
+		public final Message helpMessage = new Message(this, HELP);
 		public final Message usage = new Message(this, USAGE);
 		public final Message get = new Message(this, GET);
 		public final Message set = new Message(this, SET);
 
-		public Option(final String key) {
+		public Option(@NotNull final String key) {
 			super("option." + key);
 		}
 	}
@@ -169,12 +175,12 @@ public class M {
 		public static final Parkour AUTHORS = new Parkour(M.AUTHORS);
 		public static final Parkour DISPLAY_NAME = new Parkour(M.DISPLAY_NAME);
 
-		public final Message help = new Message(this, HELP);
+		public final Message helpMessage = new Message(this, HELP);
 		public final Message usage = new Message(this, USAGE);
 		public final Message get = new Message(this, GET);
 		public final Message set = new Message(this, SET);
 
-		public Parkour(final String key) {
+		public Parkour(@NotNull final String key) {
 			super("parkour." + key);
 		}
 	}
@@ -186,13 +192,13 @@ public class M {
 		public static final List HELP = new List(M.HELP);
 		public static final List MEDAL = new List(M.MEDAL);
 
-		public final Message help = new Message(this, M.HELP);
+		public final Message helpMessage = new Message(this, M.HELP);
 		public final Message usage = new Message(this, USAGE);
 		public final Message empty = new Message(this, EMPTY);
 		public final Message header = new Message(this, HEADER);
 		public final Message item = new Message(this, ITEM);
 
-		public List(final String key) {
+		public List(@NotNull final String key) {
 			super("list." + key);
 		}
 	}
@@ -202,11 +208,11 @@ public class M {
 			public static final Checkpoint ADD = new Checkpoint(M.ADD);
 			public static final Checkpoint SET = new Checkpoint(M.SET);
 
-			public final Message help = new Message(this, HELP);
+			public final Message helpMessage = new Message(this, HELP);
 			public final Message usage = new Message(this, USAGE);
 			public final Message success = new Message(this, SUCCESS);
 
-			public Checkpoint(final String key) {
+			public Checkpoint(@NotNull final String key) {
 				super("region.checkpoint." + key);
 			}
 		}
@@ -215,25 +221,28 @@ public class M {
 			public static final Wall ADD = new Wall(M.ADD);
 			public static final Wall SET = new Wall(M.SET);
 
-			public final Message help = new Message(this, HELP);
+			public final Message helpMessage = new Message(this, HELP);
 			public final Message usage = new Message(this, USAGE);
 			public final Message success = new Message(this, SUCCESS);
 
-			public Wall(final String key) {
+			public Wall(@NotNull final String key) {
 				super("region.wall." + key);
 			}
+		}
+
+		private Region() {
 		}
 	}
 
 	public static final class Amplifier extends Section {
 		public static final Amplifier EFFECT = new Amplifier(M.EFFECT);
 
-		public final Message help = new Message(this, HELP);
+		public final Message helpMessage = new Message(this, HELP);
 		public final Message usage = new Message(this, USAGE);
 		public final Message added = new Message(this, ADDED);
 		public final Message removed = new Message(this, REMOVED);
 
-		public Amplifier(final String key) {
+		public Amplifier(@NotNull final String key) {
 			super("amplifier." + key);
 		}
 	}
@@ -261,6 +270,7 @@ public class M {
 		public final Message missingSpawn = new Message(this, MISSING_SPAWN, true);
 		public final Message negativeNumber = new Message(this, NEGATIVE_NUMBER, true);
 		public final Message noEconomy = new Message(this, NO_ECONOMY, true);
+		public final Message noRanks = new Message(this, NO_RANKS, true);
 		public final Message noMedal = new Message(this, NO_MEDAL, true);
 		public final Message noMedalData = new Message(this, NO_MEDAL_DATA, true);
 		public final Message notBlock = new Message(this, NOT_BLOCK, true);
@@ -269,7 +279,7 @@ public class M {
 		public final Message notVip = new Message(this, NOT_VIP, true);
 		public final Message tooLargeNumber = new Message(this, TOO_LARGE_NUMBER, true);
 
-		public Error(final String key) {
+		public Error(@NotNull final String key) {
 			super(key);
 		}
 	}

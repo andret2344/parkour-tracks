@@ -6,7 +6,6 @@ import io.franzbecker.gradle.lombok.task.DelombokTask
 
 buildscript {
 	repositories {
-		jcenter()
 		maven { url 'https://plugins.gradle.org/m2/' }
 	}
 	dependencies { classpath 'io.franzbecker:gradle-lombok:2.0' }
@@ -30,9 +29,8 @@ targetCompatibility = JavaVersion.VERSION_11
 repositories {
 	mavenLocal()
 	mavenCentral()
-	spigot()
 	maven { url 'https://gitlab.com/api/v4/projects/12063927/packages/maven' }
-	maven { url "http://maven.sk89q.com/artifactory/repo" }
+	maven { url "https://maven.sk89q.com/artifactory/repo" }
 }
 
 dependencies {

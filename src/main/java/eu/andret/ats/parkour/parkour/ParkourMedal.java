@@ -9,12 +9,23 @@ import org.jetbrains.annotations.NotNull;
 
 @Value
 public class ParkourMedal implements Comparable<ParkourMedal> {
+	@NotNull
 	String name;
-	String display;
+	@NotNull
+	String displayName;
 	int importance;
 
 	@Override
 	public int compareTo(@NotNull final ParkourMedal other) {
 		return other.importance - importance;
+	}
+
+	@Override
+	public String toString() {
+		return "ParkourMedal(" +
+				"name=" + name +
+				", displayName=" + displayName + "&r" +
+				", importance=" + importance +
+				')';
 	}
 }

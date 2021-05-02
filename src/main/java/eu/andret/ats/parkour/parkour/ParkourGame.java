@@ -16,8 +16,8 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,22 +30,36 @@ import java.util.stream.Collectors;
 @Data
 @ToString
 public abstract class ParkourGame implements Comparable<ParkourGame> {
+	@NotNull
 	private final List<DirectionalRegion> checkpoints = new ArrayList<>();
+	@NotNull
 	private final List<BasicRegion> walls = new ArrayList<>();
+	@NotNull
 	private final Set<String> authors = new TreeSet<>();
+	@NotNull
 	private final List<ParkourPlayer> players = new ArrayList<>();
+	@NotNull
 	private final Map<PotionEffectType, Integer> effects = new HashMap<>();
+	@NotNull
 	private final Map<ParkourMedal, ParkourMedalData> medals = new HashMap<>();
 
+	@NotNull
 	private String name;
+	@NotNull
 	private World world;
+	@NotNull
 	private BasicRegion region;
+	@Nullable
 	private Location recordsBlock;
+	@Nullable
 	private Location teleportBlock;
+	@Nullable
 	private DirectionalRegion spawn;
 	private boolean running;
+	@NotNull
 	private String displayName;
 
+	@NotNull
 	private Options options = Options.builder().build();
 
 	public enum Type {
@@ -56,6 +70,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 
 	@Value
 	public static class Result {
+		@Nullable
 		ParkourMedal medal;
 		double reward;
 	}
@@ -91,12 +106,13 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 		private Type type = Type.SERVER;
 	}
 
-	protected ParkourGame(final String name, final BasicRegion region, final World world) {
+	protected ParkourGame(@NotNull final String name, @NotNull final BasicRegion region, @NotNull final World world) {
 		this.name = displayName = name;
 		this.region = region;
 		this.world = world;
 	}
 
+	@NotNull
 	public List<BasicRegion> getAllRegions() {
 		final List<BasicRegion> arr = new ArrayList<>();
 		arr.add(region);
@@ -106,7 +122,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 		return arr.stream().filter(Objects::nonNull).collect(Collectors.toList());
 	}
 
-	public boolean addPlayer(final ParkourPlayer parkourPlayer) {
+	public boolean addPlayer(@NotNull final ParkourPlayer parkourPlayer) {
 		if (players.contains(parkourPlayer)) {
 			return false;
 		}
@@ -114,7 +130,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 		return true;
 	}
 
-	public boolean removePlayer(final ParkourPlayer parkourPlayer) {
+	public boolean removePlayer(@NotNull final ParkourPlayer parkourPlayer) {
 		if (!players.contains(parkourPlayer)) {
 			return false;
 		}
@@ -122,20 +138,14 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 		return true;
 	}
 
-	public boolean inSpawn(final ParkourPlayer player) {
-		if (player == null) {
-			return false;
-		}
+	public boolean inSpawn(@NotNull final ParkourPlayer player) {
 		if (spawn == null) {
 			return false;
 		}
 		return spawn.contains(player);
 	}
 
-	public boolean inCheckpoint(final ParkourPlayer player) {
-		if (player == null) {
-			return false;
-		}
+	public boolean inCheckpoint(@NotNull final ParkourPlayer player) {
 		return checkpoints.stream().anyMatch(checkpoint -> checkpoint.contains(player));
 	}
 
@@ -159,7 +169,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 	}
 
 	@Override
-	public int compareTo(@Nonnull final ParkourGame parkourGame) {
+	public int compareTo(@NotNull final ParkourGame parkourGame) {
 		if (running && !parkourGame.running) {
 			return 1;
 		}

@@ -4,12 +4,14 @@
 
 package eu.andret.ats.parkour.tasks.database;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class KeepAliveTask extends AbstractTask {
-	public KeepAliveTask(final Connection connection) {
+	public KeepAliveTask(@NotNull final Connection connection) {
 		super(connection);
 	}
 

@@ -5,7 +5,8 @@
 package eu.andret.ats.parkour.api;
 
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 public interface RankProvider {
-	boolean isVip(Player player);
+	boolean isVip(@NotNull Player player);
 }

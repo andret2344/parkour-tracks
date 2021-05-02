@@ -9,12 +9,13 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.Value;
 import org.bukkit.World;
+import org.jetbrains.annotations.NotNull;
 
 @Value
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 class Parkour extends ParkourGame {
-	Parkour(final String name, final BasicRegion region, final World world) {
+	Parkour(@NotNull final String name, @NotNull final BasicRegion region, @NotNull final World world) {
 		super(name, region, world);
 	}
 }

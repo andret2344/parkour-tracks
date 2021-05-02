@@ -5,9 +5,10 @@
 package eu.andret.ats.parkour.event.game;
 
 import eu.andret.ats.parkour.parkour.ParkourGame;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import lombok.Value;
+import lombok.experimental.NonFinal;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
@@ -15,9 +16,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Aggregating class.
  */
-@Data
+@Value
+@NonFinal
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-@AllArgsConstructor
 public class AbstractGameEvent extends Event {
 	/**
 	 * List of all Handlers.
@@ -27,7 +29,8 @@ public class AbstractGameEvent extends Event {
 	/**
 	 * The Parkour that has been started.
 	 */
-	private ParkourGame game;
+	@NotNull
+	ParkourGame game;
 
 	@NotNull
 	@Override

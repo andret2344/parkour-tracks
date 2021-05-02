@@ -11,16 +11,18 @@ import eu.andret.ats.parkour.region.DirectionalRegion;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 public final class PlayerManager {
+	@NotNull
 	private final Map<Player, ParkourSinglePlayer> players = new HashMap<>();
 
 	@NotNull
-	public ParkourPlayer getParkourPlayer(final Player player) {
+	public ParkourPlayer getParkourPlayer(@NotNull final Player player) {
 		if (players.containsKey(player)) {
 			return players.get(player);
 		}
@@ -29,12 +31,11 @@ public final class PlayerManager {
 		return parkourPlayer;
 	}
 
-	@NotNull
-	public ParkourPlayer remove(final Player player) {
-		return players.remove(player);
+	public void remove(@NotNull final Player player) {
+		players.remove(player);
 	}
 
-	public void teleportToRegion(final ParkourPlayer parkourPlayer, final DirectionalRegion basicRegion) {
+	public void teleportToRegion(@NotNull final ParkourPlayer parkourPlayer, @Nullable final DirectionalRegion basicRegion) {
 		Optional.ofNullable(basicRegion)
 				.map(BasicRegion::getRegion)
 				.filter(region -> region.getWorld() != null)

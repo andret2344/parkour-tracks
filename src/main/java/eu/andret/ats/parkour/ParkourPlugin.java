@@ -19,8 +19,11 @@ import eu.andret.ats.parkour.parkour.ParkourMedal;
 import eu.andret.ats.parkour.parkour.ParkourRecord;
 import eu.andret.ats.parkour.player.PlayerManager;
 import eu.andret.ats.parkour.tasks.database.KeepAliveTask;
+import eu.andret.ats.parkour.util.Constants;
 import eu.andret.ats.parkour.util.Data;
+import eu.andret.ats.parkour.util.EventSound;
 import eu.andret.ats.parkour.util.M;
+import eu.andret.ats.parkour.util.MedalSetupOption;
 import eu.andret.ats.parkour.util.serializer.JSONSerializer;
 import lombok.Getter;
 import lombok.Setter;
@@ -40,6 +43,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
@@ -53,6 +57,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -70,32 +76,53 @@ import java.util.stream.IntStream;
 public final class ParkourPlugin extends JavaPlugin {
 	private static final String MEDAL = "medal";
 	@Getter
+	@NotNull
 	private final Map<String, String> helpDescription = new LinkedHashMap<>();
+	@NotNull
 	private final YamlConfiguration messages = new YamlConfiguration();
+	@NotNull
 	private final YamlConfiguration commands = new YamlConfiguration();
+	@NotNull
 	private final YamlConfiguration inventory = new YamlConfiguration();
 	@Getter
+	@NotNull
 	private final Map<UUID, Integer> teleportCountdown = new HashMap<>();
 	@Getter
+	@NotNull
 	private final Map<UUID, Integer> timeCounter = new HashMap<>();
+	@Nullable
 	private Connection connection;
 	private ItemStack exitItem;
 	private ItemStack hidingItem;
+	@NotNull
 	private final JSONSerializer jsonSerializer = new JSONSerializer(this);
+	@NotNull
 	@Getter
 	private final ParkourManager<JSONObject> parkourManager = new ParkourManager<>(jsonSerializer);
+	@NotNull
 	@Getter
 	private final PlayerManager playerManager = new PlayerManager();
+	@NotNull
+	@Getter
+	private final TutorialManager tutorialManager = new TutorialManager(this);
+	@Nullable
 	@Setter
 	private FinancialProvider financialProvider;
+	@Nullable
 	@Setter
 	private RankProvider rankProvider;
+	@NotNull
 	@Getter
 	private final ParkourItemMap gameItemMap = new ParkourItemMap();
+	@NotNull
 	@Getter
 	private final ParkourItemMap worldItemMap = new ParkourItemMap();
+	@NotNull
 	@Getter
 	private final List<ParkourMedal> medals = new ArrayList<>();
+	@Getter
+	private int teleportationTimeout;
+	private DecimalFormat decimalFormat;
 
 	@Override
 	public void onEnable() {
@@ -103,10 +130,15 @@ public final class ParkourPlugin extends JavaPlugin {
 		medals.addAll(loadMedals());
 		exitItem = createItem("exit");
 		hidingItem = createItem("hiding");
+		teleportationTimeout = getConfig().getInt("teleportation-timeout");
+		decimalFormat = Optional.of(getConfig())
+				.map(config -> config.getConfigurationSection("economy"))
+				.map(this::setupDecimalFormat)
+				.orElse(new DecimalFormat());
 		getServer().getPluginManager().registerEvents(new ParkourListeners(this), this);
 		setupCommand();
 		setupDatabase();
-		load();
+		loadGames();
 		getConnection()
 				.map(KeepAliveTask::new)
 				.ifPresent(keepAliveTask -> getServer().getScheduler().scheduleSyncRepeatingTask(this, keepAliveTask, 20_000, 20_000));
@@ -142,14 +174,16 @@ public final class ParkourPlugin extends JavaPlugin {
 		getServer().getScheduler().cancelTasks(this);
 	}
 
-	public String msg(final String path) {
-		return Optional.ofNullable(path)
+	@NotNull
+	public String msg(@NotNull final String path) {
+		return Optional.of(path)
 				.map(messages::getString)
 				.map(text -> ChatColor.translateAlternateColorCodes('&', text))
-				.orElse(null);
+				.orElse("");
 	}
 
-	public String msg(final M.Message message) {
+	@NotNull
+	public String msg(@NotNull final M.Message message) {
 		final StringBuilder result = new StringBuilder();
 		if (message.isError()) {
 			result.append(commands.getString("misc.error-prefix"));
@@ -157,31 +191,34 @@ public final class ParkourPlugin extends JavaPlugin {
 		return ChatColor.translateAlternateColorCodes('&', result.append(commands.getString(message.toString())).toString());
 	}
 
+	@NotNull
 	public Optional<Connection> getConnection() {
 		return Optional.ofNullable(connection);
 	}
 
+	@NotNull
 	public WorldEditPlugin getWorldEdit() {
 		return getPlugin(WorldEditPlugin.class);
 	}
 
-	public Optional<Sound> getSound(final String name) {
+	@NotNull
+	public Optional<Sound> getSound(@NotNull final EventSound eventSound) {
 		return Optional.of(getConfig())
-				.map(configuration -> configuration.getString("sound." + name))
+				.map(configuration -> configuration.getString("sound." + eventSound.name().toLowerCase()))
 				.filter(sound -> !sound.equals("NONE"))
 				.map(Sound::valueOf);
 	}
 
-	public void updateSyncSign(final ParkourRecord parkourRecord) {
+	public void updateSyncSign(@NotNull final ParkourRecord parkourRecord) {
 		getServer().getScheduler().scheduleSyncDelayedTask(this, () -> updateSign(parkourRecord));
 	}
 
-	public void updateSign(final ParkourRecord parkourRecord) {
+	public void updateSign(@NotNull final ParkourRecord parkourRecord) {
 		Optional.of(parkourRecord.getGame())
 				.map(ParkourGame::getRecordsBlock)
 				.map(Location::getBlock)
 				.map(Block::getState)
-				.filter(blockState -> blockState instanceof Sign)
+				.filter(Sign.class::isInstance)
 				.map(Sign.class::cast)
 				.ifPresent(sign -> {
 					IntStream.of(0, 1, 2, 3).forEach(i -> {
@@ -192,15 +229,74 @@ public final class ParkourPlugin extends JavaPlugin {
 				});
 	}
 
-	@NotNull
+	public void updateSyncSign(@NotNull final ParkourGame parkourGame) {
+		getServer().getScheduler().scheduleSyncDelayedTask(this, () -> updateSign(parkourGame));
+	}
+
+	public void updateSign(@NotNull final ParkourGame parkourGame) {
+		Optional.of(parkourGame)
+				.map(ParkourGame::getRecordsBlock)
+				.map(Location::getBlock)
+				.map(Block::getState)
+				.filter(Sign.class::isInstance)
+				.map(Sign.class::cast)
+				.ifPresent(sign -> {
+					IntStream.of(0, 1, 2, 3).forEach(i -> {
+						final String lineText = getConfig().getString("recordSign.line" + (i + 1));
+						sign.setLine(i, ChatColor.translateAlternateColorCodes('&', replace(String.valueOf(lineText))));
+					});
+					sign.update();
+				});
+	}
+
 	public ItemStack getExitItem() {
 		return exitItem;
 	}
 
-	@NotNull
 	public ItemStack getHidingItem() {
 		return hidingItem;
 	}
+
+	@NotNull
+	public String formatTime(final double time) {
+		final int minutes = (int) time / 60;
+		final int seconds = (int) time % 60;
+		final int milliseconds = (int) Math.round((time % 1) * 100);
+		return String.format("%02d:%02d.%02d", minutes, seconds, milliseconds);
+	}
+
+	@NotNull
+	public String formatMoney(final double money) {
+		return decimalFormat.format(money);
+	}
+
+	@NotNull
+	public String formatCoord(final double coord) {
+		return String.format("%.2f", coord);
+	}
+
+	@NotNull
+	public String getFormattedMedals() {
+		return getMedals().stream()
+				.map(ParkourMedal::getDisplayName)
+				.collect(Collectors.joining("&r, "));
+	}
+
+	public boolean isEditLocked() {
+		return getConfig().getBoolean("edit-lock", true);
+	}
+
+	@NotNull
+	public Optional<FinancialProvider> getFinancialProvider() {
+		return Optional.ofNullable(financialProvider);
+	}
+
+	@NotNull
+	public Optional<RankProvider> getRankProvider() {
+		return Optional.ofNullable(rankProvider);
+	}
+
+	// =============== PRIVATE =============== //
 
 	@NotNull
 	private List<ParkourMedal> loadMedals() {
@@ -215,7 +311,7 @@ public final class ParkourPlugin extends JavaPlugin {
 					if (configurationSection == null) {
 						return null;
 					}
-					final String display = ChatColor.translateAlternateColorCodes('&', String.valueOf(configurationSection.getString("display", s)));
+					final String display = ChatColor.translateAlternateColorCodes('&', configurationSection.getString("display", s));
 					final int importance = configurationSection.getInt("importance");
 					return new ParkourMedal(s, display, importance);
 				})
@@ -240,7 +336,7 @@ public final class ParkourPlugin extends JavaPlugin {
 	}
 
 	@NotNull
-	private ItemStack createItem(final String path) {
+	private ItemStack createItem(@NotNull final String path) {
 		final ConfigurationSection section = inventory.getConfigurationSection(String.join(".", "game", path));
 		if (section == null) {
 			throw new NullPointerException("Section " + path + " doesn't exist in config file!");
@@ -273,20 +369,23 @@ public final class ParkourPlugin extends JavaPlugin {
 		command.addArgumentCompleter(MEDAL, medals.stream()
 				.map(ParkourMedal::getName)
 				.collect(Collectors.toList()));
-		command.addArgumentCompleter("medalOption", Arrays.asList("time", "reward"));
+		command.addTypeCompleter(MedalSetupOption.class, Arrays.stream(MedalSetupOption.values())
+				.map(Enum::name)
+				.map(String::toLowerCase)
+				.collect(Collectors.toList()));
+		command.addTypeCompleter(ParkourMedal.class, () -> medals.stream()
+				.map(ParkourMedal::getName)
+				.collect(Collectors.toList()));
 		command.addArgumentMapper(MEDAL, ParkourMedal.class, name -> medals.stream()
 						.filter(medal -> medal.getName().equals(name))
 						.findAny()
 						.orElse(null),
 				Fallback.ON_NULL);
+		command.addArgumentMapper("option", MedalSetupOption.class, name -> MedalSetupOption.valueOf(name.toUpperCase()));
 		command.addTypeCompleter(DyeColor.class, Arrays.stream(DyeColor.values())
 				.map(Enum::name)
 				.collect(Collectors.toList()));
 		command.addArgumentMapper("color", DyeColor.class, DyeColor::valueOf, Fallback.ON_NULL);
-	}
-
-	public boolean isEditLocked() {
-		return getConfig().getBoolean("edit-lock", true);
 	}
 
 	private void setupDatabase() {
@@ -314,13 +413,17 @@ public final class ParkourPlugin extends JavaPlugin {
 		return DriverManager.getConnection("jdbc:mysql://" + url + "?allowPublicKeyRetrieval=true&autoReconnect=true&useSSL=false", user, pass);
 	}
 
-	private void connect() throws SQLException {
+	private void connect() {
 		final String database = getConfig().getString("database.dbname", "ats_parkour");
-		try (final Statement stat = connection.createStatement()) {
-			stat.execute("CREATE DATABASE IF NOT EXISTS `" + database + "`;");
-			stat.execute("USE " + database + ";");
-			stat.execute("CREATE TABLE IF NOT EXISTS ats_parkour_records(id INT PRIMARY KEY AUTO_INCREMENT, date DATETIME, uuid VARCHAR(64), parkour VARCHAR(64), time DECIMAL(8, 2));");
-		}
+		getConnection().ifPresent(connection1 -> {
+			try (final Statement stat = connection1.createStatement()) {
+				stat.execute("CREATE DATABASE IF NOT EXISTS `" + database + "`;");
+				stat.execute("USE " + database + ";");
+				stat.execute("CREATE TABLE IF NOT EXISTS ats_parkour_records(id INT PRIMARY KEY AUTO_INCREMENT, date DATETIME, uuid VARCHAR(64), parkour VARCHAR(64), time DECIMAL(8, 2));");
+			} catch (final SQLException ex) {
+				ex.printStackTrace();
+			}
+		});
 	}
 
 	private void save() {
@@ -340,7 +443,7 @@ public final class ParkourPlugin extends JavaPlugin {
 		}
 	}
 
-	private void load() {
+	private void loadGames() {
 		final File lobby = new File(getDataFolder(), "setting.json");
 		if (!lobby.exists()) {
 			return;
@@ -356,69 +459,69 @@ public final class ParkourPlugin extends JavaPlugin {
 		}
 	}
 
-	public Optional<FinancialProvider> getFinancialProvider() {
-		return Optional.ofNullable(financialProvider);
-	}
-
-	public Optional<RankProvider> getRankProvider() {
-		return Optional.ofNullable(rankProvider);
-	}
-
 	private void generate() {
-		helpDescription.put("help|?", msg(M.List.HELP.help));
-		helpDescription.put("lobby", msg(M.General.LOBBY.help));
-		helpDescription.put("create", msg(M.Executive.CREATE.help));
-		helpDescription.put("remove", msg(M.Executive.REMOVE.help));
-		helpDescription.put("rename", msg(M.Executive.RENAME.help));
-		helpDescription.put("info", msg(M.Executive.INFO.help));
-		helpDescription.put("setSpawns", msg(M.Executive.SPAWN.help));
-		helpDescription.put("recreate", msg(M.Executive.RECREATE.help));
-		helpDescription.put("start", msg(M.Executive.START.help));
-		helpDescription.put("stop", msg(M.Executive.STOP.help));
-		helpDescription.put("addCheckpoint", msg(M.Region.Checkpoint.ADD.help));
-		helpDescription.put("setCheckpoint", msg(M.Region.Checkpoint.SET.help));
-		helpDescription.put("addWall", msg(M.Region.Wall.ADD.help));
-		helpDescription.put("setWall", msg(M.Region.Wall.SET.help));
-		helpDescription.put("list|ls", msg(M.List.GAMES.help));
-		helpDescription.put("ignore|i", msg(M.General.IGNORE.help));
-		helpDescription.put("sprintForced", msg(M.Option.SPRINT_FORCED.help));
-		helpDescription.put("alwaysSpawn", msg(M.Option.ALWAYS_SPAWN.help));
-		helpDescription.put("savingResults", msg(M.Option.SAVING_RESULTS.help));
-		helpDescription.put("damageAllowed", msg(M.Option.DAMAGE_ALLOWED.help));
-		helpDescription.put("effects", msg(M.List.EFFECT.help));
-		helpDescription.put("setEffect", msg(M.Amplifier.EFFECT.help));
-		helpDescription.put("boat", msg(M.Option.BOAT.help));
-		helpDescription.put("enabled", msg(M.Option.ENABLED.help));
-		helpDescription.put("modifyInventory", msg(M.Option.MODIFY_INVENTORY.help));
-		helpDescription.put("recordsBlock", msg(M.Executive.RECORDS_BLOCK.help));
-		helpDescription.put("teleportBlock", msg(M.Executive.TELEPORT_BLOCK.help));
-		helpDescription.put("teleport|tp", msg(M.Executive.TELEPORT.help));
-		helpDescription.put("fix", msg(M.General.FIX.help));
-		helpDescription.put("color", msg(M.Option.COLOR.help));
-		helpDescription.put("difficulty", msg(M.Option.DIFFICULTY.help));
-		helpDescription.put("type", msg(M.Option.TYPE.help));
-		helpDescription.put("displayName", msg(M.Parkour.DISPLAY_NAME.help));
-		helpDescription.put("authors", msg(M.Parkour.AUTHORS.help));
-		helpDescription.put("vip", msg(M.Option.VIP_ONLY.help));
-		helpDescription.put(MEDAL, msg(M.Option.MEDAL.help));
+		helpDescription.put("help|?", msg(M.List.HELP.helpMessage));
+		helpDescription.put("lobby", msg(M.General.LOBBY.helpMessage));
+		helpDescription.put("create", msg(M.Executive.CREATE.helpMessage));
+		helpDescription.put("remove", msg(M.Executive.REMOVE.helpMessage));
+		helpDescription.put("rename", msg(M.Executive.RENAME.helpMessage));
+		helpDescription.put("info", msg(M.Executive.INFO.helpMessage));
+		helpDescription.put("setSpawn", msg(M.Executive.SPAWN.helpMessage));
+		helpDescription.put("recreate", msg(M.Executive.RECREATE.helpMessage));
+		helpDescription.put("start", msg(M.Executive.START.helpMessage));
+		helpDescription.put("stop", msg(M.Executive.STOP.helpMessage));
+		helpDescription.put("addCheckpoint", msg(M.Region.Checkpoint.ADD.helpMessage));
+		helpDescription.put("setCheckpoint", msg(M.Region.Checkpoint.SET.helpMessage));
+		helpDescription.put("addWall", msg(M.Region.Wall.ADD.helpMessage));
+		helpDescription.put("setWall", msg(M.Region.Wall.SET.helpMessage));
+		helpDescription.put("list|ls", msg(M.List.GAMES.helpMessage));
+		helpDescription.put("ignore|i", msg(M.General.IGNORE.helpMessage));
+		helpDescription.put("sprintForced", msg(M.Option.SPRINT_FORCED.helpMessage));
+		helpDescription.put("alwaysSpawn", msg(M.Option.ALWAYS_SPAWN.helpMessage));
+		helpDescription.put("savingResults", msg(M.Option.SAVING_RESULTS.helpMessage));
+		helpDescription.put("damageAllowed", msg(M.Option.DAMAGE_ALLOWED.helpMessage));
+		helpDescription.put("effects", msg(M.List.EFFECT.helpMessage));
+		helpDescription.put("setEffect", msg(M.Amplifier.EFFECT.helpMessage));
+		helpDescription.put("boat", msg(M.Option.BOAT.helpMessage));
+		helpDescription.put("enabled", msg(M.Option.ENABLED.helpMessage));
+		helpDescription.put("modifyInventory", msg(M.Option.MODIFY_INVENTORY.helpMessage));
+		helpDescription.put("recordsBlock", msg(M.Executive.RECORDS_BLOCK.helpMessage));
+		helpDescription.put("teleportBlock", msg(M.Executive.TELEPORT_BLOCK.helpMessage));
+		helpDescription.put("teleport|tp", msg(M.Executive.TELEPORT.helpMessage));
+		helpDescription.put("fix", msg(M.General.FIX.helpMessage));
+		helpDescription.put("color", msg(M.Option.COLOR.helpMessage));
+		helpDescription.put("difficulty", msg(M.Option.DIFFICULTY.helpMessage));
+		helpDescription.put("type", msg(M.Option.TYPE.helpMessage));
+		helpDescription.put("displayName", msg(M.Parkour.DISPLAY_NAME.helpMessage));
+		helpDescription.put("authors", msg(M.Parkour.AUTHORS.helpMessage));
+		helpDescription.put("vipOnly", msg(M.Option.VIP_ONLY.helpMessage));
+		helpDescription.put(MEDAL, msg(M.Option.MEDAL.helpMessage));
 	}
 
 	@NotNull
-	private String replace(final String source, final ParkourRecord parkourRecord) {
+	private String replace(@NotNull final String source, @NotNull final ParkourRecord parkourRecord) {
 		final String name = Optional.of(parkourRecord)
 				.map(ParkourRecord::getUuid)
 				.map(uuid -> getServer().getOfflinePlayer(uuid))
 				.map(OfflinePlayer::getName)
 				.orElse("========");
-		return source.replace("%NICK%", name)
-				.replace("%PERSONAL_TIME%", formatTime(parkourRecord.getTime()));
+		return source.replace(Constants.NICK, name)
+				.replace(Constants.PERSONAL_TIME, formatTime(parkourRecord.getTime()));
 	}
 
 	@NotNull
-	public String formatTime(final double time) {
-		final int minutes = (int) time / 60;
-		final int seconds = (int) time % 60;
-		final int milliseconds = (int) Math.round((time % 1) * 100);
-		return String.format("%02d:%02d.%02d", minutes, seconds, milliseconds);
+	private String replace(@NotNull final String source) {
+		return source.replace(Constants.NICK, "========").replace(Constants.PERSONAL_TIME, formatTime(0));
+	}
+
+	@NotNull
+	private DecimalFormat setupDecimalFormat(@NotNull final ConfigurationSection economySection) {
+		final DecimalFormatSymbols decimalFormatSymbols = new DecimalFormatSymbols();
+		decimalFormatSymbols.setCurrencySymbol(economySection.getString("currency-symbol", "{@}"));
+		decimalFormatSymbols.setDecimalSeparator(economySection.getString("decimal-separator", ".").charAt(0));
+		decimalFormatSymbols.setGroupingSeparator(economySection.getString("group-separator", " ").charAt(0));
+		final DecimalFormat format = new DecimalFormat(economySection.getString("pattern", "+###,##0.00\u00A4;-###,##0.00\u00A4"), decimalFormatSymbols);
+		format.setGroupingSize(economySection.getInt("group-size", 3));
+		return format;
 	}
 }

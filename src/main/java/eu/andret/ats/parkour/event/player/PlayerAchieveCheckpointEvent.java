@@ -8,17 +8,21 @@ import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.region.DirectionalRegion;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import lombok.Value;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * The event that is called when player achieves checkpoint
  */
 @Value
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public class PlayerAchieveCheckpointEvent extends AbstractParkourPlayerEvent {
 	/**
 	 * The checkpoint achieved by the player.
 	 */
+	@NotNull
 	DirectionalRegion region;
 
 	/**
@@ -28,7 +32,7 @@ public class PlayerAchieveCheckpointEvent extends AbstractParkourPlayerEvent {
 	 * @param player The player that triggers the event.
 	 * @param region The achieved checkpoint.
 	 */
-	public PlayerAchieveCheckpointEvent(final ParkourGame game, final ParkourPlayer player, final DirectionalRegion region) {
+	public PlayerAchieveCheckpointEvent(@NotNull final ParkourGame game, @NotNull final ParkourPlayer player, @NotNull final DirectionalRegion region) {
 		super(game, player);
 		this.region = region;
 	}

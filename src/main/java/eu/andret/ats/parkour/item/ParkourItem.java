@@ -5,7 +5,9 @@
 package eu.andret.ats.parkour.item;
 
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
 
 public interface ParkourItem {
+	@NotNull
 	ItemStack toItemStack();
 }

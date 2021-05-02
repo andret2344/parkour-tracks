@@ -6,6 +6,8 @@ package eu.andret.ats.parkour.tasks.database;
 
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourRecord;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -18,12 +20,13 @@ import java.util.function.Consumer;
 
 public class FetchParkourBestRecordTask extends AbstractParkourTask {
 	private final int count;
+	@Nullable
 	private final Consumer<List<ParkourRecord>> callback;
 
-	public FetchParkourBestRecordTask(final Connection connection, final ParkourGame parkourGame, final int count, final Consumer<List<ParkourRecord>> callback) {
+	public FetchParkourBestRecordTask(@NotNull final Connection connection, @NotNull final ParkourGame parkourGame, final int count, @Nullable final Consumer<List<ParkourRecord>> callback) {
 		super(connection, parkourGame);
 		if (count <= 0) {
-			throw new IllegalArgumentException("Count must be positive, " + count + " provided");
+			throw new IllegalArgumentException("Count must be positive, " + count + " provided!");
 		}
 		this.count = count;
 		this.callback = callback;
@@ -39,7 +42,9 @@ public class FetchParkourBestRecordTask extends AbstractParkourTask {
 			for (int i = 0; i < count && rs.next(); i++) {
 				result.add(new ParkourRecord(UUID.fromString(rs.getString("uuid")), game, rs.getFloat("time")));
 			}
-			callback.accept(result);
+			if (callback != null) {
+				callback.accept(result);
+			}
 		} catch (final SQLException ex) {
 			ex.printStackTrace();
 		}
