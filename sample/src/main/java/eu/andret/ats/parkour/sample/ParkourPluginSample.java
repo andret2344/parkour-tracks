@@ -23,7 +23,7 @@ public class ParkourPluginSample extends JavaPlugin {
 		final AnnotatedCommand command = CommandManager.registerCommand(ParkourPluginSampleCommand.class, this);
 		command.addTypeCompleter(BalanceInteraction.class, BalanceInteraction.stringValues());
 		command.addArgumentMapper("interaction", BalanceInteraction.class, BalanceInteraction::valueOf);
-		command.setOnUnknownSubCommandExecutionListener(sender -> sender.sendMessage("/sample rank <value> or /sample balance <interaction amount>"));
+		command.setOnUnknownSubCommandExecutionListener(sender -> sender.sendMessage("/sample rank <value> or /sample balance <interaction> <amount>"));
 	}
 
 	@NotNull

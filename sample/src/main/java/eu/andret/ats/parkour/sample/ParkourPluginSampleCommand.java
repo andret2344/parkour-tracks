@@ -9,21 +9,11 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-
 @BaseCommand("sample")
 public class ParkourPluginSampleCommand extends AnnotatedCommandExecutor<ParkourPluginSample> {
-	private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("+###,##0.00\u00A4;-###,##0.00\u00A4");
 
 	public ParkourPluginSampleCommand(@NotNull final CommandSender sender, @NotNull final ParkourPluginSample plugin) {
 		super(sender, plugin);
-		final DecimalFormatSymbols dfs = new DecimalFormatSymbols();
-		dfs.setCurrencySymbol("{@}");
-		dfs.setGroupingSeparator(' ');
-		dfs.setDecimalSeparator('.');
-		DECIMAL_FORMAT.setDecimalFormatSymbols(dfs);
-		DECIMAL_FORMAT.setGroupingSize(3);
 	}
 
 	@Argument(executorType = ExecutorType.PLAYER)
@@ -41,7 +31,12 @@ public class ParkourPluginSampleCommand extends AnnotatedCommandExecutor<Parkour
 	@Argument(executorType = ExecutorType.PLAYER)
 	public String balance() {
 		final double money = plugin.getFinancialProvider().getMoney((Player) sender);
-		return String.format("You have: %s", DECIMAL_FORMAT.format(money));
+		return String.format("You have: %s", plugin.getParkourPlugin().formatMoney(money));
+	}
+
+	@Argument(executorType = ExecutorType.PLAYER)
+	public String balance(@Param("interaction") final BalanceInteraction interaction, final int amount) {
+		return balance(interaction, (double) amount);
 	}
 
 	@Argument(executorType = ExecutorType.PLAYER)
@@ -50,17 +45,17 @@ public class ParkourPluginSampleCommand extends AnnotatedCommandExecutor<Parkour
 		switch (interaction) {
 			case ADD:
 				plugin.getFinancialProvider().addMoney(player, amount);
-				return "Added " + DECIMAL_FORMAT.format(amount);
+				return "Added " + plugin.getParkourPlugin().formatMoney(amount);
 			case SUB:
 				plugin.getFinancialProvider().addMoney(player, -amount);
-				return "Subtracted " + DECIMAL_FORMAT.format(amount);
+				return "Subtracted " + plugin.getParkourPlugin().formatMoney(amount);
 			case SET:
 				if (amount < 0) {
-					plugin.getFinancialProvider().getFinances().put((player).getUniqueId(), 0D);
+					plugin.getFinancialProvider().getFinances().put(player.getUniqueId(), 0D);
 					return "Set balance to 0";
 				}
 				plugin.getFinancialProvider().getFinances().put((player).getUniqueId(), amount);
-				return "Set balance to " + DECIMAL_FORMAT.format(amount);
+				return "Set balance to " + plugin.getParkourPlugin().formatMoney(amount);
 			default:
 				return null;
 		}
