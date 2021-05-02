@@ -188,9 +188,18 @@ public final class ParkourPlugin extends JavaPlugin {
 	public String msg(@NotNull final M.Message message) {
 		final StringBuilder result = new StringBuilder();
 		if (message.isError()) {
-			result.append(commands.getString("misc.error-prefix"));
+			result.append(commands.getString("misc.prefix-error"));
 		}
 		return ChatColor.translateAlternateColorCodes('&', result.append(commands.getString(message.toString())).toString());
+	}
+
+	@NotNull
+	public String misc(@NotNull final String name) {
+		return Optional.of(name)
+				.map(text -> "misc." + text)
+				.map(commands::getString)
+				.map(text -> ChatColor.translateAlternateColorCodes('&', text))
+				.orElse("");
 	}
 
 	@NotNull
@@ -206,7 +215,7 @@ public final class ParkourPlugin extends JavaPlugin {
 	@NotNull
 	public Optional<Sound> getSound(@NotNull final EventSound eventSound) {
 		return Optional.of(getConfig())
-				.map(configuration -> configuration.getString("sound." + eventSound.name().toLowerCase()))
+				.map(configuration -> configuration.getString("sound." + eventSound.name().toLowerCase(), "NONE"))
 				.filter(sound -> !sound.equals("NONE"))
 				.map(Sound::valueOf);
 	}
@@ -284,14 +293,14 @@ public final class ParkourPlugin extends JavaPlugin {
 			return Collections.emptyList();
 		}
 		return medalsSection.getKeys(false).stream()
-				.map(s -> {
-					final ConfigurationSection configurationSection = medalsSection.getConfigurationSection(s);
+				.map(key -> {
+					final ConfigurationSection configurationSection = medalsSection.getConfigurationSection(key);
 					if (configurationSection == null) {
 						return null;
 					}
-					final String display = ChatColor.translateAlternateColorCodes('&', configurationSection.getString("display", s));
+					final String display = ChatColor.translateAlternateColorCodes('&', configurationSection.getString("display", key));
 					final int importance = configurationSection.getInt("importance");
-					return new ParkourMedal(s, display, importance);
+					return new ParkourMedal(key, display, importance);
 				})
 				.filter(Objects::nonNull)
 				.collect(Collectors.toList());

@@ -22,7 +22,6 @@ public class Constants {
 	public static final String ID = "%ID%";
 	public static final String MEDAL = "%MEDAL%";
 	public static final String MEDALS = "%MEDALS%";
-	public static final String MEDAL_PLACEHOLDER = "%MEDAL%";
 	public static final String NAME = "%NAME%";
 	public static final String NEW_NAME = "%NEW_NAME%";
 	public static final String NICK = "%NICK%";
@@ -31,7 +30,6 @@ public class Constants {
 	public static final String OPTION = "%OPTION%";
 	public static final String PAGE = "%PAGE%";
 	public static final String PAGES = "%PAGES%";
-	public static final String PARKOUR = "%PARKOUR%";
 	public static final String PERSONAL_TIME = "%PERSONAL_TIME%";
 	public static final String PLAYER = "%PLAYER%";
 	public static final String REWARD = "%REWARD%";

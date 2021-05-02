@@ -28,7 +28,7 @@ executive:
   create:
     help: '&eCreates the new parkour game.'
     usage: '&cCorrect usage: /parkour create <name>'
-    success: '&aSuccessfully created the &6%DISPLAY_NAME%&a parkour game.'
+    success: '&aSuccessfully created the &6%NAME%&a parkour game.'
   info:
     help: '&eShows information about the parkour game.'
     usage: '&cCorrect usage: /parkour info <name>'
@@ -202,7 +202,9 @@ list:
     item: '&b- &6%MEDAL%&b - time: &6%TIME%&b, reward: &6%REWARD%&b.'
 
 misc:
-  error-prefix: '&4Error: &r'
+  prefix-error: '&4Error: &r'
+  suffix-started: '&a&o[Started]&r'
+  suffix-stopped: '&c&o[Stopped]&r'
 
 error:
   already-exists: '&cThe game with name "%NAME%" already exists.'
