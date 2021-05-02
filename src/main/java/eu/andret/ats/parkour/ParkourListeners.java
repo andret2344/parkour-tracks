@@ -209,11 +209,13 @@ public class ParkourListeners implements Listener {
 		}
 		plugin.getSound(EventSound.COMPLETE)
 				.ifPresent(sound -> player.playSound(player.getLocation(), sound, 0.5F, 0.5F));
-		plugin.getFinancialProvider().ifPresent(financialProvider -> {
-			final double amount = parkourGame.getOptions().getReward();
-			financialProvider.addMoney(player, amount);
-			player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("reward-parkour").replace("%VALUE%", plugin.formatMoney(amount))));
-		});
+		final double amount = parkourGame.getOptions().getReward();
+		if (amount > 0) {
+			plugin.getFinancialProvider().ifPresent(financialProvider -> {
+				financialProvider.addMoney(player, amount);
+				player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("reward-parkour").replace(Constants.VALUE, plugin.formatMoney(amount))));
+			});
+		}
 		final ParkourCountdown task = new ParkourCountdown(plugin.getTeleportationTimeout(),
 				() -> {
 					final Map<UUID, Integer> timeCounter = plugin.getTimeCounter();

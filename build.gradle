@@ -57,7 +57,6 @@ spigot {
 	description = 'A plugin creating and play parkours.'
 	version = project.version
 	depends = ['WorldEdit']
-	softDepends = ['Multiverse']
 	prefix = 'atsParkour'
 
 	//noinspection GroovyAssignabilityCheck
