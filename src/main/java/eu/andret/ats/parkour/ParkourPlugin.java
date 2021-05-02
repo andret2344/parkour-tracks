@@ -418,7 +418,7 @@ public final class ParkourPlugin extends JavaPlugin {
 		});
 	}
 
-	private void updateSign(@NotNull final ParkourGame parkourGame, final UnaryOperator<String> replaceFunction) {
+	private void updateSign(@NotNull final ParkourGame parkourGame, @NotNull final UnaryOperator<String> replaceFunction) {
 		Optional.of(parkourGame)
 				.map(ParkourGame::getRecordsBlock)
 				.map(Location::getBlock)

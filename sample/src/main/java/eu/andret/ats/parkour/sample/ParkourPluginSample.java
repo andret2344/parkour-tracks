@@ -9,6 +9,8 @@ import lombok.Getter;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 @Getter
 public class ParkourPluginSample extends JavaPlugin {
 	@NotNull
@@ -22,6 +24,7 @@ public class ParkourPluginSample extends JavaPlugin {
 		getParkourPlugin().setRankProvider(rankProvider);
 		final AnnotatedCommand command = CommandManager.registerCommand(ParkourPluginSampleCommand.class, this);
 		command.addTypeCompleter(BalanceInteraction.class, BalanceInteraction.stringValues());
+		command.addTypeCompleter(boolean.class, Arrays.asList(Boolean.FALSE.toString(), Boolean.TRUE.toString()));
 		command.addArgumentMapper("interaction", BalanceInteraction.class, BalanceInteraction::valueOf);
 		command.setOnUnknownSubCommandExecutionListener(sender -> sender.sendMessage("/sample rank <value> or /sample balance <interaction> <amount>"));
 	}
