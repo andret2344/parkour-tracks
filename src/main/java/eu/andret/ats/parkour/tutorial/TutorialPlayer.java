@@ -146,7 +146,7 @@ public final class TutorialPlayer {
 						"Sample command execution: &b/parkour start &3fancy_parkour";
 			case 13:
 				return "&dAnd... that's it! You have just completed basic configuration of a parkour game. As you reached the end of my leadership, you no longer need me. See ya!\n" +
-						"&dNote: &nFor more information type &b&n/parkour&d&n, &b&n/parkour help &5&n[number]&r&d&n, or ask the creator - &6&l&nAndret2344&r&d.\n" +
+						"&dNote: &nFor more information type &b&n/parkour&d&n, &b&n/parkour help &5&n[page]&r&d&n, or ask the creator - &6&l&nAndret2344&r&d.\n" +
 						"Sample command execution: &b/parkour\n" +
 						"Sample command execution: &b/parkour help &53";
 			default:

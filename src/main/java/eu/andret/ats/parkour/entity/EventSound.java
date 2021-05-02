@@ -1,4 +1,4 @@
-package eu.andret.ats.parkour.util;
+package eu.andret.ats.parkour.entity;
 
 public enum EventSound {
 	JOIN,

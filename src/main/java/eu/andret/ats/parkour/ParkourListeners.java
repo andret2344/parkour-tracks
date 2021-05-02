@@ -5,6 +5,7 @@
 package eu.andret.ats.parkour;
 
 import eu.andret.ats.parkour.api.FinancialProvider;
+import eu.andret.ats.parkour.entity.EventSound;
 import eu.andret.ats.parkour.event.game.GameStartEvent;
 import eu.andret.ats.parkour.event.game.GameStopEvent;
 import eu.andret.ats.parkour.event.player.PlayerAchieveCheckpointEvent;
@@ -26,7 +27,6 @@ import eu.andret.ats.parkour.tasks.counter.TimeCounter;
 import eu.andret.ats.parkour.tasks.database.FetchAndInsertDataTask;
 import eu.andret.ats.parkour.util.Constants;
 import eu.andret.ats.parkour.util.Data;
-import eu.andret.ats.parkour.util.EventSound;
 import eu.andret.ats.parkour.util.M;
 import lombok.Value;
 import org.bukkit.ChatColor;

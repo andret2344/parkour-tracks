@@ -1,4 +1,4 @@
-package eu.andret.ats.parkour.util;
+package eu.andret.ats.parkour.entity;
 
 import eu.andret.ats.parkour.parkour.ParkourMedalData;
 import lombok.AllArgsConstructor;

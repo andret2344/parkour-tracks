@@ -12,10 +12,11 @@ import com.sk89q.worldedit.regions.Region;
 import eu.andret.arguments.AnnotatedCommandExecutor;
 import eu.andret.arguments.api.annotation.Argument;
 import eu.andret.arguments.api.annotation.BaseCommand;
-import eu.andret.arguments.api.annotation.Completer;
 import eu.andret.arguments.api.annotation.Fallback;
 import eu.andret.arguments.api.annotation.Param;
 import eu.andret.arguments.api.entity.ExecutorType;
+import eu.andret.ats.parkour.entity.MedalSetupOption;
+import eu.andret.ats.parkour.entity.SimpleLever;
 import eu.andret.ats.parkour.event.game.GameStartEvent;
 import eu.andret.ats.parkour.event.game.GameStopEvent;
 import eu.andret.ats.parkour.event.player.PlayerQuitGameEvent;
@@ -27,11 +28,11 @@ import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.region.BasicRegion;
 import eu.andret.ats.parkour.region.DirectionalRegion;
 import eu.andret.ats.parkour.tasks.database.FetchParkourBestRecordTask;
+import eu.andret.ats.parkour.tutorial.TutorialManager;
 import eu.andret.ats.parkour.tutorial.TutorialPlayer;
 import eu.andret.ats.parkour.util.Constants;
 import eu.andret.ats.parkour.util.Data;
 import eu.andret.ats.parkour.util.M;
-import eu.andret.ats.parkour.util.MedalSetupOption;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.bukkit.ChatColor;
@@ -64,23 +65,25 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 	// === TUTORIAL ===
 
 	@Argument(permission = "ats.parkour.tutorial", executorType = ExecutorType.PLAYER, description = "Runs tutorial")
-	public String tutorial(@Completer("startStop") final String state) {
+	public String tutorial(@Param("simpleLever") final SimpleLever lever) {
 		final Player player = (Player) sender;
-		if (state.equals("start")) {
-			if (plugin.getTutorialManager().hasPlayer(player)) {
-				return "&dYou are already in the tutorial... Be polite!";
-			}
-			plugin.getTutorialManager().getPlayer(player).sendMessage();
-			return null;
+		final TutorialManager tutorialManager = plugin.getTutorialManager();
+		switch (lever) {
+			case ON:
+				if (tutorialManager.hasPlayer(player)) {
+					return "&dYou are already in the tutorial... Be polite!";
+				}
+				tutorialManager.getPlayer(player).sendMessage();
+				return null;
+			case OFF:
+				if (!tutorialManager.hasPlayer(player)) {
+					return "&dYou are not in the tutorial... Be polite!";
+				}
+				tutorialManager.removePlayer(player);
+				return "&dOh, that's sad you don't want to learn anymore, but I appreciate your knowledge. Bye!";
+			default:
+				return "&dWhat to do with tutorial? Set it to true or false? Please, specify";
 		}
-		if (state.equals("stop")) {
-			if (!plugin.getTutorialManager().hasPlayer(player)) {
-				return "&dYou are not in the tutorial... Be polite!";
-			}
-			plugin.getTutorialManager().removePlayer(player);
-			return "&dOh, that's sad you don't want to learn anymore, but I appreciate your knowledge. Bye!";
-		}
-		return "&dWhat to do with tutorial? Set it to true or false? Please, specify";
 	}
 
 	// === GLOBAL ===

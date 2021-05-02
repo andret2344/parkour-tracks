@@ -10,6 +10,9 @@ import eu.andret.arguments.CommandManager;
 import eu.andret.arguments.api.annotation.Fallback;
 import eu.andret.ats.parkour.api.FinancialProvider;
 import eu.andret.ats.parkour.api.RankProvider;
+import eu.andret.ats.parkour.entity.EventSound;
+import eu.andret.ats.parkour.entity.MedalSetupOption;
+import eu.andret.ats.parkour.entity.SimpleLever;
 import eu.andret.ats.parkour.item.ParkourInteractiveItem;
 import eu.andret.ats.parkour.item.ParkourItem;
 import eu.andret.ats.parkour.item.ParkourItemMap;
@@ -22,9 +25,7 @@ import eu.andret.ats.parkour.tasks.database.KeepAliveTask;
 import eu.andret.ats.parkour.tutorial.TutorialManager;
 import eu.andret.ats.parkour.util.Constants;
 import eu.andret.ats.parkour.util.Data;
-import eu.andret.ats.parkour.util.EventSound;
 import eu.andret.ats.parkour.util.M;
-import eu.andret.ats.parkour.util.MedalSetupOption;
 import eu.andret.ats.parkour.util.serializer.JSONSerializer;
 import lombok.Getter;
 import lombok.Setter;
@@ -353,13 +354,16 @@ public final class ParkourPlugin extends JavaPlugin {
 						.orElse(null),
 				Fallback.ON_NULL);
 		command.addArgumentMapper("option", MedalSetupOption.class, name -> MedalSetupOption.valueOf(name.toUpperCase()));
-
-		command.addArgumentCompleter("startStop", Arrays.asList("start", "stop"));
+		command.addArgumentMapper("simpleLever", SimpleLever.class, name -> SimpleLever.valueOf(name.toUpperCase()));
 
 		command.addTypeCompleter(ParkourGame.class, () -> parkourManager.getAllGames().stream()
 				.map(ParkourGame::getName)
 				.collect(Collectors.toList()));
 
+		command.addTypeCompleter(SimpleLever.class, Arrays.stream(SimpleLever.values())
+				.map(Enum::name)
+				.map(String::toLowerCase)
+				.collect(Collectors.toList()));
 		command.addTypeCompleter(PotionEffectType.class, Data.ALLOWED_EFFECTS.stream()
 				.map(PotionEffectType::getName)
 				.collect(Collectors.toList()));
