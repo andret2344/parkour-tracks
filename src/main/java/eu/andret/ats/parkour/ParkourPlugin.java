@@ -19,6 +19,7 @@ import eu.andret.ats.parkour.parkour.ParkourMedal;
 import eu.andret.ats.parkour.parkour.ParkourRecord;
 import eu.andret.ats.parkour.player.PlayerManager;
 import eu.andret.ats.parkour.tasks.database.KeepAliveTask;
+import eu.andret.ats.parkour.tutorial.TutorialManager;
 import eu.andret.ats.parkour.util.Constants;
 import eu.andret.ats.parkour.util.Data;
 import eu.andret.ats.parkour.util.EventSound;
@@ -70,6 +71,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -214,19 +216,7 @@ public final class ParkourPlugin extends JavaPlugin {
 	}
 
 	public void updateSign(@NotNull final ParkourRecord parkourRecord) {
-		Optional.of(parkourRecord.getGame())
-				.map(ParkourGame::getRecordsBlock)
-				.map(Location::getBlock)
-				.map(Block::getState)
-				.filter(Sign.class::isInstance)
-				.map(Sign.class::cast)
-				.ifPresent(sign -> {
-					IntStream.of(0, 1, 2, 3).forEach(i -> {
-						final String lineText = getConfig().getString("recordSign.line" + (i + 1));
-						sign.setLine(i, ChatColor.translateAlternateColorCodes('&', replace(String.valueOf(lineText), parkourRecord)));
-					});
-					sign.update();
-				});
+		updateSign(parkourRecord.getGame(), line -> replace(String.valueOf(line), parkourRecord));
 	}
 
 	public void updateSyncSign(@NotNull final ParkourGame parkourGame) {
@@ -234,19 +224,7 @@ public final class ParkourPlugin extends JavaPlugin {
 	}
 
 	public void updateSign(@NotNull final ParkourGame parkourGame) {
-		Optional.of(parkourGame)
-				.map(ParkourGame::getRecordsBlock)
-				.map(Location::getBlock)
-				.map(Block::getState)
-				.filter(Sign.class::isInstance)
-				.map(Sign.class::cast)
-				.ifPresent(sign -> {
-					IntStream.of(0, 1, 2, 3).forEach(i -> {
-						final String lineText = getConfig().getString("recordSign.line" + (i + 1));
-						sign.setLine(i, ChatColor.translateAlternateColorCodes('&', replace(String.valueOf(lineText))));
-					});
-					sign.update();
-				});
+		updateSign(parkourGame, this::replace);
 	}
 
 	public ItemStack getExitItem() {
@@ -276,13 +254,13 @@ public final class ParkourPlugin extends JavaPlugin {
 	}
 
 	@NotNull
-	public String getFormattedMedals() {
+	public String getFormattedMedals(@NotNull final String separator) {
 		return getMedals().stream()
 				.map(ParkourMedal::getDisplayName)
-				.collect(Collectors.joining("&r, "));
+				.collect(Collectors.joining(separator));
 	}
 
-	public boolean isEditLocked() {
+	public boolean isEditLockActive() {
 		return getConfig().getBoolean("edit-lock", true);
 	}
 
@@ -356,36 +334,37 @@ public final class ParkourPlugin extends JavaPlugin {
 		command.setOnInsufficientPermissionsListener(sender -> sender.sendMessage(msg(M.Error.DEFAULT.insufficientPermissions)));
 		command.setOnUnknownSubCommandExecutionListener(sender -> sender.sendMessage(msg(M.Error.DEFAULT.invalidArgument)));
 		command.getOptions().setAutoTranslateColors(true);
+
 		command.addArgumentMapper("parkourGame", ParkourGame.class, parkourManager::getParkour, Fallback.ON_NULL);
 		command.addArgumentMapper("potion", PotionEffectType.class, PotionEffectType::getByName, Fallback.ON_NULL);
-		command.addTypeCompleter(ParkourGame.class, () -> parkourManager.getAllGames().stream()
-				.map(ParkourGame::getName)
-				.collect(Collectors.toList()));
-		command.addTypeCompleter(boolean.class, Arrays.asList("false", "true"));
-		command.addTypeCompleter(PotionEffectType.class, () -> Data.ALLOWED_EFFECTS.stream()
-				.map(PotionEffectType::getName)
-				.collect(Collectors.toList()));
-		command.addArgumentCompleter("startStop", Arrays.asList("start", "stop"));
-		command.addArgumentCompleter(MEDAL, medals.stream()
-				.map(ParkourMedal::getName)
-				.collect(Collectors.toList()));
-		command.addTypeCompleter(MedalSetupOption.class, Arrays.stream(MedalSetupOption.values())
-				.map(Enum::name)
-				.map(String::toLowerCase)
-				.collect(Collectors.toList()));
-		command.addTypeCompleter(ParkourMedal.class, () -> medals.stream()
-				.map(ParkourMedal::getName)
-				.collect(Collectors.toList()));
+		command.addArgumentMapper("color", DyeColor.class, DyeColor::valueOf, Fallback.ON_NULL);
 		command.addArgumentMapper(MEDAL, ParkourMedal.class, name -> medals.stream()
 						.filter(medal -> medal.getName().equals(name))
 						.findAny()
 						.orElse(null),
 				Fallback.ON_NULL);
 		command.addArgumentMapper("option", MedalSetupOption.class, name -> MedalSetupOption.valueOf(name.toUpperCase()));
+
+		command.addArgumentCompleter("startStop", Arrays.asList("start", "stop"));
+
+		command.addTypeCompleter(ParkourGame.class, () -> parkourManager.getAllGames().stream()
+				.map(ParkourGame::getName)
+				.collect(Collectors.toList()));
+
+		command.addTypeCompleter(PotionEffectType.class, Data.ALLOWED_EFFECTS.stream()
+				.map(PotionEffectType::getName)
+				.collect(Collectors.toList()));
+		command.addTypeCompleter(ParkourMedal.class, medals.stream()
+				.map(ParkourMedal::getName)
+				.collect(Collectors.toList()));
+		command.addTypeCompleter(boolean.class, Arrays.asList(Boolean.FALSE.toString(), Boolean.TRUE.toString()));
+		command.addTypeCompleter(MedalSetupOption.class, Arrays.stream(MedalSetupOption.values())
+				.map(Enum::name)
+				.map(String::toLowerCase)
+				.collect(Collectors.toList()));
 		command.addTypeCompleter(DyeColor.class, Arrays.stream(DyeColor.values())
 				.map(Enum::name)
 				.collect(Collectors.toList()));
-		command.addArgumentMapper("color", DyeColor.class, DyeColor::valueOf, Fallback.ON_NULL);
 	}
 
 	private void setupDatabase() {
@@ -415,8 +394,8 @@ public final class ParkourPlugin extends JavaPlugin {
 
 	private void connect() {
 		final String database = getConfig().getString("database.dbname", "ats_parkour");
-		getConnection().ifPresent(connection1 -> {
-			try (final Statement stat = connection1.createStatement()) {
+		getConnection().ifPresent(conn -> {
+			try (final Statement stat = conn.createStatement()) {
 				stat.execute("CREATE DATABASE IF NOT EXISTS `" + database + "`;");
 				stat.execute("USE " + database + ";");
 				stat.execute("CREATE TABLE IF NOT EXISTS ats_parkour_records(id INT PRIMARY KEY AUTO_INCREMENT, date DATETIME, uuid VARCHAR(64), parkour VARCHAR(64), time DECIMAL(8, 2));");
@@ -424,6 +403,22 @@ public final class ParkourPlugin extends JavaPlugin {
 				ex.printStackTrace();
 			}
 		});
+	}
+
+	private void updateSign(@NotNull final ParkourGame parkourGame, final UnaryOperator<String> replaceFunction) {
+		Optional.of(parkourGame)
+				.map(ParkourGame::getRecordsBlock)
+				.map(Location::getBlock)
+				.map(Block::getState)
+				.filter(Sign.class::isInstance)
+				.map(Sign.class::cast)
+				.ifPresent(sign -> {
+					IntStream.of(0, 1, 2, 3).forEach(i -> {
+						final String lineText = getConfig().getString("recordSign.line" + (i + 1));
+						sign.setLine(i, ChatColor.translateAlternateColorCodes('&', replaceFunction.apply(lineText)));
+					});
+					sign.update();
+				});
 	}
 
 	private void save() {
@@ -504,14 +499,14 @@ public final class ParkourPlugin extends JavaPlugin {
 				.map(ParkourRecord::getUuid)
 				.map(uuid -> getServer().getOfflinePlayer(uuid))
 				.map(OfflinePlayer::getName)
-				.orElse("========");
+				.orElse(Constants.PLACEHOLDER_NO_RECORD);
 		return source.replace(Constants.NICK, name)
 				.replace(Constants.PERSONAL_TIME, formatTime(parkourRecord.getTime()));
 	}
 
 	@NotNull
 	private String replace(@NotNull final String source) {
-		return source.replace(Constants.NICK, "========").replace(Constants.PERSONAL_TIME, formatTime(0));
+		return source.replace(Constants.NICK, Constants.PLACEHOLDER_NO_RECORD).replace(Constants.PERSONAL_TIME, formatTime(0));
 	}
 
 	@NotNull

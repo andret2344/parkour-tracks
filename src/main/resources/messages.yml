@@ -1,7 +1,7 @@
 checkpoint-achieved: '&3&lCheckpoint achieved!'
 completes-count: '&9You have completed this parkour &6%COUNT%&9 time.'
 counting-element: '&7%NUMBER%...'
-joined-parkour: '&3Joined "&6%PARKOUR%&3" parkour.'
+joined-parkour: '&3Joined "&6%DISPLAY_NAME%&3" parkour.'
 medal-got: '&dSuper! You have just achieved the &6%MEDAL%&d medal!'
 new-parkour-best: '&5&lCongratulations!!!&r&5 You established the new record on the "&6&l%DISPLAY_NAME%&5&l" parkour game!'
 new-personal-best: '&9Congratulations! You have beaten own record on the "&6%DISPLAY_NAME%9" parkour game!'

@@ -9,8 +9,8 @@ import org.jetbrains.annotations.NotNull;
 
 public interface Serializer<E> {
 	@NotNull
-	ParkourManager.ParkourSetting readParkourSetting(final E e);
+	ParkourManager.ParkourSetting readParkourSetting(@NotNull final E e);
 
 	@NotNull
-	E writeParkourSetting(ParkourManager.ParkourSetting setting);
+	E writeParkourSetting(@NotNull ParkourManager.ParkourSetting setting);
 }

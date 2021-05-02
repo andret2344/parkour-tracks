@@ -2,8 +2,9 @@
  * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
  */
 
-package eu.andret.ats.parkour;
+package eu.andret.ats.parkour.tutorial;
 
+import eu.andret.ats.parkour.ParkourPlugin;
 import lombok.Value;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;

@@ -28,7 +28,7 @@ executive:
   create:
     help: '&eCreates the new parkour game.'
     usage: '&cCorrect usage: /parkour create <name>'
-    success: '&aSuccessfully created the &6%NAME%&a parkour game.'
+    success: '&aSuccessfully created the &6%DISPLAY_NAME%&a parkour game.'
   info:
     help: '&eShows information about the parkour game.'
     usage: '&cCorrect usage: /parkour info <name>'
@@ -40,11 +40,11 @@ executive:
   records-block:
     help: '&eSets the best record sign location.'
     usage: '&cCorrect usage: /parkour recordsBlock <name>'
-    success: '&aSuccessfully set up the best record location of the &6%NAME%&a parkour to the location [X=&6%COORD_X%&a, Y=&6%COORD_Y%&a, Z=&6%COORD_Z%&a].'
+    success: '&aSuccessfully set up the best record location of the &6%DISPLAY_NAME%&a parkour to the location [X=&6%COORD_X%&a, Y=&6%COORD_Y%&a, Z=&6%COORD_Z%&a].'
   remove:
     help: '&eRemoves an existing parkour game.'
     usage: '&cCorrect usage: /parkour remove <name>'
-    success: '&aSuccessfully removed the &6%NAME%&a parkour game.'
+    success: '&aSuccessfully removed the &6%DISPLAY_NAME%&a parkour game.'
   rename:
     help: '&eSets a new parkour name.'
     usage: '&cCorrect usage: /parkour rename <name> <new>'
@@ -56,19 +56,19 @@ executive:
   start:
     help: '&eStarts a parkour game.'
     usage: '&cCorrect usage: /parkour start <name>'
-    success: '&aThe game &6%NAME%&a has been started.'
+    success: '&aThe game &6%DISPLAY_NAME%&a has been started.'
   stop:
     help: '&eStops a parkour game.'
     usage: '&cCorrect usage: /parkour stop <name>'
-    success: '&aThe game &6%NAME%&a has been stopped.'
+    success: '&aThe game &6%DISPLAY_NAME%&a has been stopped.'
   teleport:
     help: '&eTeleports to the spawn of a parkour'
     usage: '&cCorrect usage: /parkour teleport <name>'
-    success: '&aTeleported to the &6%NAME%&a parkour game.'
+    success: '&aTeleported to the &6%DISPLAY_NAME%&a parkour game.'
   teleport-block:
     help: '&eSets a block, that interacted will teleport the player to the spawn of a parkour'
     usage: '&cCorrect usage: /parkour teleportBlock <name>'
-    success: '&aSuccessfully set up the teleport block of the &6%NAME%&a parkour to the location [X=&6%COORD_X%&a, Y=&6%COORD_Y%&a, Z=&6%COORD_Z%&a].'
+    success: '&aSuccessfully set up the teleport block of the &6%DISPLAY_NAME%&a parkour to the location [X=&6%COORD_X%&a, Y=&6%COORD_Y%&a, Z=&6%COORD_Z%&a].'
 
 amplifier:
   effect:
@@ -225,6 +225,7 @@ error:
   missing-spawn: '&cThis game has no spawn. Set it up first.'
   negative-number: '&cNumber must be positive (more than 0).'
   no-economy: '&cNo financial provider is configured.'
+  no-lobby: '&cNo lobby has been set.'
   no-ranks: '&cNo rank provider is configured.'
   no-medal: '&cThere is no such a medal. Choose one of: %MEDALS%.'
   no-medal-data: '&cOnly the time or the reward can be configured.'

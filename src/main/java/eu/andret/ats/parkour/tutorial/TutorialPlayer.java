@@ -2,7 +2,7 @@
  * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
  */
 
-package eu.andret.ats.parkour;
+package eu.andret.ats.parkour.tutorial;
 
 import eu.andret.ats.parkour.parkour.ParkourMedal;
 import eu.andret.ats.parkour.util.Constants;
@@ -65,7 +65,7 @@ public final class TutorialPlayer {
 	@NotNull
 	private String concatenateMedals(final List<String> medals) {
 		final int lastIndex = medals.size() - 1;
-		return String.join("&r and ", String.join("&d, ", medals.subList(0, lastIndex)), medals.get(lastIndex));
+		return String.join("&d and ", String.join("&d, ", medals.subList(0, lastIndex)), medals.get(lastIndex));
 	}
 
 	@NotNull
