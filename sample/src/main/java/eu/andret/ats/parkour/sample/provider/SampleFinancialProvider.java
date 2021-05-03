@@ -16,14 +16,7 @@ public class SampleFinancialProvider implements FinancialProvider {
 
 	@Override
 	public boolean addMoney(@NotNull final OfflinePlayer player, final double amount) {
-		if (!finances.containsKey(player.getUniqueId())) {
-			if (amount < 0) {
-				return false;
-			}
-			finances.put(player.getUniqueId(), amount);
-			return true;
-		}
-		final double owned = finances.get(player.getUniqueId());
+		final double owned = finances.getOrDefault(player.getUniqueId(), 0D);
 		if (owned + amount < 0) {
 			return false;
 		}

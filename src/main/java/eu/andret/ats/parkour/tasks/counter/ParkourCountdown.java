@@ -6,6 +6,7 @@ package eu.andret.ats.parkour.tasks.counter;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public class ParkourCountdown implements Runnable {
@@ -30,19 +31,13 @@ public class ParkourCountdown implements Runnable {
 	public void run() {
 		iterator--;
 		if (iterator == begin) {
-			if (opening != null) {
-				opening.run();
-			}
+			Optional.ofNullable(opening).ifPresent(Runnable::run);
 			return;
 		}
 		if (iterator == 0) {
-			if (closing != null) {
-				closing.run();
-			}
+			Optional.ofNullable(closing).ifPresent(Runnable::run);
 			return;
 		}
-		if (step != null) {
-			step.accept(iterator);
-		}
+		Optional.ofNullable(step).ifPresent(consumer -> consumer.accept(iterator));
 	}
 }

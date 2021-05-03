@@ -19,13 +19,4 @@ public class ParkourMedal implements Comparable<ParkourMedal> {
 	public int compareTo(@NotNull final ParkourMedal other) {
 		return other.importance - importance;
 	}
-
-	@Override
-	public String toString() {
-		return "ParkourMedal(" +
-				"name=" + name +
-				", displayName=" + displayName + "&r" +
-				", importance=" + importance +
-				')';
-	}
 }

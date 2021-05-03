@@ -132,14 +132,14 @@ public final class ParkourManager<E> {
 		return serializer.writeParkourSetting(setting);
 	}
 
-	public void setHidden(@NotNull final Player player, @NotNull final ParkourPlugin plugin, final boolean state) {
+	public void setHidden(@NotNull final Player player, @NotNull final ParkourPlugin plugin, final boolean shouldHide) {
 		getAllGames()
 				.stream()
 				.map(ParkourGame::getPlayers)
 				.flatMap(Collection::stream)
 				.map(ParkourPlayer::getPlayer)
 				.forEach(hidingPlayer -> {
-					if (state) {
+					if (shouldHide) {
 						player.showPlayer(plugin, hidingPlayer);
 					} else {
 						player.hidePlayer(plugin, hidingPlayer);

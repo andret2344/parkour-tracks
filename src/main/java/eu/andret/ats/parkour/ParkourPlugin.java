@@ -299,7 +299,7 @@ public final class ParkourPlugin extends JavaPlugin {
 					if (configurationSection == null) {
 						return null;
 					}
-					final String display = ChatColor.translateAlternateColorCodes('&', configurationSection.getString("display", key));
+					final String display = ChatColor.translateAlternateColorCodes('&', configurationSection.getString("display", key) + "&r");
 					final int importance = configurationSection.getInt("importance");
 					return new ParkourMedal(key, display, importance);
 				})

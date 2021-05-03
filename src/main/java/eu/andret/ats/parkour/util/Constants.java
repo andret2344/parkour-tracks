@@ -31,6 +31,7 @@ public class Constants {
 	public static final String PAGE = "%PAGE%";
 	public static final String PAGES = "%PAGES%";
 	public static final String PERSONAL_TIME = "%PERSONAL_TIME%";
+	public static final String PLACEHOLDER_NO_RECORD = "========";
 	public static final String PLAYER = "%PLAYER%";
 	public static final String REWARD = "%REWARD%";
 	public static final String RUNNING = "%RUNNING%";
@@ -38,5 +39,4 @@ public class Constants {
 	public static final String TIME = "%TIME%";
 	public static final String VALUE = "%VALUE%";
 	public static final String VIP_ONLY = "%VIP_ONLY%";
-	public static final String PLACEHOLDER_NO_RECORD = "========";
 }

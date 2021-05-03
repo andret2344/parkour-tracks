@@ -15,6 +15,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -42,9 +43,7 @@ public class FetchParkourBestRecordTask extends AbstractParkourTask {
 			for (int i = 0; i < count && rs.next(); i++) {
 				result.add(new ParkourRecord(UUID.fromString(rs.getString("uuid")), game, rs.getFloat("time")));
 			}
-			if (callback != null) {
-				callback.accept(result);
-			}
+			Optional.ofNullable(callback).ifPresent(cb -> cb.accept(result));
 		} catch (final SQLException ex) {
 			ex.printStackTrace();
 		}

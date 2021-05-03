@@ -15,6 +15,8 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Optional;
+
 @Value
 @NonFinal
 @AllArgsConstructor
@@ -23,23 +25,23 @@ public class BasicRegion {
 	CuboidRegion region;
 
 	public boolean contains(@Nullable final Location location) {
-		if (location == null) {
-			return false;
-		}
-		return region.contains(BlockVector3.at(location.getX(), location.getY(), location.getZ()));
+		return Optional.ofNullable(location)
+				.map(loc -> BlockVector3.at(loc.getX(), loc.getY(), loc.getZ()))
+				.map(region::contains)
+				.orElse(false);
 	}
 
 	public boolean contains(@Nullable final Player player) {
-		if (player == null) {
-			return false;
-		}
-		return contains(player.getLocation());
+		return Optional.ofNullable(player)
+				.map(Player::getLocation)
+				.map(this::contains)
+				.orElse(false);
 	}
 
 	public boolean contains(@Nullable final ParkourPlayer player) {
-		if (player == null) {
-			return false;
-		}
-		return contains(player.getPlayer());
+		return Optional.ofNullable(player)
+				.map(ParkourPlayer::getPlayer)
+				.map(this::contains)
+				.orElse(false);
 	}
 }
