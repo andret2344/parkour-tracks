@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
+ *  Copyright Andret (c) 2018-2021. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour.tasks.database;
@@ -54,7 +54,7 @@ public class FetchAndInsertDataTask extends AbstractParkourTask {
 	}
 
 	private double getPlayerBestTime() {
-		try (final PreparedStatement stat = connection.prepareStatement("SELECT time FROM ats_parkour_records WHERE uuid = ? AND parkour = ? ORDER BY time LIMIT 1")) {
+		try (final PreparedStatement stat = connection.prepareStatement("SELECT TIME FROM ats_parkour_records WHERE uuid = ? AND parkour = ? ORDER BY TIME LIMIT 1")) {
 			stat.setString(1, uuid.toString());
 			stat.setString(2, game.getName());
 			final ResultSet rs = stat.executeQuery();
@@ -69,7 +69,7 @@ public class FetchAndInsertDataTask extends AbstractParkourTask {
 	}
 
 	private double getParkourBestTime() {
-		try (final PreparedStatement stat = connection.prepareStatement("SELECT time FROM ats_parkour_records WHERE parkour = ? ORDER BY time LIMIT 1")) {
+		try (final PreparedStatement stat = connection.prepareStatement("SELECT TIME FROM ats_parkour_records WHERE parkour = ? ORDER BY TIME LIMIT 1")) {
 			stat.setString(1, game.getName());
 			final ResultSet rs = stat.executeQuery();
 			if (!rs.next()) {
