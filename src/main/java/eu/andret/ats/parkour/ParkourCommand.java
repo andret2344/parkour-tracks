@@ -12,11 +12,11 @@ import com.sk89q.worldedit.regions.Region;
 import eu.andret.arguments.AnnotatedCommandExecutor;
 import eu.andret.arguments.api.annotation.Argument;
 import eu.andret.arguments.api.annotation.BaseCommand;
-import eu.andret.arguments.api.annotation.Completer;
 import eu.andret.arguments.api.annotation.Fallback;
 import eu.andret.arguments.api.annotation.Param;
 import eu.andret.arguments.api.entity.ExecutorType;
 import eu.andret.ats.parkour.entity.MedalSetupOption;
+import eu.andret.ats.parkour.entity.SimpleLever;
 import eu.andret.ats.parkour.event.game.GameStartEvent;
 import eu.andret.ats.parkour.event.game.GameStopEvent;
 import eu.andret.ats.parkour.event.player.PlayerQuitGameEvent;
@@ -28,13 +28,17 @@ import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.region.BasicRegion;
 import eu.andret.ats.parkour.region.DirectionalRegion;
 import eu.andret.ats.parkour.tasks.database.FetchParkourBestRecordTask;
+import eu.andret.ats.parkour.tutorial.TutorialManager;
+import eu.andret.ats.parkour.tutorial.TutorialPlayer;
 import eu.andret.ats.parkour.util.Data;
 import eu.andret.ats.parkour.util.M;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.bukkit.ChatColor;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -50,6 +54,7 @@ import java.util.function.DoubleFunction;
 import java.util.function.ToDoubleFunction;
 
 @BaseCommand("parkour")
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
 	private static final String VALUE = "%VALUE%";
@@ -71,30 +76,28 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 	// === TUTORIAL ===
 
 	@Argument(permission = "ats.parkour.tutorial", executorType = ExecutorType.PLAYER, description = "Runs tutorial")
-	public void tutorial(@Completer("startStop") final String state) {
+	public String tutorial(@Param("simpleLever") final SimpleLever lever) {
 		final Player player = (Player) sender;
-		if (state.equals("start")) {
-			if (TutorialManager.hasPlayer(player)) {
-				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&dYou are already in tutorial... Be polite!"));
-				return;
-			}
-			final TutorialPlayer tutorialPlayer = TutorialManager.getPlayer(player);
-			tutorialPlayer.sendMessage();
-			return;
+		final TutorialManager tutorialManager = plugin.getTutorialManager();
+		switch (lever) {
+			case ON:
+				if (tutorialManager.hasPlayer(player)) {
+					return "&dYou are already in the tutorial... Be polite!";
+				}
+				tutorialManager.getPlayer(player).sendMessage();
+				return null;
+			case OFF:
+				if (!tutorialManager.hasPlayer(player)) {
+					return "&dYou are not in the tutorial... Be polite!";
+				}
+				tutorialManager.removePlayer(player);
+				return "&dOh, that's sad you don't want to learn anymore, but I appreciate your knowledge. Bye!";
+			default:
+				return "&dWhat to do with tutorial? Set it to true or false? Please, specify";
 		}
-		if (state.equals("stop")) {
-			if (!TutorialManager.hasPlayer(player)) {
-				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&dYou aren't in in tutorial... Be polite!"));
-				return;
-			}
-			TutorialManager.removePlayer(player);
-			sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&dOh, that's sad you don't want to learn anymore, but I appreciate your knowledge. Bye!"));
-			return;
-		}
-		sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&dWhat to do with tutorial? Set it to true or false? Please, specify"));
 	}
 
-	// === UNIVERSAL ===
+	// === GLOBAL ===
 
 	@Argument(permission = "ats.parkour.lobby", executorType = ExecutorType.PLAYER, description = "Teleports to lobby")
 	public String lobby() {
@@ -105,8 +108,9 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			executeTutorial(player, 0);
 			return "No lobby!";
 		}
-		if (TutorialManager.hasPlayer(player)) {
-			final TutorialPlayer tutorialPlayer = TutorialManager.getPlayer(player);
+		plugin.getParkourManager().teleportToLobby(player);
+		if (plugin.getTutorialManager().hasPlayer(player)) {
+			final TutorialPlayer tutorialPlayer = plugin.getTutorialManager().getPlayer(player);
 			if (tutorialPlayer.done(0, true)) {
 				tutorialPlayer.next().next().sendMessage().next().next().sendMessage();
 			}
@@ -122,10 +126,10 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		final Player player = (Player) sender;
 		final Location location = player.getLocation();
 		plugin.getParkourManager().setLobbyLocation(location);
-		if (TutorialManager.hasPlayer(player)) {
-			final TutorialPlayer tutorialPlayer = TutorialManager.getPlayer(player);
+		if (plugin.getTutorialManager().hasPlayer(player)) {
+			final TutorialPlayer tutorialPlayer = plugin.getTutorialManager().getPlayer(player);
 			if (tutorialPlayer.done(1, true)) {
-				tutorialPlayer.next().next().next().sendMessage().next().sendMessage();
+				tutorialPlayer.next().next().sendMessage().next().sendMessage();
 			}
 		}
 		return plugin.msg(M.General.SET_LOBBY.success)
@@ -136,12 +140,14 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@Argument(permission = "ats.parkour.list", description = "Lists all parkour games", aliases = "ls")
 	public String list() {
-		if (plugin.getParkourManager().getAllGames().isEmpty()) {
+		final List<ParkourGame> allGames = plugin.getParkourManager().getAllGames();
+		if (allGames.isEmpty()) {
 			return plugin.msg(M.List.GAMES.empty);
 		}
-		sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.List.GAMES.header)
-				.replace("%COUNT%", String.valueOf(plugin.getParkourManager().getAllGames().size()))));
-		final List<ParkourGame> allGames = plugin.getParkourManager().getAllGames();
+		sender.sendMessage(plugin.msg(M.List.GAMES.header).replace("%COUNT%", String.valueOf(allGames.size())));
+		if (sender instanceof Player) {
+			executeTutorial((Player) sender, 11);
+		}
 		for (int i = 0; i < allGames.size(); i++) {
 			final ParkourGame parkourGame = allGames.get(i);
 			final String running;
@@ -151,7 +157,6 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 				running = ChatColor.RED + "" + ChatColor.ITALIC + "[Stopped]";
 			}
 			sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.List.GAMES.item)
-					.replace("%ID%", String.valueOf(i + 1))
 					.replace(NAME, parkourGame.getName())
 					.replace("%RUNNING%", running)));
 		}
@@ -176,19 +181,19 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		final Player player = (Player) sender;
 		final ParkourPlayer parkourPlayer = plugin.getPlayerManager().getParkourPlayer(player);
 		if (parkourPlayer.isIgnoring()) {
-			parkourPlayer.setIgnoring(false);
 			plugin.getParkourManager().getAllGames().stream()
 					.filter(parkourGame -> plugin.getParkourManager().inAnyRegion(parkourGame, player))
 					.forEach(parkourGame -> plugin.getParkourManager().teleportToLobby(player));
-			return plugin.msg(M.General.IGNORE.success).replace(VALUE, "false");
+			parkourPlayer.setIgnoring(false);
+			return plugin.msg(M.General.IGNORE.success).replace(VALUE, Boolean.FALSE.toString());
 		}
-		parkourPlayer.setIgnoring(true);
 		final ParkourGame parkour = plugin.getParkourManager().getParkour(player);
 		if (parkour != null) {
 			plugin.getServer().getPluginManager().callEvent(new PlayerQuitGameEvent(parkour, parkourPlayer));
 			parkour.removePlayer(parkourPlayer);
 		}
-		return plugin.msg(M.General.IGNORE.success).replace(VALUE, "true");
+		parkourPlayer.setIgnoring(true);
+		return plugin.msg(M.General.IGNORE.success).replace(VALUE, Boolean.TRUE.toString());
 	}
 
 	@Argument(permission = "ats.parkour.help", description = "Shows help page", aliases = "?")
@@ -238,8 +243,11 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Error.DEFAULT.alreadyExists).replace(NAME, name);
 		}
 		executeTutorial(player, 4);
-		final ParkourGame parkourGame = plugin.getParkourManager().createParkour(name, new BasicRegion(selection), player.getLocation().getWorld());
-		plugin.getParkourManager().addParkour(parkourGame);
+		final World world = player.getLocation().getWorld();
+		if (world == null) {
+			return plugin.msg(M.Error.DEFAULT.invalidGame);
+		}
+		final ParkourGame parkourGame = plugin.getParkourManager().createParkour(name, new BasicRegion(selection), world);
 		return plugin.msg(M.Executive.CREATE.success).replace(NAME, parkourGame.getName());
 	}
 
@@ -249,7 +257,9 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
 		plugin.getParkourManager().removeParkour(parkourGame);
-		return plugin.msg(M.Executive.REMOVE.success).replace(NAME, parkourGame.getName());
+		return plugin.msg(M.Executive.REMOVE.success)
+				.replace(NAME, parkourGame.getName())
+				.replace("%DISPLAY_NAME%", parkourGame.getDisplayName());
 	}
 
 	@Fallback
@@ -270,13 +280,15 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		}
 		if (sender instanceof Player) {
 			final Player player = (Player) sender;
-			if (executeTutorial(player, 11)) {
-				TutorialManager.removePlayer(player);
+			if (executeTutorial(player, 12)) {
+				plugin.getTutorialManager().removePlayer(player);
 			}
 		}
 		parkourGame.setRunning(true);
 		plugin.getServer().getPluginManager().callEvent(new GameStartEvent(parkourGame));
-		return plugin.msg(M.Executive.START.success).replace(NAME, parkourGame.getName());
+		return plugin.msg(M.Executive.START.success)
+				.replace(NAME, parkourGame.getName())
+				.replace("%DISPLAY_NAME%", parkourGame.getDisplayName());
 	}
 
 	@Fallback
@@ -291,7 +303,9 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		}
 		parkourGame.setRunning(false);
 		plugin.getServer().getPluginManager().callEvent(new GameStopEvent(parkourGame));
-		return plugin.msg(M.Executive.STOP.success).replace(NAME, parkourGame.getName());
+		return plugin.msg(M.Executive.STOP.success)
+				.replace(NAME, parkourGame.getName())
+				.replace("%DISPLAY_NAME%", parkourGame.getDisplayName());
 	}
 
 	@Fallback
@@ -345,7 +359,9 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Error.DEFAULT.missingSpawn);
 		}
 		plugin.getPlayerManager().teleportToRegion(parkourPlayer, parkourGame.getSpawn());
-		return plugin.msg(M.Executive.TELEPORT.success).replace(NAME, parkourGame.getName());
+		return plugin.msg(M.Executive.TELEPORT.success)
+				.replace(NAME, parkourGame.getName())
+				.replace("%DISPLAY_NAME%", parkourGame.getDisplayName());
 	}
 
 	@Fallback
@@ -405,7 +421,8 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (parkourGame.isRunning() && plugin.isEditLockActive()) {
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
-		final CuboidRegion selection = getRegionSelection((Player) sender);
+		final Player player = (Player) sender;
+		final CuboidRegion selection = getRegionSelection(player);
 		if (selection == null) {
 			return plugin.msg(M.Error.DEFAULT.invalidSelection);
 		}
@@ -415,8 +432,9 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (id > parkourGame.getCheckpoints().size()) {
 			return plugin.msg(M.Error.DEFAULT.tooLargeNumber);
 		}
-		final Location location = ((Player) sender).getLocation();
+		final Location location = player.getLocation();
 		parkourGame.getCheckpoints().add(id - 1, new DirectionalRegion(selection, location.getYaw(), location.getPitch()));
+		executeTutorial(player, 6, false);
 		return plugin.msg(M.Region.Checkpoint.SET.success).replace("%ID%", String.valueOf(id));
 	}
 
@@ -436,6 +454,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Error.DEFAULT.invalidSelection);
 		}
 		parkourGame.getWalls().add(new BasicRegion(selection));
+		executeTutorial(player, 9, false);
 		return plugin.msg(M.Region.Wall.ADD.success).replace("%ID%", String.valueOf(parkourGame.getWalls().size()));
 	}
 
@@ -449,7 +468,8 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (parkourGame.isRunning() && plugin.isEditLockActive()) {
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
-		final CuboidRegion selection = getRegionSelection((Player) sender);
+		final Player player = (Player) sender;
+		final CuboidRegion selection = getRegionSelection(player);
 		if (selection == null) {
 			return plugin.msg(M.Error.DEFAULT.invalidSelection);
 		}
@@ -460,6 +480,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Error.DEFAULT.tooLargeNumber);
 		}
 		parkourGame.getWalls().set(id - 1, new BasicRegion(selection));
+		executeTutorial(player, 9, false);
 		return plugin.msg(M.Region.Wall.SET.success).replace("%ID%", String.valueOf(id));
 	}
 
@@ -473,7 +494,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (parkourGame.getEffects().isEmpty()) {
 			return plugin.msg(M.List.EFFECT.empty);
 		}
-		sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.List.EFFECT.header)));
+		sender.sendMessage(plugin.msg(M.List.EFFECT.header));
 		parkourGame.getEffects().entrySet()
 				.stream()
 				.map(entry -> plugin.msg(M.List.EFFECT.item)
@@ -499,7 +520,9 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Amplifier.EFFECT.removed).replace(EFFECT, type.getName());
 		}
 		parkourGame.getEffects().put(type, power);
-		return plugin.msg(M.Amplifier.EFFECT.added).replace(EFFECT, type.getName()).replace(AMPLIFIER, String.valueOf(power));
+		return plugin.msg(M.Amplifier.EFFECT.added)
+				.replace(EFFECT, type.getName())
+				.replace(AMPLIFIER, String.valueOf(power));
 	}
 
 	@Fallback
@@ -700,8 +723,10 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (parkourGame.isRunning() && plugin.isEditLockActive()) {
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
-		final String name = String.join(" ", newName);
+		// Adding &r to reset colors in huge texts, e.g. `/pk info <name>`
+		final String name = String.join(" ", newName) + "&r";
 		parkourGame.setDisplayName(name);
+		executeTutorial((Player) sender, 10, false);
 		return plugin.msg(M.Parkour.DISPLAY_NAME.set).replace(VALUE, name);
 	}
 
@@ -731,14 +756,14 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@Argument(permission = "ats.parkour.fee", description = "Sets value of parkour entrance fee")
 	public String fee(@Param("parkourGame") final ParkourGame parkourGame, final double fee) {
+		if (plugin.getFinancialProvider().isEmpty()) {
+			return plugin.msg(M.Error.DEFAULT.noEconomy);
+		}
 		if (parkourGame.isRunning() && plugin.isEditLockActive()) {
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
 		if (fee < 0) {
 			return plugin.msg(M.Error.DEFAULT.negativeNumber);
-		}
-		if (plugin.getFinancialProvider().isEmpty()) {
-			return plugin.msg(M.Error.DEFAULT.noEconomy);
 		}
 		parkourGame.getOptions().setFee(fee);
 		return plugin.msg(M.Option.FEE.set).replace(VALUE, String.valueOf(fee));
@@ -746,7 +771,10 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@Argument(permission = "ats.parkour.fee", description = "Shows value of parkour entrance fee")
 	public String fee(@Param("parkourGame") final ParkourGame parkourGame) {
-		return plugin.msg(M.Option.FEE.get).replace(VALUE, String.valueOf(parkourGame.getOptions().getFee()));
+		if (plugin.getFinancialProvider().isEmpty()) {
+			return plugin.msg(M.Error.DEFAULT.noEconomy);
+		}
+		return plugin.msg(M.Option.FEE.get).replace(VALUE, plugin.formatMoney(parkourGame.getOptions().getFee()));
 	}
 
 	@Fallback
@@ -805,7 +833,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 				.ifPresentOrElse(location -> {
 					parkourGame.setTeleportBlock(location);
 					sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.Executive.TELEPORT_BLOCK.success).replace("%PARKOUR%", parkourGame.getName())));
-				}, () -> sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.Error.DEFAULT.notBlock))));
+				}, () -> sender.sendMessage(plugin.msg(M.Error.DEFAULT.notBlock)));
 		return null;
 	}
 
@@ -819,10 +847,10 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		plugin.getConnection()
 				.map(connection -> new FetchParkourBestRecordTask(connection, parkourGame, count, result -> {
 					if (result.isEmpty()) {
-						sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.List.TOP.empty)));
+						sender.sendMessage(plugin.msg(M.List.TOP.empty));
 						return;
 					}
-					sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.List.TOP.header)));
+					sender.sendMessage(plugin.msg(M.List.TOP.header));
 					for (int i = 0; i < result.size(); i++) {
 						final ParkourRecord parkourRecord = result.get(i);
 						final String name = plugin.getServer().getOfflinePlayer(parkourRecord.getUuid()).getName();
@@ -899,7 +927,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			plugin.getFinancialProvider().ifPresentOrElse(
 					ignored -> executeTutorial(player, 7, false),
 					() -> {
-						final TutorialPlayer tutorialPlayer = TutorialManager.getPlayer(player);
+						final TutorialPlayer tutorialPlayer = plugin.getTutorialManager().getPlayer(player);
 						tutorialPlayer.done(7, false);
 						tutorialPlayer.next().next().sendMessage();
 					});
@@ -993,16 +1021,16 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		return null;
 	}
 
-	private boolean executeTutorial(final Player player, final int i) {
-		return executeTutorial(player, i, true);
+	private boolean executeTutorial(final Player player, final int id) {
+		return executeTutorial(player, id, true);
 	}
 
-	private boolean executeTutorial(final Player player, final int i, final boolean mistakeInformation) {
-		if (!TutorialManager.hasPlayer(player)) {
+	private boolean executeTutorial(final Player player, final int id, final boolean mistakeInformation) {
+		if (!plugin.getTutorialManager().hasPlayer(player)) {
 			return false;
 		}
-		final TutorialPlayer tutorialPlayer = TutorialManager.getPlayer(player);
-		if (!tutorialPlayer.done(i, mistakeInformation)) {
+		final TutorialPlayer tutorialPlayer = plugin.getTutorialManager().getPlayer(player);
+		if (!tutorialPlayer.done(id, mistakeInformation)) {
 			return false;
 		}
 		tutorialPlayer.next().sendMessage();

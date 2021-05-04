@@ -11,6 +11,7 @@ import eu.andret.arguments.api.annotation.Fallback;
 import eu.andret.ats.parkour.api.FinancialProvider;
 import eu.andret.ats.parkour.api.RankProvider;
 import eu.andret.ats.parkour.entity.MedalSetupOption;
+import eu.andret.ats.parkour.entity.SimpleLever;
 import eu.andret.ats.parkour.item.ParkourInteractiveItem;
 import eu.andret.ats.parkour.item.ParkourItem;
 import eu.andret.ats.parkour.item.ParkourItemMap;
@@ -20,6 +21,7 @@ import eu.andret.ats.parkour.parkour.ParkourMedal;
 import eu.andret.ats.parkour.parkour.ParkourRecord;
 import eu.andret.ats.parkour.player.PlayerManager;
 import eu.andret.ats.parkour.tasks.database.KeepAliveTask;
+import eu.andret.ats.parkour.tutorial.TutorialManager;
 import eu.andret.ats.parkour.util.Data;
 import eu.andret.ats.parkour.util.M;
 import eu.andret.ats.parkour.util.serializer.JSONSerializer;
@@ -102,6 +104,9 @@ public final class ParkourPlugin extends JavaPlugin {
 	@Getter
 	@NotNull
 	private final PlayerManager playerManager = new PlayerManager();
+	@NotNull
+	@Getter
+	private final TutorialManager tutorialManager = new TutorialManager(this);
 	@Setter
 	@Nullable
 	private FinancialProvider financialProvider;
@@ -132,7 +137,7 @@ public final class ParkourPlugin extends JavaPlugin {
 		getServer().getPluginManager().registerEvents(new ParkourListeners(this), this);
 		setupCommand();
 		setupDatabase();
-		load();
+		loadGames();
 		getConnection()
 				.map(KeepAliveTask::new)
 				.ifPresent(keepAliveTask -> getServer().getScheduler().scheduleSyncRepeatingTask(this, keepAliveTask, 20_000, 20_000));
@@ -261,15 +266,14 @@ public final class ParkourPlugin extends JavaPlugin {
 			return Collections.emptyList();
 		}
 		return medalsSection.getKeys(false).stream()
-				.map(key -> {
-					final ConfigurationSection configurationSection = medalsSection.getConfigurationSection(key);
-					if (configurationSection == null) {
-						return null;
-					}
-					final String display = ChatColor.translateAlternateColorCodes('&', configurationSection.getString("display", key));
-					final int importance = configurationSection.getInt("importance");
-					return new ParkourMedal(key, display, importance);
-				})
+				.map(key -> Optional.of(key)
+						.map(medalsSection::getConfigurationSection)
+						.map(configurationSection -> {
+							final String display = ChatColor.translateAlternateColorCodes('&', configurationSection.getString("display", key));
+							final int importance = configurationSection.getInt("importance");
+							return new ParkourMedal(key, display, importance);
+						})
+						.orElse(null))
 				.filter(Objects::nonNull)
 				.collect(Collectors.toList());
 	}
@@ -321,11 +325,16 @@ public final class ParkourPlugin extends JavaPlugin {
 						.orElse(null),
 				Fallback.ON_NULL);
 		command.addArgumentMapper("option", MedalSetupOption.class, name -> MedalSetupOption.valueOf(name.toUpperCase()));
+		command.addArgumentMapper("simpleLever", SimpleLever.class, name -> SimpleLever.valueOf(name.toUpperCase()));
 
 		command.addTypeCompleter(ParkourGame.class, () -> parkourManager.getAllGames().stream()
 				.map(ParkourGame::getName)
 				.collect(Collectors.toList()));
 
+		command.addTypeCompleter(SimpleLever.class, Arrays.stream(SimpleLever.values())
+				.map(Enum::name)
+				.map(String::toLowerCase)
+				.collect(Collectors.toList()));
 		command.addTypeCompleter(PotionEffectType.class, Data.ALLOWED_EFFECTS.stream()
 				.map(PotionEffectType::getName)
 				.collect(Collectors.toList()));
@@ -413,7 +422,7 @@ public final class ParkourPlugin extends JavaPlugin {
 		}
 	}
 
-	private void load() {
+	private void loadGames() {
 		final File lobby = new File(getDataFolder(), "setting.json");
 		if (!lobby.exists()) {
 			return;
@@ -440,42 +449,42 @@ public final class ParkourPlugin extends JavaPlugin {
 	}
 
 	private void generate() {
-		helpDescription.put("help|?", msg(M.List.HELP.help));
-		helpDescription.put("lobby", msg(M.General.LOBBY.help));
-		helpDescription.put("create", msg(M.Executive.CREATE.help));
-		helpDescription.put("remove", msg(M.Executive.REMOVE.help));
-		helpDescription.put("rename", msg(M.Executive.RENAME.help));
-		helpDescription.put("info", msg(M.Executive.INFO.help));
-		helpDescription.put("setSpawns", msg(M.Executive.SPAWN.help));
-		helpDescription.put("recreate", msg(M.Executive.RECREATE.help));
-		helpDescription.put("start", msg(M.Executive.START.help));
-		helpDescription.put("stop", msg(M.Executive.STOP.help));
-		helpDescription.put("addCheckpoint", msg(M.Region.Checkpoint.ADD.help));
-		helpDescription.put("setCheckpoint", msg(M.Region.Checkpoint.SET.help));
-		helpDescription.put("addWall", msg(M.Region.Wall.ADD.help));
-		helpDescription.put("setWall", msg(M.Region.Wall.SET.help));
-		helpDescription.put("list|ls", msg(M.List.GAMES.help));
-		helpDescription.put("ignore|i", msg(M.General.IGNORE.help));
-		helpDescription.put("sprintForced", msg(M.Option.SPRINT_FORCED.help));
-		helpDescription.put("alwaysSpawn", msg(M.Option.ALWAYS_SPAWN.help));
-		helpDescription.put("savingResults", msg(M.Option.SAVING_RESULTS.help));
-		helpDescription.put("damageAllowed", msg(M.Option.DAMAGE_ALLOWED.help));
-		helpDescription.put("effects", msg(M.List.EFFECT.help));
-		helpDescription.put("setEffect", msg(M.Amplifier.EFFECT.help));
-		helpDescription.put("boat", msg(M.Option.BOAT.help));
-		helpDescription.put("enabled", msg(M.Option.ENABLED.help));
-		helpDescription.put("modifyInventory", msg(M.Option.MODIFY_INVENTORY.help));
-		helpDescription.put("recordsBlock", msg(M.Executive.RECORDS_BLOCK.help));
-		helpDescription.put("teleportBlock", msg(M.Executive.TELEPORT_BLOCK.help));
-		helpDescription.put("teleport|tp", msg(M.Executive.TELEPORT.help));
-		helpDescription.put("fix", msg(M.General.FIX.help));
-		helpDescription.put("color", msg(M.Option.COLOR.help));
-		helpDescription.put("difficulty", msg(M.Option.DIFFICULTY.help));
-		helpDescription.put("type", msg(M.Option.TYPE.help));
-		helpDescription.put("displayName", msg(M.Parkour.DISPLAY_NAME.help));
-		helpDescription.put("authors", msg(M.Parkour.AUTHORS.help));
-		helpDescription.put("vip", msg(M.Option.VIP_ONLY.help));
-		helpDescription.put(MEDAL, msg(M.Option.MEDAL.help));
+		helpDescription.put("help|?", msg(M.List.HELP.helpMessage));
+		helpDescription.put("lobby", msg(M.General.LOBBY.helpMessage));
+		helpDescription.put("create", msg(M.Executive.CREATE.helpMessage));
+		helpDescription.put("remove", msg(M.Executive.REMOVE.helpMessage));
+		helpDescription.put("rename", msg(M.Executive.RENAME.helpMessage));
+		helpDescription.put("info", msg(M.Executive.INFO.helpMessage));
+		helpDescription.put("setSpawns", msg(M.Executive.SPAWN.helpMessage));
+		helpDescription.put("recreate", msg(M.Executive.RECREATE.helpMessage));
+		helpDescription.put("start", msg(M.Executive.START.helpMessage));
+		helpDescription.put("stop", msg(M.Executive.STOP.helpMessage));
+		helpDescription.put("addCheckpoint", msg(M.Region.Checkpoint.ADD.helpMessage));
+		helpDescription.put("setCheckpoint", msg(M.Region.Checkpoint.SET.helpMessage));
+		helpDescription.put("addWall", msg(M.Region.Wall.ADD.helpMessage));
+		helpDescription.put("setWall", msg(M.Region.Wall.SET.helpMessage));
+		helpDescription.put("list|ls", msg(M.List.GAMES.helpMessage));
+		helpDescription.put("ignore|i", msg(M.General.IGNORE.helpMessage));
+		helpDescription.put("sprintForced", msg(M.Option.SPRINT_FORCED.helpMessage));
+		helpDescription.put("alwaysSpawn", msg(M.Option.ALWAYS_SPAWN.helpMessage));
+		helpDescription.put("savingResults", msg(M.Option.SAVING_RESULTS.helpMessage));
+		helpDescription.put("damageAllowed", msg(M.Option.DAMAGE_ALLOWED.helpMessage));
+		helpDescription.put("effects", msg(M.List.EFFECT.helpMessage));
+		helpDescription.put("setEffect", msg(M.Amplifier.EFFECT.helpMessage));
+		helpDescription.put("boat", msg(M.Option.BOAT.helpMessage));
+		helpDescription.put("enabled", msg(M.Option.ENABLED.helpMessage));
+		helpDescription.put("modifyInventory", msg(M.Option.MODIFY_INVENTORY.helpMessage));
+		helpDescription.put("recordsBlock", msg(M.Executive.RECORDS_BLOCK.helpMessage));
+		helpDescription.put("teleportBlock", msg(M.Executive.TELEPORT_BLOCK.helpMessage));
+		helpDescription.put("teleport|tp", msg(M.Executive.TELEPORT.helpMessage));
+		helpDescription.put("fix", msg(M.General.FIX.helpMessage));
+		helpDescription.put("color", msg(M.Option.COLOR.helpMessage));
+		helpDescription.put("difficulty", msg(M.Option.DIFFICULTY.helpMessage));
+		helpDescription.put("type", msg(M.Option.TYPE.helpMessage));
+		helpDescription.put("displayName", msg(M.Parkour.DISPLAY_NAME.helpMessage));
+		helpDescription.put("authors", msg(M.Parkour.AUTHORS.helpMessage));
+		helpDescription.put("vip", msg(M.Option.VIP_ONLY.helpMessage));
+		helpDescription.put(MEDAL, msg(M.Option.MEDAL.helpMessage));
 	}
 
 	@NotNull

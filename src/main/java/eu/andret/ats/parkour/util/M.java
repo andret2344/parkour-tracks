@@ -116,7 +116,7 @@ public class M {
 		public static final General LOBBY = new General(M.LOBBY);
 		public static final General SET_LOBBY = new General(M.SET_LOBBY);
 
-		public final Message help = new Message(this, HELP);
+		public final Message helpMessage = new Message(this, HELP);
 		public final Message success = new Message(this, SUCCESS);
 
 		public General(@NotNull final String key) {
@@ -137,7 +137,7 @@ public class M {
 		public static final Executive TELEPORT = new Executive(M.TELEPORT);
 		public static final Executive TELEPORT_BLOCK = new Executive(M.TELEPORT_BLOCK);
 
-		public final Message help = new Message(this, HELP);
+		public final Message helpMessage = new Message(this, HELP);
 		public final Message usage = new Message(this, USAGE);
 		public final Message success = new Message(this, SUCCESS);
 
@@ -162,7 +162,7 @@ public class M {
 		public static final Option TYPE = new Option(M.TYPE);
 		public static final Option VIP_ONLY = new Option(M.VIP_ONLY);
 
-		public final Message help = new Message(this, HELP);
+		public final Message helpMessage = new Message(this, HELP);
 		public final Message usage = new Message(this, USAGE);
 		public final Message get = new Message(this, GET);
 		public final Message set = new Message(this, SET);
@@ -176,7 +176,7 @@ public class M {
 		public static final Parkour AUTHORS = new Parkour(M.AUTHORS);
 		public static final Parkour DISPLAY_NAME = new Parkour(M.DISPLAY_NAME);
 
-		public final Message help = new Message(this, HELP);
+		public final Message helpMessage = new Message(this, HELP);
 		public final Message usage = new Message(this, USAGE);
 		public final Message get = new Message(this, GET);
 		public final Message set = new Message(this, SET);
@@ -193,7 +193,7 @@ public class M {
 		public static final List HELP = new List(M.HELP);
 		public static final List MEDAL = new List(M.MEDAL);
 
-		public final Message help = new Message(this, M.HELP);
+		public final Message helpMessage = new Message(this, M.HELP);
 		public final Message usage = new Message(this, USAGE);
 		public final Message empty = new Message(this, EMPTY);
 		public final Message header = new Message(this, HEADER);
@@ -209,7 +209,7 @@ public class M {
 			public static final Checkpoint ADD = new Checkpoint(M.ADD);
 			public static final Checkpoint SET = new Checkpoint(M.SET);
 
-			public final Message help = new Message(this, HELP);
+			public final Message helpMessage = new Message(this, HELP);
 			public final Message usage = new Message(this, USAGE);
 			public final Message success = new Message(this, SUCCESS);
 
@@ -222,7 +222,7 @@ public class M {
 			public static final Wall ADD = new Wall(M.ADD);
 			public static final Wall SET = new Wall(M.SET);
 
-			public final Message help = new Message(this, HELP);
+			public final Message helpMessage = new Message(this, HELP);
 			public final Message usage = new Message(this, USAGE);
 			public final Message success = new Message(this, SUCCESS);
 
@@ -238,7 +238,7 @@ public class M {
 	public static final class Amplifier extends Section {
 		public static final Amplifier EFFECT = new Amplifier(M.EFFECT);
 
-		public final Message help = new Message(this, HELP);
+		public final Message helpMessage = new Message(this, HELP);
 		public final Message usage = new Message(this, USAGE);
 		public final Message added = new Message(this, ADDED);
 		public final Message removed = new Message(this, REMOVED);
