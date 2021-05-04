@@ -79,3 +79,22 @@ sound:
   checkpoint: NONE
   complete: ENTITY_PLAYER_LEVELUP
   left: NONE
+
+# Following section will be important only if FinancialProvider is configured.
+economy:
+  # Pattern compliant with following instruction: https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/text/DecimalFormat.html
+  # Type: String
+  # Default: '+###,##0.00¤;-###,##0.00¤'
+  pattern: '+###,##0.00¤;-###,##0.00¤'
+  # Type: String
+  # Default: '{@}'
+  currency-symbol: '{@}'
+  # Type: char
+  # Default: '.'
+  decimal-separator: '.'
+  # Type: char
+  # Default: ' '
+  group-separator: ' '
+  # Type: Integer
+  # Default: 3
+  grouping-size: 3
