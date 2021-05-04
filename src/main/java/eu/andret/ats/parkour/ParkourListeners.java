@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
+ *  Copyright Andret (c) 2018-2021. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour;
@@ -247,27 +247,27 @@ public class ParkourListeners implements Listener {
 				});
 		final int schedulerId = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, task, 10, 20);
 		plugin.getTeleportCountdown().put(uniqueId, schedulerId);
-		final double currentTime = parkourPlayer.getTime();
+		final double duration = parkourPlayer.getTime();
 		if (!parkourGame.getOptions().isSavingResults()) {
 			return;
 		}
-		player.sendMessage(plugin.msg("finishTime").replace("%PERSONAL_TIME%", plugin.formatTime(currentTime)));
+		player.sendMessage(plugin.msg("finishTime").replace("%PERSONAL_TIME%", plugin.formatTime(duration)));
 		if (player.hasPermission("ats.parkour.ignoreRecords")) {
 			player.sendMessage("Your time hasn't been saved to database");
 			return;
 		}
 		plugin.getConnection()
-				.map(connection -> new FetchAndInsertDataTask(connection, parkourGame, player.getUniqueId(), currentTime, (previousCount, previousPlayerBest, previousParkourBest) -> {
+				.map(connection -> new FetchAndInsertDataTask(connection, parkourGame, player.getUniqueId(), duration, (previousCount, previousPlayerBest, previousParkourBest) -> {
 					player.sendMessage(plugin.msg("howMany").replace("%COUNT%", String.valueOf(previousCount + 1)));
-					if (previousParkourBest > currentTime) {
+					if (previousParkourBest > duration) {
 						player.sendMessage(plugin.msg("newParkourBestTime"));
-						plugin.updateSyncSign(new ParkourRecord(player.getUniqueId(), parkourGame, currentTime));
+						plugin.updateSyncSign(new ParkourRecord(player.getUniqueId(), parkourGame, duration));
 					}
-					if (previousPlayerBest > currentTime) {
+					if (previousPlayerBest > duration) {
 						player.sendMessage(plugin.msg("newPersonalBestTime"));
 					}
 					final ParkourGame.Result previousResult = parkourGame.getResult(previousPlayerBest);
-					final ParkourGame.Result result = parkourGame.getResult(currentTime);
+					final ParkourGame.Result result = parkourGame.getResult(duration);
 					if (result.getMedal() == null || result.getMedal().equals(previousResult.getMedal())) {
 						return;
 					}

@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
+ *  Copyright Andret (c) 2018-2021. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour;
@@ -188,7 +188,7 @@ public final class ParkourPlugin extends JavaPlugin {
 				.map(ParkourGame::getRecordsBlock)
 				.map(Location::getBlock)
 				.map(Block::getState)
-				.filter(blockState -> blockState instanceof Sign)
+				.filter(Sign.class::isInstance)
 				.map(Sign.class::cast)
 				.ifPresent(sign -> {
 					IntStream.of(0, 1, 2, 3).forEach(i -> {
@@ -331,7 +331,7 @@ public final class ParkourPlugin extends JavaPlugin {
 		try (final Statement stat = connection.createStatement()) {
 			stat.execute("CREATE DATABASE IF NOT EXISTS `" + database + "`;");
 			stat.execute("USE " + database + ";");
-			stat.execute("CREATE TABLE IF NOT EXISTS ats_parkour_records(id INT PRIMARY KEY AUTO_INCREMENT, date DATETIME, uuid VARCHAR(64), parkour VARCHAR(64), time DECIMAL(8, 2));");
+			stat.execute("CREATE TABLE IF NOT EXISTS ats_parkour_records(id INT PRIMARY KEY AUTO_INCREMENT, date DATETIME, uuid VARCHAR(64), parkour VARCHAR(64), duration DECIMAL(8, 2));");
 		}
 	}
 
