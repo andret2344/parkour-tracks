@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
+ *  Copyright Andret (c) 2018-2021. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour.parkour;
@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -139,10 +140,9 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 	}
 
 	public boolean inSpawn(@NotNull final ParkourPlayer player) {
-		if (spawn == null) {
-			return false;
-		}
-		return spawn.contains(player);
+		return Optional.ofNullable(spawn)
+				.map(spawnLocation -> spawnLocation.contains(player))
+				.orElse(false);
 	}
 
 	public boolean inCheckpoint(@NotNull final ParkourPlayer player) {

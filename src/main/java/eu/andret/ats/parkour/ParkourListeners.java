@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
+ *  Copyright Andret (c) 2018-2021. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour;
@@ -234,11 +234,11 @@ public class ParkourListeners implements Listener {
 				});
 		final int schedulerId = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, task, 10, 20);
 		plugin.getTeleportCountdown().put(uniqueId, schedulerId);
-		final double currentTime = parkourPlayer.getTime();
+		final double duration = parkourPlayer.getTime();
 		if (!parkourGame.getOptions().isSavingResults()) {
 			return;
 		}
-		player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("personal-time").replace(Constants.PERSONAL_TIME, plugin.formatTime(currentTime))));
+		player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("personal-time").replace(Constants.PERSONAL_TIME, plugin.formatTime(duration))));
 		if (player.hasPermission("ats.parkour.ignoreRecords")) {
 			player.sendMessage(plugin.msg("warn-no-database"));
 			return;

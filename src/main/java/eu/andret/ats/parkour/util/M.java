@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2018-2021. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour.util;
@@ -83,6 +83,9 @@ public class M {
 	private static final String TYPE = "type";
 	private static final String USAGE = "usage";
 	private static final String VIP_ONLY = "vip-only";
+	private static final String REWARD = "reward";
+	private static final String NO_LOBBY = "no-lobby";
+	private static final String NO_RANKS = "no-ranks";
 
 	@AllArgsConstructor
 	private static class Section {

@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2018-2021. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour.util.serializer;
@@ -392,8 +392,8 @@ public class JSONSerializer implements Serializer<JSONObject> {
 				.put(ENABLED, options.isEnabled())
 				.put(FEE, options.getFee())
 				.put(MODIFY_INVENTORY, options.isModifyInventory())
-				.put(REWARD, options.getReward())
 				.put(SAVING_RESULTS, options.isSavingResults())
+				.put(REWARD, options.getReward())
 				.put(SPRINT_FORCED, options.isSprintForced())
 				.put(TYPE, options.getType().name())
 				.put(VIP_ONLY, options.isVipOnly());

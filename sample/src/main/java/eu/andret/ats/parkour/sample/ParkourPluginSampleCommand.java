@@ -1,3 +1,7 @@
+/*
+ *  Copyright Andret (c) 2018-2021. Copying and modifying allowed only keeping git link reference.
+ */
+
 package eu.andret.ats.parkour.sample;
 
 import eu.andret.arguments.AnnotatedCommandExecutor;
@@ -11,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 
 @BaseCommand("sample")
 public class ParkourPluginSampleCommand extends AnnotatedCommandExecutor<ParkourPluginSample> {
-
 	public ParkourPluginSampleCommand(@NotNull final CommandSender sender, @NotNull final ParkourPluginSample plugin) {
 		super(sender, plugin);
 	}
@@ -50,12 +53,9 @@ public class ParkourPluginSampleCommand extends AnnotatedCommandExecutor<Parkour
 				plugin.getFinancialProvider().addMoney(player, -amount);
 				return "Subtracted " + plugin.getParkourPlugin().formatMoney(amount);
 			case SET:
-				if (amount < 0) {
-					plugin.getFinancialProvider().getFinances().put(player.getUniqueId(), 0D);
-					return "Set balance to 0";
-				}
-				plugin.getFinancialProvider().getFinances().put((player).getUniqueId(), amount);
-				return "Set balance to " + plugin.getParkourPlugin().formatMoney(amount);
+				final double targetAmount = Math.max(amount, 0);
+				plugin.getFinancialProvider().getFinances().put(player.getUniqueId(), targetAmount);
+				return "Set balance to " + plugin.getParkourPlugin().formatMoney(targetAmount);
 			default:
 				return null;
 		}

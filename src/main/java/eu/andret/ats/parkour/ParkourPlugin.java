@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
+ *  Copyright Andret (c) 2018-2021. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour;
@@ -77,6 +77,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public final class ParkourPlugin extends JavaPlugin {
+	@NotNull
 	private static final String MEDAL = "medal";
 	@Getter
 	@NotNull
@@ -101,27 +102,34 @@ public final class ParkourPlugin extends JavaPlugin {
 	private final JSONSerializer jsonSerializer = new JSONSerializer(this);
 	@NotNull
 	@Getter
+	@NotNull
 	private final ParkourManager<JSONObject> parkourManager = new ParkourManager<>(jsonSerializer);
 	@NotNull
 	@Getter
+	@NotNull
 	private final PlayerManager playerManager = new PlayerManager();
 	@NotNull
 	@Getter
 	private final TutorialManager tutorialManager = new TutorialManager(this);
 	@Nullable
 	@Setter
+	@Nullable
 	private FinancialProvider financialProvider;
 	@Nullable
 	@Setter
+	@Nullable
 	private RankProvider rankProvider;
 	@NotNull
 	@Getter
+	@NotNull
 	private final ParkourItemMap gameItemMap = new ParkourItemMap();
 	@NotNull
 	@Getter
+	@NotNull
 	private final ParkourItemMap worldItemMap = new ParkourItemMap();
 	@NotNull
 	@Getter
+	@NotNull
 	private final List<ParkourMedal> medals = new ArrayList<>();
 	@Getter
 	private int teleportationTimeout;
@@ -411,7 +419,7 @@ public final class ParkourPlugin extends JavaPlugin {
 			try (final Statement stat = conn.createStatement()) {
 				stat.execute("CREATE DATABASE IF NOT EXISTS `" + database + "`;");
 				stat.execute("USE " + database + ";");
-				stat.execute("CREATE TABLE IF NOT EXISTS ats_parkour_records(id INT PRIMARY KEY AUTO_INCREMENT, date DATETIME, uuid VARCHAR(64), parkour VARCHAR(64), time DECIMAL(8, 2));");
+				stat.execute("CREATE TABLE IF NOT EXISTS ats_parkour_records(id INT PRIMARY KEY AUTO_INCREMENT, date DATETIME, uuid VARCHAR(64), parkour VARCHAR(64), duration DECIMAL(8, 2));");
 			} catch (final SQLException ex) {
 				ex.printStackTrace();
 			}
@@ -520,6 +528,17 @@ public final class ParkourPlugin extends JavaPlugin {
 	@NotNull
 	private String replace(@NotNull final String source) {
 		return source.replace(Constants.NICK, Constants.PLACEHOLDER_NO_RECORD).replace(Constants.PERSONAL_TIME, formatTime(0));
+	}
+
+	@NotNull
+	private DecimalFormat setupDecimalFormat(@NotNull final ConfigurationSection economySection) {
+		final DecimalFormatSymbols decimalFormatSymbols = new DecimalFormatSymbols();
+		decimalFormatSymbols.setCurrencySymbol(economySection.getString("currency-symbol", "{@}"));
+		decimalFormatSymbols.setDecimalSeparator(economySection.getString("decimal-separator", ".").charAt(0));
+		decimalFormatSymbols.setGroupingSeparator(economySection.getString("group-separator", " ").charAt(0));
+		final DecimalFormat format = new DecimalFormat(economySection.getString("pattern", "+###,##0.00\u00A4;-###,##0.00\u00A4"), decimalFormatSymbols);
+		format.setGroupingSize(economySection.getInt("group-size", 3));
+		return format;
 	}
 
 	@NotNull

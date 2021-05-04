@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
+ *  Copyright Andret (c) 2018-2021. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour.tasks.database;
@@ -13,12 +13,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.Optional;
 import java.util.UUID;
 
 public class FetchAndInsertDataTask extends AbstractParkourTask {
 	@NotNull
 	UUID uuid;
-	double time;
+	double duration;
 	@Nullable
 	FetchDataCallback fetchDataCallback;
 
@@ -26,10 +27,10 @@ public class FetchAndInsertDataTask extends AbstractParkourTask {
 		void onFetchData(int previousCount, double previousPlayerBest, double previousParkourBest);
 	}
 
-	public FetchAndInsertDataTask(@NotNull final Connection connection, @NotNull final ParkourGame game, @NotNull final UUID uuid, final double time, @Nullable final FetchDataCallback fetchDataCallback) {
+	public FetchAndInsertDataTask(@NotNull final Connection connection, @NotNull final ParkourGame game, @NotNull final UUID uuid, final double duration, @Nullable final FetchDataCallback fetchDataCallback) {
 		super(connection, game);
 		this.uuid = uuid;
-		this.time = time;
+		this.duration = duration;
 		this.fetchDataCallback = fetchDataCallback;
 	}
 
@@ -39,9 +40,7 @@ public class FetchAndInsertDataTask extends AbstractParkourTask {
 		final double parkourBestTime = getParkourBestTime();
 		final int playerPassCount = getPlayerPassCount();
 		insertNewTime();
-		if (fetchDataCallback != null) {
-			fetchDataCallback.onFetchData(playerPassCount, playerBestTime, parkourBestTime);
-		}
+		Optional.ofNullable(fetchDataCallback).ifPresent(callback -> callback.onFetchData(playerPassCount, playerBestTime, parkourBestTime));
 	}
 
 	private int getPlayerPassCount() {
@@ -60,14 +59,14 @@ public class FetchAndInsertDataTask extends AbstractParkourTask {
 	}
 
 	private double getPlayerBestTime() {
-		try (final PreparedStatement stat = connection.prepareStatement("SELECT TIME FROM ats_parkour_records WHERE uuid = ? AND parkour = ? ORDER BY TIME LIMIT 1")) {
+		try (final PreparedStatement stat = connection.prepareStatement("SELECT duration FROM ats_parkour_records WHERE uuid = ? AND parkour = ? ORDER BY duration LIMIT 1")) {
 			stat.setString(1, uuid.toString());
 			stat.setString(2, game.getName());
 			final ResultSet rs = stat.executeQuery();
 			if (!rs.next()) {
 				return Double.POSITIVE_INFINITY;
 			}
-			return rs.getFloat("time");
+			return rs.getFloat("duration");
 		} catch (final SQLException ex) {
 			ex.printStackTrace();
 		}
@@ -75,13 +74,13 @@ public class FetchAndInsertDataTask extends AbstractParkourTask {
 	}
 
 	private double getParkourBestTime() {
-		try (final PreparedStatement stat = connection.prepareStatement("SELECT TIME FROM ats_parkour_records WHERE parkour = ? ORDER BY TIME LIMIT 1")) {
+		try (final PreparedStatement stat = connection.prepareStatement("SELECT  duration FROM ats_parkour_records WHERE parkour = ? ORDER BY duration LIMIT 1")) {
 			stat.setString(1, game.getName());
 			final ResultSet rs = stat.executeQuery();
 			if (!rs.next()) {
 				return Double.POSITIVE_INFINITY;
 			}
-			return rs.getFloat("time");
+			return rs.getFloat("duration");
 		} catch (final SQLException ex) {
 			ex.printStackTrace();
 		}
@@ -93,7 +92,7 @@ public class FetchAndInsertDataTask extends AbstractParkourTask {
 			stat.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
 			stat.setString(2, uuid.toString());
 			stat.setString(3, game.getName());
-			stat.setDouble(4, time);
+			stat.setDouble(4, duration);
 			stat.execute();
 		} catch (final SQLException ex) {
 			ex.printStackTrace();

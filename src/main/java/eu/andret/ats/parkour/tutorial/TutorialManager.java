@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
+ *  Copyright Andret (c) 2018-2021. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour.tutorial;
@@ -15,9 +15,7 @@ import java.util.Map;
 @Value
 public class TutorialManager {
 	@NotNull
-	Map<Player, TutorialPlayer> players = new HashMap<>();
-	@NotNull
-	ParkourPlugin plugin;
+	private final Map<Player, TutorialPlayer> players = new HashMap<>();
 
 	@NotNull
 	public TutorialPlayer getPlayer(@NotNull final Player player) {

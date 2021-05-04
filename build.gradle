@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2018-2021. Copying and modifying allowed only keeping git link reference.
  */
 
 import io.franzbecker.gradle.lombok.task.DelombokTask
@@ -166,7 +166,6 @@ publishing {
 		}
 	}
 	repositories {
-		//noinspection GroovyAssignabilityCheck
 		maven {
 			url 'https://gitlab.com/api/v4/projects/6426481/packages/maven'
 			credentials(HttpHeaderCredentials) {

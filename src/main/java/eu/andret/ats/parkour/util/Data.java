@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2018-2021. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour.util;
@@ -9,8 +9,9 @@ import org.bukkit.Material;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -31,8 +32,7 @@ public final class Data {
 			PotionEffectType.WATER_BREATHING,
 			PotionEffectType.INVISIBILITY,
 			PotionEffectType.BLINDNESS,
-			PotionEffectType.NIGHT_VISION
-	);
+			PotionEffectType.NIGHT_VISION);
 
 	/**
 	 * List of all available signs variations.
@@ -54,8 +54,7 @@ public final class Data {
 			Material.SPRUCE_SIGN,
 			Material.SPRUCE_WALL_SIGN,
 			Material.WARPED_SIGN,
-			Material.WARPED_WALL_SIGN
-	);
+			Material.WARPED_WALL_SIGN);
 
 	/**
 	 * List of all available levers variations.
@@ -75,8 +74,7 @@ public final class Data {
 			Material.JUNGLE_DOOR,
 			Material.OAK_DOOR,
 			Material.SPRUCE_DOOR,
-			Material.WARPED_DOOR
-	);
+			Material.WARPED_DOOR);
 
 	/**
 	 * List of all available buttons variations.
@@ -91,8 +89,7 @@ public final class Data {
 			Material.JUNGLE_BUTTON,
 			Material.OAK_BUTTON,
 			Material.SPRUCE_BUTTON,
-			Material.WARPED_BUTTON
-	);
+			Material.WARPED_BUTTON);
 
 	/**
 	 * List of all available trapdoors variations.
@@ -106,8 +103,7 @@ public final class Data {
 			Material.JUNGLE_TRAPDOOR,
 			Material.OAK_TRAPDOOR,
 			Material.SPRUCE_TRAPDOOR,
-			Material.WARPED_TRAPDOOR
-	);
+			Material.WARPED_TRAPDOOR);
 
 	/**
 	 * List of all available chests variations.
@@ -127,8 +123,7 @@ public final class Data {
 			Material.JUNGLE_FENCE_GATE,
 			Material.OAK_FENCE_GATE,
 			Material.SPRUCE_FENCE_GATE,
-			Material.WARPED_FENCE_GATE
-	);
+			Material.WARPED_FENCE_GATE);
 
 	/**
 	 * List of all available boats variations.
@@ -140,16 +135,15 @@ public final class Data {
 			Material.DARK_OAK_BOAT,
 			Material.JUNGLE_BOAT,
 			Material.OAK_BOAT,
-			Material.SPRUCE_BOAT
-	);
+			Material.SPRUCE_BOAT);
 
 	/**
 	 * @return {@code List<Material>} of all available interactive blocks.
 	 */
 	@NotNull
 	public static List<Material> getInteractiveMaterials() {
-		final List<Material> result = new ArrayList<>();
-		Stream.of(LEVERS, DOORS, BUTTONS, TRAPDOORS, CHESTS, GATES).forEach(result::addAll);
-		return result;
+		return Stream.of(LEVERS, DOORS, BUTTONS, TRAPDOORS, CHESTS, GATES)
+				.flatMap(Collection::stream)
+				.collect(Collectors.toList());
 	}
 }
