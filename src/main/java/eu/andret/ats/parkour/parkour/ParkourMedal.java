@@ -12,7 +12,7 @@ public class ParkourMedal implements Comparable<ParkourMedal> {
 	@NotNull
 	String name;
 	@NotNull
-	String display;
+	String displayName;
 	int importance;
 
 	@Override

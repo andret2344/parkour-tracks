@@ -55,6 +55,7 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.vehicle.VehicleExitEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.potion.PotionEffect;
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
 
 import java.util.Map;
@@ -64,6 +65,7 @@ import java.util.UUID;
 
 @Value
 public class ParkourListeners implements Listener {
+	@NotNull
 	ParkourPlugin plugin;
 
 	@EventHandler
@@ -271,7 +273,7 @@ public class ParkourListeners implements Listener {
 					if (result.getMedal() == null || result.getMedal().equals(previousResult.getMedal())) {
 						return;
 					}
-					player.sendMessage(plugin.msg("achieveMedal").replace("%MEDAL%", result.getMedal().getDisplay()));
+					player.sendMessage(plugin.msg("achieveMedal").replace("%MEDAL%", result.getMedal().getDisplayName()));
 					plugin.getFinancialProvider().ifPresent(financialProvider -> {
 						final double finalReward = result.getReward() - previousResult.getReward();
 						if (finalReward > 0) {
@@ -475,7 +477,7 @@ public class ParkourListeners implements Listener {
 		if (event.getClickedBlock() == null) {
 			return;
 		}
-		if (!plugin.isEditLocked()) {
+		if (!plugin.isEditLockActive()) {
 			return;
 		}
 		if (Data.getInteractiveMaterials().contains(event.getClickedBlock().getType())
@@ -627,7 +629,7 @@ public class ParkourListeners implements Listener {
 		final Location brokenBlockLocation = event.getBlock().getLocation();
 		plugin.getParkourManager().getAllGames().forEach(parkourGame -> {
 			if (parkourGame.getTeleportBlock() != null && parkourGame.getTeleportBlock().getBlock().getLocation().equals(brokenBlockLocation)) {
-				if (parkourGame.isRunning() && plugin.isEditLocked()) {
+				if (parkourGame.isRunning() && plugin.isEditLockActive()) {
 					event.getPlayer().sendMessage(plugin.msg(M.Error.DEFAULT.forbiddenModification));
 					event.setCancelled(true);
 					return;
@@ -636,7 +638,7 @@ public class ParkourListeners implements Listener {
 				event.getPlayer().sendMessage(plugin.msg("destroyedTeleportBlock"));
 			}
 			if (parkourGame.getRecordsBlock() != null && parkourGame.getRecordsBlock().getBlock().getLocation().equals(brokenBlockLocation)) {
-				if (parkourGame.isRunning() && plugin.isEditLocked()) {
+				if (parkourGame.isRunning() && plugin.isEditLockActive()) {
 					event.getPlayer().sendMessage(plugin.msg(M.Error.DEFAULT.forbiddenModification));
 					event.setCancelled(true);
 					return;
@@ -667,7 +669,7 @@ public class ParkourListeners implements Listener {
 						cancellableEvent.setCancelled(true);
 						return;
 					}
-					if (parkourGame.isRunning() && plugin.isEditLocked()) {
+					if (parkourGame.isRunning() && plugin.isEditLockActive()) {
 						player.sendMessage(plugin.msg(M.Error.DEFAULT.forbiddenModification));
 						cancellableEvent.setCancelled(true);
 					}

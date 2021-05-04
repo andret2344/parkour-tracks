@@ -11,6 +11,7 @@ import java.util.UUID;
 
 @Value
 public class ParkourRecord {
+	@NotNull
 	UUID uuid;
 	@NotNull
 	ParkourGame game;

@@ -27,7 +27,7 @@ repositories {
 	mavenLocal()
 	mavenCentral()
 	maven { url 'https://gitlab.com/api/v4/projects/12063927/packages/maven' }
-	maven { url 'http://maven.sk89q.com/artifactory/repo' }
+	maven { url 'https://maven.sk89q.com/artifactory/repo' }
 }
 
 dependencies {
@@ -54,7 +54,6 @@ spigot {
 	description = 'A plugin creating and play parkours.'
 	version = project.version
 	depends = ['WorldEdit']
-	softDepends = ['Multiverse']
 	prefix = 'atsParkour'
 
 	//noinspection GroovyAssignabilityCheck
