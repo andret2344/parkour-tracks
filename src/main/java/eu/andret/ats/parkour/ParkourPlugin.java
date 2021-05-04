@@ -53,6 +53,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -96,6 +98,7 @@ public final class ParkourPlugin extends JavaPlugin {
 	private final ParkourItemMap worldItemMap = new ParkourItemMap();
 	@Getter
 	private final List<ParkourMedal> medals = new ArrayList<>();
+	private DecimalFormat decimalFormat;
 
 	@Override
 	public void onEnable() {
@@ -103,6 +106,10 @@ public final class ParkourPlugin extends JavaPlugin {
 		medals.addAll(loadMedals());
 		exitItem = createItem("exit");
 		hidingItem = createItem("hiding");
+		decimalFormat = Optional.of(getConfig())
+				.map(config -> config.getConfigurationSection("economy"))
+				.map(this::setupDecimalFormat)
+				.orElse(new DecimalFormat());
 		getServer().getPluginManager().registerEvents(new ParkourListeners(this), this);
 		setupCommand();
 		setupDatabase();
@@ -203,6 +210,11 @@ public final class ParkourPlugin extends JavaPlugin {
 	}
 
 	@NotNull
+	public String formatMoney(final double money) {
+		return decimalFormat.format(money);
+	}
+
+	@NotNull
 	private List<ParkourMedal> loadMedals() {
 		final ConfigurationSection medalsSection = getConfig().getConfigurationSection(MEDAL);
 		if (medalsSection == null) {
@@ -215,7 +227,7 @@ public final class ParkourPlugin extends JavaPlugin {
 					if (configurationSection == null) {
 						return null;
 					}
-					final String display = ChatColor.translateAlternateColorCodes('&', String.valueOf(configurationSection.getString("display", s)));
+					final String display = ChatColor.translateAlternateColorCodes('&', configurationSection.getString("display", s));
 					final int importance = configurationSection.getInt("importance");
 					return new ParkourMedal(s, display, importance);
 				})
@@ -420,5 +432,16 @@ public final class ParkourPlugin extends JavaPlugin {
 		final int seconds = (int) time % 60;
 		final int milliseconds = (int) Math.round((time % 1) * 100);
 		return String.format("%02d:%02d.%02d", minutes, seconds, milliseconds);
+	}
+
+	@NotNull
+	private DecimalFormat setupDecimalFormat(@NotNull final ConfigurationSection economySection) {
+		final DecimalFormatSymbols decimalFormatSymbols = new DecimalFormatSymbols();
+		decimalFormatSymbols.setCurrencySymbol(economySection.getString("currency-symbol", "{@}"));
+		decimalFormatSymbols.setDecimalSeparator(economySection.getString("decimal-separator", ".").charAt(0));
+		decimalFormatSymbols.setGroupingSeparator(economySection.getString("group-separator", " ").charAt(0));
+		final DecimalFormat format = new DecimalFormat(economySection.getString("pattern", "+###,##0.00\u00A4;-###,##0.00\u00A4"), decimalFormatSymbols);
+		format.setGroupingSize(economySection.getInt("group-size", 3));
+		return format;
 	}
 }

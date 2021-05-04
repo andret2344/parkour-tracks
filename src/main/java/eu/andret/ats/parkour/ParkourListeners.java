@@ -437,13 +437,11 @@ public class ParkourListeners implements Listener {
 					}
 					final double fee = parkourGame.getOptions().getFee();
 					plugin.getFinancialProvider().ifPresent(financialProvider -> {
-						final double money = financialProvider.getMoney(player);
-						if (money < fee) {
+						if (!financialProvider.addMoney(player, -fee)) {
 							player.sendMessage("You are too poor");
 							return;
 						}
 						player.sendMessage("You have paid " + fee + " for joining.");
-						financialProvider.addMoney(player, -fee);
 						plugin.getPlayerManager().teleportToRegion(parkourPlayer, parkourSpawn);
 					});
 				});

@@ -5,10 +5,6 @@
 import io.franzbecker.gradle.lombok.task.DelombokTask
 
 buildscript {
-	repositories {
-		jcenter()
-		maven { url 'https://plugins.gradle.org/m2/' }
-	}
 	dependencies { classpath 'io.franzbecker:gradle-lombok:2.0' }
 }
 
@@ -30,20 +26,19 @@ targetCompatibility = JavaVersion.VERSION_11
 repositories {
 	mavenLocal()
 	mavenCentral()
-	spigot()
 	maven { url 'https://gitlab.com/api/v4/projects/12063927/packages/maven' }
-	maven { url "http://maven.sk89q.com/artifactory/repo" }
+	maven { url 'http://maven.sk89q.com/artifactory/repo' }
 }
 
 dependencies {
 	compileOnly group: 'org.spigotmc', name: 'spigot-api', version: "${spigotVersion}-R0.1-SNAPSHOT"
-	compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.18'
+	compileOnly group: 'org.projectlombok', name: 'lombok', version: lombokVersion
 	compileOnly group: 'org.jetbrains', name: 'annotations', version: '20.1.0'
 	compileOnly group: 'com.sk89q.worldedit', name: 'worldedit-bukkit', version: '7.2.3'
 	implementation group: 'eu.andret', name: 'ats-arguments', version: argumentsVersion
 	implementation group: 'org.bstats', name: 'bstats-bukkit', version: '2.2.1'
 	implementation group: 'org.json', name: 'json', version: '20210307'
-	annotationProcessor group: "org.projectlombok", name: "lombok", version: "1.18.18"
+	annotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
 
 	testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.7.0'
 	testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.7.0'
@@ -190,7 +185,7 @@ shadowJar {
 	archiveFileName = "${project.name}-${project.version}.jar"
 	relocate 'org.json', 'eu.andret.ats.parkour.json'
 	relocate 'eu.andret.arguments', 'eu.andret.ats.parkour.arguments'
-	relocate "org.bstats", "eu.andret.ats.parkour.bstats"
+	relocate 'org.bstats', 'eu.andret.ats.parkour.bstats'
 	project.configurations.implementation.canBeResolved = true
 	configurations = [project.configurations.implementation]
 }

@@ -4,8 +4,8 @@
 
 package eu.andret.ats.parkour.api;
 
-import org.bukkit.entity.Player;
+import org.bukkit.OfflinePlayer;
 
 public interface RankProvider {
-	boolean isVip(Player player);
+	boolean isVip(OfflinePlayer player);
 }
