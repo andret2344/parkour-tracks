@@ -1,5 +1,5 @@
 /*
- *  Copyright Andret (c) 2018-2021. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour.item;
@@ -10,6 +10,7 @@ import lombok.experimental.NonFinal;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -17,10 +18,14 @@ import java.util.List;
 @NonFinal
 @ToString
 public class ParkourInteractiveItem implements ParkourItem {
+	@NotNull
 	Material material;
+	@NotNull
 	String name;
+	@NotNull
 	List<String> lore;
 
+	@NotNull
 	@Override
 	public ItemStack toItemStack() {
 		final ItemStack itemStack = new ItemStack(material);

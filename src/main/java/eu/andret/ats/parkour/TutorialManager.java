@@ -6,15 +6,18 @@ package eu.andret.ats.parkour;
 
 import lombok.experimental.UtilityClass;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @UtilityClass
 public class TutorialManager {
+	@NotNull
 	private final Map<Player, TutorialPlayer> players = new HashMap<>();
 
-	public TutorialPlayer getPlayer(final Player player) {
+	@NotNull
+	public TutorialPlayer getPlayer(@NotNull final Player player) {
 		if (players.containsKey(player)) {
 			return players.get(player);
 		}
@@ -23,11 +26,11 @@ public class TutorialManager {
 		return tutorialPlayer;
 	}
 
-	public void removePlayer(final Player player) {
+	public void removePlayer(@NotNull final Player player) {
 		players.remove(player);
 	}
 
-	public boolean hasPlayer(final Player player) {
+	public boolean hasPlayer(@NotNull final Player player) {
 		return players.containsKey(player);
 	}
 }

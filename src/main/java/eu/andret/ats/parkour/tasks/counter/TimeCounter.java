@@ -4,16 +4,22 @@
 
 package eu.andret.ats.parkour.tasks.counter;
 
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 public class TimeCounter implements Runnable {
+	@Nullable
 	private final BooleanSupplier reset;
+	@Nullable
 	private final Consumer<Integer> step;
+	@Nullable
 	private final BooleanSupplier condition;
 	private int counter = 0;
 
-	public TimeCounter(final BooleanSupplier reset, final Consumer<Integer> step, final BooleanSupplier condition) {
+	public TimeCounter(@Nullable final BooleanSupplier reset, @Nullable final Consumer<Integer> step, @Nullable final BooleanSupplier condition) {
 		this.reset = reset;
 		this.step = step;
 		this.condition = condition;
@@ -21,11 +27,13 @@ public class TimeCounter implements Runnable {
 
 	@Override
 	public void run() {
-		if (reset.getAsBoolean()) {
-			counter = 0;
-		}
-		if (condition.getAsBoolean()) {
-			step.accept(counter++);
-		}
+		Optional.ofNullable(reset)
+				.map(BooleanSupplier::getAsBoolean)
+				.filter(Boolean.TRUE::equals)
+				.ifPresent(ignored -> counter = 0);
+		Optional.ofNullable(condition)
+				.map(BooleanSupplier::getAsBoolean)
+				.map(ignored -> step)
+				.ifPresent(s -> s.accept(counter++));
 	}
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright Andret (c) 2018-2021. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour.util;
@@ -7,9 +7,11 @@ package eu.andret.ats.parkour.util;
 import lombok.experimental.UtilityClass;
 import org.bukkit.Material;
 import org.bukkit.potion.PotionEffectType;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -20,6 +22,7 @@ public final class Data {
 	/**
 	 * List of potion effects that can be applied to a region.
 	 */
+	@NotNull
 	public static final List<PotionEffectType> ALLOWED_EFFECTS = List.of(
 			PotionEffectType.SPEED,
 			PotionEffectType.SLOW,
@@ -29,12 +32,12 @@ public final class Data {
 			PotionEffectType.WATER_BREATHING,
 			PotionEffectType.INVISIBILITY,
 			PotionEffectType.BLINDNESS,
-			PotionEffectType.NIGHT_VISION
-	);
+			PotionEffectType.NIGHT_VISION);
 
 	/**
 	 * List of all available signs variations.
 	 */
+	@NotNull
 	public static final List<Material> SIGNS = List.of(
 			Material.ACACIA_SIGN,
 			Material.ACACIA_WALL_SIGN,
@@ -51,17 +54,18 @@ public final class Data {
 			Material.SPRUCE_SIGN,
 			Material.SPRUCE_WALL_SIGN,
 			Material.WARPED_SIGN,
-			Material.WARPED_WALL_SIGN
-	);
+			Material.WARPED_WALL_SIGN);
 
 	/**
 	 * List of all available levers variations.
 	 */
+	@NotNull
 	public static final List<Material> LEVERS = List.of(Material.LEVER);
 
 	/**
 	 * List of all available doors variations.
 	 */
+	@NotNull
 	public static final List<Material> DOORS = List.of(
 			Material.ACACIA_DOOR,
 			Material.BIRCH_DOOR,
@@ -70,12 +74,12 @@ public final class Data {
 			Material.JUNGLE_DOOR,
 			Material.OAK_DOOR,
 			Material.SPRUCE_DOOR,
-			Material.WARPED_DOOR
-	);
+			Material.WARPED_DOOR);
 
 	/**
 	 * List of all available buttons variations.
 	 */
+	@NotNull
 	public static final List<Material> BUTTONS = List.of(
 			Material.STONE_BUTTON,
 			Material.ACACIA_BUTTON,
@@ -85,12 +89,12 @@ public final class Data {
 			Material.JUNGLE_BUTTON,
 			Material.OAK_BUTTON,
 			Material.SPRUCE_BUTTON,
-			Material.WARPED_BUTTON
-	);
+			Material.WARPED_BUTTON);
 
 	/**
 	 * List of all available trapdoors variations.
 	 */
+	@NotNull
 	public static final List<Material> TRAPDOORS = List.of(
 			Material.ACACIA_TRAPDOOR,
 			Material.BIRCH_TRAPDOOR,
@@ -99,17 +103,18 @@ public final class Data {
 			Material.JUNGLE_TRAPDOOR,
 			Material.OAK_TRAPDOOR,
 			Material.SPRUCE_TRAPDOOR,
-			Material.WARPED_TRAPDOOR
-	);
+			Material.WARPED_TRAPDOOR);
 
 	/**
 	 * List of all available chests variations.
 	 */
+	@NotNull
 	public static final List<Material> CHESTS = List.of(Material.CHEST);
 
 	/**
 	 * List of all available gates variations.
 	 */
+	@NotNull
 	public static final List<Material> GATES = List.of(
 			Material.ACACIA_FENCE_GATE,
 			Material.BIRCH_FENCE_GATE,
@@ -118,27 +123,27 @@ public final class Data {
 			Material.JUNGLE_FENCE_GATE,
 			Material.OAK_FENCE_GATE,
 			Material.SPRUCE_FENCE_GATE,
-			Material.WARPED_FENCE_GATE
-	);
+			Material.WARPED_FENCE_GATE);
 
 	/**
 	 * List of all available boats variations.
 	 */
+	@NotNull
 	public static final List<Material> BOATS = List.of(
 			Material.ACACIA_BOAT,
 			Material.BIRCH_BOAT,
 			Material.DARK_OAK_BOAT,
 			Material.JUNGLE_BOAT,
 			Material.OAK_BOAT,
-			Material.SPRUCE_BOAT
-	);
+			Material.SPRUCE_BOAT);
 
 	/**
 	 * @return {@code List<Material>} of all available interactive blocks.
 	 */
+	@NotNull
 	public static List<Material> getInteractiveMaterials() {
-		final List<Material> result = new ArrayList<>();
-		Stream.of(LEVERS, DOORS, BUTTONS, TRAPDOORS, CHESTS, GATES).forEach(result::addAll);
-		return result;
+		return Stream.of(LEVERS, DOORS, BUTTONS, TRAPDOORS, CHESTS, GATES)
+				.flatMap(Collection::stream)
+				.collect(Collectors.toList());
 	}
 }

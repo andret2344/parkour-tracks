@@ -7,14 +7,16 @@ package eu.andret.ats.parkour;
 import lombok.Getter;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 public class TutorialPlayer {
 	@Getter
+	@NotNull
 	private final Player player;
 	int step;
 	int last;
 
-	public TutorialPlayer(final Player player) {
+	public TutorialPlayer(@NotNull final Player player) {
 		this.player = player;
 	}
 
@@ -39,6 +41,7 @@ public class TutorialPlayer {
 		return this;
 	}
 
+	@NotNull
 	private String getMessage() {
 		switch (step) {
 			case 0:

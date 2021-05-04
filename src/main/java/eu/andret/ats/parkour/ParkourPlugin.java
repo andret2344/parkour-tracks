@@ -40,6 +40,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
@@ -70,33 +71,49 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public final class ParkourPlugin extends JavaPlugin {
+	@NotNull
 	private static final String MEDAL = "medal";
 	@Getter
+	@NotNull
 	private final Map<String, String> helpDescription = new LinkedHashMap<>();
+	@NotNull
 	private final YamlConfiguration messages = new YamlConfiguration();
+	@NotNull
 	private final YamlConfiguration commands = new YamlConfiguration();
+	@NotNull
 	private final YamlConfiguration inventory = new YamlConfiguration();
 	@Getter
+	@NotNull
 	private final Map<UUID, Integer> teleportCountdown = new HashMap<>();
 	@Getter
+	@NotNull
 	private final Map<UUID, Integer> timeCounter = new HashMap<>();
+	@Nullable
 	private Connection connection;
 	private ItemStack exitItem;
 	private ItemStack hidingItem;
+	@NotNull
 	private final JSONSerializer jsonSerializer = new JSONSerializer(this);
 	@Getter
+	@NotNull
 	private final ParkourManager<JSONObject> parkourManager = new ParkourManager<>(jsonSerializer);
 	@Getter
+	@NotNull
 	private final PlayerManager playerManager = new PlayerManager();
 	@Setter
+	@Nullable
 	private FinancialProvider financialProvider;
 	@Setter
+	@Nullable
 	private RankProvider rankProvider;
 	@Getter
+	@NotNull
 	private final ParkourItemMap gameItemMap = new ParkourItemMap();
 	@Getter
+	@NotNull
 	private final ParkourItemMap worldItemMap = new ParkourItemMap();
 	@Getter
+	@NotNull
 	private final List<ParkourMedal> medals = new ArrayList<>();
 	private DecimalFormat decimalFormat;
 
@@ -149,14 +166,16 @@ public final class ParkourPlugin extends JavaPlugin {
 		getServer().getScheduler().cancelTasks(this);
 	}
 
-	public String msg(final String path) {
+	@NotNull
+	public String msg(@NotNull final String path) {
 		return Optional.ofNullable(path)
 				.map(messages::getString)
 				.map(text -> ChatColor.translateAlternateColorCodes('&', text))
-				.orElse(null);
+				.orElse("");
 	}
 
-	public String msg(final M.Message message) {
+	@NotNull
+	public String msg(@NotNull final M.Message message) {
 		final StringBuilder result = new StringBuilder();
 		if (message.isError()) {
 			result.append(commands.getString("misc.error-prefix"));
@@ -164,26 +183,29 @@ public final class ParkourPlugin extends JavaPlugin {
 		return ChatColor.translateAlternateColorCodes('&', result.append(commands.getString(message.toString())).toString());
 	}
 
+	@NotNull
 	public Optional<Connection> getConnection() {
 		return Optional.ofNullable(connection);
 	}
 
+	@NotNull
 	public WorldEditPlugin getWorldEdit() {
 		return getPlugin(WorldEditPlugin.class);
 	}
 
-	public Optional<Sound> getSound(final String name) {
+	@NotNull
+	public Optional<Sound> getSound(@NotNull final String name) {
 		return Optional.of(getConfig())
 				.map(configuration -> configuration.getString("sound." + name))
 				.filter(sound -> !sound.equals("NONE"))
 				.map(Sound::valueOf);
 	}
 
-	public void updateSyncSign(final ParkourRecord parkourRecord) {
+	public void updateSyncSign(@NotNull final ParkourRecord parkourRecord) {
 		getServer().getScheduler().scheduleSyncDelayedTask(this, () -> updateSign(parkourRecord));
 	}
 
-	public void updateSign(final ParkourRecord parkourRecord) {
+	public void updateSign(@NotNull final ParkourRecord parkourRecord) {
 		Optional.of(parkourRecord.getGame())
 				.map(ParkourGame::getRecordsBlock)
 				.map(Location::getBlock)
@@ -252,7 +274,7 @@ public final class ParkourPlugin extends JavaPlugin {
 	}
 
 	@NotNull
-	private ItemStack createItem(final String path) {
+	private ItemStack createItem(@NotNull final String path) {
 		final ConfigurationSection section = inventory.getConfigurationSection(String.join(".", "game", path));
 		if (section == null) {
 			throw new NullPointerException("Section " + path + " doesn't exist in config file!");
@@ -328,11 +350,15 @@ public final class ParkourPlugin extends JavaPlugin {
 
 	private void connect() throws SQLException {
 		final String database = getConfig().getString("database.dbname", "ats_parkour");
-		try (final Statement stat = connection.createStatement()) {
-			stat.execute("CREATE DATABASE IF NOT EXISTS `" + database + "`;");
-			stat.execute("USE " + database + ";");
-			stat.execute("CREATE TABLE IF NOT EXISTS ats_parkour_records(id INT PRIMARY KEY AUTO_INCREMENT, date DATETIME, uuid VARCHAR(64), parkour VARCHAR(64), duration DECIMAL(8, 2));");
-		}
+		getConnection().ifPresent(conn -> {
+			try (final Statement stat = conn.createStatement()) {
+				stat.execute("CREATE DATABASE IF NOT EXISTS `" + database + "`;");
+				stat.execute("USE " + database + ";");
+				stat.execute("CREATE TABLE IF NOT EXISTS ats_parkour_records(id INT PRIMARY KEY AUTO_INCREMENT, date DATETIME, uuid VARCHAR(64), parkour VARCHAR(64), duration DECIMAL(8, 2));");
+			} catch (final SQLException ex) {
+				ex.printStackTrace();
+			}
+		});
 	}
 
 	private void save() {
@@ -368,10 +394,12 @@ public final class ParkourPlugin extends JavaPlugin {
 		}
 	}
 
+	@NotNull
 	public Optional<FinancialProvider> getFinancialProvider() {
 		return Optional.ofNullable(financialProvider);
 	}
 
+	@NotNull
 	public Optional<RankProvider> getRankProvider() {
 		return Optional.ofNullable(rankProvider);
 	}
@@ -416,7 +444,7 @@ public final class ParkourPlugin extends JavaPlugin {
 	}
 
 	@NotNull
-	private String replace(final String source, final ParkourRecord parkourRecord) {
+	private String replace(@NotNull final String source, @NotNull final ParkourRecord parkourRecord) {
 		final String name = Optional.of(parkourRecord)
 				.map(ParkourRecord::getUuid)
 				.map(uuid -> getServer().getOfflinePlayer(uuid))

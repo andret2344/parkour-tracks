@@ -1,5 +1,5 @@
 /*
- *  Copyright Andret (c) 2018-2021. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour.event.player;
@@ -7,12 +7,15 @@ package eu.andret.ats.parkour.event.player;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.player.ParkourPlayer;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import lombok.Value;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Event that is called when player leaves the parkour game.
  */
 @Value
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public class PlayerQuitGameEvent extends AbstractParkourPlayerEvent {
 	/**
@@ -21,7 +24,7 @@ public class PlayerQuitGameEvent extends AbstractParkourPlayerEvent {
 	 * @param game The game that player is in.
 	 * @param player The player that triggers the event.
 	 */
-	public PlayerQuitGameEvent(final ParkourGame game, final ParkourPlayer player) {
+	public PlayerQuitGameEvent(@NotNull final ParkourGame game, @NotNull final ParkourPlayer player) {
 		super(game, player);
 	}
 }

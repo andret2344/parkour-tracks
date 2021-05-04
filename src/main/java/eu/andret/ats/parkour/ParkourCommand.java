@@ -39,6 +39,7 @@ import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
@@ -61,7 +62,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 	private static final String OPTION = "%OPTION%";
 	private static final String MEDAL_PLACEHOLDER = "%MEDAL%";
 
-	public ParkourCommand(final CommandSender sender, final ParkourPlugin plugin) {
+	public ParkourCommand(@NotNull final CommandSender sender, @NotNull final ParkourPlugin plugin) {
 		super(sender, plugin);
 	}
 
@@ -161,8 +162,8 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			plugin.getParkourManager().getAllGames()
 					.stream()
 					.map(parkourGame -> new FetchParkourBestRecordTask(connection, parkourGame, 1, data -> {
-						final ParkourRecord record = data.isEmpty() ? new ParkourRecord(null, parkourGame, 0) : data.get(0);
-						plugin.updateSyncSign(record);
+						final ParkourRecord parkourRecord = data.isEmpty() ? new ParkourRecord(null, parkourGame, 0) : data.get(0);
+						plugin.updateSyncSign(parkourRecord);
 					}
 					))
 					.forEach(fetchParkourBestRecordTask -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchParkourBestRecordTask));
@@ -860,8 +861,8 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 		plugin.getConnection()
 				.map(connection -> new FetchParkourBestRecordTask(connection, parkourGame, 1, data -> {
-					final ParkourRecord record = data.isEmpty() ? new ParkourRecord(null, parkourGame, 0) : data.get(0);
-					plugin.updateSyncSign(record);
+					final ParkourRecord parkourRecord = data.isEmpty() ? new ParkourRecord(null, parkourGame, 0) : data.get(0);
+					plugin.updateSyncSign(parkourRecord);
 				}))
 				.ifPresentOrElse(
 						fetchParkourBestRecordTask -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchParkourBestRecordTask),

@@ -5,10 +5,12 @@
 package eu.andret.ats.parkour.tasks.database;
 
 import lombok.AllArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 
 import java.sql.Connection;
 
 @AllArgsConstructor
 public abstract class AbstractTask implements Runnable {
+	@NotNull
 	protected final Connection connection;
 }
