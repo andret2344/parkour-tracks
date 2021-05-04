@@ -5,7 +5,8 @@
 package eu.andret.ats.parkour.api;
 
 import org.bukkit.OfflinePlayer;
+import org.jetbrains.annotations.NotNull;
 
 public interface RankProvider {
-	boolean isVip(OfflinePlayer player);
+	boolean isVip(@NotNull OfflinePlayer player);
 }

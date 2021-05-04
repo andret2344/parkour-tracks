@@ -5,24 +5,29 @@
 package eu.andret.ats.parkour.tasks.database;
 
 import eu.andret.ats.parkour.parkour.ParkourGame;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.Optional;
 import java.util.UUID;
 
 public class FetchAndInsertDataTask extends AbstractParkourTask {
+	@NotNull
 	UUID uuid;
 	double duration;
+	@Nullable
 	FetchDataCallback fetchDataCallback;
 
 	public interface FetchDataCallback {
 		void onFetchData(int previousCount, double previousPlayerBest, double previousParkourBest);
 	}
 
-	public FetchAndInsertDataTask(final Connection connection, final ParkourGame game, final UUID uuid, final double duration, final FetchDataCallback fetchDataCallback) {
+	public FetchAndInsertDataTask(@NotNull final Connection connection, @NotNull final ParkourGame game, @NotNull final UUID uuid, final double duration, @Nullable final FetchDataCallback fetchDataCallback) {
 		super(connection, game);
 		this.uuid = uuid;
 		this.duration = duration;
@@ -35,7 +40,7 @@ public class FetchAndInsertDataTask extends AbstractParkourTask {
 		final double parkourBestTime = getParkourBestTime();
 		final int playerPassCount = getPlayerPassCount();
 		insertNewTime();
-		fetchDataCallback.onFetchData(playerPassCount, playerBestTime, parkourBestTime);
+		Optional.ofNullable(fetchDataCallback).ifPresent(callback -> callback.onFetchData(playerPassCount, playerBestTime, parkourBestTime));
 	}
 
 	private int getPlayerPassCount() {

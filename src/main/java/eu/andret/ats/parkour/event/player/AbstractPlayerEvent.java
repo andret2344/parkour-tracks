@@ -1,13 +1,14 @@
 /*
- *  Copyright Andret (c) 2018-2021. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2018-2021. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour.event.player;
 
 import eu.andret.ats.parkour.parkour.ParkourGame;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import lombok.Value;
+import lombok.experimental.NonFinal;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
@@ -16,9 +17,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Aggregating class.
  */
-@Data
+@Value
+@NonFinal
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-@AllArgsConstructor
 public class AbstractPlayerEvent extends Event {
 	/**
 	 * List of all Handlers.
@@ -28,12 +30,14 @@ public class AbstractPlayerEvent extends Event {
 	/**
 	 * The Parkour that has been started.
 	 */
-	private ParkourGame game;
+	@NotNull
+	ParkourGame game;
 
 	/**
 	 * The player that triggered the event.
 	 */
-	private Player player;
+	@NotNull
+	Player player;
 
 	@NotNull
 	@Override

@@ -9,7 +9,9 @@ import org.jetbrains.annotations.NotNull;
 
 @Value
 public class ParkourMedal implements Comparable<ParkourMedal> {
+	@NotNull
 	String name;
+	@NotNull
 	String display;
 	int importance;
 

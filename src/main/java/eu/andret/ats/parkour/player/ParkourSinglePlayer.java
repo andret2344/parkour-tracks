@@ -8,12 +8,13 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.Value;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 @Value
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 class ParkourSinglePlayer extends ParkourPlayer {
-	ParkourSinglePlayer(final Player player) {
+	ParkourSinglePlayer(@NotNull final Player player) {
 		super(player);
 	}
 }

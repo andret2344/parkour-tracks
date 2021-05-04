@@ -1,11 +1,12 @@
 /*
- *  Copyright Andret (c) 2018-2021. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2018-2021. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour.util;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 
 public class M {
 	private static final String FIX = "fix";
@@ -79,23 +80,30 @@ public class M {
 	private static final String MEDAL = "medal";
 	private static final String BOUNDS_EXCEEDED = "bounds-exceeded";
 	private static final String FEE = "fee";
+	private static final String REWARD = "reward";
+	private static final String NO_LOBBY = "no-lobby";
+	private static final String NO_RANKS = "no-ranks";
 
 	@AllArgsConstructor
 	private static class Section {
+		@NotNull
 		protected final String key;
 	}
 
 	@AllArgsConstructor
 	public static class Message {
+		@NotNull
 		private final Section parent;
+		@NotNull
 		private final String key;
 		@Getter
 		private final boolean error;
 
-		public Message(final Section parent, final String key) {
+		public Message(@NotNull final Section parent, @NotNull final String key) {
 			this(parent, key, false);
 		}
 
+		@NotNull
 		@Override
 		public String toString() {
 			return parent.key + "." + key;
@@ -111,7 +119,7 @@ public class M {
 		public final Message help = new Message(this, HELP);
 		public final Message success = new Message(this, SUCCESS);
 
-		public General(final String key) {
+		public General(@NotNull final String key) {
 			super("general." + key);
 		}
 	}
@@ -133,7 +141,7 @@ public class M {
 		public final Message usage = new Message(this, USAGE);
 		public final Message success = new Message(this, SUCCESS);
 
-		public Executive(final String key) {
+		public Executive(@NotNull final String key) {
 			super("executive." + key);
 		}
 	}
@@ -148,6 +156,7 @@ public class M {
 		public static final Option FEE = new Option(M.FEE);
 		public static final Option MEDAL = new Option(M.MEDAL);
 		public static final Option MODIFY_INVENTORY = new Option(M.MODIFY_INVENTORY);
+		public static final Option REWARD = new Option(M.REWARD);
 		public static final Option SAVING_RESULTS = new Option(M.SAVING_RESULTS);
 		public static final Option SPRINT_FORCED = new Option(M.SPRINT_FORCED);
 		public static final Option TYPE = new Option(M.TYPE);
@@ -158,7 +167,7 @@ public class M {
 		public final Message get = new Message(this, GET);
 		public final Message set = new Message(this, SET);
 
-		public Option(final String key) {
+		public Option(@NotNull final String key) {
 			super("option." + key);
 		}
 	}
@@ -172,7 +181,7 @@ public class M {
 		public final Message get = new Message(this, GET);
 		public final Message set = new Message(this, SET);
 
-		public Parkour(final String key) {
+		public Parkour(@NotNull final String key) {
 			super("parkour." + key);
 		}
 	}
@@ -190,7 +199,7 @@ public class M {
 		public final Message header = new Message(this, HEADER);
 		public final Message item = new Message(this, ITEM);
 
-		public List(final String key) {
+		public List(@NotNull final String key) {
 			super("list." + key);
 		}
 	}
@@ -204,7 +213,7 @@ public class M {
 			public final Message usage = new Message(this, USAGE);
 			public final Message success = new Message(this, SUCCESS);
 
-			public Checkpoint(final String key) {
+			public Checkpoint(@NotNull final String key) {
 				super("region.checkpoint." + key);
 			}
 		}
@@ -217,9 +226,12 @@ public class M {
 			public final Message usage = new Message(this, USAGE);
 			public final Message success = new Message(this, SUCCESS);
 
-			public Wall(final String key) {
+			public Wall(@NotNull final String key) {
 				super("region.wall." + key);
 			}
+		}
+
+		private Region() {
 		}
 	}
 
@@ -231,7 +243,7 @@ public class M {
 		public final Message added = new Message(this, ADDED);
 		public final Message removed = new Message(this, REMOVED);
 
-		public Amplifier(final String key) {
+		public Amplifier(@NotNull final String key) {
 			super("amplifier." + key);
 		}
 	}
@@ -259,6 +271,8 @@ public class M {
 		public final Message missingSpawn = new Message(this, MISSING_SPAWN, true);
 		public final Message negativeNumber = new Message(this, NEGATIVE_NUMBER, true);
 		public final Message noEconomy = new Message(this, NO_ECONOMY, true);
+		public final Message noLobby = new Message(this, NO_LOBBY, true);
+		public final Message noRanks = new Message(this, NO_RANKS, true);
 		public final Message noMedal = new Message(this, NO_MEDAL, true);
 		public final Message noMedalData = new Message(this, NO_MEDAL_DATA, true);
 		public final Message notBlock = new Message(this, NOT_BLOCK, true);
@@ -267,7 +281,7 @@ public class M {
 		public final Message notVip = new Message(this, NOT_VIP, true);
 		public final Message tooLargeNumber = new Message(this, TOO_LARGE_NUMBER, true);
 
-		public Error(final String key) {
+		public Error(@NotNull final String key) {
 			super(key);
 		}
 	}

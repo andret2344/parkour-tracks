@@ -5,9 +5,10 @@
 package eu.andret.ats.parkour.api;
 
 import org.bukkit.OfflinePlayer;
+import org.jetbrains.annotations.NotNull;
 
 public interface FinancialProvider {
-	boolean addMoney(OfflinePlayer player, double amount);
+	boolean addMoney(@NotNull OfflinePlayer player, double amount);
 
-	double getMoney(OfflinePlayer player);
+	double getMoney(@NotNull OfflinePlayer player);
 }
