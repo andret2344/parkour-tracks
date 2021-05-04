@@ -3,3 +3,5 @@
  */
 
 rootProject.name = 'atsParkour'
+include 'sample'
+
