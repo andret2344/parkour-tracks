@@ -182,7 +182,7 @@ list:
     usage: '&cCorrect usage: /parkour list'
     empty: '&bThere are no created parkour games.'
     header: '&bThere are %COUNT% parkour games.'
-    item: '&b%ID%. &6%NAME%&b %RUNNING%'
+    item: '&6%NAME%&b %RUNNING%'
   help:
     help: '&eShow help'
     usage: '&cCorrect usage: /parkour help [page]'
