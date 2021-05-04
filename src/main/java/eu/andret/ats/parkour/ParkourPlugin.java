@@ -10,6 +10,7 @@ import eu.andret.arguments.CommandManager;
 import eu.andret.arguments.api.annotation.Fallback;
 import eu.andret.ats.parkour.api.FinancialProvider;
 import eu.andret.ats.parkour.api.RankProvider;
+import eu.andret.ats.parkour.entity.MedalSetupOption;
 import eu.andret.ats.parkour.item.ParkourInteractiveItem;
 import eu.andret.ats.parkour.item.ParkourItem;
 import eu.andret.ats.parkour.item.ParkourItemMap;
@@ -67,6 +68,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -168,7 +170,7 @@ public final class ParkourPlugin extends JavaPlugin {
 
 	@NotNull
 	public String msg(@NotNull final String path) {
-		return Optional.ofNullable(path)
+		return Optional.of(path)
 				.map(messages::getString)
 				.map(text -> ChatColor.translateAlternateColorCodes('&', text))
 				.orElse("");
@@ -206,19 +208,15 @@ public final class ParkourPlugin extends JavaPlugin {
 	}
 
 	public void updateSign(@NotNull final ParkourRecord parkourRecord) {
-		Optional.of(parkourRecord.getGame())
-				.map(ParkourGame::getRecordsBlock)
-				.map(Location::getBlock)
-				.map(Block::getState)
-				.filter(Sign.class::isInstance)
-				.map(Sign.class::cast)
-				.ifPresent(sign -> {
-					IntStream.of(0, 1, 2, 3).forEach(i -> {
-						final String lineText = getConfig().getString("recordSign.line" + (i + 1));
-						sign.setLine(i, ChatColor.translateAlternateColorCodes('&', replace(String.valueOf(lineText), parkourRecord)));
-					});
-					sign.update();
-				});
+		updateSign(parkourRecord.getGame(), line -> replace(String.valueOf(line), parkourRecord));
+	}
+
+	public void updateSyncSign(@NotNull final ParkourGame parkourGame) {
+		getServer().getScheduler().scheduleSyncDelayedTask(this, () -> updateSign(parkourGame));
+	}
+
+	public void updateSign(@NotNull final ParkourGame parkourGame) {
+		updateSign(parkourGame, this::replace);
 	}
 
 	@NotNull
@@ -232,8 +230,27 @@ public final class ParkourPlugin extends JavaPlugin {
 	}
 
 	@NotNull
+	public String formatTime(final double time) {
+		final int minutes = (int) time / 60;
+		final int seconds = (int) time % 60;
+		final int milliseconds = (int) Math.round((time % 1) * 100);
+		return String.format("%02d:%02d.%02d", minutes, seconds, milliseconds);
+	}
+
+	@NotNull
 	public String formatMoney(final double money) {
 		return decimalFormat.format(money);
+	}
+
+	@NotNull
+	public String getFormattedMedals(@NotNull final String separator) {
+		return getMedals().stream()
+				.map(ParkourMedal::getDisplayName)
+				.collect(Collectors.joining(separator));
+	}
+
+	public boolean isEditLockActive() {
+		return getConfig().getBoolean("edit-lock", true);
 	}
 
 	@NotNull
@@ -244,14 +261,14 @@ public final class ParkourPlugin extends JavaPlugin {
 			return Collections.emptyList();
 		}
 		return medalsSection.getKeys(false).stream()
-				.map(s -> {
-					final ConfigurationSection configurationSection = medalsSection.getConfigurationSection(s);
+				.map(key -> {
+					final ConfigurationSection configurationSection = medalsSection.getConfigurationSection(key);
 					if (configurationSection == null) {
 						return null;
 					}
-					final String display = ChatColor.translateAlternateColorCodes('&', configurationSection.getString("display", s));
+					final String display = ChatColor.translateAlternateColorCodes('&', configurationSection.getString("display", key));
 					final int importance = configurationSection.getInt("importance");
-					return new ParkourMedal(s, display, importance);
+					return new ParkourMedal(key, display, importance);
 				})
 				.filter(Objects::nonNull)
 				.collect(Collectors.toList());
@@ -294,33 +311,35 @@ public final class ParkourPlugin extends JavaPlugin {
 		command.setOnInsufficientPermissionsListener(sender -> sender.sendMessage(msg(M.Error.DEFAULT.insufficientPermissions)));
 		command.setOnUnknownSubCommandExecutionListener(sender -> sender.sendMessage(msg(M.Error.DEFAULT.invalidArgument)));
 		command.getOptions().setAutoTranslateColors(true);
+
 		command.addArgumentMapper("parkourGame", ParkourGame.class, parkourManager::getParkour, Fallback.ON_NULL);
 		command.addArgumentMapper("potion", PotionEffectType.class, PotionEffectType::getByName, Fallback.ON_NULL);
-		command.addTypeCompleter(ParkourGame.class, () -> parkourManager.getAllGames().stream()
-				.map(ParkourGame::getName)
-				.collect(Collectors.toList()));
-		command.addTypeCompleter(boolean.class, Arrays.asList("false", "true"));
-		command.addTypeCompleter(PotionEffectType.class, () -> Data.ALLOWED_EFFECTS.stream()
-				.map(PotionEffectType::getName)
-				.collect(Collectors.toList()));
-		command.addArgumentCompleter("startStop", Arrays.asList("start", "stop"));
-		command.addArgumentCompleter(MEDAL, medals.stream()
-				.map(ParkourMedal::getName)
-				.collect(Collectors.toList()));
-		command.addArgumentCompleter("medalOption", Arrays.asList("time", "reward"));
+		command.addArgumentMapper("color", DyeColor.class, DyeColor::valueOf, Fallback.ON_NULL);
 		command.addArgumentMapper(MEDAL, ParkourMedal.class, name -> medals.stream()
 						.filter(medal -> medal.getName().equals(name))
 						.findAny()
 						.orElse(null),
 				Fallback.ON_NULL);
+		command.addArgumentMapper("option", MedalSetupOption.class, name -> MedalSetupOption.valueOf(name.toUpperCase()));
+
+		command.addTypeCompleter(ParkourGame.class, () -> parkourManager.getAllGames().stream()
+				.map(ParkourGame::getName)
+				.collect(Collectors.toList()));
+
+		command.addTypeCompleter(PotionEffectType.class, Data.ALLOWED_EFFECTS.stream()
+				.map(PotionEffectType::getName)
+				.collect(Collectors.toList()));
+		command.addTypeCompleter(ParkourMedal.class, medals.stream()
+				.map(ParkourMedal::getName)
+				.collect(Collectors.toList()));
+		command.addTypeCompleter(boolean.class, Arrays.asList(Boolean.FALSE.toString(), Boolean.TRUE.toString()));
+		command.addTypeCompleter(MedalSetupOption.class, Arrays.stream(MedalSetupOption.values())
+				.map(Enum::name)
+				.map(String::toLowerCase)
+				.collect(Collectors.toList()));
 		command.addTypeCompleter(DyeColor.class, Arrays.stream(DyeColor.values())
 				.map(Enum::name)
 				.collect(Collectors.toList()));
-		command.addArgumentMapper("color", DyeColor.class, DyeColor::valueOf, Fallback.ON_NULL);
-	}
-
-	public boolean isEditLocked() {
-		return getConfig().getBoolean("edit-lock", true);
 	}
 
 	private void setupDatabase() {
@@ -348,7 +367,7 @@ public final class ParkourPlugin extends JavaPlugin {
 		return DriverManager.getConnection("jdbc:mysql://" + url + "?allowPublicKeyRetrieval=true&autoReconnect=true&useSSL=false", user, pass);
 	}
 
-	private void connect() throws SQLException {
+	private void connect() {
 		final String database = getConfig().getString("database.dbname", "ats_parkour");
 		getConnection().ifPresent(conn -> {
 			try (final Statement stat = conn.createStatement()) {
@@ -359,6 +378,22 @@ public final class ParkourPlugin extends JavaPlugin {
 				ex.printStackTrace();
 			}
 		});
+	}
+
+	private void updateSign(@NotNull final ParkourGame parkourGame, @NotNull final UnaryOperator<String> replaceFunction) {
+		Optional.of(parkourGame)
+				.map(ParkourGame::getRecordsBlock)
+				.map(Location::getBlock)
+				.map(Block::getState)
+				.filter(Sign.class::isInstance)
+				.map(Sign.class::cast)
+				.ifPresent(sign -> {
+					IntStream.of(0, 1, 2, 3).forEach(i -> {
+						final String lineText = getConfig().getString("recordSign.line" + (i + 1));
+						sign.setLine(i, ChatColor.translateAlternateColorCodes('&', replaceFunction.apply(lineText)));
+					});
+					sign.update();
+				});
 	}
 
 	private void save() {
@@ -455,11 +490,8 @@ public final class ParkourPlugin extends JavaPlugin {
 	}
 
 	@NotNull
-	public String formatTime(final double time) {
-		final int minutes = (int) time / 60;
-		final int seconds = (int) time % 60;
-		final int milliseconds = (int) Math.round((time % 1) * 100);
-		return String.format("%02d:%02d.%02d", minutes, seconds, milliseconds);
+	private String replace(@NotNull final String source) {
+		return source.replace("nick", "========").replace("%PERSONAL_TIME%", formatTime(0));
 	}
 
 	@NotNull
