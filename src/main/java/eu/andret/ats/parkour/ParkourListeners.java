@@ -71,6 +71,8 @@ public class ParkourListeners implements Listener {
 	@NotNull
 	ParkourPlugin plugin;
 
+	// ======= Events methods =======
+
 	@EventHandler
 	public void flying(final PlayerMoveEvent event) {
 		final Player player = event.getPlayer();
@@ -631,7 +633,7 @@ public class ParkourListeners implements Listener {
 			plugin.getPlayerManager().teleportToRegion(parkourPlayer, parkourGame.getSpawn());
 			return;
 		}
-		player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("warn-no-money")
+		player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("error-no-money")
 				.replace(Constants.FEE, plugin.formatMoney(fee))
 				.replace(Constants.NAME, parkourGame.getName())
 				.replace(Constants.DISPLAY_NAME, parkourGame.getDisplayName())
