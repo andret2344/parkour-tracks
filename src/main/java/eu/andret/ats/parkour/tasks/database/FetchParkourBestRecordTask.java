@@ -27,7 +27,7 @@ public class FetchParkourBestRecordTask extends AbstractParkourTask {
 	public FetchParkourBestRecordTask(@NotNull final Connection connection, @NotNull final ParkourGame parkourGame, final int count, @Nullable final Consumer<List<ParkourRecord>> callback) {
 		super(connection, parkourGame);
 		if (count <= 0) {
-			throw new IllegalArgumentException("Count must be positive, " + count + " provided");
+			throw new IllegalArgumentException("Count must be positive, " + count + " provided!");
 		}
 		this.count = count;
 		this.callback = callback;

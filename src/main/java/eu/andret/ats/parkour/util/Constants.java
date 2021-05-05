@@ -11,6 +11,7 @@ public class Constants {
 	public static final String AMP = "%AMP%";
 	public static final String AMPLIFIER = "%AMPLIFIER%";
 	public static final String ARGUMENT = "%ARGUMENT%";
+	public static final String BALANCE = "%BALANCE%";
 	public static final String COORD_PITCH = "%COORD_PITCH%";
 	public static final String COORD_X = "%COORD_X%";
 	public static final String COORD_Y = "%COORD_Y%";
@@ -21,6 +22,7 @@ public class Constants {
 	public static final String DISPLAY_NAME = "%DISPLAY_NAME%";
 	public static final String EFFECT = "%EFFECT%";
 	public static final String ENABLED = "%ENABLED%";
+	public static final String FEE = "%FEE%";
 	public static final String ID = "%ID%";
 	public static final String MEDAL = "%MEDAL%";
 	public static final String MEDALS = "%MEDALS%";
