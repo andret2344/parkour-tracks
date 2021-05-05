@@ -4,6 +4,7 @@
 
 package eu.andret.ats.parkour;
 
+import eu.andret.ats.parkour.entity.EventSound;
 import eu.andret.ats.parkour.event.game.GameStartEvent;
 import eu.andret.ats.parkour.event.game.GameStopEvent;
 import eu.andret.ats.parkour.event.player.PlayerAchieveCheckpointEvent;
@@ -208,7 +209,7 @@ public class ParkourListeners implements Listener {
 			parkourPlayer.setLastCheckpoint(checkpointId);
 			if (checkpointId != parkourGame.getCheckpoints().size() - 1) {
 				parkourPlayer.getPlayer().sendMessage(plugin.msg("achieveCheckpoint"));
-				plugin.getSound("complete")
+				plugin.getSound(EventSound.CHECKPOINT)
 						.ifPresent(sound -> parkourPlayer.getPlayer().playSound(parkourPlayer.getPlayer().getLocation(), sound, 0.5F, 0.5F));
 			}
 		}
@@ -231,7 +232,7 @@ public class ParkourListeners implements Listener {
 		if (plugin.getTeleportCountdown().containsKey(uniqueId)) {
 			return;
 		}
-		plugin.getSound("complete")
+		plugin.getSound(EventSound.COMPLETE)
 				.ifPresent(sound -> player.playSound(player.getLocation(), sound, 0.5F, 0.5F));
 		final ParkourCountdown task = new ParkourCountdown(5,
 				() -> {
@@ -370,7 +371,7 @@ public class ParkourListeners implements Listener {
 	public void joinGame(final PlayerJoinGameEvent event) {
 		final ParkourPlayer parkourPlayer = event.getPlayer();
 		final Player player = parkourPlayer.getPlayer();
-		plugin.getSound("join")
+		plugin.getSound(EventSound.JOIN)
 				.ifPresent(sound -> player.playSound(player.getLocation(), sound, 0.5F, 0.5F));
 		final ParkourGame parkourGame = event.getGame();
 		if (parkourGame.getOptions().isSavingResults()) {
@@ -378,7 +379,7 @@ public class ParkourListeners implements Listener {
 					() -> parkourGame.inSpawn(parkourPlayer),
 					i -> {
 						if (i == 0) {
-							plugin.getSound("start")
+							plugin.getSound(EventSound.START)
 									.ifPresent(sound -> player.playSound(player.getLocation(), sound, 0.5F, 0.5F));
 						}
 
@@ -506,7 +507,7 @@ public class ParkourListeners implements Listener {
 		final ParkourPlayer parkourPlayer = event.getPlayer();
 		final Player player = parkourPlayer.getPlayer();
 		final UUID uniqueId = player.getUniqueId();
-		plugin.getSound("leave")
+		plugin.getSound(EventSound.LEAVE)
 				.ifPresent(sound -> player.playSound(player.getLocation(), sound, 0.5F, 0.5F));
 		parkourPlayer.reset();
 		if (plugin.getTimeCounter().containsKey(uniqueId)) {
