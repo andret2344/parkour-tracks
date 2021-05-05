@@ -5,6 +5,7 @@
 package eu.andret.ats.parkour.tutorial;
 
 import eu.andret.ats.parkour.parkour.ParkourMedal;
+import eu.andret.ats.parkour.util.Constants;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
@@ -56,7 +57,7 @@ public final class TutorialPlayer {
 	public TutorialPlayer sendMessage() {
 		Arrays.stream(getMessage().split("\n"))
 				.map(message -> ChatColor.translateAlternateColorCodes('&', message))
-				.map(message -> message.replace("%AMP%", "&"))
+				.map(message -> message.replace(Constants.AMP, "&"))
 				.forEach(player::sendMessage);
 		return this;
 	}

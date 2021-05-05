@@ -22,6 +22,7 @@ import eu.andret.ats.parkour.parkour.ParkourRecord;
 import eu.andret.ats.parkour.player.PlayerManager;
 import eu.andret.ats.parkour.tasks.database.KeepAliveTask;
 import eu.andret.ats.parkour.tutorial.TutorialManager;
+import eu.andret.ats.parkour.util.Constants;
 import eu.andret.ats.parkour.util.Data;
 import eu.andret.ats.parkour.util.M;
 import eu.andret.ats.parkour.util.serializer.JSONSerializer;
@@ -245,6 +246,11 @@ public final class ParkourPlugin extends JavaPlugin {
 	@NotNull
 	public String formatMoney(final double money) {
 		return decimalFormat.format(money);
+	}
+
+	@NotNull
+	public String formatCoord(final double coord) {
+		return String.format("%.2f", coord);
 	}
 
 	@NotNull
@@ -493,14 +499,14 @@ public final class ParkourPlugin extends JavaPlugin {
 				.map(ParkourRecord::getUuid)
 				.map(uuid -> getServer().getOfflinePlayer(uuid))
 				.map(OfflinePlayer::getName)
-				.orElse("========");
-		return source.replace("%NICK%", name)
-				.replace("%PERSONAL_TIME%", formatTime(parkourRecord.getTime()));
+				.orElse(Constants.PLACEHOLDER_NO_RECORD);
+		return source.replace(Constants.NICK, name)
+				.replace(Constants.PERSONAL_TIME, formatTime(parkourRecord.getTime()));
 	}
 
 	@NotNull
 	private String replace(@NotNull final String source) {
-		return source.replace("nick", "========").replace("%PERSONAL_TIME%", formatTime(0));
+		return source.replace("nick", Constants.PLACEHOLDER_NO_RECORD).replace(Constants.PERSONAL_TIME, formatTime(0));
 	}
 
 	@NotNull
