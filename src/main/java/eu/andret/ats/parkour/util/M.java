@@ -61,7 +61,7 @@ public class M {
 	private static final String NO_LOBBY = "no-lobby";
 	private static final String NO_MEDAL = "no-medal";
 	private static final String NO_MEDAL_DATA = "no-medal-data";
-	private static final String NO_RANKS = "no-economy";
+	private static final String NO_RANKS = "no-ranks";
 	private static final String RECORDS_BLOCK = "records-block";
 	private static final String RECREATE = "recreate";
 	private static final String REMOVE = "remove";

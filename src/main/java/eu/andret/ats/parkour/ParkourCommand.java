@@ -1004,7 +1004,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		return plugin.msg(M.List.MEDAL.item)
 				.replace(Constants.MEDAL, medal.getDisplayName())
 				.replace(Constants.TIME, plugin.formatTime(data.getTime()))
-				.replace(Constants.REWARD, plugin.formatMoney(data.getReward()));
+				.replace(Constants.VALUE, plugin.formatMoney(data.getReward()));
 	}
 
 	@Argument(permission = "ats.parkour.medal", description = "Gets all medal data for parkour")
