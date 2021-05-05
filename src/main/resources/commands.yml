@@ -14,23 +14,23 @@ general:
 
 parkour:
   authors:
-    help: '&eShows or set authors of the parkour.'
+    help: '&eShows or sets authors of the parkour.'
     usage: '&cCorrect usage: /parkour authors <name> <authors...>'
     get: '&bCurrent authors are set to &6%VALUE%&b.'
     set: '&aSuccessfully set authors to &6%VALUE%&a.'
   display-name:
-    help: '&eShows or set the parkour display name.'
+    help: '&eShows or sets the parkour display name.'
     usage: '&cCorrect usage: /parkour displayName <name> [value]'
     get: '&bCurrent display name is set to "&6%VALUE%&b".'
     set: '&aSuccessfully set display name to "&6%VALUE%&a".'
 
 executive:
   create:
-    help: '&eCreates the new parkour game.'
+    help: '&eCreates a new parkour game.'
     usage: '&cCorrect usage: /parkour create <name>'
     success: '&aSuccessfully created the &6%NAME%&a parkour game.'
   info:
-    help: '&eShows information about the parkour game.'
+    help: '&eShows information about a parkour game.'
     usage: '&cCorrect usage: /parkour info <name>'
     success: '%VALUE%'
   recreate:
@@ -66,7 +66,7 @@ executive:
     usage: '&cCorrect usage: /parkour teleport <name>'
     success: '&aTeleported to the &6%DISPLAY_NAME%&a parkour game.'
   teleport-block:
-    help: '&eSets a block, that interacted will teleport the player to the spawn of a parkour'
+    help: '&eSets a block, that, when interacted with, will teleport the player to the spawn of a parkour'
     usage: '&cCorrect usage: /parkour teleportBlock <name>'
     success: '&aSuccessfully set up the teleport block of the &6%DISPLAY_NAME%&a parkour to the location [X=&6%COORD_X%&a, Y=&6%COORD_Y%&a, Z=&6%COORD_Z%&a].'
 
