@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -49,14 +48,6 @@ public final class ParkourManager<E> {
 		final ParkourGame game = new Parkour(name, region, world);
 		setting.parkourGames.add(game);
 		return game;
-	}
-
-	public void addParkour(@NotNull final ParkourGame parkourGame) {
-		setting.parkourGames.add(parkourGame);
-	}
-
-	public void sortGames() {
-		Collections.sort(setting.parkourGames);
 	}
 
 	public List<ParkourGame> getAllGames() {
