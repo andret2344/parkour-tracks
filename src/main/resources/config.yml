@@ -78,7 +78,7 @@ sound:
   start: BLOCK_LEVER_CLICK
   checkpoint: NONE
   complete: ENTITY_PLAYER_LEVELUP
-  left: NONE
+  leave: NONE
 
 # Following section will be important only if FinancialProvider is configured.
 economy:

@@ -10,6 +10,7 @@ import eu.andret.arguments.CommandManager;
 import eu.andret.arguments.api.annotation.Fallback;
 import eu.andret.ats.parkour.api.FinancialProvider;
 import eu.andret.ats.parkour.api.RankProvider;
+import eu.andret.ats.parkour.entity.EventSound;
 import eu.andret.ats.parkour.entity.MedalSetupOption;
 import eu.andret.ats.parkour.entity.SimpleLever;
 import eu.andret.ats.parkour.item.ParkourInteractiveItem;
@@ -202,9 +203,9 @@ public final class ParkourPlugin extends JavaPlugin {
 	}
 
 	@NotNull
-	public Optional<Sound> getSound(@NotNull final String name) {
+	public Optional<Sound> getSound(@NotNull final EventSound eventSound) {
 		return Optional.of(getConfig())
-				.map(configuration -> configuration.getString("sound." + name))
+				.map(configuration -> configuration.getString("sound." + eventSound.name().toLowerCase(), "NONE"))
 				.filter(sound -> !sound.equals("NONE"))
 				.map(Sound::valueOf);
 	}
