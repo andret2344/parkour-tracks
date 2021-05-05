@@ -71,6 +71,8 @@ public class ParkourListeners implements Listener {
 	@NotNull
 	ParkourPlugin plugin;
 
+	// ======= Events methods =======
+
 	@EventHandler
 	public void flying(final PlayerMoveEvent event) {
 		final Player player = event.getPlayer();
@@ -579,7 +581,8 @@ public class ParkourListeners implements Listener {
 			}
 		});
 	}
-// ======= Helper methods =======
+
+	// ======= Helper methods =======
 
 	private void iterateOverRegions(@Nullable final Location from, @Nullable final Location to, @NotNull final ParkourPlayer parkourPlayer, @NotNull final ParkourGame parkourGame) {
 		final Player player = parkourPlayer.getPlayer();
