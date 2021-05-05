@@ -124,6 +124,8 @@ public final class ParkourPlugin extends JavaPlugin {
 	@Getter
 	@NotNull
 	private final List<ParkourMedal> medals = new ArrayList<>();
+	@Getter
+	private int teleportationTimeout;
 	private DecimalFormat decimalFormat;
 
 	@Override
@@ -132,6 +134,7 @@ public final class ParkourPlugin extends JavaPlugin {
 		medals.addAll(loadMedals());
 		exitItem = createItem("exit");
 		hidingItem = createItem("hiding");
+		teleportationTimeout = getConfig().getInt("teleportation-timeout");
 		decimalFormat = Optional.of(getConfig())
 				.map(config -> config.getConfigurationSection("economy"))
 				.map(this::setupDecimalFormat)
@@ -187,7 +190,7 @@ public final class ParkourPlugin extends JavaPlugin {
 	public String msg(@NotNull final M.Message message) {
 		final StringBuilder result = new StringBuilder();
 		if (message.isError()) {
-			result.append(commands.getString("misc.error-prefix"));
+			result.append(commands.getString("misc.prefix-error"));
 		}
 		return ChatColor.translateAlternateColorCodes('&', result.append(commands.getString(message.toString())).toString());
 	}
@@ -235,12 +238,10 @@ public final class ParkourPlugin extends JavaPlugin {
 		updateSign(parkourGame, this::replace);
 	}
 
-	@NotNull
 	public ItemStack getExitItem() {
 		return exitItem;
 	}
 
-	@NotNull
 	public ItemStack getHidingItem() {
 		return hidingItem;
 	}

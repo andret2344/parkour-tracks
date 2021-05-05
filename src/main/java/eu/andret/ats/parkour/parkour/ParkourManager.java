@@ -34,6 +34,12 @@ public final class ParkourManager<E> {
 		private final List<ParkourGame> parkourGames = new ArrayList<>();
 		@Nullable
 		private Location lobbyLocation;
+
+		@NotNull
+		private ParkourGame add(@NotNull final ParkourGame game) {
+			parkourGames.add(game);
+			return game;
+		}
 	}
 
 	public ParkourManager(@NotNull final Serializer<E> serializer) {
@@ -42,14 +48,13 @@ public final class ParkourManager<E> {
 
 	@NotNull
 	public ParkourGame createParkour(@NotNull final String name, @NotNull final BasicRegion region, @Nullable final World world) {
-		if (world == null) {
-			throw new IllegalArgumentException("World cannot be null!");
-		}
-		final ParkourGame game = new Parkour(name, region, world);
-		setting.parkourGames.add(game);
-		return game;
+		return Optional.ofNullable(world)
+				.map(x -> new Parkour(name, region, x))
+				.map(x -> setting.add(x))
+				.orElseThrow(() -> new IllegalArgumentException("World cannot be null!"));
 	}
 
+	@NotNull
 	public List<ParkourGame> getAllGames() {
 		return new ArrayList<>(setting.parkourGames);
 	}

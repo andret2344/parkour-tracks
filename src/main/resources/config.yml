@@ -80,6 +80,13 @@ sound:
   complete: ENTITY_PLAYER_LEVELUP
   leave: NONE
 
+# How many seconds player has to wait after entering last checkpoint (completing parkour),
+# before being automatically teleported to lobby.
+# Any non-positive (lower or equal to 0) number is treated as invalid and forces default to be used.
+# Type: Integer
+# Default: 5
+teleportation-timeout: 5
+
 # Following section will be important only if FinancialProvider is configured.
 economy:
   # Pattern compliant with following instruction: https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/text/DecimalFormat.html
