@@ -99,7 +99,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		plugin.getParkourManager().teleportToLobby(player);
 		if (plugin.getTutorialManager().hasPlayer(player)) {
 			final TutorialPlayer tutorialPlayer = plugin.getTutorialManager().getPlayer(player);
-			if (tutorialPlayer.done(0, true)) {
+			if (tutorialPlayer.done(0)) {
 				tutorialPlayer.next().next().sendMessage().next().next().sendMessage();
 			}
 		}
@@ -507,7 +507,9 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Amplifier.EFFECT.removed).replace(Constants.EFFECT, type.getName());
 		}
 		parkourGame.getEffects().put(type, power);
-		return plugin.msg(M.Amplifier.EFFECT.added).replace(Constants.EFFECT, type.getName()).replace(Constants.AMPLIFIER, String.valueOf(power));
+		return plugin.msg(M.Amplifier.EFFECT.added)
+				.replace(Constants.EFFECT, type.getName())
+				.replace(Constants.AMPLIFIER, String.valueOf(power));
 	}
 
 	@Fallback
@@ -952,6 +954,9 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 						tutorialPlayer.done(7, false);
 						tutorialPlayer.next().next().sendMessage();
 					});
+		}
+		if (option.equals(MedalSetupOption.REWARD)) {
+			executeTutorial(player, 8, false);
 		}
 		if (option.equals(MedalSetupOption.REWARD)) {
 			executeTutorial(player, 8, false);

@@ -243,7 +243,7 @@ public class ParkourListeners implements Listener {
 			player.sendMessage(plugin.msg("warn-no-database"));
 			return;
 		}
-		performDatabaseOperations(player, parkourGame, currentTime);
+		performDatabaseOperations(player, parkourGame, duration);
 	}
 
 	@EventHandler

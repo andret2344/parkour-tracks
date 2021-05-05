@@ -100,34 +100,27 @@ public final class ParkourPlugin extends JavaPlugin {
 	private ItemStack hidingItem;
 	@NotNull
 	private final JSONSerializer jsonSerializer = new JSONSerializer(this);
-	@NotNull
 	@Getter
 	@NotNull
 	private final ParkourManager<JSONObject> parkourManager = new ParkourManager<>(jsonSerializer);
-	@NotNull
 	@Getter
 	@NotNull
 	private final PlayerManager playerManager = new PlayerManager();
 	@NotNull
 	@Getter
 	private final TutorialManager tutorialManager = new TutorialManager(this);
-	@Nullable
 	@Setter
 	@Nullable
 	private FinancialProvider financialProvider;
-	@Nullable
 	@Setter
 	@Nullable
 	private RankProvider rankProvider;
-	@NotNull
 	@Getter
 	@NotNull
 	private final ParkourItemMap gameItemMap = new ParkourItemMap();
-	@NotNull
 	@Getter
 	@NotNull
 	private final ParkourItemMap worldItemMap = new ParkourItemMap();
-	@NotNull
 	@Getter
 	@NotNull
 	private final List<ParkourMedal> medals = new ArrayList<>();
@@ -302,15 +295,14 @@ public final class ParkourPlugin extends JavaPlugin {
 			return Collections.emptyList();
 		}
 		return medalsSection.getKeys(false).stream()
-				.map(key -> {
-					final ConfigurationSection configurationSection = medalsSection.getConfigurationSection(key);
-					if (configurationSection == null) {
-						return null;
-					}
-					final String display = ChatColor.translateAlternateColorCodes('&', configurationSection.getString("display", key) + "&r");
-					final int importance = configurationSection.getInt("importance");
-					return new ParkourMedal(key, display, importance);
-				})
+				.map(key -> Optional.of(key)
+						.map(medalsSection::getConfigurationSection)
+						.map(configurationSection -> {
+							final String display = ChatColor.translateAlternateColorCodes('&', configurationSection.getString("display", key));
+							final int importance = configurationSection.getInt("importance");
+							return new ParkourMedal(key, display, importance);
+						})
+						.orElse(null))
 				.filter(Objects::nonNull)
 				.collect(Collectors.toList());
 	}
@@ -528,17 +520,6 @@ public final class ParkourPlugin extends JavaPlugin {
 	@NotNull
 	private String replace(@NotNull final String source) {
 		return source.replace(Constants.NICK, Constants.PLACEHOLDER_NO_RECORD).replace(Constants.PERSONAL_TIME, formatTime(0));
-	}
-
-	@NotNull
-	private DecimalFormat setupDecimalFormat(@NotNull final ConfigurationSection economySection) {
-		final DecimalFormatSymbols decimalFormatSymbols = new DecimalFormatSymbols();
-		decimalFormatSymbols.setCurrencySymbol(economySection.getString("currency-symbol", "{@}"));
-		decimalFormatSymbols.setDecimalSeparator(economySection.getString("decimal-separator", ".").charAt(0));
-		decimalFormatSymbols.setGroupingSeparator(economySection.getString("group-separator", " ").charAt(0));
-		final DecimalFormat format = new DecimalFormat(economySection.getString("pattern", "+###,##0.00\u00A4;-###,##0.00\u00A4"), decimalFormatSymbols);
-		format.setGroupingSize(economySection.getInt("group-size", 3));
-		return format;
 	}
 
 	@NotNull

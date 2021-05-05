@@ -15,7 +15,9 @@ import java.util.Map;
 @Value
 public class TutorialManager {
 	@NotNull
-	private final Map<Player, TutorialPlayer> players = new HashMap<>();
+	ParkourPlugin plugin;
+	@NotNull
+	Map<Player, TutorialPlayer> players = new HashMap<>();
 
 	@NotNull
 	public TutorialPlayer getPlayer(@NotNull final Player player) {
