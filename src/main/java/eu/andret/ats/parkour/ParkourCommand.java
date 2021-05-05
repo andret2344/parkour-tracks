@@ -557,6 +557,31 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		return plugin.msg(M.Error.DEFAULT.invalidGame);
 	}
 
+	@Argument(permission = "ats.parkour.reward", description = "Shows value of reward")
+	public String reward(@Param("parkourGame") final ParkourGame parkourGame) {
+		if (plugin.getFinancialProvider().isEmpty()) {
+			return plugin.msg(M.Error.DEFAULT.noEconomy);
+		}
+		return plugin.msg(M.Option.REWARD.get).replace(Constants.VALUE, plugin.formatMoney(parkourGame.getOptions().getReward()));
+	}
+
+	@Argument(permission = "ats.parkour.reward", description = "Sets value of reward")
+	public String reward(@Param("parkourGame") final ParkourGame parkourGame, final double reward) {
+		if (plugin.getFinancialProvider().isEmpty()) {
+			return plugin.msg(M.Error.DEFAULT.noEconomy);
+		}
+		if (parkourGame.isRunning() && plugin.isEditLockActive()) {
+			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
+		}
+		parkourGame.getOptions().setReward(reward);
+		return plugin.msg(M.Option.REWARD.set).replace(Constants.VALUE, plugin.formatMoney(reward));
+	}
+
+	@Fallback
+	public String reward() {
+		return plugin.msg(M.Error.DEFAULT.invalidGame);
+	}
+
 	@Argument(permission = "ats.parkour.savingResults", description = "Shows value of savingResults flag")
 	public String savingResults(@Param("parkourGame") final ParkourGame parkourGame) {
 		return plugin.msg(M.Option.SAVING_RESULTS.get).replace(Constants.VALUE, String.valueOf(parkourGame.getOptions().isSavingResults()));

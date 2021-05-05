@@ -199,7 +199,7 @@ list:
     usage: '&cCorrect usage: /parkour medal <name> [medal]'
     empty: '&bThe parkour has no medals configured'
     header: '&bParkour has following medals:'
-    item: '&b- &6%MEDAL%&b - time: &6%TIME%&b, reward: &6%REWARD%&b.'
+    item: '&b- &6%MEDAL%&b - time: &6%TIME%&b, reward: &6%VALUE%&b.'
 
 misc:
   prefix-error: '&4Error: &r'

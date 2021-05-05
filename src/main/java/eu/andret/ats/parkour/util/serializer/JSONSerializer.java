@@ -195,6 +195,7 @@ public class JSONSerializer implements Serializer<JSONObject> {
 				.color(DyeColor.valueOf(jsonObject.getString(COLOR)))
 				.difficulty(jsonObject.getInt(DIFFICULTY))
 				.type(ParkourGame.Type.valueOf(jsonObject.getString(TYPE)))
+				.reward(jsonObject.getDouble(REWARD))
 				.vipOnly(jsonObject.getBoolean(VIP_ONLY))
 				.enabled(jsonObject.getBoolean(ENABLED))
 				.fee(jsonObject.getDouble(FEE))
@@ -392,6 +393,7 @@ public class JSONSerializer implements Serializer<JSONObject> {
 				.put(FEE, options.getFee())
 				.put(MODIFY_INVENTORY, options.isModifyInventory())
 				.put(SAVING_RESULTS, options.isSavingResults())
+				.put(REWARD, options.getReward())
 				.put(SPRINT_FORCED, options.isSprintForced())
 				.put(TYPE, options.getType().name())
 				.put(VIP_ONLY, options.isVipOnly());
