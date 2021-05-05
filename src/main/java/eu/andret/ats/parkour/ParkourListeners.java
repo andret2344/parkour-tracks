@@ -216,8 +216,7 @@ public class ParkourListeners implements Listener {
 					final Map<UUID, Integer> timeCounter = plugin.getTimeCounter();
 					plugin.getServer().getScheduler().cancelTask(timeCounter.get(uniqueId));
 					timeCounter.remove(uniqueId);
-					player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("teleportation-forecast")
-							.replace(Constants.SECONDS, "5")));
+					player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("teleportation-forecast").replace(Constants.SECONDS, "5")));
 				},
 				i -> player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("counting-element").replace(Constants.NUMBER, String.valueOf(i)))),
 				() -> {
