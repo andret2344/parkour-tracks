@@ -1019,7 +1019,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 				.map(medalEntry -> plugin.msg(M.List.MEDAL.item)
 						.replace(Constants.MEDAL, medalEntry.getKey().getDisplayName())
 						.replace(Constants.TIME, plugin.formatTime(medalEntry.getValue().getTime()))
-						.replace(Constants.REWARD, plugin.formatMoney(medalEntry.getValue().getReward())))
+						.replace(Constants.VALUE, plugin.formatMoney(medalEntry.getValue().getReward())))
 				.map(text -> ChatColor.translateAlternateColorCodes('&', text))
 				.forEach(sender::sendMessage);
 		return null;
