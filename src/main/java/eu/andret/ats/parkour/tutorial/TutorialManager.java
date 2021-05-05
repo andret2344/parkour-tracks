@@ -2,26 +2,29 @@
  *  Copyright Andret (c) 2018-2021. Copying and modifying allowed only keeping git link reference.
  */
 
-package eu.andret.ats.parkour;
+package eu.andret.ats.parkour.tutorial;
 
-import lombok.experimental.UtilityClass;
+import eu.andret.ats.parkour.ParkourPlugin;
+import lombok.Value;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@UtilityClass
+@Value
 public class TutorialManager {
 	@NotNull
-	private final Map<Player, TutorialPlayer> players = new HashMap<>();
+	ParkourPlugin plugin;
+	@NotNull
+	Map<Player, TutorialPlayer> players = new HashMap<>();
 
 	@NotNull
 	public TutorialPlayer getPlayer(@NotNull final Player player) {
 		if (players.containsKey(player)) {
 			return players.get(player);
 		}
-		final TutorialPlayer tutorialPlayer = new TutorialPlayer(player);
+		final TutorialPlayer tutorialPlayer = new TutorialPlayer(player, this);
 		players.put(player, tutorialPlayer);
 		return tutorialPlayer;
 	}

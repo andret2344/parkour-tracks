@@ -18,7 +18,6 @@ import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -168,7 +167,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 	}
 
 	@Override
-	public int compareTo(@Nonnull final ParkourGame parkourGame) {
+	public int compareTo(@NotNull final ParkourGame parkourGame) {
 		if (running && !parkourGame.running) {
 			return 1;
 		}
