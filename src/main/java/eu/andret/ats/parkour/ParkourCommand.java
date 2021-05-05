@@ -111,7 +111,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		plugin.getParkourManager().teleportToLobby(player);
 		if (plugin.getTutorialManager().hasPlayer(player)) {
 			final TutorialPlayer tutorialPlayer = plugin.getTutorialManager().getPlayer(player);
-			if (tutorialPlayer.done(0, true)) {
+			if (tutorialPlayer.done(0)) {
 				tutorialPlayer.next().next().sendMessage().next().next().sendMessage();
 			}
 		}
@@ -128,7 +128,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		plugin.getParkourManager().setLobbyLocation(location);
 		if (plugin.getTutorialManager().hasPlayer(player)) {
 			final TutorialPlayer tutorialPlayer = plugin.getTutorialManager().getPlayer(player);
-			if (tutorialPlayer.done(1, true)) {
+			if (tutorialPlayer.done(1)) {
 				tutorialPlayer.next().next().sendMessage().next().sendMessage();
 			}
 		}

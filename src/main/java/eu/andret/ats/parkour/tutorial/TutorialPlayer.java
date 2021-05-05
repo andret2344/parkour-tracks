@@ -24,8 +24,8 @@ public final class TutorialPlayer {
 	private final Player player;
 	@NotNull
 	private final TutorialManager manager;
-	int step;
-	int last;
+	private int step;
+	private int last;
 
 	public TutorialPlayer(@NotNull final Player player, @NotNull final TutorialManager manager) {
 		this.player = player;
@@ -37,12 +37,12 @@ public final class TutorialPlayer {
 		return this;
 	}
 
-	public boolean done(final int i) {
-		return done(i, true);
+	public boolean done(final int id) {
+		return done(id, true);
 	}
 
-	public boolean done(final int i, final boolean mistakeInformation) {
-		if (i == step) {
+	public boolean done(final int id, final boolean mistakeInformation) {
+		if (id == step) {
 			last = step;
 			return true;
 		}
@@ -74,7 +74,8 @@ public final class TutorialPlayer {
 
 		switch (step) {
 			case 0:
-				return "&dHello and welcome to the &natsParkour setup tutorial&r&d. I'm going to teach you how to correctly setup a working parkour. My name is &lAn&r&d, and I will lead you through this tutorial. " +
+				return "&dHello and welcome to the &natsParkour setup tutorial&r&d. I'm going to teach you how to correctly setup a working parkour. " +
+						"My name is &lAn&r&d, and I will lead you through this tutorial. " +
 						"So, firstly the parkour lobby has to be set up. Let's check if it's done already using command &b/parkour lobby&d.\n" +
 						"Sample command execution: &b/parkour lobby";
 			case 1:
@@ -92,7 +93,7 @@ public final class TutorialPlayer {
 						"&dNote: &nThe name of any parkour can contain only lowercase and uppercase letters, numbers, underscore sign (_) and dash sign (-).\n" +
 						"Sample command execution: &b/parkour create &3fancy_parkour";
 			case 5:
-				return "&dCool, our parkour region is set up. Now Make a &lWorldEdit&r&d selection of the parkour spawn region and execute &b/parkour setSpawn &3<name>&d.\n" +
+				return "&dCool, our parkour region is set up. Now make another &lWorldEdit&r&d selection, select the parkour spawn region and execute &b/parkour setSpawn &3<name>&d.\n" +
 						"&dNote: &nA parkour player will spawn in the&l center&r&d&n of the region you selected&r&d.\n" +
 						"&dNote: &nThe direction you are looking will be also saved and applied to players after teleporting to this region&r&d.\n" +
 						"Sample command execution: &b/parkour setSpawn &3fancy_parkour";
