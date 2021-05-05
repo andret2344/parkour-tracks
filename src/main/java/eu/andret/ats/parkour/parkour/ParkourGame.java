@@ -169,10 +169,10 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 	@Override
 	public int compareTo(@NotNull final ParkourGame parkourGame) {
 		if (running && !parkourGame.running) {
-			return 1;
+			return -1;
 		}
 		if (!running && parkourGame.running) {
-			return -1;
+			return 1;
 		}
 		if (options.difficulty != parkourGame.options.difficulty) {
 			return options.difficulty - parkourGame.options.difficulty;

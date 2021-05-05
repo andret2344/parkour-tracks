@@ -41,7 +41,6 @@ import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
@@ -362,9 +361,6 @@ public class ParkourListeners implements Listener {
 
 	@EventHandler
 	public void parkourTeleportBlockClick(final PlayerInteractEvent event) {
-		if (event.getAction().equals(Action.PHYSICAL)) {
-			return;
-		}
 		if (event.getClickedBlock() == null) {
 			return;
 		}
