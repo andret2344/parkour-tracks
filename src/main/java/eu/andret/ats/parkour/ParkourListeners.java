@@ -24,6 +24,7 @@ import eu.andret.ats.parkour.region.DirectionalRegion;
 import eu.andret.ats.parkour.tasks.counter.ParkourCountdown;
 import eu.andret.ats.parkour.tasks.counter.TimeCounter;
 import eu.andret.ats.parkour.tasks.database.FetchAndInsertDataTask;
+import eu.andret.ats.parkour.util.Constants;
 import eu.andret.ats.parkour.util.Data;
 import eu.andret.ats.parkour.util.M;
 import lombok.Value;
@@ -237,9 +238,9 @@ public class ParkourListeners implements Listener {
 					final Map<UUID, Integer> timeCounter = plugin.getTimeCounter();
 					plugin.getServer().getScheduler().cancelTask(timeCounter.get(uniqueId));
 					timeCounter.remove(uniqueId);
-					player.sendMessage(plugin.msg("teleportingTime").replace("%SECONDS%", "5"));
+					player.sendMessage(plugin.msg("teleportingTime").replace(Constants.SECONDS, "5"));
 				},
-				i -> player.sendMessage(plugin.msg("counting").replace("%NUMBER%", String.valueOf(i))),
+				i -> player.sendMessage(plugin.msg("counting").replace(Constants.NUMBER, String.valueOf(i))),
 				() -> {
 					final Map<UUID, Integer> teleportCountdown = plugin.getTeleportCountdown();
 					plugin.getServer().getScheduler().cancelTask(teleportCountdown.get(uniqueId));
@@ -253,14 +254,14 @@ public class ParkourListeners implements Listener {
 		if (!parkourGame.getOptions().isSavingResults()) {
 			return;
 		}
-		player.sendMessage(plugin.msg("finishTime").replace("%PERSONAL_TIME%", plugin.formatTime(duration)));
+		player.sendMessage(plugin.msg("finishTime").replace(Constants.PERSONAL_TIME, plugin.formatTime(duration)));
 		if (player.hasPermission("ats.parkour.ignoreRecords")) {
 			player.sendMessage("Your time hasn't been saved to database");
 			return;
 		}
 		plugin.getConnection()
 				.map(connection -> new FetchAndInsertDataTask(connection, parkourGame, player.getUniqueId(), duration, (previousCount, previousPlayerBest, previousParkourBest) -> {
-					player.sendMessage(plugin.msg("howMany").replace("%COUNT%", String.valueOf(previousCount + 1)));
+					player.sendMessage(plugin.msg("howMany").replace(Constants.COUNT, String.valueOf(previousCount + 1)));
 					if (previousParkourBest > duration) {
 						player.sendMessage(plugin.msg("newParkourBestTime"));
 						plugin.updateSyncSign(new ParkourRecord(player.getUniqueId(), parkourGame, duration));
@@ -273,12 +274,12 @@ public class ParkourListeners implements Listener {
 					if (result.getMedal() == null || result.getMedal().equals(previousResult.getMedal())) {
 						return;
 					}
-					player.sendMessage(plugin.msg("achieveMedal").replace("%MEDAL%", result.getMedal().getDisplayName()));
+					player.sendMessage(plugin.msg("achieveMedal").replace(Constants.MEDAL, result.getMedal().getDisplayName()));
 					plugin.getFinancialProvider().ifPresent(financialProvider -> {
 						final double finalReward = result.getReward() - previousResult.getReward();
 						if (finalReward > 0) {
 							financialProvider.addMoney(player, finalReward);
-							player.sendMessage(plugin.msg("reward").replace("%REWARD%", String.valueOf(finalReward)));
+							player.sendMessage(plugin.msg("reward").replace(Constants.REWARD, String.valueOf(finalReward)));
 						}
 					});
 				}))
@@ -400,7 +401,7 @@ public class ParkourListeners implements Listener {
 		parkourGame.getEffects().entrySet().stream()
 				.map(entry -> new PotionEffect(entry.getKey(), 99999999, entry.getValue()))
 				.forEach(player::addPotionEffect);
-		player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("joinParkour").replace("%PARKOUR%", parkourGame.getDisplayName())));
+		player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("joinParkour").replace(Constants.NAME, parkourGame.getDisplayName())));
 	}
 
 	@EventHandler
