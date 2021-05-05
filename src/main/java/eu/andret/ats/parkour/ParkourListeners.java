@@ -535,7 +535,6 @@ public class ParkourListeners implements Listener {
 				.stream()
 				.filter(player -> !player.isIgnoring())
 				.forEach(parkourManager::teleportToLobby);
-		parkourManager.sortGames();
 	}
 
 	@EventHandler
@@ -545,7 +544,6 @@ public class ParkourListeners implements Listener {
 				.filter(player -> !plugin.getPlayerManager().getParkourPlayer(player).isIgnoring())
 				.filter(player -> parkourManager.inAnyRegion(event.getGame(), player))
 				.forEach(parkourManager::teleportToLobby);
-		parkourManager.sortGames();
 	}
 
 	@EventHandler(priority = EventPriority.LOW)
