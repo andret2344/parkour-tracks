@@ -94,7 +94,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		final Location location = plugin.getParkourManager().getLobbyLocation();
 		if (location == null) {
 			executeTutorial(player, 0);
-			return "No lobby!";
+			return plugin.msg(M.Error.DEFAULT.noLobby);
 		}
 		plugin.getParkourManager().teleportToLobby(player);
 		if (plugin.getTutorialManager().hasPlayer(player)) {
@@ -140,17 +140,13 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (sender instanceof Player) {
 			executeTutorial((Player) sender, 11);
 		}
-		for (final ParkourGame parkourGame : allGames) {
-			final String running;
-			if (parkourGame.isRunning()) {
-				running = ChatColor.GREEN + "" + ChatColor.ITALIC + "[Started]";
-			} else {
-				running = ChatColor.RED + "" + ChatColor.ITALIC + "[Stopped]";
-			}
-			sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.List.GAMES.item)
-					.replace(Constants.NAME, parkourGame.getName())
-					.replace(Constants.RUNNING, running)));
-		}
+		allGames.stream()
+				.map(parkourGame -> plugin.msg(M.List.GAMES.item)
+						.replace(Constants.NAME, parkourGame.getName())
+						.replace(Constants.DISPLAY_NAME, parkourGame.getDisplayName())
+						.replace(Constants.RUNNING, plugin.misc(parkourGame.isRunning() ? "suffix-started" : "suffix-stopped")))
+				.map(text -> ChatColor.translateAlternateColorCodes('&', text))
+				.forEach(sender::sendMessage);
 		return null;
 	}
 
@@ -757,7 +753,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Error.DEFAULT.negativeNumber);
 		}
 		parkourGame.getOptions().setFee(fee);
-		return plugin.msg(M.Option.FEE.set).replace(Constants.VALUE, String.valueOf(fee));
+		return plugin.msg(M.Option.FEE.set).replace(Constants.VALUE, plugin.formatMoney(fee));
 	}
 
 	@Argument(permission = "ats.parkour.fee", description = "Shows value of parkour entrance fee")
@@ -933,6 +929,9 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 						tutorialPlayer.done(7, false);
 						tutorialPlayer.next().next().sendMessage();
 					});
+		}
+		if (option.equals(MedalSetupOption.REWARD)) {
+			executeTutorial(player, 8, false);
 		}
 		if (option.equals(MedalSetupOption.REWARD)) {
 			executeTutorial(player, 8, false);

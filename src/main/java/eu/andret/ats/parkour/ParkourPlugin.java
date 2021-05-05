@@ -193,6 +193,15 @@ public final class ParkourPlugin extends JavaPlugin {
 	}
 
 	@NotNull
+	public String misc(@NotNull final String name) {
+		return Optional.of(name)
+				.map(text -> "misc." + text)
+				.map(commands::getString)
+				.map(text -> ChatColor.translateAlternateColorCodes('&', text))
+				.orElse("");
+	}
+
+	@NotNull
 	public Optional<Connection> getConnection() {
 		return Optional.ofNullable(connection);
 	}
@@ -264,6 +273,18 @@ public final class ParkourPlugin extends JavaPlugin {
 	public boolean isEditLockActive() {
 		return getConfig().getBoolean("edit-lock", true);
 	}
+
+	@NotNull
+	public Optional<FinancialProvider> getFinancialProvider() {
+		return Optional.ofNullable(financialProvider);
+	}
+
+	@NotNull
+	public Optional<RankProvider> getRankProvider() {
+		return Optional.ofNullable(rankProvider);
+	}
+
+	// =============== PRIVATE =============== //
 
 	@NotNull
 	private List<ParkourMedal> loadMedals() {
@@ -445,16 +466,6 @@ public final class ParkourPlugin extends JavaPlugin {
 		}
 	}
 
-	@NotNull
-	public Optional<FinancialProvider> getFinancialProvider() {
-		return Optional.ofNullable(financialProvider);
-	}
-
-	@NotNull
-	public Optional<RankProvider> getRankProvider() {
-		return Optional.ofNullable(rankProvider);
-	}
-
 	private void generate() {
 		helpDescription.put("help|?", msg(M.List.HELP.helpMessage));
 		helpDescription.put("lobby", msg(M.General.LOBBY.helpMessage));
@@ -462,7 +473,7 @@ public final class ParkourPlugin extends JavaPlugin {
 		helpDescription.put("remove", msg(M.Executive.REMOVE.helpMessage));
 		helpDescription.put("rename", msg(M.Executive.RENAME.helpMessage));
 		helpDescription.put("info", msg(M.Executive.INFO.helpMessage));
-		helpDescription.put("setSpawns", msg(M.Executive.SPAWN.helpMessage));
+		helpDescription.put("setSpawn", msg(M.Executive.SPAWN.helpMessage));
 		helpDescription.put("recreate", msg(M.Executive.RECREATE.helpMessage));
 		helpDescription.put("start", msg(M.Executive.START.helpMessage));
 		helpDescription.put("stop", msg(M.Executive.STOP.helpMessage));
@@ -490,7 +501,7 @@ public final class ParkourPlugin extends JavaPlugin {
 		helpDescription.put("type", msg(M.Option.TYPE.helpMessage));
 		helpDescription.put("displayName", msg(M.Parkour.DISPLAY_NAME.helpMessage));
 		helpDescription.put("authors", msg(M.Parkour.AUTHORS.helpMessage));
-		helpDescription.put("vip", msg(M.Option.VIP_ONLY.helpMessage));
+		helpDescription.put("vipOnly", msg(M.Option.VIP_ONLY.helpMessage));
 		helpDescription.put(MEDAL, msg(M.Option.MEDAL.helpMessage));
 	}
 
@@ -507,7 +518,7 @@ public final class ParkourPlugin extends JavaPlugin {
 
 	@NotNull
 	private String replace(@NotNull final String source) {
-		return source.replace("nick", Constants.PLACEHOLDER_NO_RECORD).replace(Constants.PERSONAL_TIME, formatTime(0));
+		return source.replace(Constants.NICK, Constants.PLACEHOLDER_NO_RECORD).replace(Constants.PERSONAL_TIME, formatTime(0));
 	}
 
 	@NotNull
