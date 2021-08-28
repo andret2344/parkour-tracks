@@ -1,5 +1,5 @@
 /*
- *  Copyright Andret (c) 2018-2021. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour;
@@ -340,30 +340,29 @@ public final class ParkourPlugin extends JavaPlugin {
 	}
 
 	private void setupCommand() {
-		final AnnotatedCommand command = CommandManager.registerCommand(ParkourCommand.class, this);
+		final AnnotatedCommand<ParkourPlugin> command = CommandManager.registerCommand(ParkourCommand.class, this);
 		command.setOnInsufficientPermissionsListener(sender -> sender.sendMessage(msg(M.Error.DEFAULT.insufficientPermissions)));
 		command.setOnUnknownSubCommandExecutionListener(sender -> sender.sendMessage(msg(M.Error.DEFAULT.invalidArgument)));
+		command.setOnMainCommandExecutionListener(sender -> sender.sendMessage(msg("main-command")));
 		command.getOptions().setAutoTranslateColors(true);
+		command.getOptions().setCaseSensitive(false);
 
-		command.addArgumentMapper("parkourGame", ParkourGame.class, parkourManager::getParkour, Fallback.ON_NULL);
-		command.addArgumentMapper("potion", PotionEffectType.class, PotionEffectType::getByName, Fallback.ON_NULL);
-		command.addArgumentMapper("color", DyeColor.class, DyeColor::valueOf, Fallback.ON_NULL);
-		command.addArgumentMapper(MEDAL, ParkourMedal.class, name -> medals.stream()
+		command.addTypeMapper(ParkourGame.class, parkourManager::getParkour, Fallback.ON_NULL);
+		command.addTypeMapper(PotionEffectType.class, PotionEffectType::getByName, Fallback.ON_NULL);
+		command.addEnumMapper(DyeColor.class, Fallback.ON_NULL);
+		command.addTypeMapper(ParkourMedal.class, name -> medals.stream()
 						.filter(medal -> medal.getName().equals(name))
 						.findAny()
 						.orElse(null),
 				Fallback.ON_NULL);
-		command.addArgumentMapper("option", MedalSetupOption.class, name -> MedalSetupOption.valueOf(name.toUpperCase()));
-		command.addArgumentMapper("simpleLever", SimpleLever.class, name -> SimpleLever.valueOf(name.toUpperCase()));
+		command.addEnumMapper(MedalSetupOption.class);
+		command.addEnumMapper(SimpleLever.class);
 
 		command.addTypeCompleter(ParkourGame.class, () -> parkourManager.getAllGames().stream()
 				.map(ParkourGame::getName)
 				.collect(Collectors.toList()));
 
-		command.addTypeCompleter(SimpleLever.class, Arrays.stream(SimpleLever.values())
-				.map(Enum::name)
-				.map(String::toLowerCase)
-				.collect(Collectors.toList()));
+		command.addEnumCompleter(SimpleLever.class);
 		command.addTypeCompleter(PotionEffectType.class, Data.ALLOWED_EFFECTS.stream()
 				.map(PotionEffectType::getName)
 				.collect(Collectors.toList()));
@@ -371,13 +370,8 @@ public final class ParkourPlugin extends JavaPlugin {
 				.map(ParkourMedal::getName)
 				.collect(Collectors.toList()));
 		command.addTypeCompleter(boolean.class, Arrays.asList(Boolean.FALSE.toString(), Boolean.TRUE.toString()));
-		command.addTypeCompleter(MedalSetupOption.class, Arrays.stream(MedalSetupOption.values())
-				.map(Enum::name)
-				.map(String::toLowerCase)
-				.collect(Collectors.toList()));
-		command.addTypeCompleter(DyeColor.class, Arrays.stream(DyeColor.values())
-				.map(Enum::name)
-				.collect(Collectors.toList()));
+		command.addEnumCompleter(MedalSetupOption.class);
+		command.addEnumCompleter(DyeColor.class);
 	}
 
 	private void setupDatabase() {
