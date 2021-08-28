@@ -7,7 +7,6 @@ package eu.andret.ats.parkour.sample;
 import eu.andret.arguments.AnnotatedCommandExecutor;
 import eu.andret.arguments.api.annotation.Argument;
 import eu.andret.arguments.api.annotation.BaseCommand;
-import eu.andret.arguments.api.annotation.Mapper;
 import eu.andret.arguments.api.entity.ExecutorType;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -38,12 +37,12 @@ public class ParkourPluginSampleCommand extends AnnotatedCommandExecutor<Parkour
 	}
 
 	@Argument(executorType = ExecutorType.PLAYER)
-	public String balance(@Mapper("interaction") final BalanceInteraction interaction, final int amount) {
+	public String balance(final BalanceInteraction interaction, final int amount) {
 		return balance(interaction, (double) amount);
 	}
 
 	@Argument(executorType = ExecutorType.PLAYER)
-	public String balance(@Mapper("interaction") final BalanceInteraction interaction, final double amount) {
+	public String balance(final BalanceInteraction interaction, final double amount) {
 		final Player player = (Player) sender;
 		switch (interaction) {
 			case ADD:
