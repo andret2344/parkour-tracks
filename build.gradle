@@ -10,8 +10,8 @@ buildscript {
 
 plugins {
 	id 'de.jansauer.printcoverage' version '2.0.0'
-	id 'com.github.johnrengelman.shadow' version '6.1.0'
-	id 'kr.entree.spigradle' version '2.2.3'
+	id 'com.github.johnrengelman.shadow' version '7.0.0'
+	id 'kr.entree.spigradle' version '2.2.4'
 	id 'io.franzbecker.gradle-lombok' version '4.0.0'
 }
 
@@ -115,6 +115,10 @@ spigot {
 test {
 	useJUnitPlatform()
 	finalizedBy jacocoTestCoverageVerification, printCoverage
+}
+
+jacoco {
+	toolVersion = '0.8.7'
 }
 
 jacocoTestReport {
