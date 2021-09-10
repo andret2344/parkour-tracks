@@ -2,17 +2,10 @@
  * Copyright Andret (c) 2018-2021. Copying and modifying allowed only keeping git link reference.
  */
 
-//import io.franzbecker.gradle.lombok.task.DelombokTask
-
-//buildscript {
-//	dependencies { classpath 'io.franzbecker:gradle-lombok:4.0.0' }
-//}
-
 plugins {
 	id 'de.jansauer.printcoverage' version '2.0.0'
 	id 'com.github.johnrengelman.shadow' version '7.0.0'
 	id 'kr.entree.spigradle' version '2.2.4'
-//	id 'io.franzbecker.gradle-lombok' version '4.0.0'
 }
 
 apply plugin: 'idea'
@@ -201,8 +194,17 @@ task delombok {
 	}
 	project.configurations.compileOnly.canBeResolved = true
 	ant.taskdef(classname: 'lombok.delombok.ant.Tasks$Delombok', classpath: configurations.compileOnly.asPath,  name: 'delombok')
-	ant.mkdir(dir: 'build/src-delomboked')
-	ant.delombok(verbose: 'true', encoding: 'UTF-8', to: 'build/src-delomboked', from: 'src/main/java')
+	ant.mkdir(dir: 'build/delombok')
+	ant.delombok(verbose: 'true', encoding: 'UTF-8', to: 'build/delombok', from: 'src/main/java')
+}
+
+sourceSets {
+	main {
+		java { srcDirs = [ 'build/delombok' ] }
+	}
+	test {
+		java { srcDirs += [ 'build/delombok' ] }
+	}
 }
 
 tasks.register('spigotVersion') {
