@@ -202,9 +202,6 @@ sourceSets {
 	main {
 		java { srcDirs = [ 'build/delombok' ] }
 	}
-	test {
-		java { srcDirs += [ 'build/delombok' ] }
-	}
 }
 
 tasks.register('spigotVersion') {
