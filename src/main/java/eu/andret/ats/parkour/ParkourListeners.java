@@ -17,6 +17,7 @@ import eu.andret.ats.parkour.event.player.PlayerJoinGameEvent;
 import eu.andret.ats.parkour.event.player.PlayerLeaveRegionEvent;
 import eu.andret.ats.parkour.event.player.PlayerQuitGameEvent;
 import eu.andret.ats.parkour.event.player.PlayerTeleportBackEvent;
+import eu.andret.ats.parkour.parkour.ParkourEffect;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourManager;
 import eu.andret.ats.parkour.parkour.ParkourRecord;
@@ -58,7 +59,6 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.potion.PotionEffect;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.json.JSONObject;
 
 import java.util.Map;
 import java.util.Objects;
@@ -359,8 +359,8 @@ public class ParkourListeners implements Listener {
 			plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, () ->
 					plugin.getGameItemMap().iterate(player.getInventory()::setItem), 2);
 		}
-		parkourGame.getEffects().entrySet().stream()
-				.map(entry -> new PotionEffect(entry.getKey(), 99999999, entry.getValue()))
+		parkourGame.getEffects().stream()
+				.map(entry -> new PotionEffect(entry.getEffectType(), 99999999, entry.getAmplifier()))
 				.forEach(player::addPotionEffect);
 		player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("joined-parkour")
 				.replace(Constants.NAME, parkourGame.getName())
@@ -464,7 +464,9 @@ public class ParkourListeners implements Listener {
 			plugin.getServer().getScheduler().cancelTask(plugin.getTeleportCountdown().get(uniqueId));
 			plugin.getTeleportCountdown().remove(uniqueId);
 		}
-		event.getGame().getEffects().keySet().forEach(player::removePotionEffect);
+		event.getGame().getEffects().stream()
+				.map(ParkourEffect::getEffectType)
+				.forEach(player::removePotionEffect);
 		plugin.getPlayerManager().remove(player);
 	}
 
@@ -475,7 +477,7 @@ public class ParkourListeners implements Listener {
 
 	@EventHandler
 	public void gameStart(final GameStartEvent event) {
-		final ParkourManager<JSONObject> parkourManager = plugin.getParkourManager();
+		final ParkourManager parkourManager = plugin.getParkourManager();
 		event.getGame().getWorld().getPlayers().stream()
 				.filter(player -> !plugin.getPlayerManager().getParkourPlayer(player).isIgnoring())
 				.filter(player -> parkourManager.inAnyRegion(event.getGame(), player))

@@ -7,6 +7,7 @@ package eu.andret.ats.parkour.parkour;
 import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.region.BasicRegion;
 import eu.andret.ats.parkour.region.DirectionalRegion;
+import eu.andret.ats.parkour.region.ParkourRegion;
 import lombok.Builder;
 import lombok.Data;
 import lombok.ToString;
@@ -14,14 +15,11 @@ import lombok.Value;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -34,18 +32,21 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 	@NotNull
 	private final List<DirectionalRegion> checkpoints = new ArrayList<>();
 	@NotNull
-	private final List<BasicRegion> walls = new ArrayList<>();
+	private final List<ParkourRegion> walls = new ArrayList<>();
 	@NotNull
 	private final Set<String> authors = new TreeSet<>();
 	@NotNull
-	private final List<ParkourPlayer> players = new ArrayList<>();
+	private final transient List<ParkourPlayer> players = new ArrayList<>();
 	@NotNull
-	private final Map<PotionEffectType, Integer> effects = new HashMap<>();
+	private final List<ParkourEffect> effects = new ArrayList<>();
 	@NotNull
-	private final Map<ParkourMedal, ParkourMedalData> medals = new HashMap<>();
+	private final List<ParkourMedalData> medals = new ArrayList<>();
 
 	@NotNull
 	private String name;
+	@NotNull
+	private String displayName;
+	private boolean running;
 	@NotNull
 	private World world;
 	@NotNull
@@ -56,9 +57,6 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 	private Location teleportBlock;
 	@Nullable
 	private DirectionalRegion spawn;
-	private boolean running;
-	@NotNull
-	private String displayName;
 
 	@NotNull
 	private Options options = Options.builder().build();
@@ -154,15 +152,14 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 		double smallest = Double.POSITIVE_INFINITY;
 		ParkourMedal medal = null;
 		double reward = 0;
-		for (final Map.Entry<ParkourMedal, ParkourMedalData> entry : medals.entrySet()) {
-			final ParkourMedalData parkourMedalData = entry.getValue();
+		for (final ParkourMedalData parkourMedalData : medals) {
 			if (parkourMedalData.getTime() < time) {
 				continue;
 			}
 			reward += parkourMedalData.getReward();
 			if (parkourMedalData.getTime() < smallest) {
 				smallest = parkourMedalData.getTime();
-				medal = entry.getKey();
+				medal = parkourMedalData.getMedal();
 			}
 		}
 		return new Result(medal, reward);

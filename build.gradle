@@ -24,13 +24,17 @@ repositories {
 }
 
 dependencies {
-	compileOnly group: 'org.spigotmc', name: 'spigot-api', version: "${spigotVersion}-R0.1-SNAPSHOT"
+	compileOnly(group: 'org.spigotmc', name: 'spigot-api', version: "${spigotVersion}-R0.1-SNAPSHOT") {
+		exclude group: 'com.google.code.gson', module: 'gson'
+	}
 	compileOnly group: 'org.projectlombok', name: 'lombok', version: lombokVersion
 	compileOnly group: 'org.jetbrains', name: 'annotations', version: '20.1.0'
-	compileOnly group: 'com.sk89q.worldedit', name: 'worldedit-bukkit', version: '7.2.3'
+	compileOnly(group: 'com.sk89q.worldedit', name: 'worldedit-bukkit', version: '7.2.3') {
+		exclude group: 'com.google.code.gson', module: 'gson'
+	}
 	implementation group: 'eu.andret', name: 'ats-arguments', version: argumentsVersion
 	implementation group: 'org.bstats', name: 'bstats-bukkit', version: '2.2.1'
-	implementation group: 'org.json', name: 'json', version: '20210307'
+	implementation group: 'com.google.code.gson', name: 'gson', version: '2.8.8'
 	annotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
 
 	testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.7.0'
@@ -142,7 +146,7 @@ javadoc {
 
 task sourceJar(type: Jar) {
 	archiveClassifier.set('sources')
-	from sourceSets.main.allJava
+	from file('build/delombok')
 }
 
 task packageJavadoc(type: Jar) {
@@ -178,10 +182,14 @@ publishing {
 }
 
 shadowJar {
+	dependencies {
+		exclude(dependency('com.google.code.gson:gson:2.8.0'))
+	}
 	archiveFileName = "${project.name}-${project.version}.jar"
 	relocate 'org.json', 'eu.andret.ats.parkour.json'
 	relocate 'eu.andret.arguments', 'eu.andret.ats.parkour.arguments'
 	relocate 'org.bstats', 'eu.andret.ats.parkour.bstats'
+	relocate 'com.google.gson', 'eu.andret.ats.parkour.gson'
 	project.configurations.implementation.canBeResolved = true
 	configurations = [project.configurations.implementation]
 }
@@ -193,15 +201,9 @@ task delombok {
 		compileOnly group: 'it.unimi.dsi', name: 'fastutil', version: '8.2.1'
 	}
 	project.configurations.compileOnly.canBeResolved = true
-	ant.taskdef(classname: 'lombok.delombok.ant.Tasks$Delombok', classpath: configurations.compileOnly.asPath,  name: 'delombok')
+	ant.taskdef(classname: 'lombok.delombok.ant.Tasks$Delombok', classpath: configurations.compileOnly.asPath, name: 'delombok')
 	ant.mkdir(dir: 'build/delombok')
 	ant.delombok(verbose: 'true', encoding: 'UTF-8', to: 'build/delombok', from: 'src/main/java')
-}
-
-sourceSets {
-	main {
-		java { srcDirs = [ 'build/delombok' ] }
-	}
 }
 
 tasks.register('spigotVersion') {
