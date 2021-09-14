@@ -11,17 +11,25 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
-import org.bukkit.Bukkit;
+import eu.andret.ats.parkour.ParkourPlugin;
+import lombok.AllArgsConstructor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Type;
 
+@AllArgsConstructor
 public class LocationAdapter implements JsonSerializer<Location>, JsonDeserializer<Location> {
+	@NotNull
+	private final ParkourPlugin plugin;
+
 	@NotNull
 	@Override
 	public JsonElement serialize(@NotNull final Location src, @NotNull final Type typeOfSrc, @NotNull final JsonSerializationContext context) {
+		if (src.getWorld() == null) {
+			return new JsonObject();
+		}
 		final JsonObject jsonObject = new JsonObject();
 		jsonObject.addProperty("world", src.getWorld().getName());
 		jsonObject.addProperty("x", src.getX());
@@ -36,7 +44,7 @@ public class LocationAdapter implements JsonSerializer<Location>, JsonDeserializ
 	@Override
 	public Location deserialize(@NotNull final JsonElement json, @NotNull final Type typeOfT, @NotNull final JsonDeserializationContext context) throws JsonParseException {
 		final JsonObject jsonObject = json.getAsJsonObject();
-		final World world = Bukkit.getServer().getWorld(jsonObject.get("world").getAsString());
+		final World world = plugin.getServer().getWorld(jsonObject.get("world").getAsString());
 		final float x = jsonObject.get("x").getAsFloat();
 		final float y = jsonObject.get("y").getAsFloat();
 		final float z = jsonObject.get("z").getAsFloat();

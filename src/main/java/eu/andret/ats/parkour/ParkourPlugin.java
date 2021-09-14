@@ -134,7 +134,7 @@ public final class ParkourPlugin extends JavaPlugin {
 	private final Gson gson = new GsonBuilder()
 			.registerTypeHierarchyAdapter(PotionEffectType.class, new PotionEffectTypeAdapter())
 			.registerTypeHierarchyAdapter(World.class, new WorldAdapter(this))
-			.registerTypeHierarchyAdapter(Location.class, new LocationAdapter())
+			.registerTypeHierarchyAdapter(Location.class, new LocationAdapter(this))
 			.registerTypeHierarchyAdapter(ParkourMedal.class, new MedalAdapter(this))
 			.registerTypeAdapter(ParkourGame.class, new ParkourGameCreator(this))
 			.setPrettyPrinting()
