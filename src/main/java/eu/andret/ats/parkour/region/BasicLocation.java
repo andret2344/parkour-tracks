@@ -7,8 +7,6 @@ package eu.andret.ats.parkour.region;
 import com.sk89q.worldedit.math.BlockVector3;
 import lombok.AllArgsConstructor;
 import lombok.Value;
-import org.bukkit.Location;
-import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
 
 @Value
@@ -21,17 +19,7 @@ public class BasicLocation {
 	public BasicLocation(@NotNull final BlockVector3 vector) {
 		this(vector.getX(), vector.getY(), vector.getZ());
 	}
-
-	@NotNull
-	public Location toLocation(final World world) {
-		return new Location(world, x, y, z);
-	}
-
-	@NotNull
-	public Location toLocation() {
-		return toLocation(null);
-	}
-
+	
 	@NotNull
 	public BlockVector3 toBlockVector3() {
 		return BlockVector3.at(x, y, z);
