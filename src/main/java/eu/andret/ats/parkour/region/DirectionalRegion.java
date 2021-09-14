@@ -20,13 +20,13 @@ public class DirectionalRegion extends ParkourRegion {
 	double yaw;
 	double pitch;
 
-	public DirectionalRegion(@NotNull final ParkourLocation pos1, @NotNull final ParkourLocation pos2, @NotNull final ParkourGame parkourGame, final double yaw, final double pitch) {
+	public DirectionalRegion(@NotNull final BasicLocation pos1, @NotNull final BasicLocation pos2, @NotNull final ParkourGame parkourGame, final double yaw, final double pitch) {
 		super(pos1, pos2, parkourGame);
 		this.yaw = yaw;
 		this.pitch = pitch;
 	}
 
-	public DirectionalRegion(final CuboidRegion cuboidRegion, final @NotNull ParkourGame parkourGame, final double yaw, final double pitch) {
-		this(new ParkourLocation(cuboidRegion.getPos1()), new ParkourLocation(cuboidRegion.getPos2()), parkourGame, yaw, pitch);
+	public DirectionalRegion(@NotNull final CuboidRegion cuboidRegion, @NotNull final ParkourGame parkourGame, final double yaw, final double pitch) {
+		this(new BasicLocation(cuboidRegion.getPos1()), new BasicLocation(cuboidRegion.getPos2()), parkourGame, yaw, pitch);
 	}
 }

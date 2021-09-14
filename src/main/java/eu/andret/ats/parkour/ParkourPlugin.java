@@ -6,6 +6,7 @@ package eu.andret.ats.parkour;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.stream.JsonWriter;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import eu.andret.arguments.AnnotatedCommand;
 import eu.andret.arguments.CommandManager;
@@ -447,9 +448,10 @@ public final class ParkourPlugin extends JavaPlugin {
 				getLogger().severe("An error occurred when trying to create parkour setting file");
 				return;
 			}
-			final PrintWriter printWriter = new PrintWriter(target);
-			printWriter.write(gson.toJson(parkourManager.getSetting()));
-			printWriter.close();
+			final JsonWriter jsonWriter = gson.newJsonWriter(new PrintWriter(target));
+			jsonWriter.setIndent("    ");
+			gson.toJson(parkourManager.getSetting(), ParkourManager.ParkourSetting.class, jsonWriter);
+			jsonWriter.close();
 			getLogger().info("Successfully saved parkour setting");
 		} catch (final IOException ex) {
 			getLogger().severe("An error occurred when trying to save parkour setting");

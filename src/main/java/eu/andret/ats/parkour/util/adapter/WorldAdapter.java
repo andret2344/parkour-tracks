@@ -23,13 +23,14 @@ public class WorldAdapter implements JsonSerializer<World>, JsonDeserializer<Wor
 	@NotNull
 	private final ParkourPlugin plugin;
 
+	@NotNull
 	@Override
-	public JsonElement serialize(final World world, final Type typeOfSrc, final JsonSerializationContext context) {
+	public JsonElement serialize(@NotNull final World world, @NotNull final Type typeOfSrc, @NotNull final JsonSerializationContext context) {
 		return new JsonPrimitive(world.getName());
 	}
 
 	@Override
-	public World deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
+	public World deserialize(@NotNull final JsonElement json, @NotNull final Type typeOfT, @NotNull final JsonDeserializationContext context) throws JsonParseException {
 		return plugin.getServer().getWorld(json.getAsString());
 	}
 }

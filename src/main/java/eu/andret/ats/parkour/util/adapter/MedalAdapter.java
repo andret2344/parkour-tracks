@@ -23,13 +23,14 @@ public class MedalAdapter implements JsonSerializer<ParkourMedal>, JsonDeseriali
 	@NotNull
 	private final ParkourPlugin plugin;
 
+	@NotNull
 	@Override
-	public JsonElement serialize(final ParkourMedal src, final Type typeOfSrc, final JsonSerializationContext context) {
+	public JsonElement serialize(@NotNull final ParkourMedal src, @NotNull final Type typeOfSrc, @NotNull final JsonSerializationContext context) {
 		return new JsonPrimitive(src.getName());
 	}
 
 	@Override
-	public ParkourMedal deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
+	public ParkourMedal deserialize(@NotNull final JsonElement json, @NotNull final Type typeOfT, @NotNull final JsonDeserializationContext context) throws JsonParseException {
 		return plugin.getMedals().stream()
 				.filter(medal -> medal.getName().equals(json.getAsString()))
 				.findAny()

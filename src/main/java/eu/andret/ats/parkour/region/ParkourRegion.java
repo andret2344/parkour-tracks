@@ -19,15 +19,15 @@ import org.jetbrains.annotations.NotNull;
 @EqualsAndHashCode(callSuper = true)
 public class ParkourRegion extends BasicRegion {
 	@NotNull
-	transient ParkourGame parkourGame;
+	ParkourGame parkourGame;
 
-	public ParkourRegion(@NotNull final ParkourLocation pos1, @NotNull final ParkourLocation pos2, @NotNull final ParkourGame parkourGame) {
+	public ParkourRegion(@NotNull final BasicLocation pos1, @NotNull final BasicLocation pos2, @NotNull final ParkourGame parkourGame) {
 		super(pos1, pos2);
 		this.parkourGame = parkourGame;
 	}
 
-	public ParkourRegion(final CuboidRegion cuboidRegion, @NotNull final ParkourGame parkourGame) {
-		this(new ParkourLocation(cuboidRegion.getPos1()), new ParkourLocation(cuboidRegion.getPos2()), parkourGame);
+	public ParkourRegion(@NotNull final CuboidRegion cuboidRegion, @NotNull final ParkourGame parkourGame) {
+		this(new BasicLocation(cuboidRegion.getPos1()), new BasicLocation(cuboidRegion.getPos2()), parkourGame);
 	}
 
 	public Location getCenter() {

@@ -14,12 +14,14 @@ import com.google.gson.JsonSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Type;
 
 public class LocationAdapter implements JsonSerializer<Location>, JsonDeserializer<Location> {
+	@NotNull
 	@Override
-	public JsonElement serialize(final Location src, final Type typeOfSrc, final JsonSerializationContext context) {
+	public JsonElement serialize(@NotNull final Location src, @NotNull final Type typeOfSrc, @NotNull final JsonSerializationContext context) {
 		final JsonObject jsonObject = new JsonObject();
 		jsonObject.addProperty("world", src.getWorld().getName());
 		jsonObject.addProperty("x", src.getX());
@@ -30,8 +32,9 @@ public class LocationAdapter implements JsonSerializer<Location>, JsonDeserializ
 		return jsonObject;
 	}
 
+	@NotNull
 	@Override
-	public Location deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
+	public Location deserialize(@NotNull final JsonElement json, @NotNull final Type typeOfT, @NotNull final JsonDeserializationContext context) throws JsonParseException {
 		final JsonObject jsonObject = json.getAsJsonObject();
 		final World world = Bukkit.getServer().getWorld(jsonObject.get("world").getAsString());
 		final float x = jsonObject.get("x").getAsFloat();
