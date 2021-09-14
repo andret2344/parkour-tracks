@@ -26,8 +26,7 @@ import eu.andret.ats.parkour.parkour.ParkourMedalData;
 import eu.andret.ats.parkour.parkour.ParkourRecord;
 import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.region.BasicRegion;
-import eu.andret.ats.parkour.region.DirectionalRegion;
-import eu.andret.ats.parkour.region.ParkourRegion;
+import eu.andret.ats.parkour.region.LocatedRegion;
 import eu.andret.ats.parkour.tasks.database.FetchParkourBestRecordTask;
 import eu.andret.ats.parkour.tutorial.TutorialManager;
 import eu.andret.ats.parkour.tutorial.TutorialPlayer;
@@ -314,7 +313,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (region == null) {
 			return plugin.msg(M.Error.DEFAULT.invalidSelection);
 		}
-		parkourGame.setRegion(new ParkourRegion(region, parkourGame));
+		parkourGame.setRegion(new BasicRegion(region));
 		return plugin.msg(M.Executive.RECREATE.success);
 	}
 
@@ -376,7 +375,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		}
 		executeTutorial(player, 5);
 		final Location location = (player).getLocation();
-		parkourGame.setSpawn(new DirectionalRegion(region, parkourGame, location.getYaw(), location.getPitch()));
+		parkourGame.setSpawn(new LocatedRegion(region, location));
 		return plugin.msg(M.Executive.SPAWN.success);
 	}
 
@@ -400,7 +399,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		}
 		executeTutorial(player, 6, false);
 		final Location location = player.getLocation();
-		parkourGame.getCheckpoints().add(new DirectionalRegion(region, parkourGame, location.getYaw(), location.getPitch()));
+		parkourGame.getCheckpoints().add(new LocatedRegion(region, location));
 		return plugin.msg(M.Region.Checkpoint.ADD.success)
 				.replace(Constants.ID, String.valueOf(parkourGame.getCheckpoints().size()));
 	}
@@ -427,7 +426,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Error.DEFAULT.tooLargeNumber);
 		}
 		final Location location = player.getLocation();
-		parkourGame.getCheckpoints().set(id - 1, new DirectionalRegion(region, parkourGame, location.getYaw(), location.getPitch()));
+		parkourGame.getCheckpoints().set(id - 1, new LocatedRegion(region, location));
 		executeTutorial(player, 6, false);
 		return plugin.msg(M.Region.Checkpoint.SET.success)
 				.replace(Constants.ID, String.valueOf(id));
@@ -448,7 +447,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (region == null) {
 			return plugin.msg(M.Error.DEFAULT.invalidSelection);
 		}
-		parkourGame.getWalls().add(new ParkourRegion(region, parkourGame));
+		parkourGame.getWalls().add(new BasicRegion(region));
 		executeTutorial(player, 9, false);
 		return plugin.msg(M.Region.Wall.ADD.success)
 				.replace(Constants.ID, String.valueOf(parkourGame.getWalls().size()));
@@ -475,7 +474,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (id > parkourGame.getWalls().size()) {
 			return plugin.msg(M.Error.DEFAULT.tooLargeNumber);
 		}
-		parkourGame.getWalls().set(id - 1, new ParkourRegion(region, parkourGame));
+		parkourGame.getWalls().set(id - 1, new BasicRegion(region));
 		executeTutorial(player, 9, false);
 		return plugin.msg(M.Region.Wall.SET.success)
 				.replace(Constants.ID, String.valueOf(id));

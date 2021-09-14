@@ -22,7 +22,7 @@ import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourManager;
 import eu.andret.ats.parkour.parkour.ParkourRecord;
 import eu.andret.ats.parkour.player.ParkourPlayer;
-import eu.andret.ats.parkour.region.DirectionalRegion;
+import eu.andret.ats.parkour.region.LocatedRegion;
 import eu.andret.ats.parkour.tasks.counter.ParkourCountdown;
 import eu.andret.ats.parkour.tasks.counter.TimeCounter;
 import eu.andret.ats.parkour.tasks.database.FetchAndInsertDataTask;
@@ -121,7 +121,7 @@ public class ParkourListeners implements Listener {
 				.filter(region -> region.contains(player.getLocation()))
 				.findAny()
 				.ifPresent(directionalRegion -> {
-					final DirectionalRegion region = parkour.getOptions().isAlwaysSpawn() ? parkour.getSpawn() : parkour.getCheckpoints().get(lastVisitedCheckpointId);
+					final LocatedRegion region = parkour.getOptions().isAlwaysSpawn() ? parkour.getSpawn() : parkour.getCheckpoints().get(lastVisitedCheckpointId);
 					if (region == null) {
 						return;
 					}
@@ -289,7 +289,7 @@ public class ParkourListeners implements Listener {
 	public void wall(final PlayerHitWallEvent event) {
 		final ParkourPlayer parkourPlayer = event.getPlayer();
 		final ParkourGame parkourGame = event.getGame();
-		final DirectionalRegion region;
+		final LocatedRegion region;
 		final int lastCheckpoint = parkourPlayer.getLastCheckpoint();
 		if (parkourGame.getOptions().isAlwaysSpawn() || lastCheckpoint == -1) {
 			region = parkourGame.getSpawn();
@@ -604,11 +604,11 @@ public class ParkourListeners implements Listener {
 			if (parkourGame.getWalls().contains(region)) {
 				pluginManager.callEvent(new PlayerHitWallEvent(parkourGame, parkourPlayer, region));
 			}
-			if (!(region instanceof DirectionalRegion)) {
+			if (!(region instanceof LocatedRegion)) {
 				return;
 			}
 			if (parkourGame.getCheckpoints().contains(region)) {
-				pluginManager.callEvent(new PlayerAchieveCheckpointEvent(parkourGame, parkourPlayer, (DirectionalRegion) region));
+				pluginManager.callEvent(new PlayerAchieveCheckpointEvent(parkourGame, parkourPlayer, (LocatedRegion) region));
 			}
 			if (Objects.equals(parkourGame.getSpawn(), region)) {
 				pluginManager.callEvent(new PlayerEnterSpawnEvent(parkourGame, parkourPlayer));

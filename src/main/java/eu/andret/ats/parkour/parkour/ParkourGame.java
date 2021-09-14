@@ -6,8 +6,7 @@ package eu.andret.ats.parkour.parkour;
 
 import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.region.BasicRegion;
-import eu.andret.ats.parkour.region.DirectionalRegion;
-import eu.andret.ats.parkour.region.ParkourRegion;
+import eu.andret.ats.parkour.region.LocatedRegion;
 import lombok.Builder;
 import lombok.Data;
 import lombok.ToString;
@@ -30,9 +29,9 @@ import java.util.stream.Collectors;
 @ToString
 public abstract class ParkourGame implements Comparable<ParkourGame> {
 	@NotNull
-	private final List<DirectionalRegion> checkpoints = new ArrayList<>();
+	private final List<LocatedRegion> checkpoints = new ArrayList<>();
 	@NotNull
-	private final List<ParkourRegion> walls = new ArrayList<>();
+	private final List<BasicRegion> walls = new ArrayList<>();
 	@NotNull
 	private final Set<String> authors = new TreeSet<>();
 	@NotNull
@@ -56,7 +55,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 	@Nullable
 	private Location teleportBlock;
 	@Nullable
-	private DirectionalRegion spawn;
+	private LocatedRegion spawn;
 
 	@NotNull
 	private Options options = Options.builder().build();
