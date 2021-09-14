@@ -56,7 +56,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -171,11 +170,12 @@ public final class ParkourPlugin extends JavaPlugin {
 				final String name = String.format("backup_%02d%02d%02d_%02d%02d%02d.json", now.getYear(), now.getMonth().getValue(), now.getDayOfMonth(), now.getHour(), now.getMinute(), now.getSecond());
 				final File target = new File(backups.getPath(), name);
 				try {
-					final PrintWriter printWriter = new PrintWriter(target);
-					printWriter.write(gson.toJson(parkourManager.getSetting()));
-					printWriter.close();
+					final JsonWriter jsonWriter = gson.newJsonWriter(new PrintWriter(target));
+					jsonWriter.setIndent("\t");
+					gson.toJson(parkourManager.getSetting(), ParkourManager.ParkourSetting.class, jsonWriter);
+					jsonWriter.close();
 					getLogger().info("Successfully created \"backups/" + name + "\" file!");
-				} catch (final FileNotFoundException ex) {
+				} catch (final IOException ex) {
 					getLogger().severe("An error occurred when trying to backup parkours!");
 					ex.printStackTrace();
 				}

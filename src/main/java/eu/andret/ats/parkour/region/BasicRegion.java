@@ -22,12 +22,12 @@ import java.util.Optional;
 @AllArgsConstructor
 public class BasicRegion {
 	@NotNull
-	protected BasicLocation pos1;
+	protected BlockVector3 pos1;
 	@NotNull
-	protected BasicLocation pos2;
+	protected BlockVector3 pos2;
 
 	public BasicRegion(@NotNull final CuboidRegion cuboidRegion) {
-		this(new BasicLocation(cuboidRegion.getPos1()), new BasicLocation(cuboidRegion.getPos2()));
+		this(cuboidRegion.getPos1(), cuboidRegion.getPos2());
 	}
 
 	public boolean contains(@Nullable final Location location) {
@@ -52,6 +52,6 @@ public class BasicRegion {
 
 	@NotNull
 	public CuboidRegion toCuboidRegion() {
-		return new CuboidRegion(pos1.toBlockVector3(), pos2.toBlockVector3());
+		return new CuboidRegion(pos1, pos2);
 	}
 }

@@ -5,8 +5,8 @@
 package eu.andret.ats.parkour.parkour;
 
 import com.google.gson.InstanceCreator;
+import com.sk89q.worldedit.math.BlockVector3;
 import eu.andret.ats.parkour.ParkourPlugin;
-import eu.andret.ats.parkour.region.BasicLocation;
 import eu.andret.ats.parkour.region.BasicRegion;
 import lombok.AllArgsConstructor;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +24,7 @@ public class ParkourGameCreator implements InstanceCreator<ParkourGame> {
 		// Random data just to create the instance, it will be overwritten during deserialization
 		return new Parkour(
 				"",
-				new BasicRegion(new BasicLocation(0, 0, 0), new BasicLocation(0, 0, 0)),
+				new BasicRegion(BlockVector3.ZERO, BlockVector3.ZERO),
 				plugin.getServer().getWorlds().get(0));
 	}
 }

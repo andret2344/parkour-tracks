@@ -4,6 +4,7 @@
 
 package eu.andret.ats.parkour.region;
 
+import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -19,12 +20,12 @@ import org.jetbrains.annotations.NotNull;
 public class LocatedRegion extends BasicRegion {
 	Location location;
 
-	public LocatedRegion(@NotNull final BasicLocation pos1, @NotNull final BasicLocation pos2, @NotNull final Location location) {
+	public LocatedRegion(@NotNull final BlockVector3 pos1, @NotNull final BlockVector3 pos2, @NotNull final Location location) {
 		super(pos1, pos2);
 		this.location = location;
 	}
 
 	public LocatedRegion(@NotNull final CuboidRegion cuboidRegion, @NotNull final Location location) {
-		this(new BasicLocation(cuboidRegion.getPos1()), new BasicLocation(cuboidRegion.getPos2()), location);
+		this(cuboidRegion.getPos1(), cuboidRegion.getPos2(), location);
 	}
 }
