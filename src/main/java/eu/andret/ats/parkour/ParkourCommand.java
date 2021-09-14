@@ -92,7 +92,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 	@Argument(permission = "ats.parkour.lobby", executorType = ExecutorType.PLAYER, description = "Teleports to lobby")
 	public String lobby() {
 		final Player player = (Player) sender;
-		final Location location = plugin.getParkourManager().getLobbyLocation();
+		final Location location = plugin.getParkourManager().getLobby();
 		if (location == null) {
 			executeTutorial(player, 0);
 			return plugin.msg(M.Error.DEFAULT.noLobby);
@@ -116,7 +116,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 	public String setLobby() {
 		final Player player = (Player) sender;
 		final Location location = player.getLocation();
-		plugin.getParkourManager().setLobbyLocation(location);
+		plugin.getParkourManager().setLobby(location);
 		if (plugin.getTutorialManager().hasPlayer(player)) {
 			final TutorialPlayer tutorialPlayer = plugin.getTutorialManager().getPlayer(player);
 			if (tutorialPlayer.done(1)) {
@@ -217,7 +217,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@Argument(permission = "ats.parkour.create", executorType = ExecutorType.PLAYER, description = "Creates parkour game")
 	public String create(final String name) {
-		if (plugin.getParkourManager().getLobbyLocation() == null) {
+		if (plugin.getParkourManager().getLobby() == null) {
 			return plugin.msg(M.Error.DEFAULT.missingLobby);
 		}
 		final Player player = (Player) sender;

@@ -137,7 +137,7 @@ public final class ParkourPlugin extends JavaPlugin {
 			.registerTypeHierarchyAdapter(World.class, new WorldAdapter(this))
 			.registerTypeHierarchyAdapter(Location.class, new LocationAdapter())
 			.registerTypeHierarchyAdapter(ParkourMedal.class, new MedalAdapter(this))
-			.registerTypeAdapter(ParkourGame.class, new ParkourGameCreator())
+			.registerTypeAdapter(ParkourGame.class, new ParkourGameCreator(this))
 			.setPrettyPrinting()
 			.create();
 
@@ -449,7 +449,7 @@ public final class ParkourPlugin extends JavaPlugin {
 				return;
 			}
 			final JsonWriter jsonWriter = gson.newJsonWriter(new PrintWriter(target));
-			jsonWriter.setIndent("    ");
+			jsonWriter.setIndent("\t");
 			gson.toJson(parkourManager.getSetting(), ParkourManager.ParkourSetting.class, jsonWriter);
 			jsonWriter.close();
 			getLogger().info("Successfully saved parkour setting");

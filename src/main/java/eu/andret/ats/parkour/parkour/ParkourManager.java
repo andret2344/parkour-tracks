@@ -41,8 +41,8 @@ public final class ParkourManager {
 	}
 
 	@NotNull
-	public ParkourGame createParkour(@NotNull final String name, @NotNull final BasicRegion region, @Nullable final World world) {
-		return Optional.ofNullable(world)
+	public ParkourGame createParkour(@NotNull final String name, @NotNull final BasicRegion region, @NotNull final World world) {
+		return Optional.of(world)
 				.map(w -> new Parkour(name, region, w))
 				.map(setting::add)
 				.orElseThrow(() -> new IllegalArgumentException("World cannot be null!"));
@@ -115,11 +115,11 @@ public final class ParkourManager {
 	}
 
 	@Nullable
-	public Location getLobbyLocation() {
+	public Location getLobby() {
 		return setting.getLobby();
 	}
 
-	public void setLobbyLocation(@NotNull final Location location) {
+	public void setLobby(@NotNull final Location location) {
 		setting.setLobby(location);
 	}
 
