@@ -1106,11 +1106,21 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		return true;
 	}
 
-	private boolean verify(@NotNull final ParkourMedalData medalData, @NotNull final ParkourGame parkourGame, final double value, @NotNull final ToDoubleFunction<ParkourMedalData> function, @NotNull final BiPredicate<Double, Double> relation) {
-		final Optional<ParkourMedalData> better = parkourGame.getMedals().stream().filter(parkourMedal -> parkourMedal.getMedal().getImportance() < medalData.getMedal().getImportance()).findAny();
-		final Optional<ParkourMedalData> worse = parkourGame.getMedals().stream().filter(parkourMedal -> parkourMedal.getMedal().getImportance() > medalData.getMedal().getImportance()).findAny();
-		final boolean betterIsOk = better.filter(data -> function.applyAsDouble(data) > 0 && relation.test(function.applyAsDouble(data), value)).isEmpty();
-		final boolean worseIsOk = worse.filter(data -> function.applyAsDouble(data) > 0 && !relation.test(function.applyAsDouble(data), value)).isEmpty();
+	private boolean verify(@NotNull final ParkourMedalData medalData,
+						   @NotNull final ParkourGame parkourGame,
+						   final double value,
+						   @NotNull final ToDoubleFunction<ParkourMedalData> function,
+						   @NotNull final BiPredicate<Double, Double> relation) {
+		final boolean betterIsOk = parkourGame.getMedals().stream()
+				.filter(parkourMedal -> parkourMedal.getMedal().getImportance() < medalData.getMedal().getImportance())
+				.findAny()
+				.filter(data -> function.applyAsDouble(data) > 0 && relation.test(function.applyAsDouble(data), value))
+				.isEmpty();
+		final boolean worseIsOk = parkourGame.getMedals().stream()
+				.filter(parkourMedal -> parkourMedal.getMedal().getImportance() > medalData.getMedal().getImportance())
+				.findAny()
+				.filter(data -> function.applyAsDouble(data) > 0 && !relation.test(function.applyAsDouble(data), value))
+				.isEmpty();
 		return betterIsOk && worseIsOk;
 	}
 }
