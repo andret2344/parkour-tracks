@@ -33,6 +33,7 @@ public class TimeCounter implements Runnable {
 				.ifPresent(ignored -> counter = 0);
 		Optional.ofNullable(condition)
 				.map(BooleanSupplier::getAsBoolean)
+				.filter(Boolean.TRUE::equals)
 				.map(ignored -> step)
 				.ifPresent(s -> s.accept(counter++));
 	}

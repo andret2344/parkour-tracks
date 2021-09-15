@@ -4,6 +4,9 @@
 
 package eu.andret.ats.parkour;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.stream.JsonWriter;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import eu.andret.arguments.AnnotatedCommand;
 import eu.andret.arguments.CommandManager;
@@ -17,6 +20,7 @@ import eu.andret.ats.parkour.item.ParkourInteractiveItem;
 import eu.andret.ats.parkour.item.ParkourItem;
 import eu.andret.ats.parkour.item.ParkourItemMap;
 import eu.andret.ats.parkour.parkour.ParkourGame;
+import eu.andret.ats.parkour.parkour.ParkourGameCreator;
 import eu.andret.ats.parkour.parkour.ParkourManager;
 import eu.andret.ats.parkour.parkour.ParkourMedal;
 import eu.andret.ats.parkour.parkour.ParkourRecord;
@@ -26,7 +30,10 @@ import eu.andret.ats.parkour.tutorial.TutorialManager;
 import eu.andret.ats.parkour.util.Constants;
 import eu.andret.ats.parkour.util.Data;
 import eu.andret.ats.parkour.util.M;
-import eu.andret.ats.parkour.util.serializer.JSONSerializer;
+import eu.andret.ats.parkour.util.adapter.LocationAdapter;
+import eu.andret.ats.parkour.util.adapter.MedalAdapter;
+import eu.andret.ats.parkour.util.adapter.PotionEffectTypeAdapter;
+import eu.andret.ats.parkour.util.adapter.WorldAdapter;
 import lombok.Getter;
 import lombok.Setter;
 import org.bstats.bukkit.Metrics;
@@ -36,6 +43,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Sound;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.configuration.ConfigurationSection;
@@ -46,11 +54,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.json.JSONObject;
-import org.json.JSONTokener;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -98,11 +103,9 @@ public final class ParkourPlugin extends JavaPlugin {
 	private Connection connection;
 	private ItemStack exitItem;
 	private ItemStack hidingItem;
-	@NotNull
-	private final JSONSerializer jsonSerializer = new JSONSerializer(this);
 	@Getter
 	@NotNull
-	private final ParkourManager<JSONObject> parkourManager = new ParkourManager<>(jsonSerializer);
+	private final ParkourManager parkourManager = new ParkourManager();
 	@Getter
 	@NotNull
 	private final PlayerManager playerManager = new PlayerManager();
@@ -127,6 +130,15 @@ public final class ParkourPlugin extends JavaPlugin {
 	@Getter
 	private int teleportationTimeout;
 	private DecimalFormat decimalFormat;
+	@NotNull
+	private final Gson gson = new GsonBuilder()
+			.registerTypeHierarchyAdapter(PotionEffectType.class, new PotionEffectTypeAdapter())
+			.registerTypeHierarchyAdapter(World.class, new WorldAdapter(this))
+			.registerTypeHierarchyAdapter(Location.class, new LocationAdapter(this))
+			.registerTypeHierarchyAdapter(ParkourMedal.class, new MedalAdapter(this))
+			.registerTypeAdapter(ParkourGame.class, new ParkourGameCreator(this))
+			.setPrettyPrinting()
+			.create();
 
 	@Override
 	public void onEnable() {
@@ -158,11 +170,12 @@ public final class ParkourPlugin extends JavaPlugin {
 				final String name = String.format("backup_%02d%02d%02d_%02d%02d%02d.json", now.getYear(), now.getMonth().getValue(), now.getDayOfMonth(), now.getHour(), now.getMinute(), now.getSecond());
 				final File target = new File(backups.getPath(), name);
 				try {
-					final PrintWriter printWriter = new PrintWriter(target);
-					printWriter.write(parkourManager.serialize().toString(4));
-					printWriter.close();
+					final JsonWriter jsonWriter = gson.newJsonWriter(new PrintWriter(target));
+					jsonWriter.setIndent("\t");
+					gson.toJson(parkourManager.getSetting(), ParkourManager.ParkourSetting.class, jsonWriter);
+					jsonWriter.close();
 					getLogger().info("Successfully created \"backups/" + name + "\" file!");
-				} catch (final FileNotFoundException ex) {
+				} catch (final IOException ex) {
 					getLogger().severe("An error occurred when trying to backup parkours!");
 					ex.printStackTrace();
 				}
@@ -430,14 +443,15 @@ public final class ParkourPlugin extends JavaPlugin {
 
 	private void save() {
 		try {
-			final File lobby = new File(getDataFolder(), "setting.json");
-			if (!lobby.exists() && !lobby.createNewFile()) {
+			final File target = new File(getDataFolder(), "setting.json");
+			if (!target.exists() && !target.createNewFile()) {
 				getLogger().severe("An error occurred when trying to create parkour setting file");
 				return;
 			}
-			final PrintWriter printWriter = new PrintWriter(lobby);
-			printWriter.write(parkourManager.serialize().toString(4));
-			printWriter.close();
+			final JsonWriter jsonWriter = gson.newJsonWriter(new PrintWriter(target));
+			jsonWriter.setIndent("\t");
+			gson.toJson(parkourManager.getSetting(), ParkourManager.ParkourSetting.class, jsonWriter);
+			jsonWriter.close();
 			getLogger().info("Successfully saved parkour setting");
 		} catch (final IOException ex) {
 			getLogger().severe("An error occurred when trying to save parkour setting");
@@ -451,9 +465,7 @@ public final class ParkourPlugin extends JavaPlugin {
 			return;
 		}
 		try (final Reader reader = new FileReader(lobby)) {
-			final JSONTokener jsonTokener = new JSONTokener(reader);
-			final JSONObject jsonObject = new JSONObject(jsonTokener);
-			parkourManager.deserialize(jsonObject);
+			parkourManager.setSetting(gson.fromJson(reader, ParkourManager.ParkourSetting.class));
 			getLogger().info("Successfully loaded parkour setting");
 		} catch (final IOException ex) {
 			getLogger().severe("An error occurred when trying to load parkour setting");

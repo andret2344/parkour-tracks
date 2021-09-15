@@ -6,7 +6,7 @@ package eu.andret.ats.parkour.event.player;
 
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.player.ParkourPlayer;
-import eu.andret.ats.parkour.region.DirectionalRegion;
+import eu.andret.ats.parkour.region.LocatedRegion;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.Value;
@@ -23,7 +23,7 @@ public class PlayerAchieveCheckpointEvent extends AbstractParkourPlayerEvent {
 	 * The checkpoint achieved by the player.
 	 */
 	@NotNull
-	DirectionalRegion region;
+	LocatedRegion region;
 
 	/**
 	 * Constructor.
@@ -32,7 +32,7 @@ public class PlayerAchieveCheckpointEvent extends AbstractParkourPlayerEvent {
 	 * @param player The player that triggers the event.
 	 * @param region The achieved checkpoint.
 	 */
-	public PlayerAchieveCheckpointEvent(@NotNull final ParkourGame game, @NotNull final ParkourPlayer player, @NotNull final DirectionalRegion region) {
+	public PlayerAchieveCheckpointEvent(@NotNull final ParkourGame game, @NotNull final ParkourPlayer player, @NotNull final LocatedRegion region) {
 		super(game, player);
 		this.region = region;
 	}

@@ -4,11 +4,7 @@
 
 package eu.andret.ats.parkour.player;
 
-import com.sk89q.worldedit.bukkit.BukkitAdapter;
-import com.sk89q.worldedit.math.Vector3;
-import eu.andret.ats.parkour.region.BasicRegion;
-import eu.andret.ats.parkour.region.DirectionalRegion;
-import org.bukkit.Location;
+import eu.andret.ats.parkour.region.LocatedRegion;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,13 +31,9 @@ public final class PlayerManager {
 		players.remove(player);
 	}
 
-	public void teleportToRegion(@NotNull final ParkourPlayer parkourPlayer, @Nullable final DirectionalRegion basicRegion) {
-		Optional.ofNullable(basicRegion)
-				.map(BasicRegion::getRegion)
-				.filter(region -> region.getWorld() != null)
-				.ifPresent(region -> {
-					final Vector3 center = region.getCenter();
-					parkourPlayer.getPlayer().teleport(new Location(BukkitAdapter.adapt(region.getWorld()), center.getX() + 0.5, center.getY(), center.getZ() + 0.5, (float) basicRegion.getYaw(), (float) basicRegion.getPitch()));
-				});
+	public void teleportToRegion(@NotNull final ParkourPlayer parkourPlayer, @Nullable final LocatedRegion locatedRegion) {
+		Optional.ofNullable(locatedRegion)
+				.map(LocatedRegion::getLocation)
+				.ifPresent(parkourPlayer.getPlayer()::teleport);
 	}
 }

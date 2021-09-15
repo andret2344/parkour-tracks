@@ -6,14 +6,17 @@ package eu.andret.ats.parkour.parkour;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
-@NoArgsConstructor
 public class ParkourMedalData {
+	private final ParkourMedal medal;
 	private double time;
 	private double reward;
+
+	public ParkourMedalData(final ParkourMedal medal) {
+		this(medal, 0, 0);
+	}
 
 	public void setTime(final double time) {
 		if (time < 0) {

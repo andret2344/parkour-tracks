@@ -22,13 +22,18 @@ import java.util.Optional;
 @AllArgsConstructor
 public class BasicRegion {
 	@NotNull
-	CuboidRegion region;
+	protected BlockVector3 pos1;
+	@NotNull
+	protected BlockVector3 pos2;
+
+	public BasicRegion(@NotNull final CuboidRegion cuboidRegion) {
+		this(cuboidRegion.getPos1(), cuboidRegion.getPos2());
+	}
 
 	public boolean contains(@Nullable final Location location) {
 		return Optional.ofNullable(location)
-				.map(loc -> BlockVector3.at(loc.getX(), loc.getY(), loc.getZ()))
-				.map(region::contains)
-				.orElse(false);
+				.filter(loc -> toCuboidRegion().contains(BlockVector3.at(loc.getX(), loc.getY(), loc.getZ())))
+				.isPresent();
 	}
 
 	public boolean contains(@Nullable final Player player) {
@@ -43,5 +48,10 @@ public class BasicRegion {
 				.map(ParkourPlayer::getPlayer)
 				.map(this::contains)
 				.orElse(false);
+	}
+
+	@NotNull
+	public CuboidRegion toCuboidRegion() {
+		return new CuboidRegion(pos1, pos2);
 	}
 }
