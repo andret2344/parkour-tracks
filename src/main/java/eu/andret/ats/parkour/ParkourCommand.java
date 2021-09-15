@@ -47,14 +47,15 @@ import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiPredicate;
 import java.util.function.DoubleFunction;
 import java.util.function.ToDoubleFunction;
-import java.util.stream.Collectors;
 
+@SuppressWarnings("DuplicatedCode")
 @BaseCommand("parkour")
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
@@ -139,8 +140,8 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		}
 		sender.sendMessage(plugin.msg(M.List.GAMES.header)
 				.replace(Constants.COUNT, String.valueOf(allGames.size())));
-		if (sender instanceof Player) {
-			executeTutorial((Player) sender, 11);
+		if (sender instanceof Player sender) {
+			executeTutorial(sender, 11);
 		}
 		return allGames.stream()
 				.map(parkourGame -> plugin.msg(M.List.GAMES.item)
@@ -148,7 +149,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 						.replace(Constants.DISPLAY_NAME, parkourGame.getDisplayName())
 						.replace(Constants.RUNNING, plugin.misc(parkourGame.isRunning() ? "suffix-started" : "suffix-stopped")))
 				.map(text -> ChatColor.translateAlternateColorCodes('&', text))
-				.collect(Collectors.toList());
+				.toList();
 	}
 
 	@Argument(permission = "ats.parkour.fix", description = "Fixes signs after database connection troubles.")
@@ -197,7 +198,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		final int maxPages = (int) Math.ceil(messages.size() / 5.);
 		final int skip = 5 * (page - 1);
 		if (page > maxPages) {
-			return null;
+			return Collections.emptyList();
 		}
 		sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.List.HELP.header)
 				.replace(Constants.PAGE, String.valueOf(page))
@@ -210,7 +211,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 						.replace(Constants.ARGUMENT, command.getKey())
 						.replace(Constants.DESCRIPTION, command.getValue()))
 				.map(text -> ChatColor.translateAlternateColorCodes('&', text))
-				.collect(Collectors.toList());
+				.toList();
 	}
 
 	// === GENERAL ===
@@ -269,11 +270,8 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (parkourGame.getCheckpoints().isEmpty()) {
 			return plugin.msg(M.Error.DEFAULT.missingCheckpoint);
 		}
-		if (sender instanceof Player) {
-			final Player player = (Player) sender;
-			if (executeTutorial(player, 12)) {
-				plugin.getTutorialManager().removePlayer(player);
-			}
+		if (sender instanceof Player player && executeTutorial(player, 12)) {
+			plugin.getTutorialManager().removePlayer(player);
 		}
 		parkourGame.setRunning(true);
 		plugin.getServer().getPluginManager().callEvent(new GameStartEvent(parkourGame));
@@ -496,7 +494,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 						.replace(Constants.EFFECT, entry.getEffectType().getName())
 						.replace(Constants.AMPLIFIER, String.valueOf(entry.getAmplifier())))
 				.map(text -> ChatColor.translateAlternateColorCodes('&', text))
-				.collect(Collectors.toList());
+				.toList();
 	}
 
 	@Fallback
@@ -1065,7 +1063,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 						.replace(Constants.TIME, plugin.formatTime(medalEntry.getTime()))
 						.replace(Constants.VALUE, plugin.formatMoney(medalEntry.getReward())))
 				.map(text -> ChatColor.translateAlternateColorCodes('&', text))
-				.collect(Collectors.toList());
+				.toList();
 	}
 
 	@Fallback

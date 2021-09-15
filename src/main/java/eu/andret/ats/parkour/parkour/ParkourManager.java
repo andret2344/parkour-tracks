@@ -19,7 +19,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Data
 public final class ParkourManager {
@@ -69,7 +68,7 @@ public final class ParkourManager {
 				.map(ParkourGame::getPlayers)
 				.flatMap(Collection::stream)
 				.map(ParkourPlayer::getPlayer)
-				.collect(Collectors.toList());
+				.toList();
 	}
 
 	@Nullable

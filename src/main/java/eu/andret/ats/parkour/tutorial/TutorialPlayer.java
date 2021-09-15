@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @ToString
 @EqualsAndHashCode
@@ -70,88 +69,76 @@ public final class TutorialPlayer {
 
 	@NotNull
 	private String getMessage() {
-		final List<String> medals = manager.getPlugin().getMedals().stream().sorted().map(ParkourMedal::getDisplayName).collect(Collectors.toList());
+		final List<String> medals = manager.getPlugin().getMedals().stream()
+				.sorted()
+				.map(ParkourMedal::getDisplayName)
+				.toList();
 		final String medal = medals.get(0);
 
-		switch (step) {
-			case 0:
-				return "&dHello and welcome to the &natsParkour setup tutorial&r&d. I'm going to teach you how to correctly setup a working parkour. " +
-						"My name is &lAn&r&d, and I will lead you through this tutorial. " +
-						"So, firstly the parkour lobby has to be set up. Let's check if it's done already using command &b/parkour lobby&d.\n" +
-						"Sample command execution: &b/parkour lobby";
-			case 1:
-				return "&dAs you can see below, lobby is not yet configured. Go to the location where lobby should appear and execute &b/parkour setLobby&d.\n" +
-						"Sample command execution: &b/parkour setLobby";
-			case 2:
-				return "&dNice, the lobby is already set.\n" +
-						"&dNote: &nI can't say if it's a correct location for lobby. If not, you can reconfigure it with the correct location using &b&n/parkour setLobby&d&n command&r&d.";
-			case 3:
-				return "&dGreat, you have set the lobby up!\n" +
-						"&dNote: &nYou can always reconfigure lobby location using &b&n/parkour setLobby&d&n command again&r&d.";
-			case 4:
-				return "&dIt's high time to create your first parkour! Make a &lWorldEdit&r&d selection of whole parkour region and type &b/parkour create &3<name>&d.\n" +
-						"&dNote: &nThe &l<name>&r&d&n and similar are only placeholders, don't blindly repeat them.\n" +
-						"&dNote: &nThe name of any parkour can contain only lowercase and uppercase letters, numbers, underscore sign (_) and dash sign (-).\n" +
-						"Sample command execution: &b/parkour create &3fancy_parkour";
-			case 5:
-				return "&dCool, our parkour region is set up. Now make another &lWorldEdit&r&d selection, select the parkour spawn region and execute &b/parkour setSpawn &3<name>&d.\n" +
-						"&dNote: &nA parkour player will spawn in the&l center&r&d&n of the region you selected&r&d.\n" +
-						"&dNote: &nThe direction you are looking will be also saved and applied to players after teleporting to this region&r&d.\n" +
-						"Sample command execution: &b/parkour setSpawn &3fancy_parkour";
-			case 6:
-				return "&dOk, spawn region is set. To run the parkour game, at least one checkpoint is needed, because always the last parkour checkpoint is its finish. " +
-						"It's your turn now! Add at least one checkpoint by selecting region and executing &b/parkour addCheckpoint &3<name>&d.\n" +
-						"&dNote: &nTechnically, spawn and checkpoint regions are the same, due to which every checkpoint also saves direction you are looking&r&d.\n" +
-						"&dNote: &nIf you made a mistake, don't worry, just use the add-twin command: &b&n/parkour setCheckpoint &3&n<name> &e&n<id>&r&d.\n" +
-						"Sample command execution: &b/parkour addCheckpoint &3fancy_parkour\n" +
-						"Sample command execution: &b/parkour setCheckpoint &3fancy_parkour &e1";
-			case 7:
-				return "&dYou're almost done! Now it's the most difficult part. We have to set up all medals: " + concatenateMedals(medals) + "&d. " +
-						"Execute &b/parkour medal &3<name> &b<medal> &6time &e<value>&d providing time with a period.\n" +
-						"Sample command execution: &b/parkour medal &3fancy_parkour " + medal + " &6time &e10.0";
-			case 8:
-				return "&dThat's an interesting choice... Ok, let's go further. Now reward for the that medal is set using &b/parkour medal &3<name> &b<medal> &6reward &e<value>&d.\n" +
-						"Sample command execution: &b/parkour medal &3fancy_parkour " + medal + " &6reward &e100.0";
-			case 9:
-				return "&dNice! The medal is done. You can now set up the remaining medals as they're required (with at least time configured) before starting the parkour. " +
-						"Once you're done, we need to create a wall. Using &lWorldEdit&r&d, select the ground region and execute &b/parkour addWall &3<name>&r&d.\n" +
-						"&dNote: &nThe \"wall\" is a common name for region that will teleport back to last checkpoint or the spawn&r&d.\n" +
-						"&dNote: &nWalls are similar to checkpoints, they also have add-twin command in case of mistake: &b&n/parkour setWall &3&n<name> &e&n<id>&r&d.\n" +
-						"Sample command execution: &b/parkour addWall &3fancy_parkour\n" +
-						"Sample command execution: &b/parkour setWall &3fancy_parkour &e1";
-			case 10:
-				return "&dPerfect! To fully understand the possibilities of this plugin, you have to get to know what are the Parkour Options. " +
-						"They look like typical commands, but are totally unnecessary in basic parkour build. Options consist of:\n" +
-						"&6displayName&r: &2String &r(default: &2&lequal to name&r) -&d the name that will be shown to players &7(note: this is never used in commands, it's only a visual change)\n" +
-						"&6sprintForced&r: &2boolean &r(default: &2&lfalse&r) -&d sprint cannot be turned off, but when a player stops in a parkour game, they will be teleported back\n" +
-						"&6alwaysSpawn&r: &2boolean &r(default: &2&lfalse&r) -&d even if player achieves a checkpoint, hitting a wall will teleport them to the spawn region\n" +
-						"&6savingResults&r: &2boolean &r(default: &2&ltrue&r) -&d should database store player's result when they complete the parkour game &7(note: requires database connection established to work)\n" +
-						"&6damageAllowed&r: &2boolean &r(default: &2&lfalse&r) -&d if players should receive any damage during parkour game, or not\n" +
-						"&6boat&r: &2boolean &r(default: &2&lfalse&r) -&d should players start in boats, or not &7(note: be careful, this option is designed to use in water parkour, there is a possibility of side effects)\n" +
-						"&6modifyInventory&r: &2boolean &r(default: &2&ltrue&r) -&d should the players equipments be modified when joining or leaving game, or not " +
-						"&7(note: it means e.g. when joining, inventory will be cleared and two obligatory items appear in the hot bar, and when leaving inventory is totally cleared)\n" +
-						"&6vipOnly&r: &2boolean &r(default: &2&ltrue&r) -&d only a VIP player can join the parkour &7(note: requires RankProvider configured to work)\n" +
-						"&6fee&r: &2double &r(default: &2&l0.00&r) -&d the amount of money the player needs to pay before entering parkour &7(note: requires FinancialProvider configured to work)\n" +
-						"&6reward&r: &2double &r(default: &2&l0.00&r) -&d the amount of money player will earn after completing parkour, independently from medals rewards &7(note: requires FinancialProvider configured to work)\n" +
-						"&6difficulty&r: &2int &r(default: &2&l1&r) -&d the difficulty of the parkour game &7(note: this option is mainly used in atsQuickParkour)\n" +
-						"&6color&r: &2dye/wool color &r(default: &lWHITE&r) -&d the color representing parkour, chosen dye/wool colors &7(note: this option is mainly used in atsQuickParkour)\n" +
-						"&6type&r: &2server, training or players &r(default: &2&lserver&r) -&d the type of parkour, from or for whom it is designed " +
-						"&7(note: server - prepared by server admins; training - parkours with neither time nor records; players - parkours authored by players. It's possible in the future there will be more types)&d.\n" +
-						"&dWell, is it clear? I strongly hope you got it. Let's configure one of them, let's say... Ah, &ndisplay name&r&d seems perfect to me! Just execute &b/parkour displayName &3<name> &9<displayName>&d.\n" +
-						"Sample command execution: &b/parkour displayName &3fancy_parkour&r %AMP%1My %AMP%2Fancy %AMP%3Parkour";
-			case 11:
-				return "&dNice, the parkour got a new look! Let's see it on the parkour games list, execute command &b/parkour list&d.\n" +
-						"Sample command execution: &b/parkour list";
-			case 12:
-				return "&dGreat, the parkour's new name is valid and available. Of course you can play with other options, don't hesitate. Once you're done, just start the game with &b/parkour start &3<name>&d.\n" +
-						"Sample command execution: &b/parkour start &3fancy_parkour";
-			case 13:
-				return "&dAnd... that's it! You have just completed basic configuration of a parkour game. As you reached the end of my leadership, you no longer need me. See ya!\n" +
-						"&dNote: &nFor more information type &b&n/parkour&d&n, &b&n/parkour help &5&n[page]&r&d&n, or ask the creator - &6&l&nAndret2344&r&d.\n" +
-						"Sample command execution: &b/parkour\n" +
-						"Sample command execution: &b/parkour help &53";
-			default:
-				return "&dEm... what?";
-		}
+		return switch (step) {
+			case 0 -> "&dHello and welcome to the &natsParkour setup tutorial&r&d. I'm going to teach you how to correctly setup a working parkour. " +
+					"My name is &lAn&r&d, and I will lead you through this tutorial. " +
+					"So, firstly the parkour lobby has to be set up. Let's check if it's done already using command &b/parkour lobby&d.\n" +
+					"Sample command execution: &b/parkour lobby";
+			case 1 -> "&dAs you can see below, lobby is not yet configured. Go to the location where lobby should appear and execute &b/parkour setLobby&d.\n" +
+					"Sample command execution: &b/parkour setLobby";
+			case 2 -> "&dNice, the lobby is already set.\n" +
+					"&dNote: &nI can't say if it's a correct location for lobby. If not, you can reconfigure it with the correct location using &b&n/parkour setLobby&d&n command&r&d.";
+			case 3 -> "&dGreat, you have set the lobby up!\n" +
+					"&dNote: &nYou can always reconfigure lobby location using &b&n/parkour setLobby&d&n command again&r&d.";
+			case 4 -> "&dIt's high time to create your first parkour! Make a &lWorldEdit&r&d selection of whole parkour region and type &b/parkour create &3<name>&d.\n" +
+					"&dNote: &nThe &l<name>&r&d&n and similar are only placeholders, don't blindly repeat them.\n" +
+					"&dNote: &nThe name of any parkour can contain only lowercase and uppercase letters, numbers, underscore sign (_) and dash sign (-).\n" +
+					"Sample command execution: &b/parkour create &3fancy_parkour";
+			case 5 -> "&dCool, our parkour region is set up. Now make another &lWorldEdit&r&d selection, select the parkour spawn region and execute &b/parkour setSpawn &3<name>&d.\n" +
+					"&dNote: &nA parkour player will spawn in the&l center&r&d&n of the region you selected&r&d.\n" +
+					"&dNote: &nThe direction you are looking will be also saved and applied to players after teleporting to this region&r&d.\n" +
+					"Sample command execution: &b/parkour setSpawn &3fancy_parkour";
+			case 6 -> "&dOk, spawn region is set. To run the parkour game, at least one checkpoint is needed, because always the last parkour checkpoint is its finish. " +
+					"It's your turn now! Add at least one checkpoint by selecting region and executing &b/parkour addCheckpoint &3<name>&d.\n" +
+					"&dNote: &nTechnically, spawn and checkpoint regions are the same, due to which every checkpoint also saves direction you are looking&r&d.\n" +
+					"&dNote: &nIf you made a mistake, don't worry, just use the add-twin command: &b&n/parkour setCheckpoint &3&n<name> &e&n<id>&r&d.\n" +
+					"Sample command execution: &b/parkour addCheckpoint &3fancy_parkour\n" +
+					"Sample command execution: &b/parkour setCheckpoint &3fancy_parkour &e1";
+			case 7 -> "&dYou're almost done! Now it's the most difficult part. We have to set up all medals: " + concatenateMedals(medals) + "&d. " +
+					"Execute &b/parkour medal &3<name> &b<medal> &6time &e<value>&d providing time with a period.\n" +
+					"Sample command execution: &b/parkour medal &3fancy_parkour " + medal + " &6time &e10.0";
+			case 8 -> "&dThat's an interesting choice... Ok, let's go further. Now reward for the that medal is set using &b/parkour medal &3<name> &b<medal> &6reward &e<value>&d.\n" +
+					"Sample command execution: &b/parkour medal &3fancy_parkour " + medal + " &6reward &e100.0";
+			case 9 -> "&dNice! The medal is done. You can now set up the remaining medals as they're required (with at least time configured) before starting the parkour. " +
+					"Once you're done, we need to create a wall. Using &lWorldEdit&r&d, select the ground region and execute &b/parkour addWall &3<name>&r&d.\n" +
+					"&dNote: &nThe \"wall\" is a common name for region that will teleport back to last checkpoint or the spawn&r&d.\n" +
+					"&dNote: &nWalls are similar to checkpoints, they also have add-twin command in case of mistake: &b&n/parkour setWall &3&n<name> &e&n<id>&r&d.\n" +
+					"Sample command execution: &b/parkour addWall &3fancy_parkour\n" +
+					"Sample command execution: &b/parkour setWall &3fancy_parkour &e1";
+			case 10 -> "&dPerfect! To fully understand the possibilities of this plugin, you have to get to know what are the Parkour Options. " +
+					"They look like typical commands, but are totally unnecessary in basic parkour build. Options consist of:\n" +
+					"&6displayName&r: &2String &r(default: &2&lequal to name&r) -&d the name that will be shown to players &7(note: this is never used in commands, it's only a visual change)\n" +
+					"&6sprintForced&r: &2boolean &r(default: &2&lfalse&r) -&d sprint cannot be turned off, but when a player stops in a parkour game, they will be teleported back\n" +
+					"&6alwaysSpawn&r: &2boolean &r(default: &2&lfalse&r) -&d even if player achieves a checkpoint, hitting a wall will teleport them to the spawn region\n" +
+					"&6savingResults&r: &2boolean &r(default: &2&ltrue&r) -&d should database store player's result when they complete the parkour game &7(note: requires database connection established to work)\n" +
+					"&6damageAllowed&r: &2boolean &r(default: &2&lfalse&r) -&d if players should receive any damage during parkour game, or not\n" +
+					"&6boat&r: &2boolean &r(default: &2&lfalse&r) -&d should players start in boats, or not &7(note: be careful, this option is designed to use in water parkour, there is a possibility of side effects)\n" +
+					"&6modifyInventory&r: &2boolean &r(default: &2&ltrue&r) -&d should the players equipments be modified when joining or leaving game, or not " +
+					"&7(note: it means e.g. when joining, inventory will be cleared and two obligatory items appear in the hot bar, and when leaving inventory is totally cleared)\n" +
+					"&6vipOnly&r: &2boolean &r(default: &2&ltrue&r) -&d only a VIP player can join the parkour &7(note: requires RankProvider configured to work)\n" +
+					"&6fee&r: &2double &r(default: &2&l0.00&r) -&d the amount of money the player needs to pay before entering parkour &7(note: requires FinancialProvider configured to work)\n" +
+					"&6reward&r: &2double &r(default: &2&l0.00&r) -&d the amount of money player will earn after completing parkour, independently from medals rewards &7(note: requires FinancialProvider configured to work)\n" +
+					"&6difficulty&r: &2int &r(default: &2&l1&r) -&d the difficulty of the parkour game &7(note: this option is mainly used in atsQuickParkour)\n" +
+					"&6color&r: &2dye/wool color &r(default: &lWHITE&r) -&d the color representing parkour, chosen dye/wool colors &7(note: this option is mainly used in atsQuickParkour)\n" +
+					"&6type&r: &2server, training or players &r(default: &2&lserver&r) -&d the type of parkour, from or for whom it is designed " +
+					"&7(note: server - prepared by server admins; training - parkours with neither time nor records; players - parkours authored by players. It's possible in the future there will be more types)&d.\n" +
+					"&dWell, is it clear? I strongly hope you got it. Let's configure one of them, let's say... Ah, &ndisplay name&r&d seems perfect to me! Just execute &b/parkour displayName &3<name> &9<displayName>&d.\n" +
+					"Sample command execution: &b/parkour displayName &3fancy_parkour&r %AMP%1My %AMP%2Fancy %AMP%3Parkour";
+			case 11 -> "&dNice, the parkour got a new look! Let's see it on the parkour games list, execute command &b/parkour list&d.\n" +
+					"Sample command execution: &b/parkour list";
+			case 12 -> "&dGreat, the parkour's new name is valid and available. Of course you can play with other options, don't hesitate. Once you're done, just start the game with &b/parkour start &3<name>&d.\n" +
+					"Sample command execution: &b/parkour start &3fancy_parkour";
+			case 13 -> "&dAnd... that's it! You have just completed basic configuration of a parkour game. As you reached the end of my leadership, you no longer need me. See ya!\n" +
+					"&dNote: &nFor more information type &b&n/parkour&d&n, &b&n/parkour help &5&n[page]&r&d&n, or ask the creator - &6&l&nAndret2344&r&d.\n" +
+					"Sample command execution: &b/parkour\n" +
+					"Sample command execution: &b/parkour help &53";
+			default -> "&dEm... what?";
+		};
 	}
 }

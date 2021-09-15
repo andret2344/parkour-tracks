@@ -23,7 +23,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 
 @Data
 @ToString
@@ -117,7 +116,9 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 		arr.add(spawn);
 		arr.addAll(walls);
 		arr.addAll(checkpoints);
-		return arr.stream().filter(Objects::nonNull).collect(Collectors.toList());
+		return arr.stream()
+				.filter(Objects::nonNull)
+				.toList();
 	}
 
 	public boolean addPlayer(@NotNull final ParkourPlayer parkourPlayer) {

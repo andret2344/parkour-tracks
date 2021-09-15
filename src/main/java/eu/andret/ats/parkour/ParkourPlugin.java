@@ -317,7 +317,7 @@ public final class ParkourPlugin extends JavaPlugin {
 						})
 						.orElse(null))
 				.filter(Objects::nonNull)
-				.collect(Collectors.toList());
+				.toList();
 	}
 
 	private void setupConfigFiles() {
@@ -346,7 +346,7 @@ public final class ParkourPlugin extends JavaPlugin {
 		final String name = ChatColor.translateAlternateColorCodes('&', "&r" + section.getString("name"));
 		final List<String> lore = section.getStringList("lore").stream()
 				.map(line -> ChatColor.translateAlternateColorCodes('&', "&r" + line))
-				.collect(Collectors.toList());
+				.toList();
 		final ParkourItem parkourItem = new ParkourInteractiveItem(material, name, lore);
 		gameItemMap.setItem(section.getInt("position"), parkourItem);
 		return parkourItem.toItemStack();
@@ -373,15 +373,15 @@ public final class ParkourPlugin extends JavaPlugin {
 
 		command.addTypeCompleter(ParkourGame.class, () -> parkourManager.getAllGames().stream()
 				.map(ParkourGame::getName)
-				.collect(Collectors.toList()));
+				.toList());
 
 		command.addEnumCompleter(SimpleLever.class);
 		command.addTypeCompleter(PotionEffectType.class, Data.ALLOWED_EFFECTS.stream()
 				.map(PotionEffectType::getName)
-				.collect(Collectors.toList()));
+				.toList());
 		command.addTypeCompleter(ParkourMedal.class, medals.stream()
 				.map(ParkourMedal::getName)
-				.collect(Collectors.toList()));
+				.toList());
 		command.addTypeCompleter(boolean.class, Arrays.asList(Boolean.FALSE.toString(), Boolean.TRUE.toString()));
 		command.addEnumCompleter(MedalSetupOption.class);
 		command.addEnumCompleter(DyeColor.class);
