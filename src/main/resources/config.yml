@@ -56,14 +56,14 @@ medal:
     importance: 4
 
 # Should it be forbidden to everyone to edit running parkour games?
-# This settings forbids any terrain changes and game modification via commends.
+# This setting forbids any terrain changes and game modification via commends.
 # If set to true, you need to stop the game in order to apply any modification it.
 # There's no bypass permission for it.
 # Type: Boolean
 # Default: true
 edit-lock: true
 
-# To prevent data loss, its highly recommended to set backup frequency.
+# To prevent data loss, it's highly recommended to set backup frequency.
 # Configure every how many minutes the backup should be created.
 # Time is counted since every server start.
 # Any non-positive (lower or equal to 0) number is treated as no backups.
@@ -80,7 +80,7 @@ sound:
   complete: ENTITY_PLAYER_LEVELUP
   leave: NONE
 
-# How many seconds player has to wait after entering last checkpoint (completing parkour),
+# How many seconds' player has to wait after entering last checkpoint (completing parkour),
 # before being automatically teleported to lobby.
 # Any non-positive (lower or equal to 0) number is treated as invalid and forces default to be used.
 # Type: Integer

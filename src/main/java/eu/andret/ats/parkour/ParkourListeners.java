@@ -265,10 +265,9 @@ public class ParkourListeners implements Listener {
 
 	@EventHandler
 	public void leaveBoat(final VehicleExitEvent event) {
-		if (!(event.getExited() instanceof Player)) {
+		if (!(event.getExited() instanceof final Player player)) {
 			return;
 		}
-		final Player player = (Player) event.getExited();
 		final ParkourGame parkourGame = plugin.getParkourManager().getParkour(player);
 		if (parkourGame == null) {
 			return;
@@ -519,10 +518,9 @@ public class ParkourListeners implements Listener {
 
 	@EventHandler
 	public void dmg(final EntityDamageEvent event) {
-		if (!(event.getEntity() instanceof Player)) {
+		if (!(event.getEntity() instanceof final Player player)) {
 			return;
 		}
-		final Player player = (Player) event.getEntity();
 		final ParkourGame parkourGame = plugin.getParkourManager().getParkour(player);
 		if (parkourGame != null && !parkourGame.getOptions().isDamageAllowed() && parkourGame.getWorld().equals(player.getWorld())) {
 			event.setCancelled(true);
