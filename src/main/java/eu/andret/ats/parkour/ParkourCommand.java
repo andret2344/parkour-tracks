@@ -140,8 +140,8 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		}
 		sender.sendMessage(plugin.msg(M.List.GAMES.header)
 				.replace(Constants.COUNT, String.valueOf(allGames.size())));
-		if (sender instanceof Player sender) {
-			executeTutorial(sender, 11);
+		if (sender instanceof final Player player) {
+			executeTutorial(player, 11);
 		}
 		return allGames.stream()
 				.map(parkourGame -> plugin.msg(M.List.GAMES.item)
