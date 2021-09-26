@@ -7,13 +7,16 @@ package eu.andret.ats.parkour.parkour;
 import lombok.Value;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.UUID;
-
 @Value
-public class ParkourRecord {
+public class Medal implements Comparable<Medal> {
 	@NotNull
-	UUID uuid;
+	String name;
 	@NotNull
-	ParkourGame game;
-	double time;
+	String displayName;
+	int importance;
+
+	@Override
+	public int compareTo(@NotNull final Medal other) {
+		return other.importance - importance;
+	}
 }

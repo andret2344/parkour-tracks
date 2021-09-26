@@ -19,11 +19,11 @@ import eu.andret.ats.parkour.entity.SimpleLever;
 import eu.andret.ats.parkour.item.ParkourInteractiveItem;
 import eu.andret.ats.parkour.item.ParkourItem;
 import eu.andret.ats.parkour.item.ParkourItemMap;
+import eu.andret.ats.parkour.parkour.Medal;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourGameCreator;
 import eu.andret.ats.parkour.parkour.ParkourManager;
-import eu.andret.ats.parkour.parkour.ParkourMedal;
-import eu.andret.ats.parkour.parkour.ParkourRecord;
+import eu.andret.ats.parkour.parkour.Score;
 import eu.andret.ats.parkour.player.PlayerManager;
 import eu.andret.ats.parkour.tasks.database.KeepAliveTask;
 import eu.andret.ats.parkour.tutorial.TutorialManager;
@@ -126,7 +126,7 @@ public final class ParkourPlugin extends JavaPlugin {
 	private final ParkourItemMap worldItemMap = new ParkourItemMap();
 	@Getter
 	@NotNull
-	private final List<ParkourMedal> medals = new ArrayList<>();
+	private final List<Medal> medals = new ArrayList<>();
 	@Getter
 	private int teleportationTimeout;
 	private DecimalFormat decimalFormat;
@@ -135,7 +135,7 @@ public final class ParkourPlugin extends JavaPlugin {
 			.registerTypeHierarchyAdapter(PotionEffectType.class, new PotionEffectTypeAdapter())
 			.registerTypeHierarchyAdapter(World.class, new WorldAdapter(this))
 			.registerTypeHierarchyAdapter(Location.class, new LocationAdapter(this))
-			.registerTypeHierarchyAdapter(ParkourMedal.class, new MedalAdapter(this))
+			.registerTypeHierarchyAdapter(Medal.class, new MedalAdapter(this))
 			.registerTypeAdapter(ParkourGame.class, new ParkourGameCreator(this))
 			.setPrettyPrinting()
 			.create();
@@ -235,12 +235,12 @@ public final class ParkourPlugin extends JavaPlugin {
 				.map(Sound::valueOf);
 	}
 
-	public void updateSyncSign(@NotNull final ParkourRecord parkourRecord) {
-		getServer().getScheduler().scheduleSyncDelayedTask(this, () -> updateSign(parkourRecord));
+	public void updateSyncSign(@NotNull final Score score) {
+		getServer().getScheduler().scheduleSyncDelayedTask(this, () -> updateSign(score));
 	}
 
-	public void updateSign(@NotNull final ParkourRecord parkourRecord) {
-		updateSign(parkourRecord.getGame(), line -> replace(String.valueOf(line), parkourRecord));
+	public void updateSign(@NotNull final Score score) {
+		updateSign(score.getGame(), line -> replace(String.valueOf(line), score));
 	}
 
 	public void updateSyncSign(@NotNull final ParkourGame parkourGame) {
@@ -280,7 +280,7 @@ public final class ParkourPlugin extends JavaPlugin {
 	@NotNull
 	public String getFormattedMedals(@NotNull final String separator) {
 		return getMedals().stream()
-				.map(ParkourMedal::getDisplayName)
+				.map(Medal::getDisplayName)
 				.collect(Collectors.joining(separator));
 	}
 
@@ -301,7 +301,7 @@ public final class ParkourPlugin extends JavaPlugin {
 	// =============== PRIVATE =============== //
 
 	@NotNull
-	private List<ParkourMedal> loadMedals() {
+	private List<Medal> loadMedals() {
 		final ConfigurationSection medalsSection = getConfig().getConfigurationSection(MEDAL);
 		if (medalsSection == null) {
 			getLogger().info("No medals loaded!");
@@ -313,7 +313,7 @@ public final class ParkourPlugin extends JavaPlugin {
 						.map(configurationSection -> {
 							final String display = ChatColor.translateAlternateColorCodes('&', configurationSection.getString("display", key));
 							final int importance = configurationSection.getInt("importance");
-							return new ParkourMedal(key, display, importance);
+							return new Medal(key, display, importance);
 						})
 						.orElse(null))
 				.filter(Objects::nonNull)
@@ -363,7 +363,7 @@ public final class ParkourPlugin extends JavaPlugin {
 		command.addTypeMapper(ParkourGame.class, parkourManager::getParkour, Fallback.ON_NULL);
 		command.addTypeMapper(PotionEffectType.class, PotionEffectType::getByName, Fallback.ON_NULL);
 		command.addEnumMapper(DyeColor.class, Fallback.ON_NULL);
-		command.addTypeMapper(ParkourMedal.class, name -> medals.stream()
+		command.addTypeMapper(Medal.class, name -> medals.stream()
 						.filter(medal -> medal.getName().equals(name))
 						.findAny()
 						.orElse(null),
@@ -379,8 +379,8 @@ public final class ParkourPlugin extends JavaPlugin {
 		command.addTypeCompleter(PotionEffectType.class, Data.ALLOWED_EFFECTS.stream()
 				.map(PotionEffectType::getName)
 				.toList());
-		command.addTypeCompleter(ParkourMedal.class, medals.stream()
-				.map(ParkourMedal::getName)
+		command.addTypeCompleter(Medal.class, medals.stream()
+				.map(Medal::getName)
 				.toList());
 		command.addTypeCompleter(boolean.class, Arrays.asList(Boolean.FALSE.toString(), Boolean.TRUE.toString()));
 		command.addEnumCompleter(MedalSetupOption.class);
@@ -513,14 +513,14 @@ public final class ParkourPlugin extends JavaPlugin {
 	}
 
 	@NotNull
-	private String replace(@NotNull final String source, @NotNull final ParkourRecord parkourRecord) {
-		final String name = Optional.of(parkourRecord)
-				.map(ParkourRecord::getUuid)
+	private String replace(@NotNull final String source, @NotNull final Score score) {
+		final String name = Optional.of(score)
+				.map(Score::getUuid)
 				.map(uuid -> getServer().getOfflinePlayer(uuid))
 				.map(OfflinePlayer::getName)
 				.orElse(Constants.PLACEHOLDER_NO_RECORD);
 		return source.replace(Constants.NICK, name)
-				.replace(Constants.PERSONAL_TIME, formatTime(parkourRecord.getTime()));
+				.replace(Constants.PERSONAL_TIME, formatTime(score.getTime()));
 	}
 
 	@NotNull

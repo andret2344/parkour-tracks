@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 class Parkour extends ParkourGame {
-	Parkour(@NotNull final String name, @NotNull final BasicRegion region, @NotNull final World world) {
-		super(name, region, world);
+	Parkour(final int id, @NotNull final String name, @NotNull final BasicRegion region, @NotNull final World world) {
+		super(id, name, region, world);
 	}
 }

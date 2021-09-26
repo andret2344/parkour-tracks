@@ -4,7 +4,7 @@
 
 package eu.andret.ats.parkour.tutorial;
 
-import eu.andret.ats.parkour.parkour.ParkourMedal;
+import eu.andret.ats.parkour.parkour.medal.Medal;
 import eu.andret.ats.parkour.util.Constants;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -71,7 +71,7 @@ public final class TutorialPlayer {
 	private String getMessage() {
 		final List<String> medals = manager.getPlugin().getMedals().stream()
 				.sorted()
-				.map(ParkourMedal::getDisplayName)
+				.map(Medal::getDisplayName)
 				.toList();
 		final String medal = medals.get(0);
 
@@ -90,10 +90,11 @@ public final class TutorialPlayer {
 					"&dNote: &nThe &l<name>&r&d&n and similar are only placeholders, don't blindly repeat them.\n" +
 					"&dNote: &nThe name of any parkour can contain only lowercase and uppercase letters, numbers, underscore sign (_) and dash sign (-).\n" +
 					"Sample command execution: &b/parkour create &3fancy_parkour";
-			case 5 -> "&dCool, our parkour region is set up. Now make another &lWorldEdit&r&d selection, select the parkour spawn region and execute &b/parkour setSpawn &3<name>&d.\n" +
+			case 5 -> "&dCool, our parkour region is set up. Now make another &lWorldEdit&r&d selection, select the parkour spawn region and execute &b/parkour addCheckpoint &3<name>&d.\n" +
 					"&dNote: &nA parkour player will spawn in the&l center&r&d&n of the region you selected&r&d.\n" +
 					"&dNote: &nThe direction you are looking will be also saved and applied to players after teleporting to this region&r&d.\n" +
-					"Sample command execution: &b/parkour setSpawn &3fancy_parkour";
+					"&dNote: &nYou are adding checkpoint, but keep in mind that first checkpoint ever will be the spawn location&r&d.\n" +
+					"Sample command execution: &b/parkour addCheckpoint &3fancy_parkour";
 			case 6 -> "&dOk, spawn region is set. To run the parkour game, at least one checkpoint is needed, because always the last parkour checkpoint is its finish. " +
 					"It's your turn now! Add at least one checkpoint by selecting region and executing &b/parkour addCheckpoint &3<name>&d.\n" +
 					"&dNote: &nTechnically, spawn and checkpoint regions are the same, due to which every checkpoint also saves direction you are looking&r&d.\n" +

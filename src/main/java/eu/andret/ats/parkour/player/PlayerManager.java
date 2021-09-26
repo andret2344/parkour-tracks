@@ -4,7 +4,7 @@
 
 package eu.andret.ats.parkour.player;
 
-import eu.andret.ats.parkour.region.LocatedRegion;
+import eu.andret.ats.parkour.region.Checkpoint;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,9 +31,9 @@ public final class PlayerManager {
 		players.remove(player);
 	}
 
-	public void teleportToRegion(@NotNull final ParkourPlayer parkourPlayer, @Nullable final LocatedRegion locatedRegion) {
-		Optional.ofNullable(locatedRegion)
-				.map(LocatedRegion::getLocation)
+	public void teleportToCheckpoint(@NotNull final ParkourPlayer parkourPlayer, @Nullable final Checkpoint checkpoint) {
+		Optional.ofNullable(checkpoint)
+				.map(Checkpoint::getLocation)
 				.ifPresent(parkourPlayer.getPlayer()::teleport);
 	}
 }

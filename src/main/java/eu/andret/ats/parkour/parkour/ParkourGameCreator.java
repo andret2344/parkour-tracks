@@ -23,6 +23,7 @@ public class ParkourGameCreator implements InstanceCreator<ParkourGame> {
 	public ParkourGame createInstance(final Type type) {
 		// Random data just to create the instance, it will be overwritten during deserialization
 		return new Parkour(
+				-1,
 				"",
 				new BasicRegion(BlockVector3.ZERO, BlockVector3.ZERO),
 				plugin.getServer().getWorlds().get(0));

@@ -9,23 +9,22 @@ import com.sk89q.worldedit.regions.CuboidRegion;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.Value;
-import lombok.experimental.NonFinal;
 import org.bukkit.Location;
 import org.jetbrains.annotations.NotNull;
 
 @Value
-@NonFinal
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-public class LocatedRegion extends BasicRegion {
+public class Checkpoint extends IdentifiableRegion {
 	Location location;
 
-	public LocatedRegion(@NotNull final BlockVector3 pos1, @NotNull final BlockVector3 pos2, @NotNull final Location location) {
-		super(pos1, pos2);
+	public Checkpoint(final int index, @NotNull final BlockVector3 pos1, @NotNull final BlockVector3 pos2,
+					  @NotNull final Location location) {
+		super(index, pos1, pos2);
 		this.location = location;
 	}
 
-	public LocatedRegion(@NotNull final CuboidRegion cuboidRegion, @NotNull final Location location) {
-		this(cuboidRegion.getPos1(), cuboidRegion.getPos2(), location);
+	public Checkpoint(final int index, @NotNull final CuboidRegion cuboidRegion, @NotNull final Location location) {
+		this(index, cuboidRegion.getPos1(), cuboidRegion.getPos2(), location);
 	}
 }

@@ -42,7 +42,7 @@ public final class ParkourManager {
 	@NotNull
 	public ParkourGame createParkour(@NotNull final String name, @NotNull final BasicRegion region, @NotNull final World world) {
 		return Optional.of(world)
-				.map(w -> new Parkour(name, region, w))
+				.map(w -> new Parkour(-1, name, region, w))
 				.map(setting::add)
 				.orElseThrow(() -> new IllegalArgumentException("World cannot be null!"));
 	}

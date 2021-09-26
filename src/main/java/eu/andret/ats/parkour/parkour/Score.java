@@ -5,10 +5,15 @@
 package eu.andret.ats.parkour.parkour;
 
 import lombok.Value;
-import org.bukkit.potion.PotionEffectType;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.UUID;
 
 @Value
-public class ParkourEffect {
-	PotionEffectType effectType;
-	int amplifier;
+public class Score {
+	@NotNull
+	UUID uuid;
+	@NotNull
+	ParkourGame game;
+	double time;
 }
