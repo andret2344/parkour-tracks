@@ -4,7 +4,7 @@
 
 package eu.andret.ats.parkour.tutorial;
 
-import eu.andret.ats.parkour.parkour.medal.Medal;
+import eu.andret.ats.parkour.parkour.Medal;
 import eu.andret.ats.parkour.util.Constants;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
