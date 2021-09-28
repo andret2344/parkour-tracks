@@ -184,7 +184,7 @@ public class ParkourListeners implements Listener {
 		final int checkpointId = parkourGame.getCheckpoints().indexOf(event.getCheckpoint());
 		if (checkpointId > parkourPlayer.getLastCheckpoint()) {
 			parkourPlayer.setLastCheckpoint(checkpointId);
-			if (checkpointId != parkourGame.getCheckpoints().size() - 1) {
+			if (checkpointId != parkourGame.getCheckpoints().size() - 1 && checkpointId != 0) {
 				parkourPlayer.getPlayer().sendMessage(plugin.msg("checkpoint-achieved"));
 				plugin.getSound(EventSound.CHECKPOINT)
 						.ifPresent(sound -> parkourPlayer.getPlayer().playSound(parkourPlayer.getPlayer().getLocation(), sound, 0.5F, 0.5F));
