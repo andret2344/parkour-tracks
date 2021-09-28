@@ -23,6 +23,7 @@ import eu.andret.ats.parkour.parkour.ParkourManager;
 import eu.andret.ats.parkour.parkour.Score;
 import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.region.Checkpoint;
+import eu.andret.ats.parkour.region.Wall;
 import eu.andret.ats.parkour.tasks.counter.ParkourCountdown;
 import eu.andret.ats.parkour.tasks.counter.TimeCounter;
 import eu.andret.ats.parkour.tasks.database.FetchAndInsertDataTask;
@@ -594,7 +595,7 @@ public class ParkourListeners implements Listener {
 				return;
 			}
 			pluginManager.callEvent(new PlayerEnterRegionEvent(parkourGame, player, region));
-			if (parkourGame.getWalls().contains(region)) {
+			if (region instanceof final Wall wall && parkourGame.getWalls().contains(wall)) {
 				pluginManager.callEvent(new PlayerHitWallEvent(parkourGame, parkourPlayer, region));
 			}
 			if (!(region instanceof final Checkpoint checkpoint)) {

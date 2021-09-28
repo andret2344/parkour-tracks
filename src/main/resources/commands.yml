@@ -82,20 +82,20 @@ region:
     add:
       help: '&eAdds the checkpoint to a parkour game.'
       usage: '&cCorrect usage: /parkour addCheckpoint <name>'
-      success: '&aSuccessfully added the checkpoint no. &6%ID%&a.'
+      success: '&aSuccessfully added the checkpoint no. &6%INDEX%&a.'
     set:
       help: '&eReplaces the checkpoint of a parkour game.'
       usage: '&cCorrect usage: /parkour setCheckpoint <id> <name>'
-      success: '&aSuccessfully set the checkpoint no. &6%ID%&a.'
+      success: '&aSuccessfully set the checkpoint no. &6%INDEX%&a.'
   wall:
     add:
       help: '&eAdds the wall to a parkour game.'
       usage: '&cCorrect usage: /parkour addWall <name>'
-      success: '&aSuccessfully added the wall no. &6%ID%&a.'
+      success: '&aSuccessfully added the wall no. &6%INDEX%&a.'
     set:
       help: '&eReplaces a wall of a parkour game.'
       usage: '&cCorrect usage: /parkour setWall <id> <name>'
-      success: '&aSuccessfully set the wall no. &6%ID%&a.'
+      success: '&aSuccessfully set the wall no. &6%INDEX%&a.'
 
 option:
   always-spawn:

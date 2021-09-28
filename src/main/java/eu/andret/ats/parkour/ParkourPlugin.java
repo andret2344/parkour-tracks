@@ -82,8 +82,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public final class ParkourPlugin extends JavaPlugin {
-	@NotNull
-	private static final String MEDAL = "medal";
 	@Getter
 	@NotNull
 	private final Map<String, String> helpDescription = new LinkedHashMap<>();
@@ -302,7 +300,7 @@ public final class ParkourPlugin extends JavaPlugin {
 
 	@NotNull
 	private List<Medal> loadMedals() {
-		final ConfigurationSection medalsSection = getConfig().getConfigurationSection(MEDAL);
+		final ConfigurationSection medalsSection = getConfig().getConfigurationSection(Constants.MEDAL);
 		if (medalsSection == null) {
 			getLogger().info("No medals loaded!");
 			return Collections.emptyList();
@@ -509,7 +507,7 @@ public final class ParkourPlugin extends JavaPlugin {
 		helpDescription.put("displayName", msg(M.Parkour.DISPLAY_NAME.helpMessage));
 		helpDescription.put("authors", msg(M.Parkour.AUTHORS.helpMessage));
 		helpDescription.put("vipOnly", msg(M.Option.VIP_ONLY.helpMessage));
-		helpDescription.put(MEDAL, msg(M.Option.MEDAL.helpMessage));
+		helpDescription.put(Constants.MEDAL, msg(M.Option.MEDAL.helpMessage));
 	}
 
 	@NotNull

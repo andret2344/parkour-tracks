@@ -374,9 +374,9 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			executeTutorial(player, 6, false);
 		}
 		final Location location = player.getLocation();
-		parkourGame.getCheckpoints().add(new Checkpoint(parkourGame.getCheckpoints().size(), region, location));
+		parkourGame.getCheckpoints().add(new Checkpoint(region, location));
 		return plugin.msg(M.Region.Checkpoint.ADD.success)
-				.replace(Constants.ID, String.valueOf(parkourGame.getCheckpoints().size()));
+				.replace(Constants.INDEX, String.valueOf(parkourGame.getCheckpoints().size()));
 	}
 
 	@Fallback
@@ -401,10 +401,10 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Error.DEFAULT.tooLargeNumber);
 		}
 		final Location location = player.getLocation();
-		parkourGame.getCheckpoints().set(index, new Checkpoint(index, region, location));
+		parkourGame.getCheckpoints().set(index, new Checkpoint(region, location));
 		executeTutorial(player, 6, false);
 		return plugin.msg(M.Region.Checkpoint.SET.success)
-				.replace(Constants.ID, String.valueOf(index));
+				.replace(Constants.INDEX, String.valueOf(index));
 	}
 
 	@Fallback
@@ -422,10 +422,10 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (region == null) {
 			return plugin.msg(M.Error.DEFAULT.invalidSelection);
 		}
-		parkourGame.getWalls().add(new Wall(parkourGame.getWalls().size(), region));
+		parkourGame.getWalls().add(new Wall(region));
 		executeTutorial(player, 9, false);
 		return plugin.msg(M.Region.Wall.ADD.success)
-				.replace(Constants.ID, String.valueOf(parkourGame.getWalls().size()));
+				.replace(Constants.INDEX, String.valueOf(parkourGame.getWalls().size()));
 	}
 
 	@Fallback
@@ -449,10 +449,10 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (index > parkourGame.getWalls().size()) {
 			return plugin.msg(M.Error.DEFAULT.tooLargeNumber);
 		}
-		parkourGame.getWalls().set(index, new Wall(index, region));
+		parkourGame.getWalls().set(index, new Wall(region));
 		executeTutorial(player, 9, false);
 		return plugin.msg(M.Region.Wall.SET.success)
-				.replace(Constants.ID, String.valueOf(index));
+				.replace(Constants.INDEX, String.valueOf(index));
 	}
 
 	@Fallback
