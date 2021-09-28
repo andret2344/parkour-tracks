@@ -11,11 +11,13 @@ import lombok.Value;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.UUID;
+
 @Value
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 class Parkour extends ParkourGame {
-	Parkour(final int id, @NotNull final String name, @NotNull final BasicRegion region, @NotNull final World world) {
-		super(id, name, region, world);
+	Parkour(@NotNull final UUID uuid, @NotNull final String name, @NotNull final BasicRegion region, @NotNull final World world) {
+		super(uuid, name, region, world);
 	}
 }

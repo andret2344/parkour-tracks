@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 @Data
 @ToString
@@ -36,7 +37,8 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 	private final List<Effect> effects = new ArrayList<>();
 	@NotNull
 	private final List<ParkourMedal> medals = new ArrayList<>();
-	private final int id;
+	@NotNull
+	private final UUID uuid;
 
 	@NotNull
 	private String name;
@@ -99,8 +101,9 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 		private Type type = Type.SERVER;
 	}
 
-	protected ParkourGame(final int id, @NotNull final String name, @NotNull final BasicRegion region, @NotNull final World world) {
-		this.id = id;
+	protected ParkourGame(@NotNull final UUID uuid, @NotNull final String name, @NotNull final BasicRegion region,
+						  @NotNull final World world) {
+		this.uuid = uuid;
 		this.name = displayName = name;
 		this.region = region;
 		this.world = world;

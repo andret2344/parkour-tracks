@@ -12,6 +12,7 @@ import lombok.AllArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Type;
+import java.util.UUID;
 
 @AllArgsConstructor
 public class ParkourGameCreator implements InstanceCreator<ParkourGame> {
@@ -23,7 +24,7 @@ public class ParkourGameCreator implements InstanceCreator<ParkourGame> {
 	public ParkourGame createInstance(final Type type) {
 		// Random data just to create the instance, it will be overwritten during deserialization
 		return new Parkour(
-				-1,
+				UUID.randomUUID(),
 				"",
 				new BasicRegion(BlockVector3.ZERO, BlockVector3.ZERO),
 				plugin.getServer().getWorlds().get(0));
