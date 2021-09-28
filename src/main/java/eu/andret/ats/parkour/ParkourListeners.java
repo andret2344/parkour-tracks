@@ -178,19 +178,20 @@ public class ParkourListeners implements Listener {
 		if (!parkourPlayer.getPlayer().getWorld().equals(parkourGame.getWorld())) {
 			return;
 		}
-		if (parkourPlayer.getLastCheckpoint() == parkourGame.getCheckpoints().size() - 1) {
+		final int checkpointsCount = parkourGame.getCheckpoints().size() - 1;
+		if (parkourPlayer.getLastCheckpoint() == checkpointsCount) {
 			return;
 		}
 		final int checkpointId = parkourGame.getCheckpoints().indexOf(event.getCheckpoint());
 		if (checkpointId > parkourPlayer.getLastCheckpoint()) {
 			parkourPlayer.setLastCheckpoint(checkpointId);
-			if (checkpointId != parkourGame.getCheckpoints().size() - 1 && checkpointId != 0) {
+			if (checkpointId != 0 && checkpointId != checkpointsCount) {
 				parkourPlayer.getPlayer().sendMessage(plugin.msg("checkpoint-achieved"));
 				plugin.getSound(EventSound.CHECKPOINT)
 						.ifPresent(sound -> parkourPlayer.getPlayer().playSound(parkourPlayer.getPlayer().getLocation(), sound, 0.5F, 0.5F));
 			}
 		}
-		if (checkpointId == parkourGame.getCheckpoints().size() - 1) {
+		if (checkpointId == checkpointsCount) {
 			plugin.getServer().getPluginManager().callEvent(new PlayerCompleteParkourEvent(parkourGame, parkourPlayer));
 		}
 	}
