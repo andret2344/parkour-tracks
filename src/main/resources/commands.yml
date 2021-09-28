@@ -49,10 +49,6 @@ executive:
     help: '&eSets a new parkour name.'
     usage: '&cCorrect usage: /parkour rename <name> <new>'
     success: '&aSuccessfully renamed the &6%OLD_NAME%&a game to the &6%NEW_NAME%&a.'
-  spawn:
-    help: '&eSets the spawn for the parkour.'
-    usage: '&cCorrect usage: /parkour setSpawn <name>'
-    success: '&aSuccessfully set up the spawn region.'
   start:
     help: '&eStarts a parkour game.'
     usage: '&cCorrect usage: /parkour start <name>'
@@ -221,10 +217,10 @@ error:
   invalid-name: '&cThis name is wrong.'
   invalid-selection: '&cIncorrect selection.'
   invalid-type: '&cIncorrect type.'
-  missing-checkpoint: '&cAt least one checkpoint is required.'
+  missing-checkpoint-1: '&cAt least one checkpoint is required.'
+  missing-checkpoint-2: '&cAt least two checkpoints are required.'
   missing-lobby: '&cYou must set the lobby up first.'
   missing-medals: '&cYou must set all medals up until you start the game.'
-  missing-spawn: '&cThis game has no spawn. Set it up first.'
   negative-number: '&cNumber must be positive (more than 0).'
   no-economy: '&cNo financial provider is configured.'
   no-lobby: '&cNo lobby has been set.'

@@ -91,13 +91,11 @@ public final class TutorialPlayer {
 					"&dNote: &nThe name of any parkour can contain only lowercase and uppercase letters, numbers, underscore sign (_) and dash sign (-).\n" +
 					"Sample command execution: &b/parkour create &3fancy_parkour";
 			case 5 -> "&dCool, our parkour region is set up. Now make another &lWorldEdit&r&d selection, select the parkour spawn region and execute &b/parkour addCheckpoint &3<name>&d.\n" +
-					"&dNote: &nA parkour player will spawn in the&l center&r&d&n of the region you selected&r&d.\n" +
-					"&dNote: &nThe direction you are looking will be also saved and applied to players after teleporting to this region&r&d.\n" +
 					"&dNote: &nYou are adding checkpoint, but keep in mind that first checkpoint ever will be the spawn location&r&d.\n" +
+					"&dNote: &nYour position and the direction you are looking will be also saved and applied to players after teleporting to this region&r&d.\n" +
 					"Sample command execution: &b/parkour addCheckpoint &3fancy_parkour";
-			case 6 -> "&dOk, spawn region is set. To run the parkour game, at least one checkpoint is needed, because always the last parkour checkpoint is its finish. " +
-					"It's your turn now! Add at least one checkpoint by selecting region and executing &b/parkour addCheckpoint &3<name>&d.\n" +
-					"&dNote: &nTechnically, spawn and checkpoint regions are the same, due to which every checkpoint also saves direction you are looking&r&d.\n" +
+			case 6 -> "&dOk, spawn region is set. To run the parkour game, at least two checkpoints are needed, because always the last parkour checkpoint is its finish. " +
+					"It's your turn now! Add at least one more checkpoint again by selecting the region and executing &b/parkour addCheckpoint &3<name>&d.\n" +
 					"&dNote: &nIf you made a mistake, don't worry, just use the add-twin command: &b&n/parkour setCheckpoint &3&n<name> &e&n<id>&r&d.\n" +
 					"Sample command execution: &b/parkour addCheckpoint &3fancy_parkour\n" +
 					"Sample command execution: &b/parkour setCheckpoint &3fancy_parkour &e1";

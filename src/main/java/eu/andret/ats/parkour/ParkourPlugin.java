@@ -300,7 +300,7 @@ public final class ParkourPlugin extends JavaPlugin {
 
 	@NotNull
 	private List<Medal> loadMedals() {
-		final ConfigurationSection medalsSection = getConfig().getConfigurationSection(Constants.MEDAL);
+		final ConfigurationSection medalsSection = getConfig().getConfigurationSection(Constants.KEY_MEDAL);
 		if (medalsSection == null) {
 			getLogger().info("No medals loaded!");
 			return Collections.emptyList();
@@ -478,7 +478,6 @@ public final class ParkourPlugin extends JavaPlugin {
 		helpDescription.put("remove", msg(M.Executive.REMOVE.helpMessage));
 		helpDescription.put("rename", msg(M.Executive.RENAME.helpMessage));
 		helpDescription.put("info", msg(M.Executive.INFO.helpMessage));
-		helpDescription.put("setSpawn", msg(M.Executive.SPAWN.helpMessage));
 		helpDescription.put("recreate", msg(M.Executive.RECREATE.helpMessage));
 		helpDescription.put("start", msg(M.Executive.START.helpMessage));
 		helpDescription.put("stop", msg(M.Executive.STOP.helpMessage));

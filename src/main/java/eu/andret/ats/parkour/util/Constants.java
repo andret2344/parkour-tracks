@@ -43,4 +43,6 @@ public class Constants {
 	public static final String TIME = "%TIME%";
 	public static final String VALUE = "%VALUE%";
 	public static final String VIP_ONLY = "%VIP_ONLY%";
+
+	public static final String KEY_MEDAL = "medal";
 }

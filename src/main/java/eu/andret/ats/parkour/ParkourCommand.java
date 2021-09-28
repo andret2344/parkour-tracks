@@ -265,7 +265,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Error.DEFAULT.alreadyStarted);
 		}
 		if (parkourGame.getCheckpoints().size() < 2) {
-			return plugin.msg(M.Error.DEFAULT.missingCheckpoint);
+			return plugin.msg(M.Error.DEFAULT.missingCheckpoint2);
 		}
 		if (sender instanceof Player player && executeTutorial(player, 12)) {
 			plugin.getTutorialManager().removePlayer(player);
@@ -343,7 +343,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		parkourGame.addPlayer(parkourPlayer);
 		parkourPlayer.reset();
 		if (parkourGame.getCheckpoints().isEmpty()) {
-			return plugin.msg(M.Error.DEFAULT.missingSpawn);
+			return plugin.msg(M.Error.DEFAULT.missingCheckpoint1);
 		}
 		plugin.getPlayerManager().teleportToCheckpoint(parkourPlayer, parkourGame.getCheckpoints().get(0));
 		return plugin.msg(M.Executive.TELEPORT.success)
@@ -942,8 +942,9 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 					() -> {
 						if (plugin.getTutorialManager().hasPlayer(player)) {
 							final TutorialPlayer tutorialPlayer = plugin.getTutorialManager().getPlayer(player);
-							tutorialPlayer.done(7, false);
-							tutorialPlayer.next().next().sendMessage();
+							if (tutorialPlayer.done(7, false)) {
+								tutorialPlayer.next().next().sendMessage();
+							}
 						}
 					});
 		}
