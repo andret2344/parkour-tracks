@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class ParkourPlayer {
 	@NotNull
 	protected final Player player;
-	protected int lastCheckpoint = -1;
+	protected int lastCheckpoint = 0;
 	protected boolean ignoring = false;
 	protected double time = 0;
 	protected boolean hidden = false;
@@ -22,7 +22,7 @@ public abstract class ParkourPlayer {
 	}
 
 	public void reset() {
-		lastCheckpoint = -1;
+		lastCheckpoint = 0;
 		time = 0;
 		player.setExp(0);
 		player.setLevel(0);

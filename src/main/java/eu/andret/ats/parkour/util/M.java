@@ -47,10 +47,10 @@ public class M {
 	private static final String ITEM = "item";
 	private static final String LOBBY = "lobby";
 	private static final String MEDAL = "medal";
-	private static final String MISSING_CHECKPOINT = "missing-checkpoint";
+	private static final String MISSING_CHECKPOINT_1 = "missing-checkpoint-1";
+	private static final String MISSING_CHECKPOINT_2 = "missing-checkpoint-2";
 	private static final String MISSING_LOBBY = "missing-lobby";
 	private static final String MISSING_MEDALS = "missing-medals";
-	private static final String MISSING_SPAWN = "missing-spawn";
 	private static final String MODIFY_INVENTORY = "modify-inventory";
 	private static final String NEGATIVE_NUMBER = "negative-number";
 	private static final String NOT_BLOCK = "not-block";
@@ -71,7 +71,6 @@ public class M {
 	private static final String SAVING_RESULTS = "saving-results";
 	private static final String SET = "set";
 	private static final String SET_LOBBY = "set-lobby";
-	private static final String SPAWN = "spawn";
 	private static final String SPRINT_FORCED = "sprint-forced";
 	private static final String START = "start";
 	private static final String STOP = "stop";
@@ -131,7 +130,6 @@ public class M {
 		public static final Executive RECORDS_BLOCK = new Executive(M.RECORDS_BLOCK);
 		public static final Executive REMOVE = new Executive(M.REMOVE);
 		public static final Executive RENAME = new Executive(M.RENAME);
-		public static final Executive SPAWN = new Executive(M.SPAWN);
 		public static final Executive START = new Executive(M.START);
 		public static final Executive STOP = new Executive(M.STOP);
 		public static final Executive TELEPORT = new Executive(M.TELEPORT);
@@ -265,10 +263,10 @@ public class M {
 		public final Message invalidName = new Message(this, INVALID_NAME, true);
 		public final Message invalidSelection = new Message(this, INVALID_SELECTION, true);
 		public final Message invalidType = new Message(this, INVALID_TYPE, true);
-		public final Message missingCheckpoint = new Message(this, MISSING_CHECKPOINT, true);
+		public final Message missingCheckpoint1 = new Message(this, MISSING_CHECKPOINT_1, true);
+		public final Message missingCheckpoint2 = new Message(this, MISSING_CHECKPOINT_2, true);
 		public final Message missingLobby = new Message(this, MISSING_LOBBY, true);
 		public final Message missingMedals = new Message(this, MISSING_MEDALS, true);
-		public final Message missingSpawn = new Message(this, MISSING_SPAWN, true);
 		public final Message negativeNumber = new Message(this, NEGATIVE_NUMBER, true);
 		public final Message noEconomy = new Message(this, NO_ECONOMY, true);
 		public final Message noLobby = new Message(this, NO_LOBBY, true);

@@ -5,7 +5,7 @@
 package eu.andret.ats.parkour.tasks.database;
 
 import eu.andret.ats.parkour.parkour.ParkourGame;
-import eu.andret.ats.parkour.parkour.ParkourRecord;
+import eu.andret.ats.parkour.parkour.Score;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,9 +22,9 @@ import java.util.function.Consumer;
 public class FetchParkourBestRecordTask extends AbstractParkourTask {
 	private final int count;
 	@Nullable
-	private final Consumer<List<ParkourRecord>> callback;
+	private final Consumer<List<Score>> callback;
 
-	public FetchParkourBestRecordTask(@NotNull final Connection connection, @NotNull final ParkourGame parkourGame, final int count, @Nullable final Consumer<List<ParkourRecord>> callback) {
+	public FetchParkourBestRecordTask(@NotNull final Connection connection, @NotNull final ParkourGame parkourGame, final int count, @Nullable final Consumer<List<Score>> callback) {
 		super(connection, parkourGame);
 		if (count <= 0) {
 			throw new IllegalArgumentException("Count must be positive, " + count + " provided!");
@@ -39,9 +39,9 @@ public class FetchParkourBestRecordTask extends AbstractParkourTask {
 			stat.setString(1, game.getName());
 			stat.setInt(2, count);
 			final ResultSet rs = stat.executeQuery();
-			final List<ParkourRecord> result = new ArrayList<>();
+			final List<Score> result = new ArrayList<>();
 			for (int i = 0; i < count && rs.next(); i++) {
-				result.add(new ParkourRecord(UUID.fromString(rs.getString("uuid")), game, rs.getFloat("duration")));
+				result.add(new Score(UUID.fromString(rs.getString("uuid")), game, rs.getFloat("duration")));
 			}
 			Optional.ofNullable(callback).ifPresent(cb -> cb.accept(result));
 		} catch (final SQLException ex) {

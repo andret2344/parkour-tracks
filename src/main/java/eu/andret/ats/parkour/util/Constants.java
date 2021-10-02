@@ -23,7 +23,7 @@ public class Constants {
 	public static final String EFFECT = "%EFFECT%";
 	public static final String ENABLED = "%ENABLED%";
 	public static final String FEE = "%FEE%";
-	public static final String ID = "%ID%";
+	public static final String INDEX = "%INDEX%";
 	public static final String MEDAL = "%MEDAL%";
 	public static final String MEDALS = "%MEDALS%";
 	public static final String NAME = "%NAME%";
@@ -43,4 +43,6 @@ public class Constants {
 	public static final String TIME = "%TIME%";
 	public static final String VALUE = "%VALUE%";
 	public static final String VIP_ONLY = "%VIP_ONLY%";
+
+	public static final String KEY_MEDAL = "medal";
 }

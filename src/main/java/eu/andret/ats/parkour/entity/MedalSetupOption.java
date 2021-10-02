@@ -4,7 +4,7 @@
 
 package eu.andret.ats.parkour.entity;
 
-import eu.andret.ats.parkour.parkour.ParkourMedalData;
+import eu.andret.ats.parkour.parkour.ParkourMedal;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -16,25 +16,25 @@ import java.util.function.ToDoubleFunction;
 @Getter
 @AllArgsConstructor
 public enum MedalSetupOption {
-	TIME(false, ParkourMedalData::getTime, ParkourMedalData::setTime, (d1, d2) -> d1 > d2),
-	REWARD(true, ParkourMedalData::getReward, ParkourMedalData::setReward, (d1, d2) -> d1 < d2);
+	TIME(false, ParkourMedal::getTime, ParkourMedal::setTime, (d1, d2) -> d1 > d2),
+	REWARD(true, ParkourMedal::getReward, ParkourMedal::setReward, (d1, d2) -> d1 < d2);
 
 	final boolean economyRequired;
 	@NotNull
-	final ToDoubleFunction<ParkourMedalData> getterFunction;
+	final ToDoubleFunction<ParkourMedal> getterFunction;
 	@NotNull
-	final BiConsumer<ParkourMedalData, Double> setterFunction;
+	final BiConsumer<ParkourMedal, Double> setterFunction;
 	/**
 	 * Informs, if "better" medal should have smalled (time) value or greater (reward) maybe?
 	 */
 	@NotNull
 	final BiPredicate<Double, Double> valuesRelation;
 
-	public void set(final ParkourMedalData medalData, final double value) {
+	public void set(final ParkourMedal medalData, final double value) {
 		setterFunction.accept(medalData, value);
 	}
 
-	public double get(final ParkourMedalData medalData) {
+	public double get(final ParkourMedal medalData) {
 		return getterFunction.applyAsDouble(medalData);
 	}
 }

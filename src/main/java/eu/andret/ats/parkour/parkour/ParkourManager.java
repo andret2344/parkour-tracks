@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 @Data
 public final class ParkourManager {
@@ -42,7 +43,7 @@ public final class ParkourManager {
 	@NotNull
 	public ParkourGame createParkour(@NotNull final String name, @NotNull final BasicRegion region, @NotNull final World world) {
 		return Optional.of(world)
-				.map(w -> new Parkour(name, region, w))
+				.map(w -> new Parkour(UUID.randomUUID(), name, region, w))
 				.map(setting::add)
 				.orElseThrow(() -> new IllegalArgumentException("World cannot be null!"));
 	}

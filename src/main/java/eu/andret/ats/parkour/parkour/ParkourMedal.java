@@ -4,19 +4,31 @@
 
 package eu.andret.ats.parkour.parkour;
 
-import lombok.Value;
-import org.jetbrains.annotations.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
-@Value
-public class ParkourMedal implements Comparable<ParkourMedal> {
-	@NotNull
-	String name;
-	@NotNull
-	String displayName;
-	int importance;
+@Data
+@AllArgsConstructor
+public class ParkourMedal {
+	private final Medal medal;
+	private double time;
+	private double reward;
 
-	@Override
-	public int compareTo(@NotNull final ParkourMedal other) {
-		return other.importance - importance;
+	public ParkourMedal(final Medal medal) {
+		this(medal, 0, 0);
+	}
+
+	public void setTime(final double time) {
+		if (time < 0) {
+			throw new IllegalArgumentException("Time cannot be negative, " + time + " provided");
+		}
+		this.time = time;
+	}
+
+	public void setReward(final double reward) {
+		if (reward < 0) {
+			throw new IllegalArgumentException("Reward cannot be negative, " + time + " provided");
+		}
+		this.reward = reward;
 	}
 }

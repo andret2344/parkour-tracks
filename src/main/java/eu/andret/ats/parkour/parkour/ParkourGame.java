@@ -6,7 +6,8 @@ package eu.andret.ats.parkour.parkour;
 
 import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.region.BasicRegion;
-import eu.andret.ats.parkour.region.LocatedRegion;
+import eu.andret.ats.parkour.region.Checkpoint;
+import eu.andret.ats.parkour.region.Wall;
 import lombok.Builder;
 import lombok.Data;
 import lombok.ToString;
@@ -21,24 +22,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.UUID;
 
 @Data
 @ToString
 public abstract class ParkourGame implements Comparable<ParkourGame> {
 	@NotNull
-	private final List<LocatedRegion> checkpoints = new ArrayList<>();
+	private final List<Checkpoint> checkpoints = new ArrayList<>();
 	@NotNull
-	private final List<BasicRegion> walls = new ArrayList<>();
-	@NotNull
-	private final Set<String> authors = new TreeSet<>();
+	private final List<Wall> walls = new ArrayList<>();
 	@NotNull
 	private final transient List<ParkourPlayer> players = new ArrayList<>();
 	@NotNull
-	private final List<ParkourEffect> effects = new ArrayList<>();
+	private final List<Effect> effects = new ArrayList<>();
 	@NotNull
-	private final List<ParkourMedalData> medals = new ArrayList<>();
+	private final List<ParkourMedal> medals = new ArrayList<>();
+	@NotNull
+	private final UUID uuid;
 
 	@NotNull
 	private String name;
@@ -53,8 +53,6 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 	private Location recordsBlock;
 	@Nullable
 	private Location teleportBlock;
-	@Nullable
-	private LocatedRegion spawn;
 
 	@NotNull
 	private Options options = Options.builder().build();
@@ -68,7 +66,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 	@Value
 	public static class Result {
 		@Nullable
-		ParkourMedal medal;
+		Medal medal;
 		double reward;
 	}
 
@@ -103,7 +101,9 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 		private Type type = Type.SERVER;
 	}
 
-	protected ParkourGame(@NotNull final String name, @NotNull final BasicRegion region, @NotNull final World world) {
+	protected ParkourGame(@NotNull final UUID uuid, @NotNull final String name, @NotNull final BasicRegion region,
+						  @NotNull final World world) {
+		this.uuid = uuid;
 		this.name = displayName = name;
 		this.region = region;
 		this.world = world;
@@ -113,7 +113,6 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 	public List<BasicRegion> getAllRegions() {
 		final List<BasicRegion> arr = new ArrayList<>();
 		arr.add(region);
-		arr.add(spawn);
 		arr.addAll(walls);
 		arr.addAll(checkpoints);
 		return arr.stream()
@@ -138,8 +137,9 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 	}
 
 	public boolean inSpawn(@NotNull final ParkourPlayer player) {
-		return Optional.ofNullable(spawn)
-				.map(spawnLocation -> spawnLocation.contains(player))
+		return Optional.of(checkpoints)
+				.map(list -> list.get(0))
+				.map(checkpoint -> checkpoint.contains(player))
 				.orElse(false);
 	}
 
@@ -150,16 +150,16 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 	@NotNull
 	public Result getResult(final double time) {
 		double smallest = Double.POSITIVE_INFINITY;
-		ParkourMedal medal = null;
+		Medal medal = null;
 		double reward = 0;
-		for (final ParkourMedalData parkourMedalData : medals) {
-			if (parkourMedalData.getTime() < time) {
+		for (final ParkourMedal parkourMedal : medals) {
+			if (parkourMedal.getTime() < time) {
 				continue;
 			}
-			reward += parkourMedalData.getReward();
-			if (parkourMedalData.getTime() < smallest) {
-				smallest = parkourMedalData.getTime();
-				medal = parkourMedalData.getMedal();
+			reward += parkourMedal.getReward();
+			if (parkourMedal.getTime() < smallest) {
+				smallest = parkourMedal.getTime();
+				medal = parkourMedal.getMedal();
 			}
 		}
 		return new Result(medal, reward);
