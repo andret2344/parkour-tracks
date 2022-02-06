@@ -61,8 +61,7 @@ import java.util.function.ToDoubleFunction;
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
-
-	public static final double EPSILON = 0.01;
+	private static final double EPSILON = 0.001;
 
 	public ParkourCommand(@NotNull final CommandSender sender, @NotNull final ParkourPlugin plugin) {
 		super(sender, plugin);
