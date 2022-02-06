@@ -289,7 +289,7 @@ public final class ParkourPlugin extends JavaPlugin {
 	}
 
 	/**
-	 * @return The hiding players  item.
+	 * @return The hiding players item.
 	 */
 	public ItemStack getHidingItem() {
 		return hidingItem;
@@ -298,7 +298,7 @@ public final class ParkourPlugin extends JavaPlugin {
 	/**
 	 * @param time Time in milliseconds.
 	 *
-	 * @return The time formatted to 12:34.56 (12 minutes, 34 seconds, 56 millis)
+	 * @return The time formatted to 12:34.56 (12 minutes, 34 seconds, 56 millis).
 	 */
 	@NotNull
 	public String formatTime(final double time) {

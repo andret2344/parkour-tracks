@@ -55,7 +55,7 @@ medal:
     display: '&4bronze'
     importance: 4
 
-# If starting a game needs all available medals to be set up.
+# If setting up all parkour medals is required to start the game.
 # Possible options:
 # NONE - no requirements
 # TIME - require only time
