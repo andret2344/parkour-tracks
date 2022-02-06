@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2018-2021. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2018-2022. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour.util;
@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -144,6 +143,6 @@ public final class Data {
 	public static List<Material> getInteractiveMaterials() {
 		return Stream.of(LEVERS, DOORS, BUTTONS, TRAPDOORS, CHESTS, GATES)
 				.flatMap(Collection::stream)
-				.collect(Collectors.toList());
+				.toList();
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2018-2021. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2018-2022. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour;
@@ -10,10 +10,11 @@ import com.google.gson.stream.JsonWriter;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import eu.andret.arguments.AnnotatedCommand;
 import eu.andret.arguments.CommandManager;
-import eu.andret.arguments.api.annotation.Fallback;
+import eu.andret.arguments.api.entity.FallbackConstants;
 import eu.andret.ats.parkour.api.FinancialProvider;
 import eu.andret.ats.parkour.api.RankProvider;
 import eu.andret.ats.parkour.entity.EventSound;
+import eu.andret.ats.parkour.entity.MedalRequirement;
 import eu.andret.ats.parkour.entity.MedalSetupOption;
 import eu.andret.ats.parkour.entity.SimpleLever;
 import eu.andret.ats.parkour.item.ParkourInteractiveItem;
@@ -189,6 +190,11 @@ public final class ParkourPlugin extends JavaPlugin {
 		getServer().getScheduler().cancelTasks(this);
 	}
 
+	/**
+	 * @param path The YML path to message from messages.yml file
+	 *
+	 * @return The colored message or empty string if invalid path provided.
+	 */
 	@NotNull
 	public String msg(@NotNull final String path) {
 		return Optional.of(path)
@@ -197,6 +203,11 @@ public final class ParkourPlugin extends JavaPlugin {
 				.orElse("");
 	}
 
+	/**
+	 * @param message The message key to lookup in commands.yml file.
+	 *
+	 * @return The colored message.
+	 */
 	@NotNull
 	public String msg(@NotNull final M.Message message) {
 		final StringBuilder result = new StringBuilder();
@@ -215,16 +226,27 @@ public final class ParkourPlugin extends JavaPlugin {
 				.orElse("");
 	}
 
+	/**
+	 * @return The {@link Optional} wrapper of database connection.
+	 */
 	@NotNull
 	public Optional<Connection> getConnection() {
 		return Optional.ofNullable(connection);
 	}
 
+	/**
+	 * @return The {@link WorldEditPlugin} instance.
+	 */
 	@NotNull
 	public WorldEditPlugin getWorldEdit() {
 		return getPlugin(WorldEditPlugin.class);
 	}
 
+	/**
+	 * @param eventSound The event that may produce sound to its executor player.
+	 *
+	 * @return The {@link Optional} wrapper of matching {@link Sound} found in config.yml.
+	 */
 	@NotNull
 	public Optional<Sound> getSound(@NotNull final EventSound eventSound) {
 		return Optional.of(getConfig())
@@ -241,22 +263,43 @@ public final class ParkourPlugin extends JavaPlugin {
 		updateSign(score.getGame(), line -> replace(String.valueOf(line), score));
 	}
 
+	/**
+	 * Updates synchronously the matching record sign block of certain parkour.
+	 *
+	 * @param parkourGame The game which sign needs to be updated synchronously.
+	 */
 	public void updateSyncSign(@NotNull final ParkourGame parkourGame) {
 		getServer().getScheduler().scheduleSyncDelayedTask(this, () -> updateSign(parkourGame));
 	}
 
+	/**
+	 * Updates the matching record sign block of certain parkour.
+	 *
+	 * @param parkourGame The game which sign needs to be updated.
+	 */
 	public void updateSign(@NotNull final ParkourGame parkourGame) {
 		updateSign(parkourGame, this::replace);
 	}
 
+	/**
+	 * @return The parkour exit item.
+	 */
 	public ItemStack getExitItem() {
 		return exitItem;
 	}
 
+	/**
+	 * @return The hiding players  item.
+	 */
 	public ItemStack getHidingItem() {
 		return hidingItem;
 	}
 
+	/**
+	 * @param time Time in milliseconds.
+	 *
+	 * @return The time formatted to 12:34.56 (12 minutes, 34 seconds, 56 millis)
+	 */
 	@NotNull
 	public String formatTime(final double time) {
 		final int minutes = (int) time / 60;
@@ -282,15 +325,36 @@ public final class ParkourPlugin extends JavaPlugin {
 				.collect(Collectors.joining(separator));
 	}
 
+	/**
+	 * @return The {@link MedalRequirement} read from config.yml. {@link MedalRequirement#ALL} if invalid or no value
+	 * 		present.
+	 */
+	@NotNull
+	public MedalRequirement getMedalRequirement() {
+		final String medalRequirement = getConfig().getString("medal-requirement", "ALL");
+		try {
+			return MedalRequirement.valueOf(medalRequirement);
+		} catch (final IllegalArgumentException ex) {
+			System.out.println("Provided invalid medal requirement: " + medalRequirement);
+		}
+		return MedalRequirement.ALL;
+	}
+
 	public boolean isEditLockActive() {
 		return getConfig().getBoolean("edit-lock", true);
 	}
 
+	/**
+	 * @return The {@link Optional} wrapper of {@link FinancialProvider} if present, {@link Optional#empty()} otherwise.
+	 */
 	@NotNull
 	public Optional<FinancialProvider> getFinancialProvider() {
 		return Optional.ofNullable(financialProvider);
 	}
 
+	/**
+	 * @return The {@link Optional} wrapper of {@link RankProvider} if present, {@link Optional#empty()} otherwise.
+	 */
 	@NotNull
 	public Optional<RankProvider> getRankProvider() {
 		return Optional.ofNullable(rankProvider);
@@ -358,14 +422,14 @@ public final class ParkourPlugin extends JavaPlugin {
 		command.getOptions().setAutoTranslateColors(true);
 		command.getOptions().setCaseSensitive(false);
 
-		command.addTypeMapper(ParkourGame.class, parkourManager::getParkour, Fallback.ON_NULL);
-		command.addTypeMapper(PotionEffectType.class, PotionEffectType::getByName, Fallback.ON_NULL);
-		command.addEnumMapper(DyeColor.class, Fallback.ON_NULL);
+		command.addTypeMapper(ParkourGame.class, parkourManager::getParkour, FallbackConstants.ON_NULL);
+		command.addTypeMapper(PotionEffectType.class, PotionEffectType::getByName, FallbackConstants.ON_NULL);
+		command.addTypeMapper(DyeColor.class, this::getDyeColor, FallbackConstants.ON_NULL);
 		command.addTypeMapper(Medal.class, name -> medals.stream()
 						.filter(medal -> medal.getName().equals(name))
 						.findAny()
 						.orElse(null),
-				Fallback.ON_NULL);
+				FallbackConstants.ON_NULL);
 		command.addEnumMapper(MedalSetupOption.class);
 		command.addEnumMapper(SimpleLever.class);
 
@@ -383,6 +447,15 @@ public final class ParkourPlugin extends JavaPlugin {
 		command.addTypeCompleter(boolean.class, Arrays.asList(Boolean.FALSE.toString(), Boolean.TRUE.toString()));
 		command.addEnumCompleter(MedalSetupOption.class);
 		command.addEnumCompleter(DyeColor.class);
+	}
+
+	@Nullable
+	private DyeColor getDyeColor(final String colorName) {
+		try {
+			return DyeColor.valueOf(colorName);
+		} catch (final IllegalArgumentException ex) {
+			return null;
+		}
 	}
 
 	private void setupDatabase() {
