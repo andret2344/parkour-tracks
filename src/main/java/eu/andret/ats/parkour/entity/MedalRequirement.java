@@ -4,10 +4,8 @@
 
 package eu.andret.ats.parkour.entity;
 
-public enum EventSound {
-	JOIN,
-	START,
-	CHECKPOINT,
-	COMPLETE,
-	LEAVE
+public enum MedalRequirement {
+	NONE,
+	TIME,
+	ALL
 }

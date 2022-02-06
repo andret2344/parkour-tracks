@@ -55,6 +55,16 @@ medal:
     display: '&4bronze'
     importance: 4
 
+# If setting up all parkour medals is required to start the game.
+# Possible options:
+# NONE - no requirements
+# TIME - require only time
+# ALL - require time and money
+# If no financial provider available, TIME and ALL are identity.
+# Type: NONE|TIME|ALL
+# Default: ALL
+require-medals: ALL
+
 # Should it be forbidden to everyone to edit running parkour games?
 # This setting forbids any terrain changes and game modification via commends.
 # If set to true, you need to stop the game in order to apply any modification it.

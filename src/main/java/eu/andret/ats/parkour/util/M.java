@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2018-2021. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2018-2022. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour.util;
@@ -41,6 +41,7 @@ public class M {
 	private static final String INVALID_COLOR = "invalid-color";
 	private static final String INVALID_EFFECT = "invalid-effect";
 	private static final String INVALID_GAME = "invalid-game";
+	private static final String INVALID_MEDAL_OPTION = "invalid-medal-option";
 	private static final String INVALID_NAME = "invalid-name";
 	private static final String INVALID_SELECTION = "invalid-selection";
 	private static final String INVALID_TYPE = "invalid-type";
@@ -56,12 +57,9 @@ public class M {
 	private static final String NOT_BLOCK = "not-block";
 	private static final String NOT_CONNECTED = "not-connected";
 	private static final String NOT_SIGN = "not-sign";
-	private static final String NOT_VIP = "not-vip";
 	private static final String NO_ECONOMY = "no-economy";
 	private static final String NO_LOBBY = "no-lobby";
 	private static final String NO_MEDAL = "no-medal";
-	private static final String NO_MEDAL_DATA = "no-medal-data";
-	private static final String NO_RANKS = "no-ranks";
 	private static final String RECORDS_BLOCK = "records-block";
 	private static final String RECREATE = "recreate";
 	private static final String REMOVE = "remove";
@@ -80,7 +78,6 @@ public class M {
 	private static final String TOO_LARGE_NUMBER = "too-large-number";
 	private static final String TOP = "top";
 	private static final String TYPE = "type";
-	private static final String USAGE = "usage";
 	private static final String VIP_ONLY = "vip-only";
 
 	@AllArgsConstructor
@@ -136,7 +133,6 @@ public class M {
 		public static final Executive TELEPORT_BLOCK = new Executive(M.TELEPORT_BLOCK);
 
 		public final Message helpMessage = new Message(this, HELP);
-		public final Message usage = new Message(this, USAGE);
 		public final Message success = new Message(this, SUCCESS);
 
 		public Executive(@NotNull final String key) {
@@ -161,7 +157,6 @@ public class M {
 		public static final Option VIP_ONLY = new Option(M.VIP_ONLY);
 
 		public final Message helpMessage = new Message(this, HELP);
-		public final Message usage = new Message(this, USAGE);
 		public final Message get = new Message(this, GET);
 		public final Message set = new Message(this, SET);
 
@@ -175,7 +170,6 @@ public class M {
 		public static final Parkour DISPLAY_NAME = new Parkour(M.DISPLAY_NAME);
 
 		public final Message helpMessage = new Message(this, HELP);
-		public final Message usage = new Message(this, USAGE);
 		public final Message get = new Message(this, GET);
 		public final Message set = new Message(this, SET);
 
@@ -192,7 +186,6 @@ public class M {
 		public static final List MEDAL = new List(M.MEDAL);
 
 		public final Message helpMessage = new Message(this, M.HELP);
-		public final Message usage = new Message(this, USAGE);
 		public final Message empty = new Message(this, EMPTY);
 		public final Message header = new Message(this, HEADER);
 		public final Message item = new Message(this, ITEM);
@@ -208,7 +201,6 @@ public class M {
 			public static final Checkpoint SET = new Checkpoint(M.SET);
 
 			public final Message helpMessage = new Message(this, HELP);
-			public final Message usage = new Message(this, USAGE);
 			public final Message success = new Message(this, SUCCESS);
 
 			public Checkpoint(@NotNull final String key) {
@@ -221,7 +213,6 @@ public class M {
 			public static final Wall SET = new Wall(M.SET);
 
 			public final Message helpMessage = new Message(this, HELP);
-			public final Message usage = new Message(this, USAGE);
 			public final Message success = new Message(this, SUCCESS);
 
 			public Wall(@NotNull final String key) {
@@ -237,7 +228,6 @@ public class M {
 		public static final Amplifier EFFECT = new Amplifier(M.EFFECT);
 
 		public final Message helpMessage = new Message(this, HELP);
-		public final Message usage = new Message(this, USAGE);
 		public final Message added = new Message(this, ADDED);
 		public final Message removed = new Message(this, REMOVED);
 
@@ -260,6 +250,7 @@ public class M {
 		public final Message invalidColor = new Message(this, INVALID_COLOR, true);
 		public final Message invalidEffect = new Message(this, INVALID_EFFECT, true);
 		public final Message invalidGame = new Message(this, INVALID_GAME, true);
+		public final Message invalidMedalOption = new Message(this, INVALID_MEDAL_OPTION, true);
 		public final Message invalidName = new Message(this, INVALID_NAME, true);
 		public final Message invalidSelection = new Message(this, INVALID_SELECTION, true);
 		public final Message invalidType = new Message(this, INVALID_TYPE, true);
@@ -270,13 +261,10 @@ public class M {
 		public final Message negativeNumber = new Message(this, NEGATIVE_NUMBER, true);
 		public final Message noEconomy = new Message(this, NO_ECONOMY, true);
 		public final Message noLobby = new Message(this, NO_LOBBY, true);
-		public final Message noRanks = new Message(this, NO_RANKS, true);
 		public final Message noMedal = new Message(this, NO_MEDAL, true);
-		public final Message noMedalData = new Message(this, NO_MEDAL_DATA, true);
 		public final Message notBlock = new Message(this, NOT_BLOCK, true);
 		public final Message notConnected = new Message(this, NOT_CONNECTED, true);
 		public final Message notSign = new Message(this, NOT_SIGN, true);
-		public final Message notVip = new Message(this, NOT_VIP, true);
 		public final Message tooLargeNumber = new Message(this, TOO_LARGE_NUMBER, true);
 
 		public Error(@NotNull final String key) {

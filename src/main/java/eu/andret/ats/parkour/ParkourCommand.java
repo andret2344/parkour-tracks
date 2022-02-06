@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2018-2021. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2018-2022. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour;
@@ -12,8 +12,9 @@ import com.sk89q.worldedit.regions.Region;
 import eu.andret.arguments.AnnotatedCommandExecutor;
 import eu.andret.arguments.api.annotation.Argument;
 import eu.andret.arguments.api.annotation.BaseCommand;
-import eu.andret.arguments.api.annotation.Fallback;
+import eu.andret.arguments.api.annotation.TypeFallback;
 import eu.andret.arguments.api.entity.ExecutorType;
+import eu.andret.ats.parkour.entity.MedalRequirement;
 import eu.andret.ats.parkour.entity.MedalSetupOption;
 import eu.andret.ats.parkour.entity.SimpleLever;
 import eu.andret.ats.parkour.event.game.GameStartEvent;
@@ -60,6 +61,8 @@ import java.util.function.ToDoubleFunction;
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin> {
+	private static final double EPSILON = 0.001;
+
 	public ParkourCommand(@NotNull final CommandSender sender, @NotNull final ParkourPlugin plugin) {
 		super(sender, plugin);
 	}
@@ -254,11 +257,6 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 				.replace(Constants.DISPLAY_NAME, parkourGame.getDisplayName());
 	}
 
-	@Fallback
-	public String remove() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
-	}
-
 	@Argument(permission = "ats.parkour.start", description = "Starts parkour game")
 	public String start(final ParkourGame parkourGame) {
 		if (parkourGame.isRunning()) {
@@ -266,6 +264,9 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		}
 		if (parkourGame.getCheckpoints().size() < 2) {
 			return plugin.msg(M.Error.DEFAULT.missingCheckpoint2);
+		}
+		if (!verifyMedals(parkourGame)) {
+			return plugin.msg(M.Error.DEFAULT.missingMedals);
 		}
 		if (sender instanceof Player player && executeTutorial(player, 12)) {
 			plugin.getTutorialManager().removePlayer(player);
@@ -275,11 +276,6 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		return plugin.msg(M.Executive.START.success)
 				.replace(Constants.NAME, parkourGame.getName())
 				.replace(Constants.DISPLAY_NAME, parkourGame.getDisplayName());
-	}
-
-	@Fallback
-	public String start() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
 	}
 
 	@Argument(permission = "ats.parkour.stop", description = "Stops parkour game")
@@ -294,11 +290,6 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 				.replace(Constants.DISPLAY_NAME, parkourGame.getDisplayName());
 	}
 
-	@Fallback
-	public String stop() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
-	}
-
 	@Argument(permission = "ats.parkour.recreate", executorType = ExecutorType.PLAYER, description = "Sets new region for parkour game")
 	public String recreate(final ParkourGame parkourGame) {
 		if (parkourGame.isRunning() && plugin.isEditLockActive()) {
@@ -310,11 +301,6 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		}
 		parkourGame.setRegion(new BasicRegion(region));
 		return plugin.msg(M.Executive.RECREATE.success);
-	}
-
-	@Fallback
-	public String recreate() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
 	}
 
 	@Argument(permission = "ats.parkour.rename", description = "Sets new name for parkour game")
@@ -332,11 +318,6 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 				.replace(Constants.NEW_NAME, name);
 	}
 
-	@Fallback
-	public String rename() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
-	}
-
 	@Argument(permission = "ats.parkour.teleport", executorType = ExecutorType.PLAYER, description = "Teleports sender to parkours spawn region", aliases = "tp")
 	public String teleport(final ParkourGame parkourGame) {
 		final ParkourPlayer parkourPlayer = plugin.getPlayerManager().getParkourPlayer((Player) sender);
@@ -351,13 +332,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 				.replace(Constants.DISPLAY_NAME, parkourGame.getDisplayName());
 	}
 
-	@Fallback
-	public String teleport() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
-	}
-
 	// === REGIONS ===
-
 	@Argument(permission = "ats.parkour.addCheckpoint", description = "Adds checkpoint to parkour game", executorType = ExecutorType.PLAYER)
 	public String addCheckpoint(final ParkourGame parkourGame) {
 		if (parkourGame.isRunning() && plugin.isEditLockActive()) {
@@ -377,11 +352,6 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		parkourGame.getCheckpoints().add(new Checkpoint(region, location));
 		return plugin.msg(M.Region.Checkpoint.ADD.success)
 				.replace(Constants.INDEX, String.valueOf(parkourGame.getCheckpoints().size()));
-	}
-
-	@Fallback
-	public String addCheckpoint() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
 	}
 
 	@Argument(permission = "ats.parkour.setCheckpoint", description = "Sets specified parkour game checkpoint", executorType = ExecutorType.PLAYER)
@@ -407,11 +377,6 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 				.replace(Constants.INDEX, String.valueOf(index));
 	}
 
-	@Fallback
-	public String setCheckpoint() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
-	}
-
 	@Argument(permission = "ats.parkour.addWall", description = "Adds wall to parkour game", executorType = ExecutorType.PLAYER)
 	public String addWall(final ParkourGame parkourGame) {
 		if (parkourGame.isRunning() && plugin.isEditLockActive()) {
@@ -426,11 +391,6 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		executeTutorial(player, 9, false);
 		return plugin.msg(M.Region.Wall.ADD.success)
 				.replace(Constants.INDEX, String.valueOf(parkourGame.getWalls().size()));
-	}
-
-	@Fallback
-	public String addWall() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
 	}
 
 	@Argument(permission = "ats.parkour.setWall", description = "Sets specified parkour game wall", executorType = ExecutorType.PLAYER)
@@ -455,11 +415,6 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 				.replace(Constants.INDEX, String.valueOf(index));
 	}
 
-	@Fallback
-	public String setWall() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
-	}
-
 	@Argument(permission = "ats.parkour.effects", description = "Shows current parkour effects")
 	public List<String> effects(final ParkourGame parkourGame) {
 		if (parkourGame.getEffects().isEmpty()) {
@@ -472,11 +427,6 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 						.replace(Constants.AMPLIFIER, String.valueOf(entry.getAmplifier())))
 				.map(text -> ChatColor.translateAlternateColorCodes('&', text))
 				.toList();
-	}
-
-	@Fallback
-	public String effects() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
 	}
 
 	@Argument(permission = "ats.parkour.setEffect", description = "Sets parkour game effect", aliases = "se")
@@ -495,13 +445,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 				.replace(Constants.AMPLIFIER, String.valueOf(power));
 	}
 
-	@Fallback
-	public String setEffect() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
-	}
-
 	// === OPTIONS ===
-
 	@Argument(permission = "ats.parkour.sprintForced", description = "Shows value of sprintForced flag")
 	public String sprintForced(final ParkourGame parkourGame) {
 		return plugin.msg(M.Option.SPRINT_FORCED.get)
@@ -518,11 +462,6 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 				.replace(Constants.VALUE, String.valueOf(sprintForced));
 	}
 
-	@Fallback
-	public String sprintForced() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
-	}
-
 	@Argument(permission = "ats.parkour.alwaysSpawn", description = "Shows value of alwaysSpawn flag")
 	public String alwaysSpawn(final ParkourGame parkourGame) {
 		return plugin.msg(M.Option.ALWAYS_SPAWN.get)
@@ -537,11 +476,6 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		parkourGame.getOptions().setAlwaysSpawn(alwaysSpawn);
 		return plugin.msg(M.Option.ALWAYS_SPAWN.set)
 				.replace(Constants.VALUE, String.valueOf(alwaysSpawn));
-	}
-
-	@Fallback
-	public String alwaysSpawn() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
 	}
 
 	@Argument(permission = "ats.parkour.reward", description = "Shows value of reward")
@@ -566,11 +500,6 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 				.replace(Constants.VALUE, plugin.formatMoney(reward));
 	}
 
-	@Fallback
-	public String reward() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
-	}
-
 	@Argument(permission = "ats.parkour.savingResults", description = "Shows value of savingResults flag")
 	public String savingResults(final ParkourGame parkourGame) {
 		return plugin.msg(M.Option.SAVING_RESULTS.get)
@@ -585,11 +514,6 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		parkourGame.getOptions().setSavingResults(savingResults);
 		return plugin.msg(M.Option.SAVING_RESULTS.set)
 				.replace(Constants.VALUE, String.valueOf(savingResults));
-	}
-
-	@Fallback
-	public String savingResults() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
 	}
 
 	@Argument(permission = "ats.parkour.vipOnly", description = "Shows value of vipOnly flag")
@@ -608,11 +532,6 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 				.replace(Constants.VALUE, String.valueOf(vipOnly));
 	}
 
-	@Fallback
-	public String vipOnly() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
-	}
-
 	@Argument(permission = "ats.parkour.damageAllowed", description = "Shows value of damageAllowed flag")
 	public String damageAllowed(final ParkourGame parkourGame) {
 		return plugin.msg(M.Option.DAMAGE_ALLOWED.get)
@@ -627,11 +546,6 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		parkourGame.getOptions().setDamageAllowed(damageAllowed);
 		return plugin.msg(M.Option.DAMAGE_ALLOWED.set)
 				.replace(Constants.VALUE, String.valueOf(damageAllowed));
-	}
-
-	@Fallback
-	public String damageAllowed() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
 	}
 
 	@Argument(permission = "ats.parkour.boat", description = "Shows value of boat flag")
@@ -650,11 +564,6 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 				.replace(Constants.VALUE, String.valueOf(boat));
 	}
 
-	@Fallback
-	public String boat() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
-	}
-
 	@Argument(permission = "ats.parkour.enabled", description = "Shows value of enabled flag")
 	public String enabled(final ParkourGame parkourGame) {
 		return plugin.msg(M.Option.ENABLED.get)
@@ -669,11 +578,6 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		parkourGame.getOptions().setEnabled(enabled);
 		return plugin.msg(M.Option.ENABLED.set)
 				.replace(Constants.ENABLED, String.valueOf(enabled));
-	}
-
-	@Fallback
-	public String enabled() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
 	}
 
 	@Argument(permission = "ats.parkour.modifyInventory", description = "Shows value of modifyInventory flag")
@@ -692,19 +596,9 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 				.replace(Constants.VALUE, String.valueOf(modifyInventory));
 	}
 
-	@Fallback
-	public String modifyInventory() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
-	}
-
 	@Argument(permission = "ats.parkour.info", description = "Shows information about parkour game")
 	public String info(final ParkourGame parkourGame) {
 		return parkourGame.toString();
-	}
-
-	@Fallback
-	public String info(final String parkourGame) {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
 	}
 
 	@Argument(permission = "ats.parkour.difficulty", description = "Shows parkour game difficulty")
@@ -721,11 +615,6 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		parkourGame.getOptions().setDifficulty(difficulty);
 		return plugin.msg(M.Option.DIFFICULTY.set)
 				.replace(Constants.VALUE, String.valueOf(difficulty));
-	}
-
-	@Fallback
-	public String difficulty() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
 	}
 
 	@Argument(permission = "ats.parkour.displayName", description = "Shows parkour game displayName")
@@ -746,11 +635,6 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		return plugin.msg(M.Parkour.DISPLAY_NAME.set).replace(Constants.VALUE, name);
 	}
 
-	@Fallback
-	public String displayName() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
-	}
-
 	@Argument(permission = "ats.parkour.color", description = "Sets value of parkour color")
 	public String color(final ParkourGame parkourGame, final DyeColor color) {
 		if (parkourGame.isRunning() && plugin.isEditLockActive()) {
@@ -765,11 +649,6 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 	public String color(final ParkourGame parkourGame) {
 		return plugin.msg(M.Option.COLOR.get)
 				.replace(Constants.VALUE, parkourGame.getOptions().getColor().name());
-	}
-
-	@Fallback
-	public String color() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
 	}
 
 	@Argument(permission = "ats.parkour.fee", description = "Sets value of parkour entrance fee")
@@ -795,11 +674,6 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		return plugin.msg(M.Option.FEE.get).replace(Constants.VALUE, plugin.formatMoney(parkourGame.getOptions().getFee()));
 	}
 
-	@Fallback
-	public String fee() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
-	}
-
 	@Argument(permission = "ats.parkour.type", description = "Shows parkour type")
 	public String type(final ParkourGame parkourGame) {
 		return plugin.msg(M.Option.TYPE.get).replace(Constants.VALUE, parkourGame.getOptions().getType().name());
@@ -812,11 +686,6 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		}
 		parkourGame.getOptions().setType(type);
 		return plugin.msg(M.Option.TYPE.set).replace(Constants.VALUE, type.name());
-	}
-
-	@Fallback
-	public String type() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
 	}
 
 	@Argument(permission = "ats.parkour.teleportBlock", description = "Sets parkour teleportBlock")
@@ -842,11 +711,6 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		return null;
 	}
 
-	@Fallback
-	public String teleportBlock() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
-	}
-
 	@Argument(permission = "ats.parkour.top", description = "Shows top players for parkour game")
 	public void top(final ParkourGame parkourGame, final int count) {
 		plugin.getConnection()
@@ -869,11 +733,6 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 					}
 				}))
 				.ifPresent(topPlayersDataOperations -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, topPlayersDataOperations));
-	}
-
-	@Fallback
-	public String top() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
 	}
 
 	@Argument(permission = "ats.parkour.recordsBlock", description = "Sets recordsBlock sign location")
@@ -905,13 +764,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		return null;
 	}
 
-	@Fallback
-	public String recordsBlock() {
-		return plugin.msg(M.Error.DEFAULT.invalidGame);
-	}
-
 	// === MEDALS ===
-
 	@Argument(permission = "ats.parkour.medal", description = "Sets parkour medal data")
 	public String medal(final ParkourGame parkourGame, final Medal medal, final MedalSetupOption option, final double value) {
 		if (option.isEconomyRequired() && plugin.getFinancialProvider().isEmpty()) {
@@ -1024,9 +877,31 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 				.toList();
 	}
 
-	@Fallback
-	public String medal() {
+	// === FALLBACKS ===
+
+	@TypeFallback(ParkourGame.class)
+	public String parkourGameFallback() {
 		return plugin.msg(M.Error.DEFAULT.invalidGame);
+	}
+
+	@TypeFallback(PotionEffectType.class)
+	public String effectFallback(final String value) {
+		return plugin.msg(M.Error.DEFAULT.invalidEffect).replace("%EFFECT%", value);
+	}
+
+	@TypeFallback(DyeColor.class)
+	public String colorFallback(final String value) {
+		return plugin.msg(M.Error.DEFAULT.invalidColor).replace("%COLOR%", value);
+	}
+
+	@TypeFallback(ParkourGame.Type.class)
+	public String typeFallback(final String value) {
+		return plugin.msg(M.Error.DEFAULT.invalidType).replace("%TYPE%", value);
+	}
+
+	@TypeFallback(MedalSetupOption.class)
+	public String medalSetupOptionFallback(final String value) {
+		return plugin.msg(M.Error.DEFAULT.invalidMedalOption);
 	}
 
 	// === UTILITIES ===
@@ -1078,5 +953,21 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 				.filter(data -> function.applyAsDouble(data) > 0 && !relation.test(function.applyAsDouble(data), value))
 				.isEmpty();
 		return betterIsOk && worseIsOk;
+	}
+
+	private boolean verifyMedals(@NotNull final ParkourGame parkourGame) {
+		final MedalRequirement medalRequirement = plugin.getMedalRequirement();
+		if (medalRequirement.equals(MedalRequirement.NONE)) {
+			return true;
+		}
+		if (medalRequirement.equals(MedalRequirement.ALL) && plugin.getFinancialProvider().isPresent()) {
+			return verifyMedalsCount(parkourGame) && parkourGame.getMedals().stream()
+					.allMatch(m -> m.getTime() > EPSILON && m.getReward() > EPSILON);
+		}
+		return verifyMedalsCount(parkourGame);
+	}
+
+	private boolean verifyMedalsCount(final @NotNull ParkourGame parkourGame) {
+		return parkourGame.getMedals().size() == plugin.getMedals().size();
 	}
 }
