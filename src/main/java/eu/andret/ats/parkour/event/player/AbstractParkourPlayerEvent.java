@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 @NonFinal
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-public class AbstractParkourPlayerEvent extends Event {
+public abstract class AbstractParkourPlayerEvent extends Event {
 	/**
 	 * List of all Handlers.
 	 */

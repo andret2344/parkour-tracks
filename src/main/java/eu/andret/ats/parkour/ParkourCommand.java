@@ -229,7 +229,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (region == null) {
 			return plugin.msg(M.Error.DEFAULT.invalidSelection);
 		}
-		if (!name.matches("[a-zA-Z0-9_-]+")) {
+		if (!name.matches("[a-zA-Z\\d_-]+")) {
 			return plugin.msg(M.Error.DEFAULT.invalidName);
 		}
 		final ParkourGame parkour = plugin.getParkourManager().getParkour(name);
@@ -318,7 +318,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 				.replace(Constants.NEW_NAME, name);
 	}
 
-	@Argument(permission = "ats.parkour.teleport", executorType = ExecutorType.PLAYER, description = "Teleports sender to parkours spawn region", aliases = "tp")
+	@Argument(permission = "ats.parkour.teleport", executorType = ExecutorType.PLAYER, description = "Teleports sender to parkour's spawn region", aliases = "tp")
 	public String teleport(final ParkourGame parkourGame) {
 		final ParkourPlayer parkourPlayer = plugin.getPlayerManager().getParkourPlayer((Player) sender);
 		parkourGame.addPlayer(parkourPlayer);
@@ -880,7 +880,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 	// === FALLBACKS ===
 
 	@TypeFallback(ParkourGame.class)
-	public String parkourGameFallback() {
+	public String parkourGameFallback(final String game) {
 		return plugin.msg(M.Error.DEFAULT.invalidGame);
 	}
 

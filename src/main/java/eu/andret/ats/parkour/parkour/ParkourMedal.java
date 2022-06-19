@@ -6,15 +6,17 @@ package eu.andret.ats.parkour.parkour;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 
 @Data
 @AllArgsConstructor
 public class ParkourMedal {
+	@NotNull
 	private final Medal medal;
 	private double time;
 	private double reward;
 
-	public ParkourMedal(final Medal medal) {
+	public ParkourMedal(@NotNull final Medal medal) {
 		this(medal, 0, 0);
 	}
 

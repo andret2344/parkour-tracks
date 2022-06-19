@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public class Checkpoint extends BasicRegion {
+	@NotNull
 	Location location;
 
 	public Checkpoint(@NotNull final CuboidRegion cuboidRegion, @NotNull final Location location) {

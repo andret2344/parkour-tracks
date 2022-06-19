@@ -2,12 +2,6 @@
  * Copyright Andret (c) 2018-2022. Copying and modifying allowed only keeping git link reference.
  */
 
-buildscript {
-	repositories {
-		maven { url 'https://plugins.gradle.org/m2/' }
-	}
-}
-
 plugins {
 	id 'kr.entree.spigradle'
 	id 'com.github.johnrengelman.shadow'
@@ -28,11 +22,11 @@ repositories {
 
 dependencies {
 	compileOnly rootProject
-	compileOnly group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+	compileOnly group: 'org.projectlombok', name: 'lombok', version: rootProject.lombokVersion
 	compileOnly group: 'org.spigotmc', name: 'spigot-api', version: "${rootProject.spigotVersion}-R0.1-SNAPSHOT"
-	compileOnly group: 'org.jetbrains', name: 'annotations', version: '20.1.0'
+	compileOnly group: 'org.jetbrains', name: 'annotations', version: '23.0.0'
 	implementation group: 'eu.andret', name: 'ats-arguments', version: rootProject.argumentsVersion
-	annotationProcessor group: "org.projectlombok", name: "lombok", version: lombokVersion
+	annotationProcessor group: "org.projectlombok", name: "lombok", version: rootProject.lombokVersion
 }
 
 compileJava.options.compilerArgs << '-parameters' << '-g' << '-Xlint:deprecation' << '-Xlint:unchecked'
@@ -43,7 +37,7 @@ spigot {
 	description = 'A sample plugin to test exposed mechanics'
 	version = project.version
 	depends = ['atsParkour']
-	prefix = 'atsParkourSample'
+	libraries = []
 
 	//noinspection GroovyAssignabilityCheck
 	commands {

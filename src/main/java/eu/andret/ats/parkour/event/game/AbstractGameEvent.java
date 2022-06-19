@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 @NonFinal
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-public class AbstractGameEvent extends Event {
+public abstract class AbstractGameEvent extends Event {
 	/**
 	 * List of all Handlers.
 	 */
