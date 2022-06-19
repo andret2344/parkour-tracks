@@ -33,7 +33,7 @@ compileJava.options.compilerArgs << '-parameters' << '-g' << '-Xlint:deprecation
 
 spigot {
 	authors = ['Andret']
-	apiVersion = '1.16'
+	apiVersion = '1.17'
 	description = 'A sample plugin to test exposed mechanics'
 	version = project.version
 	depends = ['atsParkour']
