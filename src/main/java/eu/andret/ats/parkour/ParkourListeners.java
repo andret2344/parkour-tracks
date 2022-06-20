@@ -74,7 +74,7 @@ public class ParkourListeners implements Listener {
 	// ======= Events methods =======
 
 	@EventHandler
-	public void flying(final PlayerMoveEvent event) {
+	public void flying(@NotNull final PlayerMoveEvent event) {
 		final Player player = event.getPlayer();
 		if (!player.isFlying()) {
 			return;
@@ -98,7 +98,7 @@ public class ParkourListeners implements Listener {
 	}
 
 	@EventHandler
-	public void moveInParkour(final PlayerMoveEvent event) {
+	public void moveInParkour(@NotNull final PlayerMoveEvent event) {
 		final Player player = event.getPlayer();
 		final ParkourPlayer parkourPlayer = plugin.getPlayerManager().getParkourPlayer(event.getPlayer());
 		final ParkourGame parkour = plugin.getParkourManager().getParkour(player);
@@ -132,7 +132,7 @@ public class ParkourListeners implements Listener {
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST)
-	public void move(final PlayerMoveEvent event) {
+	public void move(@NotNull final PlayerMoveEvent event) {
 		final Player player = event.getPlayer();
 		final ParkourPlayer parkourPlayer = plugin.getPlayerManager().getParkourPlayer(event.getPlayer());
 		final ParkourGame parkour = plugin.getParkourManager().getParkour(player);
@@ -148,7 +148,7 @@ public class ParkourListeners implements Listener {
 	}
 
 	@EventHandler
-	public void joinLeaveMove(final PlayerMoveEvent event) {
+	public void joinLeaveMove(@NotNull final PlayerMoveEvent event) {
 		final Player player = event.getPlayer();
 		final ParkourPlayer parkourPlayer = plugin.getPlayerManager().getParkourPlayer(player);
 		if (parkourPlayer.isIgnoring()) {
@@ -172,7 +172,7 @@ public class ParkourListeners implements Listener {
 	}
 
 	@EventHandler
-	public void checkpoint(final PlayerAchieveCheckpointEvent event) {
+	public void checkpoint(@NotNull final PlayerAchieveCheckpointEvent event) {
 		final ParkourGame parkourGame = event.getGame();
 		final ParkourPlayer parkourPlayer = event.getPlayer();
 		if (!parkourPlayer.getPlayer().getWorld().equals(parkourGame.getWorld())) {
@@ -197,12 +197,12 @@ public class ParkourListeners implements Listener {
 	}
 
 	@EventHandler
-	public void enterSpawn(final PlayerEnterSpawnEvent event) {
+	public void enterSpawn(@NotNull final PlayerEnterSpawnEvent event) {
 		event.getPlayer().reset();
 	}
 
 	@EventHandler
-	public void complete(final PlayerCompleteParkourEvent event) {
+	public void complete(@NotNull final PlayerCompleteParkourEvent event) {
 		final ParkourPlayer parkourPlayer = event.getPlayer();
 		final Player player = parkourPlayer.getPlayer();
 		final UUID uniqueId = player.getUniqueId();
@@ -250,7 +250,7 @@ public class ParkourListeners implements Listener {
 	}
 
 	@EventHandler
-	public void back(final PlayerTeleportBackEvent event) {
+	public void back(@NotNull final PlayerTeleportBackEvent event) {
 		if (event.getCheckpoint().equals(event.getGame().getCheckpoints().get(0))) {
 			event.getPlayer().reset();
 		}
@@ -266,7 +266,7 @@ public class ParkourListeners implements Listener {
 	}
 
 	@EventHandler
-	public void leaveBoat(final VehicleExitEvent event) {
+	public void leaveBoat(@NotNull final VehicleExitEvent event) {
 		if (!(event.getExited() instanceof final Player player)) {
 			return;
 		}
@@ -287,7 +287,7 @@ public class ParkourListeners implements Listener {
 	}
 
 	@EventHandler
-	public void wall(final PlayerHitWallEvent event) {
+	public void wall(@NotNull final PlayerHitWallEvent event) {
 		final ParkourPlayer parkourPlayer = event.getPlayer();
 		final ParkourGame parkourGame = event.getGame();
 		final int lastCheckpointId = parkourPlayer.getLastCheckpoint();
@@ -300,7 +300,7 @@ public class ParkourListeners implements Listener {
 	}
 
 	@EventHandler
-	public void exitItemInventoryClick(final InventoryClickEvent event) {
+	public void exitItemInventoryClick(@NotNull final InventoryClickEvent event) {
 		if (!(event.getWhoClicked() instanceof Player)) {
 			return;
 		}
@@ -313,7 +313,7 @@ public class ParkourListeners implements Listener {
 	}
 
 	@EventHandler
-	public void hidingItemInventoryClick(final InventoryClickEvent event) {
+	public void hidingItemInventoryClick(@NotNull final InventoryClickEvent event) {
 		if (!(event.getWhoClicked() instanceof Player)) {
 			return;
 		}
@@ -324,7 +324,7 @@ public class ParkourListeners implements Listener {
 	}
 
 	@EventHandler
-	public void joinGame(final PlayerJoinGameEvent event) {
+	public void joinGame(@NotNull final PlayerJoinGameEvent event) {
 		final ParkourPlayer parkourPlayer = event.getPlayer();
 		final Player player = parkourPlayer.getPlayer();
 		plugin.getSound(EventSound.JOIN)
@@ -364,7 +364,7 @@ public class ParkourListeners implements Listener {
 	}
 
 	@EventHandler
-	public void parkourTeleportBlockClick(final PlayerInteractEvent event) {
+	public void parkourTeleportBlockClick(@NotNull final PlayerInteractEvent event) {
 		if (event.getClickedBlock() == null) {
 			return;
 		}
@@ -392,7 +392,7 @@ public class ParkourListeners implements Listener {
 	}
 
 	@EventHandler
-	public void hidingItemClick(final PlayerInteractEvent event) {
+	public void hidingItemClick(@NotNull final PlayerInteractEvent event) {
 		Optional.of(event)
 				.map(PlayerInteractEvent::getItem)
 				.filter(plugin.getHidingItem()::equals)
@@ -403,7 +403,7 @@ public class ParkourListeners implements Listener {
 	}
 
 	@EventHandler
-	public void entitySpawnInGame(final EntitySpawnEvent event) {
+	public void entitySpawnInGame(@NotNull final EntitySpawnEvent event) {
 		plugin.getParkourManager().getAllGames()
 				.stream()
 				.filter(game -> plugin.getParkourManager().inAnyRegion(game, event.getLocation()))
@@ -412,7 +412,7 @@ public class ParkourListeners implements Listener {
 	}
 
 	@EventHandler
-	public void clickInsideGame(final PlayerInteractEvent event) {
+	public void clickInsideGame(@NotNull final PlayerInteractEvent event) {
 		if (!plugin.getParkourManager().getPlayersInGames().contains(event.getPlayer())) {
 			return;
 		}
@@ -431,7 +431,7 @@ public class ParkourListeners implements Listener {
 	}
 
 	@EventHandler
-	public void exitItemClick(final PlayerInteractEvent event) {
+	public void exitItemClick(@NotNull final PlayerInteractEvent event) {
 		Optional.of(event)
 				.map(PlayerInteractEvent::getItem)
 				.filter(plugin.getExitItem()::equals)
@@ -442,7 +442,7 @@ public class ParkourListeners implements Listener {
 	}
 
 	@EventHandler
-	public void quitGame(final PlayerQuitGameEvent event) {
+	public void quitGame(@NotNull final PlayerQuitGameEvent event) {
 		final ParkourPlayer parkourPlayer = event.getPlayer();
 		final Player player = parkourPlayer.getPlayer();
 		final UUID uniqueId = player.getUniqueId();
@@ -467,12 +467,12 @@ public class ParkourListeners implements Listener {
 	}
 
 	@EventHandler
-	public void gameStop(final GameStopEvent event) {
+	public void gameStop(@NotNull final GameStopEvent event) {
 		event.getGame().getPlayers().forEach(plugin.getParkourManager()::teleportToLobby);
 	}
 
 	@EventHandler
-	public void gameStart(final GameStartEvent event) {
+	public void gameStart(@NotNull final GameStartEvent event) {
 		final ParkourManager parkourManager = plugin.getParkourManager();
 		event.getGame().getWorld().getPlayers().stream()
 				.filter(player -> !plugin.getPlayerManager().getParkourPlayer(player).isIgnoring())
@@ -481,7 +481,7 @@ public class ParkourListeners implements Listener {
 	}
 
 	@EventHandler(priority = EventPriority.LOW)
-	public void join(final PlayerJoinEvent event) {
+	public void join(@NotNull final PlayerJoinEvent event) {
 		final Player player = event.getPlayer();
 		plugin.getParkourManager().getAllGames().stream()
 				.filter(parkourGame -> plugin.getParkourManager().inAnyRegion(parkourGame, player))
@@ -495,7 +495,7 @@ public class ParkourListeners implements Listener {
 	}
 
 	@EventHandler
-	public void tp(final PlayerTeleportEvent event) {
+	public void tp(@NotNull final PlayerTeleportEvent event) {
 		final ParkourPlayer parkourPlayer = plugin.getPlayerManager().getParkourPlayer(event.getPlayer());
 		if (parkourPlayer.isIgnoring()) {
 			return;
@@ -514,7 +514,7 @@ public class ParkourListeners implements Listener {
 	}
 
 	@EventHandler
-	public void dmg(final EntityDamageEvent event) {
+	public void dmg(@NotNull final EntityDamageEvent event) {
 		if (!(event.getEntity() instanceof final Player player)) {
 			return;
 		}
@@ -525,17 +525,17 @@ public class ParkourListeners implements Listener {
 	}
 
 	@EventHandler
-	public void destroy(final BlockBreakEvent event) {
+	public void destroy(@NotNull final BlockBreakEvent event) {
 		universalBlockEventHandler(event, event.getPlayer());
 	}
 
 	@EventHandler
-	public void place(final BlockPlaceEvent event) {
+	public void place(@NotNull final BlockPlaceEvent event) {
 		universalBlockEventHandler(event, event.getPlayer());
 	}
 
 	@EventHandler
-	public void drop(final PlayerDropItemEvent event) {
+	public void drop(@NotNull final PlayerDropItemEvent event) {
 		final ParkourPlayer parkourPlayer = plugin.getPlayerManager().getParkourPlayer(event.getPlayer());
 		plugin.getParkourManager().getAllGames().stream()
 				.filter(parkourGame -> plugin.getParkourManager().inAnyRegion(parkourGame, parkourPlayer))
@@ -547,7 +547,7 @@ public class ParkourListeners implements Listener {
 	}
 
 	@EventHandler
-	public void leave(final PlayerQuitEvent event) {
+	public void leave(@NotNull final PlayerQuitEvent event) {
 		final Player player = event.getPlayer();
 		final ParkourPlayer parkourPlayer = plugin.getPlayerManager().getParkourPlayer(player);
 		Optional.of(plugin)
@@ -558,7 +558,7 @@ public class ParkourListeners implements Listener {
 	}
 
 	@EventHandler
-	public void breakSpecialBlock(final BlockBreakEvent event) {
+	public void breakSpecialBlock(@NotNull final BlockBreakEvent event) {
 		final Location brokenBlockLocation = event.getBlock().getLocation();
 		plugin.getParkourManager().getAllGames().forEach(parkourGame -> {
 			if (parkourGame.getTeleportBlock() != null && parkourGame.getTeleportBlock().getBlock().getLocation().equals(brokenBlockLocation)) {

@@ -59,12 +59,13 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.time.LocalDateTime;
@@ -79,6 +80,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.UnaryOperator;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -466,7 +468,7 @@ public final class ParkourPlugin extends JavaPlugin {
 		}
 		try {
 			connection = createConnection();
-			connect();
+			initDatabase();
 			getLogger().info("Database connection established.");
 		} catch (final SQLException ex) {
 			getLogger().severe("An error occurred when trying to connect to database.");
@@ -480,23 +482,38 @@ public final class ParkourPlugin extends JavaPlugin {
 		final String url = getConfig().getString("database.url", "localhost");
 		final String user = getConfig().getString("database.user", "root");
 		final String pass = getConfig().getString("database.pass", "");
-		return DriverManager.getConnection("jdbc:mysql://" + url + "?allowPublicKeyRetrieval=true&autoReconnect=true&useSSL=false", user, pass);
+		final String database = getConfig().getString("database.dbname", "ats_parkour");
+		return DriverManager.getConnection(String.format("jdbc:mysql://%s/%s?allowPublicKeyRetrieval=true&autoReconnect=true&useSSL=false", url, database), user, pass);
 	}
 
-	private void connect() {
-		final String database = getConfig().getString("database.dbname", "ats_parkour");
+	private void initDatabase() {
 		getConnection().ifPresent(conn -> {
-			try (final Statement stat = conn.createStatement()) {
-				stat.execute("CREATE DATABASE IF NOT EXISTS `" + database + "`;");
-				stat.execute("USE " + database + ";");
-				stat.execute("CREATE TABLE IF NOT EXISTS ats_parkour_records(id INT PRIMARY KEY AUTO_INCREMENT, date DATETIME, uuid VARCHAR(64), parkour VARCHAR(64), duration DECIMAL(8, 2));");
-			} catch (final SQLException ex) {
-				ex.printStackTrace();
+			try (final InputStream inputStream = getClassLoader().getResourceAsStream("setup.sql")) {
+				if (inputStream == null) {
+					return;
+				}
+				Optional.ofNullable(inputStream.readAllBytes())
+						.map(String::new)
+						.map(content -> content.split(";"))
+						.stream()
+						.flatMap(Arrays::stream)
+						.filter(query -> !query.isBlank())
+						.forEach(query -> {
+							try (final PreparedStatement statement = conn.prepareStatement(query)) {
+								statement.execute();
+							} catch (final SQLException e) {
+								getLogger().log(Level.SEVERE, "An error occurred when trying to execute query", e);
+							}
+						});
+				getLogger().info("§2Database setup complete.");
+			} catch (final IOException e) {
+				getLogger().log(Level.SEVERE, "Cannot execute SQL statement", e);
 			}
 		});
 	}
 
-	private void updateSign(@NotNull final ParkourGame parkourGame, @NotNull final UnaryOperator<String> replaceFunction) {
+	private void updateSign(@NotNull final ParkourGame parkourGame,
+							@NotNull final UnaryOperator<String> replaceFunction) {
 		Optional.of(parkourGame)
 				.map(ParkourGame::getRecordsBlock)
 				.map(Location::getBlock)
