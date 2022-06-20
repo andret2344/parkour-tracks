@@ -3,6 +3,7 @@
 /shelf/
 /sonarlint/
 
+/atsParkour.iml
 /codestream.xml
 /compiler.xml
 /dataSources.local.xml
@@ -13,5 +14,6 @@
 /intellij-javadocs-4.0.1.xml
 /jarRepositories.xml
 /libraries-with-intellij-classes.xml
+/sqldialects.xml
 /uiDesigner.xml
 /workspace.xml
