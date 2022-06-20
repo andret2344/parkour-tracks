@@ -1,11 +1,17 @@
-# Default ignored files
+/dataSources/
+/modules/
 /shelf/
 /sonarlint/
-/dataSources/
 
-/workspace.xml
+/codestream.xml
 /compiler.xml
 /dataSources.local.xml
 /dataSources.xml
 /discord.xml
+/git_toolbox_prj.xml
 /gradle.xml
+/intellij-javadocs-4.0.1.xml
+/jarRepositories.xml
+/libraries-with-intellij-classes.xml
+/uiDesigner.xml
+/workspace.xml
