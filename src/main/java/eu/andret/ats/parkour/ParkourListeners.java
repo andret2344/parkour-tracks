@@ -30,7 +30,7 @@ import eu.andret.ats.parkour.tasks.database.FetchAndInsertDataTask;
 import eu.andret.ats.parkour.util.Constants;
 import eu.andret.ats.parkour.util.Data;
 import eu.andret.ats.parkour.util.M;
-import lombok.Value;
+import lombok.AllArgsConstructor;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -66,10 +66,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-@Value
+@AllArgsConstructor
 public class ParkourListeners implements Listener {
 	@NotNull
-	ParkourPlugin plugin;
+	private final ParkourPlugin plugin;
 
 	// ======= Events methods =======
 

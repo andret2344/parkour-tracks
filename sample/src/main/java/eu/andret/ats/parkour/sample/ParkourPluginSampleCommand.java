@@ -11,6 +11,7 @@ import eu.andret.arguments.api.entity.ExecutorType;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @BaseCommand("sample")
 public class ParkourPluginSampleCommand extends AnnotatedCommandExecutor<ParkourPluginSample> {
@@ -18,31 +19,36 @@ public class ParkourPluginSampleCommand extends AnnotatedCommandExecutor<Parkour
 		super(sender, plugin);
 	}
 
+	@NotNull
 	@Argument(executorType = ExecutorType.PLAYER)
 	public String rank() {
 		final boolean vip = plugin.getRankProvider().isVip((Player) sender);
 		return vip ? "You're a VIP!" : "You are no or not yet VIP.";
 	}
 
+	@NotNull
 	@Argument(executorType = ExecutorType.PLAYER)
 	public String rank(final boolean rank) {
 		plugin.getRankProvider().getVips().put(((Player) sender).getUniqueId(), rank);
 		return rank ? "You are now a VIP!" : "You are longer VIP.";
 	}
 
+	@NotNull
 	@Argument(executorType = ExecutorType.PLAYER)
 	public String balance() {
 		final double money = plugin.getFinancialProvider().getMoney((Player) sender);
 		return String.format("You have: %s", plugin.getParkourPlugin().formatMoney(money));
 	}
 
+	@Nullable
 	@Argument(executorType = ExecutorType.PLAYER)
 	public String balance(final BalanceInteraction interaction, final int amount) {
 		return balance(interaction, (double) amount);
 	}
 
+	@Nullable
 	@Argument(executorType = ExecutorType.PLAYER)
-	public String balance(final BalanceInteraction interaction, final double amount) {
+	public String balance(@NotNull final BalanceInteraction interaction, final double amount) {
 		final Player player = (Player) sender;
 		switch (interaction) {
 			case ADD:
