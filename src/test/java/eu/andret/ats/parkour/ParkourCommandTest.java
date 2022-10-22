@@ -15,7 +15,7 @@ public class ParkourCommandTest {
 	void test() {
 		// given
 		final Player sender = mock(Player.class);
-		final eu.andret.ats.parkour.ParkourPlugin plugin = mock(eu.andret.ats.parkour.ParkourPlugin.class);
+		final ParkourPlugin plugin = mock(ParkourPlugin.class);
 		final ParkourCommand parkourCommand = new ParkourCommand(sender, plugin);
 		final ParkourManager parkourManager = new ParkourManager();
 		final TutorialManager tutorialManager = new TutorialManager(plugin);

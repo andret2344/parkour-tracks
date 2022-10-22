@@ -314,7 +314,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@NotNull
 	@Argument(permission = "ats.parkour.rename", description = "Sets new name for parkour game")
-	public String rename(@NotNull final ParkourGame parkourGame, final String name) {
+	public String rename(@NotNull final ParkourGame parkourGame, @NotNull final String name) {
 		if (parkourGame.isRunning() && plugin.isEditLockActive()) {
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}

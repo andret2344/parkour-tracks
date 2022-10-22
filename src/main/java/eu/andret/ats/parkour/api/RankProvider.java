@@ -16,8 +16,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface RankProvider {
 	/**
-	 * The method that return's {@code true} if player is vip and should be allowed to enter the parkour that requires
-	 * VIP rank.
+	 * The method to check player's VIP status and if they should be allowed to enter the parkour that requires such a
+	 * rank.
 	 *
 	 * @param player The player to test whether he has a VIP rank.
 	 *
