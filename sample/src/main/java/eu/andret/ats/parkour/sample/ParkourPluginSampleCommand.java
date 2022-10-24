@@ -23,14 +23,14 @@ public class ParkourPluginSampleCommand extends AnnotatedCommandExecutor<Parkour
 	@Argument(executorType = ExecutorType.PLAYER)
 	public String rank() {
 		final boolean vip = plugin.getRankProvider().isVip((Player) sender);
-		return vip ? "You're a VIP!" : "You are no or not yet VIP.";
+		return vip ? "You are a VIP!" : "You are not a VIP.";
 	}
 
 	@NotNull
 	@Argument(executorType = ExecutorType.PLAYER)
 	public String rank(final boolean rank) {
 		plugin.getRankProvider().getVips().put(((Player) sender).getUniqueId(), rank);
-		return rank ? "You are now a VIP!" : "You are longer VIP.";
+		return rank ? "You are now a VIP!" : "You are no longer VIP.";
 	}
 
 	@NotNull

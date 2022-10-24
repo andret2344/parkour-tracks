@@ -30,7 +30,7 @@ public interface FinancialProvider {
 	 *
 	 * @param player The player whom balance is to be checked.
 	 *
-	 * @return The current balance of passed player.
+	 * @return The current balance of the passed player.
 	 */
 	double getMoney(@NotNull OfflinePlayer player);
 }
