@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface FinancialProvider {
 	/**
-	 * The method to add some amount to player's balance.
+	 * The method to add some amount to the player's balance.
 	 *
 	 * @param player The player whom balance should be modified.
 	 * @param amount The amount to add, pass negative value to subtract.
