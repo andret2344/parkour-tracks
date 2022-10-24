@@ -30,7 +30,7 @@ public class ParkourPluginSampleCommand extends AnnotatedCommandExecutor<Parkour
 	@Argument(executorType = ExecutorType.PLAYER)
 	public String rank(final boolean rank) {
 		plugin.getRankProvider().getVips().put(((Player) sender).getUniqueId(), rank);
-		return rank ? "You are now a VIP!" : "You are no longer VIP.";
+		return rank ? "You are now a VIP!" : "You are no longer a VIP.";
 	}
 
 	@NotNull
