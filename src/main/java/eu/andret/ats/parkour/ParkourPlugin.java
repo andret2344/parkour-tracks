@@ -26,6 +26,7 @@ import eu.andret.ats.parkour.parkour.ParkourGameCreator;
 import eu.andret.ats.parkour.parkour.ParkourManager;
 import eu.andret.ats.parkour.parkour.Score;
 import eu.andret.ats.parkour.player.PlayerManager;
+import eu.andret.ats.parkour.region.Checkpoint;
 import eu.andret.ats.parkour.tasks.database.KeepAliveTask;
 import eu.andret.ats.parkour.tutorial.TutorialManager;
 import eu.andret.ats.parkour.util.Constants;
@@ -42,6 +43,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Sound;
 import org.bukkit.World;
@@ -50,7 +52,12 @@ import org.bukkit.block.Sign;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
@@ -85,6 +92,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class ParkourPlugin extends JavaPlugin {
+	public static final String PARKOUR = "parkour";
+
 	@Getter
 	@NotNull
 	private final Map<String, String> helpDescription = new LinkedHashMap<>();
@@ -140,6 +149,8 @@ public class ParkourPlugin extends JavaPlugin {
 			.registerTypeAdapter(ParkourGame.class, new ParkourGameCreator(this))
 			.setPrettyPrinting()
 			.create();
+	@NotNull
+	public final List<ArmorStand> indicators = new ArrayList<>();
 
 	@Override
 	public void onEnable() {
@@ -342,6 +353,83 @@ public class ParkourPlugin extends JavaPlugin {
 		return MedalRequirement.ALL;
 	}
 
+	/**
+	 * Removes all invisible armor stands assigned to passed {@link ParkourGame}.
+	 *
+	 * @param parkourGame The owning game of armor stands.
+	 */
+	public void hideCheckpoints(@NotNull final ParkourGame parkourGame) {
+		indicators.stream()
+				.filter(armorStand -> armorStand.getPersistentDataContainer()
+						.getOrDefault(new NamespacedKey(this, PARKOUR), PersistentDataType.STRING, "")
+						.equals(parkourGame.getName()))
+				.forEach(Entity::remove);
+	}
+
+	/**
+	 * Spawns and stores all required invisible armor stands that will indicate where checkpoints of passed
+	 * {@link ParkourGame} are.
+	 *
+	 * @param parkourGame The game to show checkpoints indicators of.
+	 */
+	public void showCheckpoints(@NotNull final ParkourGame parkourGame) {
+		final List<Checkpoint> checkpoints = parkourGame.getCheckpoints();
+		if (checkpoints.isEmpty()) {
+			return;
+		}
+		createArmorStand(parkourGame, checkpoints.get(0).getLocation(), "SPAWN");
+		for (int i = 1; i < checkpoints.size(); i++) {
+			createArmorStand(parkourGame, checkpoints.get(i).getLocation(), String.valueOf(i));
+		}
+	}
+
+	/**
+	 * Creates and stores single invisible invulnerable armor stand assigned to passed {@link ParkourGame}.
+	 *
+	 * @param parkourGame The game which checkpoint will be assigned to.
+	 * @param location The target location where the armor stand will appear.
+	 * @param text The indicator (armor stand name) text.
+	 */
+	public void createArmorStand(@NotNull final ParkourGame parkourGame, @NotNull final Location location,
+								 @NotNull final String text) {
+		final World world = location.getWorld();
+		if (world == null) {
+			return;
+		}
+		final ArmorStand armorStand = (ArmorStand) world.spawnEntity(location, EntityType.ARMOR_STAND);
+		armorStand.setGravity(false);
+		armorStand.setCustomName(text);
+		armorStand.setCustomNameVisible(true);
+		armorStand.setVisible(false);
+		armorStand.addEquipmentLock(EquipmentSlot.CHEST, ArmorStand.LockType.ADDING_OR_CHANGING);
+		armorStand.getPersistentDataContainer()
+				.set(new NamespacedKey(this, PARKOUR), PersistentDataType.STRING, parkourGame.getName());
+		indicators.add(armorStand);
+	}
+
+	/**
+	 * Moves the found armor stand to a new location.
+	 *
+	 * @param parkourGame The owning game which armor stand to move.
+	 * @param location The new location of armor stand.
+	 * @param text Current armor stand name to precisely select correct one.
+	 */
+	public void moveArmorStand(@NotNull final ParkourGame parkourGame, @NotNull final Location location,
+							   @NotNull final String text) {
+		indicators.stream()
+				.filter(armorStand -> armorStand.getPersistentDataContainer()
+						.getOrDefault(new NamespacedKey(this, PARKOUR), PersistentDataType.STRING, "")
+						.equals(parkourGame.getName()))
+				.filter(armorStand -> text.equals(armorStand.getCustomName()))
+				.findAny()
+				.ifPresent(armorStand -> armorStand.teleport(location));
+	}
+
+	/**
+	 * Check whether edit lock is enabled in config.
+	 *
+	 * @return The value from config.
+	 */
 	public boolean isEditLockActive() {
 		return getConfig().getBoolean("edit-lock", true);
 	}

@@ -280,6 +280,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		}
 		parkourGame.setRunning(true);
 		plugin.getServer().getPluginManager().callEvent(new GameStartEvent(parkourGame));
+		plugin.hideCheckpoints(parkourGame);
 		return plugin.msg(M.Executive.START.success)
 				.replace(Constants.NAME, parkourGame.getName())
 				.replace(Constants.DISPLAY_NAME, parkourGame.getDisplayName());
@@ -293,6 +294,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		}
 		parkourGame.setRunning(false);
 		plugin.getServer().getPluginManager().callEvent(new GameStopEvent(parkourGame));
+		plugin.showCheckpoints(parkourGame);
 		return plugin.msg(M.Executive.STOP.success)
 				.replace(Constants.NAME, parkourGame.getName())
 				.replace(Constants.DISPLAY_NAME, parkourGame.getDisplayName());
@@ -362,8 +364,10 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		}
 		final Location location = player.getLocation();
 		parkourGame.getCheckpoints().add(new Checkpoint(region, location));
+		final String sizeString = String.valueOf(parkourGame.getCheckpoints().size());
+		plugin.createArmorStand(parkourGame, location, sizeString);
 		return plugin.msg(M.Region.Checkpoint.ADD.success)
-				.replace(Constants.INDEX, String.valueOf(parkourGame.getCheckpoints().size()));
+				.replace(Constants.INDEX, sizeString);
 	}
 
 	@NotNull
@@ -385,9 +389,11 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		}
 		final Location location = player.getLocation();
 		parkourGame.getCheckpoints().set(index, new Checkpoint(region, location));
+		final String stringIndex = String.valueOf(index);
+		plugin.moveArmorStand(parkourGame, location, stringIndex);
 		executeTutorial(player, 6, false);
 		return plugin.msg(M.Region.Checkpoint.SET.success)
-				.replace(Constants.INDEX, String.valueOf(index));
+				.replace(Constants.INDEX, stringIndex);
 	}
 
 	@NotNull

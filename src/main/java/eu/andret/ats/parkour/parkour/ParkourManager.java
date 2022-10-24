@@ -56,9 +56,20 @@ public final class ParkourManager {
 	@Nullable
 	public ParkourGame getParkour(@NotNull final Player player) {
 		return setting.games.stream()
-				.filter(parkour -> parkour.getPlayers().stream()
+				.filter(parkour -> parkour.getPlayers()
+						.stream()
 						.map(ParkourPlayer::getPlayer)
 						.anyMatch(player::equals))
+				.findAny()
+				.orElse(null);
+	}
+
+	@Nullable
+	public ParkourGame getParkour(@NotNull final Location location) {
+		return setting.games.stream()
+				.filter(parkour -> parkour.getAllRegions()
+						.stream()
+						.anyMatch(region -> region.contains(location)))
 				.findAny()
 				.orElse(null);
 	}
