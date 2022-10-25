@@ -19,10 +19,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 @Data
 @ToString
@@ -111,11 +114,9 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 
 	@NotNull
 	public List<BasicRegion> getAllRegions() {
-		final List<BasicRegion> arr = new ArrayList<>();
-		arr.add(region);
-		arr.addAll(walls);
-		arr.addAll(checkpoints);
-		return arr.stream()
+		return Stream.of(walls, checkpoints, Collections.singletonList(region))
+				.flatMap(Collection::stream)
+				.map(BasicRegion.class::cast)
 				.filter(Objects::nonNull)
 				.toList();
 	}

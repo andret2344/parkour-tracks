@@ -48,6 +48,8 @@ public final class Data {
 			Material.DARK_OAK_WALL_SIGN,
 			Material.JUNGLE_SIGN,
 			Material.JUNGLE_WALL_SIGN,
+			Material.MANGROVE_SIGN,
+			Material.MANGROVE_WALL_SIGN,
 			Material.OAK_SIGN,
 			Material.OAK_WALL_SIGN,
 			Material.SPRUCE_SIGN,
@@ -71,6 +73,7 @@ public final class Data {
 			Material.CRIMSON_DOOR,
 			Material.DARK_OAK_DOOR,
 			Material.JUNGLE_DOOR,
+			Material.MANGROVE_DOOR,
 			Material.OAK_DOOR,
 			Material.SPRUCE_DOOR,
 			Material.WARPED_DOOR);
@@ -86,6 +89,7 @@ public final class Data {
 			Material.CRIMSON_BUTTON,
 			Material.DARK_OAK_BUTTON,
 			Material.JUNGLE_BUTTON,
+			Material.MANGROVE_BUTTON,
 			Material.OAK_BUTTON,
 			Material.SPRUCE_BUTTON,
 			Material.WARPED_BUTTON);
@@ -108,7 +112,11 @@ public final class Data {
 	 * List of all available chests variations.
 	 */
 	@NotNull
-	public static final List<Material> CHESTS = List.of(Material.CHEST);
+	public static final List<Material> CHESTS = List.of(
+			Material.CHEST,
+			Material.ENDER_CHEST,
+			Material.TRAPPED_CHEST,
+			Material.CHEST_MINECART);
 
 	/**
 	 * List of all available gates variations.
@@ -120,6 +128,7 @@ public final class Data {
 			Material.CRIMSON_FENCE_GATE,
 			Material.DARK_OAK_FENCE_GATE,
 			Material.JUNGLE_FENCE_GATE,
+			Material.MANGROVE_FENCE_GATE,
 			Material.OAK_FENCE_GATE,
 			Material.SPRUCE_FENCE_GATE,
 			Material.WARPED_FENCE_GATE);
@@ -133,6 +142,7 @@ public final class Data {
 			Material.BIRCH_BOAT,
 			Material.DARK_OAK_BOAT,
 			Material.JUNGLE_BOAT,
+			Material.MANGROVE_BOAT,
 			Material.OAK_BOAT,
 			Material.SPRUCE_BOAT);
 

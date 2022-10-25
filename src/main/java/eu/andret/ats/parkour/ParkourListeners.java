@@ -34,9 +34,11 @@ import lombok.AllArgsConstructor;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.Boat;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
@@ -56,6 +58,7 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.vehicle.VehicleExitEvent;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.potion.PotionEffect;
 import org.jetbrains.annotations.NotNull;
@@ -404,11 +407,28 @@ public class ParkourListeners implements Listener {
 
 	@EventHandler
 	public void entitySpawnInGame(@NotNull final EntitySpawnEvent event) {
-		plugin.getParkourManager().getAllGames()
-				.stream()
-				.filter(game -> plugin.getParkourManager().inAnyRegion(game, event.getLocation()))
-				.findAny()
-				.ifPresent(ignored -> event.setCancelled(true));
+		final ParkourGame parkourGame = plugin.getParkourManager().getParkour(event.getLocation());
+		if (parkourGame == null) {
+			return;
+		}
+		final Entity entity = event.getEntity();
+		if (!entity.getType().equals(EntityType.ARMOR_STAND)) {
+			event.setCancelled(true);
+			return;
+		}
+		// this code has to be executed a tick later to make sure all data are correctly injected to the armor stand
+		plugin.getServer().getScheduler().runTask(plugin, () -> {
+			final String name = entity.getPersistentDataContainer()
+					.get(new NamespacedKey(plugin, ParkourPlugin.PARKOUR), PersistentDataType.STRING);
+			if (name == null) {
+				entity.remove();
+				return;
+			}
+			final ParkourGame parkour = plugin.getParkourManager().getParkour(name);
+			if (parkour == null || parkour != parkourGame || parkour.isRunning()) {
+				entity.remove();
+			}
+		});
 	}
 
 	@EventHandler
