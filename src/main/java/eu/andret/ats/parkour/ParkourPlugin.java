@@ -354,9 +354,9 @@ public class ParkourPlugin extends JavaPlugin {
 	}
 
 	/**
-	 * Removes all invisible armor stands assigned to passed {@link ParkourGame}.
+	 * Removes all invisible armor stands assigned to the passed {@link ParkourGame}.
 	 *
-	 * @param parkourGame The owning game of armor stands.
+	 * @param parkourGame The owning game of the armor stands.
 	 */
 	public void hideCheckpoints(@NotNull final ParkourGame parkourGame) {
 		indicators.stream()
@@ -367,10 +367,10 @@ public class ParkourPlugin extends JavaPlugin {
 	}
 
 	/**
-	 * Spawns and stores all required invisible armor stands that will indicate where checkpoints of passed
+	 * Spawns and stores all required invisible armor stands that will indicate where the checkpoints of the passed
 	 * {@link ParkourGame} are.
 	 *
-	 * @param parkourGame The game to show checkpoints indicators of.
+	 * @param parkourGame The game to show the checkpoints indicators of.
 	 */
 	public void showCheckpoints(@NotNull final ParkourGame parkourGame) {
 		final List<Checkpoint> checkpoints = parkourGame.getCheckpoints();
@@ -384,7 +384,7 @@ public class ParkourPlugin extends JavaPlugin {
 	}
 
 	/**
-	 * Creates and stores single invisible invulnerable armor stand assigned to passed {@link ParkourGame}.
+	 * Creates and stores a single invisible invulnerable armor stand assigned to the passed {@link ParkourGame}.
 	 *
 	 * @param parkourGame The game which checkpoint will be assigned to.
 	 * @param location The target location where the armor stand will appear.
@@ -408,11 +408,11 @@ public class ParkourPlugin extends JavaPlugin {
 	}
 
 	/**
-	 * Moves the found armor stand to a new location.
+	 * Moves the found armor stand to the new location.
 	 *
-	 * @param parkourGame The owning game which armor stand to move.
-	 * @param location The new location of armor stand.
-	 * @param text Current armor stand name to precisely select correct one.
+	 * @param parkourGame The owning game which armor stand should be moved.
+	 * @param location The new location of the armor stand.
+	 * @param text Current armor stand name to precisely select the correct one.
 	 */
 	public void moveArmorStand(@NotNull final ParkourGame parkourGame, @NotNull final Location location,
 							   @NotNull final String text) {
@@ -426,7 +426,7 @@ public class ParkourPlugin extends JavaPlugin {
 	}
 
 	/**
-	 * Check whether edit lock is enabled in config.
+	 * Check whether the edit lock is enabled in the config.
 	 *
 	 * @return The value from config.
 	 */
