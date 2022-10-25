@@ -19,6 +19,7 @@ targetCompatibility = JavaVersion.VERSION_17
 repositories {
 	mavenLocal()
 	mavenCentral()
+	spigot()
 	maven { url 'https://gitlab.com/api/v4/projects/12063927/packages/maven' }
 	maven { url 'https://maven.enginehub.org/repo/' }
 }
@@ -33,9 +34,15 @@ dependencies {
 	implementation group: 'org.bstats', name: 'bstats-bukkit', version: '3.0.0'
 	annotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
 
-	testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.7.0'
-	testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.7.0'
-	testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-params', version: '5.7.0'
+	testCompileOnly group: 'org.jetbrains', name: 'annotations', version: '23.0.0'
+	testCompileOnly group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+	testImplementation group: 'com.sk89q.worldedit', name: 'worldedit-bukkit', version: '7.2.9'
+	testImplementation group: 'org.assertj', name: 'assertj-core', version: '3.23.1'
+	testImplementation group: 'org.mockito', name: 'mockito-core', version: '4.8.1'
+	testImplementation group: 'org.mockito', name: 'mockito-inline', version: '4.8.1'
+	testImplementation group: 'org.spigotmc', name: 'spigot-api', version: "${spigotVersion}-R0.1-SNAPSHOT"
+	testImplementation group: 'org.testng', name: 'testng', version: '7.6.1'
+	testAnnotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
 }
 
 compileJava.options.compilerArgs << '-parameters' << '-g' << '-Xlint:deprecation' << '-Xlint:unchecked'
@@ -106,7 +113,7 @@ spigot {
 }
 
 test {
-	useJUnitPlatform()
+	useTestNG()
 	finalizedBy jacocoTestCoverageVerification, printCoverage
 }
 

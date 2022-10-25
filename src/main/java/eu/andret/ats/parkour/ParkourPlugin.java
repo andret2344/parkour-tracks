@@ -84,7 +84,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public final class ParkourPlugin extends JavaPlugin {
+public class ParkourPlugin extends JavaPlugin {
 	@Getter
 	@NotNull
 	private final Map<String, String> helpDescription = new LinkedHashMap<>();

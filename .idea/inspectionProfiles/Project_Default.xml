@@ -15,7 +15,6 @@
     </inspection_tool>
     <inspection_tool class="NewExceptionWithoutArguments" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="NonFinalFieldOfException" enabled="true" level="WARNING" enabled_by_default="true" />
-    <inspection_tool class="NullComparison" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="TextBlockMigration" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="TooBroadCatch" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="ignoreThrown" value="true" />

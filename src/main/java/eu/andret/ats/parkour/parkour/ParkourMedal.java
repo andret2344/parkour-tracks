@@ -22,14 +22,14 @@ public class ParkourMedal {
 
 	public void setTime(final double time) {
 		if (time < 0) {
-			throw new IllegalArgumentException("Time cannot be negative, " + time + " provided");
+			throw new IllegalArgumentException("Time cannot be negative, %s provided".formatted(time));
 		}
 		this.time = time;
 	}
 
 	public void setReward(final double reward) {
 		if (reward < 0) {
-			throw new IllegalArgumentException("Reward cannot be negative, " + time + " provided");
+			throw new IllegalArgumentException("Reward cannot be negative, %s provided".formatted(reward));
 		}
 		this.reward = reward;
 	}
