@@ -24,12 +24,12 @@ import eu.andret.ats.parkour.parkour.Effect;
 import eu.andret.ats.parkour.parkour.Medal;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourMedal;
-import eu.andret.ats.parkour.parkour.Score;
+import eu.andret.ats.parkour.parkour.ParkourScore;
 import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.region.BasicRegion;
 import eu.andret.ats.parkour.region.Checkpoint;
 import eu.andret.ats.parkour.region.Wall;
-import eu.andret.ats.parkour.tasks.database.FetchParkourBestRecordTask;
+import eu.andret.ats.parkour.tasks.database.FetchParkourBestScoreTask;
 import eu.andret.ats.parkour.tutorial.TutorialManager;
 import eu.andret.ats.parkour.tutorial.TutorialPlayer;
 import eu.andret.ats.parkour.util.Constants;
@@ -75,20 +75,23 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		final Player player = (Player) sender;
 		final TutorialManager tutorialManager = plugin.getTutorialManager();
 		switch (lever) {
-			case ON:
+			case ON -> {
 				if (tutorialManager.hasPlayer(player)) {
 					return "&dYou are already in the tutorial... Be polite!";
 				}
 				tutorialManager.getPlayer(player).sendMessage();
 				return null;
-			case OFF:
+			}
+			case OFF -> {
 				if (!tutorialManager.hasPlayer(player)) {
 					return "&dYou are not in the tutorial... Be polite!";
 				}
 				tutorialManager.removePlayer(player);
 				return "&dOh, that's sad you don't want to learn anymore, but I appreciate your knowledge. Bye!";
-			default:
+			}
+			default -> {
 				return "&dWhat to do with tutorial? Set it to true or false? Please, specify";
+			}
 		}
 	}
 
@@ -160,15 +163,12 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@Argument(permission = "ats.parkour.fix", description = "Fixes signs after database connection troubles.")
 	public void fix() {
-		plugin.getConnection().ifPresentOrElse(connection -> {
-			plugin.getParkourManager().getAllGames()
-					.stream()
-					.map(parkourGame -> new FetchParkourBestRecordTask(connection, parkourGame, 1, data -> data.stream().findFirst()
-							.ifPresentOrElse(plugin::updateSyncSign, () -> plugin.updateSyncSign(parkourGame))
-					))
-					.forEach(fetchParkourBestRecordTask -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchParkourBestRecordTask));
-			sender.sendMessage(plugin.msg(M.General.FIX.success));
-		}, () -> sender.sendMessage(plugin.msg(M.Error.DEFAULT.notConnected)));
+		plugin.getParkourManager().getAllGames()
+				.stream()
+				.map(parkourGame -> new FetchParkourBestScoreTask(plugin, parkourGame, 1, data -> data.stream().findFirst()
+						.ifPresentOrElse(plugin::updateSyncSign, () -> plugin.updateSyncSign(parkourGame))))
+				.forEach(fetchParkourBestScoreTask -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchParkourBestScoreTask));
+		sender.sendMessage(plugin.msg(M.General.FIX.success));
 	}
 
 	@NotNull
@@ -767,26 +767,25 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@Argument(permission = "ats.parkour.top", description = "Shows top players for parkour game")
 	public void top(final ParkourGame parkourGame, final int count) {
-		plugin.getConnection()
-				.map(connection -> new FetchParkourBestRecordTask(connection, parkourGame, count, result -> {
-					if (result.isEmpty()) {
-						sender.sendMessage(plugin.msg(M.List.TOP.empty));
-						return;
-					}
-					sender.sendMessage(plugin.msg(M.List.TOP.header));
-					for (int i = 0; i < result.size(); i++) {
-						final Score score = result.get(i);
-						final String name = plugin.getServer().getOfflinePlayer(score.getUuid()).getName();
-						if (name == null) {
-							continue;
-						}
-						sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.List.TOP.item)
-								.replace(Constants.NUMBER, String.valueOf(i + 1))
-								.replace(Constants.PLAYER, name)
-								.replace(Constants.PERSONAL_TIME, plugin.formatTime(score.getTime()))));
-					}
-				}))
-				.ifPresent(topPlayersDataOperations -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, topPlayersDataOperations));
+		final FetchParkourBestScoreTask fetchParkourBestScoreTask = new FetchParkourBestScoreTask(plugin, parkourGame, count, result -> {
+			if (result.isEmpty()) {
+				sender.sendMessage(plugin.msg(M.List.TOP.empty));
+				return;
+			}
+			sender.sendMessage(plugin.msg(M.List.TOP.header));
+			for (int i = 0; i < result.size(); i++) {
+				final ParkourScore parkourScore = result.get(i);
+				final String name = plugin.getServer().getOfflinePlayer(parkourScore.getUuid()).getName();
+				if (name == null) {
+					continue;
+				}
+				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.List.TOP.item)
+						.replace(Constants.NUMBER, String.valueOf(i + 1))
+						.replace(Constants.PLAYER, name)
+						.replace(Constants.PERSONAL_TIME, plugin.formatTime(parkourScore.getTime()))));
+			}
+		});
+		plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchParkourBestScoreTask);
 	}
 
 	@Nullable
@@ -810,12 +809,10 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 				.replace(Constants.COORD_YAW, plugin.formatCoord(location.getYaw()))
 				.replace(Constants.COORD_PITCH, plugin.formatCoord(location.getPitch()))));
 
-		plugin.getConnection()
-				.map(connection -> new FetchParkourBestRecordTask(connection, parkourGame, 1, data -> data.stream().findFirst()
-						.ifPresentOrElse(plugin::updateSyncSign, () -> plugin.updateSyncSign(parkourGame))))
-				.ifPresentOrElse(
-						fetchParkourBestRecordTask -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchParkourBestRecordTask),
-						() -> sender.sendMessage(plugin.msg(M.Error.DEFAULT.notConnected)));
+		final FetchParkourBestScoreTask fetchParkourBestScoreTask = new FetchParkourBestScoreTask(plugin, parkourGame, 1, data ->
+				data.stream().findFirst()
+						.ifPresentOrElse(plugin::updateSyncSign, () -> plugin.updateSyncSign(parkourGame)));
+		plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchParkourBestScoreTask);
 		return null;
 	}
 

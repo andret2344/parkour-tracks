@@ -1,17 +1,17 @@
 # Empty line will be hidden, to prevent type whitespace char
 # Acceptable replacements are:
-# %PARKOUR%, %BEST_TIME%, %PLAYER_TIME%, %MEDAL%, %COUNT%, %TYPE%, %TIME%, %PLAYER%
+# %PARKOUR%, %BEST_TIME%, %PLAYER_TIME%, %MEDAL%, %COUNT%, %TYPE%, %LAST_DATE%, %PLAYER%
 
 scoreboard:
-  display-name: 'Display name'
+  display-name: '&lWelcome to parkour!'
+  # see https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html
+  date-time-format: 'yyyy.MM.dd HH:mm:ss'
   content:
-    - 'Current parkour: %PARKOUR%'
+    - 'Current parkour:'
+    - '%PARKOUR%'
     - ' '
-    - 'Best time:'
-    - '%BEST_TIME%'
-    - 'Your best time:'
-    - '%PLAYER_TIME%'
-    - 'Medal:'
-    - '%MEDAL%'
-    - 'Count:'
-    - '%COUNT%'
+    - 'Best time: %BEST_TIME% s'
+    - 'Your best time: %PLAYER_TIME% s'
+    - 'Medal: %MEDAL%'
+    - 'Count: %COUNT%'
+    - 'Last run: %LAST_DATE%'

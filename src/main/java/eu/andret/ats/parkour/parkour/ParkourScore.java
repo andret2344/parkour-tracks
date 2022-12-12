@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.UUID;
 
 @Value
-public class Score {
+public class ParkourScore {
 	@NotNull
 	UUID uuid;
 	@NotNull

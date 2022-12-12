@@ -4,11 +4,13 @@
 
 package eu.andret.ats.parkour.tasks.database;
 
+import eu.andret.ats.parkour.ParkourPlugin;
 import eu.andret.ats.parkour.parkour.ParkourGame;
-import eu.andret.ats.parkour.parkour.Score;
+import eu.andret.ats.parkour.parkour.ParkourScore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -19,13 +21,13 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-public class FetchParkourBestRecordTask extends AbstractParkourTask {
+public class FetchParkourBestScoreTask extends AbstractParkourTask {
 	private final int count;
 	@Nullable
-	private final Consumer<List<Score>> callback;
+	private final Consumer<List<ParkourScore>> callback;
 
-	public FetchParkourBestRecordTask(@NotNull final Connection connection, @NotNull final ParkourGame parkourGame, final int count, @Nullable final Consumer<List<Score>> callback) {
-		super(connection, parkourGame);
+	public FetchParkourBestScoreTask(@NotNull final ParkourPlugin plugin, @NotNull final ParkourGame game, final int count, @Nullable final Consumer<List<ParkourScore>> callback) {
+		super(plugin, game);
 		if (count <= 0) {
 			throw new IllegalArgumentException("Count must be positive, " + count + " provided!");
 		}
@@ -34,17 +36,17 @@ public class FetchParkourBestRecordTask extends AbstractParkourTask {
 	}
 
 	@Override
-	public void run() {
-		try (final PreparedStatement stat = connection.prepareStatement("SELECT uuid, duration FROM ats_parkour_records WHERE parkour = ? ORDER BY duration LIMIT ?")) {
+	public void go(@NotNull final Connection connection) {
+		try (final PreparedStatement stat = connection.prepareStatement(plugin.load("sql/sign.sql"))) {
 			stat.setString(1, game.getName());
 			stat.setInt(2, count);
 			final ResultSet rs = stat.executeQuery();
-			final List<Score> result = new ArrayList<>();
+			final List<ParkourScore> result = new ArrayList<>();
 			for (int i = 0; i < count && rs.next(); i++) {
-				result.add(new Score(UUID.fromString(rs.getString("uuid")), game, rs.getFloat("duration")));
+				result.add(new ParkourScore(UUID.fromString(rs.getString("uuid")), game, rs.getFloat("duration")));
 			}
 			Optional.ofNullable(callback).ifPresent(cb -> cb.accept(result));
-		} catch (final SQLException ex) {
+		} catch (final SQLException | IOException ex) {
 			ex.printStackTrace();
 		}
 	}

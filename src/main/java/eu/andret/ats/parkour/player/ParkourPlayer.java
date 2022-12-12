@@ -4,17 +4,13 @@
 
 package eu.andret.ats.parkour.player;
 
-import eu.andret.ats.parkour.parkour.ParkourScoreboard;
 import lombok.Data;
-import org.bukkit.Bukkit;
+import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.Player;
-import org.bukkit.scoreboard.Scoreboard;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Optional;
 
 @Data
+@RequiredArgsConstructor
 public abstract class ParkourPlayer {
 	@NotNull
 	protected final Player player;
@@ -23,21 +19,10 @@ public abstract class ParkourPlayer {
 	protected double time = 0;
 	protected boolean hidden = false;
 
-	ParkourPlayer(@NotNull final Player player) {
-		this.player = player;
-	}
-
 	public void reset() {
 		lastCheckpoint = 0;
 		time = 0;
 		player.setExp(0);
 		player.setLevel(0);
-	}
-
-	public void setParkourScoreboard(@Nullable final ParkourScoreboard parkourScoreboard) {
-		final Scoreboard scoreboard = Optional.ofNullable(parkourScoreboard)
-				.map(ParkourScoreboard::build)
-				.orElse(Bukkit.getScoreboardManager().getNewScoreboard());
-		player.setScoreboard(scoreboard);
 	}
 }
