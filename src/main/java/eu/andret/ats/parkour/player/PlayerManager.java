@@ -27,8 +27,8 @@ public final class PlayerManager {
 		return parkourPlayer;
 	}
 
-	public ParkourPlayer remove(final Player player) {
-		return players.remove(player);
+	public void remove(@NotNull final Player player) {
+		players.remove(player);
 	}
 
 	public void teleportToCheckpoint(@NotNull final ParkourPlayer parkourPlayer, @Nullable final Checkpoint checkpoint) {
