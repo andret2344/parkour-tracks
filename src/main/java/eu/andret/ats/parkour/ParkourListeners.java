@@ -20,13 +20,13 @@ import eu.andret.ats.parkour.event.player.PlayerTeleportBackEvent;
 import eu.andret.ats.parkour.parkour.Effect;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourManager;
-import eu.andret.ats.parkour.parkour.ParkourScore;
 import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.region.Checkpoint;
 import eu.andret.ats.parkour.region.Wall;
 import eu.andret.ats.parkour.tasks.counter.ParkourCountdown;
 import eu.andret.ats.parkour.tasks.counter.TimeCounter;
 import eu.andret.ats.parkour.tasks.database.FetchAndInsertDataTask;
+import eu.andret.ats.parkour.tasks.database.FetchParkourBestScoreTask;
 import eu.andret.ats.parkour.util.Constants;
 import eu.andret.ats.parkour.util.Data;
 import eu.andret.ats.parkour.util.M;
@@ -689,7 +689,7 @@ public class ParkourListeners implements Listener {
 				player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("new-parkour-best")
 						.replace(Constants.NAME, parkourGame.getName())
 						.replace(Constants.DISPLAY_NAME, parkourGame.getDisplayName())));
-				plugin.updateSyncSign(new ParkourScore(player.getUniqueId(), parkourGame, currentTime));
+				plugin.updateSyncSign(new FetchParkourBestScoreTask.ParkourScore(player.getUniqueId(), parkourGame, currentTime));
 			}
 			if (fetchResult.playerBestTime() > currentTime) {
 				player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("new-personal-best")

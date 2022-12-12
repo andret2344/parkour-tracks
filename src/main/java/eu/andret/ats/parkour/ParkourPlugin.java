@@ -24,10 +24,10 @@ import eu.andret.ats.parkour.parkour.Medal;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourGameCreator;
 import eu.andret.ats.parkour.parkour.ParkourManager;
-import eu.andret.ats.parkour.parkour.ParkourScore;
 import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.player.PlayerManager;
 import eu.andret.ats.parkour.region.Checkpoint;
+import eu.andret.ats.parkour.tasks.database.FetchParkourBestScoreTask;
 import eu.andret.ats.parkour.tasks.database.FetchParkourPlayerScoreTask;
 import eu.andret.ats.parkour.tasks.database.KeepAliveTask;
 import eu.andret.ats.parkour.tutorial.TutorialManager;
@@ -290,12 +290,12 @@ public class ParkourPlugin extends JavaPlugin {
 				.map(Sound::valueOf);
 	}
 
-	public void updateSyncSign(@NotNull final ParkourScore parkourScore) {
+	public void updateSyncSign(@NotNull final FetchParkourBestScoreTask.ParkourScore parkourScore) {
 		getServer().getScheduler().scheduleSyncDelayedTask(this, () -> updateSign(parkourScore));
 	}
 
-	public void updateSign(@NotNull final ParkourScore parkourScore) {
-		updateSign(parkourScore.getGame(), line -> replace(String.valueOf(line), parkourScore));
+	public void updateSign(@NotNull final FetchParkourBestScoreTask.ParkourScore parkourScore) {
+		updateSign(parkourScore.game(), line -> replace(String.valueOf(line), parkourScore));
 	}
 
 	/**
@@ -729,14 +729,14 @@ public class ParkourPlugin extends JavaPlugin {
 	}
 
 	@NotNull
-	private String replace(@NotNull final String source, @NotNull final ParkourScore parkourScore) {
-		final String name = Optional.of(parkourScore)
-				.map(ParkourScore::getUuid)
-				.map(uuid -> getServer().getOfflinePlayer(uuid))
+	private String replace(@NotNull final String source, @NotNull final FetchParkourBestScoreTask.ParkourScore parkourScore) {
+		final String playerName = Optional.of(parkourScore)
+				.map(FetchParkourBestScoreTask.ParkourScore::uuid)
+				.map(getServer()::getOfflinePlayer)
 				.map(OfflinePlayer::getName)
 				.orElse(Constants.PLACEHOLDER_NO_RECORD);
-		return source.replace(Constants.NICK, name)
-				.replace(Constants.PERSONAL_TIME, formatTime(parkourScore.getTime()));
+		return source.replace(Constants.NICK, playerName)
+				.replace(Constants.PERSONAL_TIME, formatTime(parkourScore.time()));
 	}
 
 	@NotNull
@@ -750,7 +750,7 @@ public class ParkourPlugin extends JavaPlugin {
 		decimalFormatSymbols.setCurrencySymbol(economySection.getString("currency-symbol", "{@}"));
 		decimalFormatSymbols.setDecimalSeparator(economySection.getString("decimal-separator", ".").charAt(0));
 		decimalFormatSymbols.setGroupingSeparator(economySection.getString("group-separator", " ").charAt(0));
-		final DecimalFormat format = new DecimalFormat(economySection.getString("pattern", "+###,##0.00¤;-###,##0.00\u00A4"), decimalFormatSymbols);
+		final DecimalFormat format = new DecimalFormat(economySection.getString("pattern", "+###,##0.00¤;-###,##0.00¤"), decimalFormatSymbols);
 		format.setGroupingSize(economySection.getInt("group-size", 3));
 		return format;
 	}
@@ -762,7 +762,7 @@ public class ParkourPlugin extends JavaPlugin {
 			throw new IllegalArgumentException("Something went wrong with scoreboard manager");
 		}
 		final Scoreboard board = scoreboardManager.getNewScoreboard();
-		final Objective objective = board.registerNewObjective(PARKOUR, Criteria.DUMMY, "parkour");
+		final Objective objective = board.registerNewObjective(PARKOUR, Criteria.DUMMY, PARKOUR);
 		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 		objective.setDisplayName(ChatColor.translateAlternateColorCodes('&', name));
 		for (int i = 0; i < text.size(); i++) {

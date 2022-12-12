@@ -24,7 +24,6 @@ import eu.andret.ats.parkour.parkour.Effect;
 import eu.andret.ats.parkour.parkour.Medal;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourMedal;
-import eu.andret.ats.parkour.parkour.ParkourScore;
 import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.region.BasicRegion;
 import eu.andret.ats.parkour.region.Checkpoint;
@@ -774,15 +773,15 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			}
 			sender.sendMessage(plugin.msg(M.List.TOP.header));
 			for (int i = 0; i < result.size(); i++) {
-				final ParkourScore parkourScore = result.get(i);
-				final String name = plugin.getServer().getOfflinePlayer(parkourScore.getUuid()).getName();
+				final FetchParkourBestScoreTask.ParkourScore parkourScore = result.get(i);
+				final String name = plugin.getServer().getOfflinePlayer(parkourScore.uuid()).getName();
 				if (name == null) {
 					continue;
 				}
 				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.List.TOP.item)
 						.replace(Constants.NUMBER, String.valueOf(i + 1))
 						.replace(Constants.PLAYER, name)
-						.replace(Constants.PERSONAL_TIME, plugin.formatTime(parkourScore.getTime()))));
+						.replace(Constants.PERSONAL_TIME, plugin.formatTime(parkourScore.time()))));
 			}
 		});
 		plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchParkourBestScoreTask);

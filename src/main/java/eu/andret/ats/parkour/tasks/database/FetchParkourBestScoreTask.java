@@ -6,7 +6,6 @@ package eu.andret.ats.parkour.tasks.database;
 
 import eu.andret.ats.parkour.ParkourPlugin;
 import eu.andret.ats.parkour.parkour.ParkourGame;
-import eu.andret.ats.parkour.parkour.ParkourScore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +24,9 @@ public class FetchParkourBestScoreTask extends AbstractParkourTask {
 	private final int count;
 	@Nullable
 	private final Consumer<List<ParkourScore>> callback;
+
+	public record ParkourScore(@NotNull UUID uuid, @NotNull ParkourGame game, double time) {
+	}
 
 	public FetchParkourBestScoreTask(@NotNull final ParkourPlugin plugin, @NotNull final ParkourGame game, final int count, @Nullable final Consumer<List<ParkourScore>> callback) {
 		super(plugin, game);
