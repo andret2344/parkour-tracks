@@ -451,7 +451,7 @@ public class ParkourPlugin extends JavaPlugin {
 	public String load(@NotNull final String filename) throws IOException {
 		try (final InputStream inputStream = getClassLoader().getResourceAsStream(filename)) {
 			if (inputStream == null) {
-				return "";
+				throw new IOException("Cannot open resource as stream: " + filename);
 			}
 			return new String(inputStream.readAllBytes());
 		}
