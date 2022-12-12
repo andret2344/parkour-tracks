@@ -1,12 +1,11 @@
 # Empty line will be hidden, to prevent type whitespace char
 # Acceptable replacements are:
-# %PARKOUR%, %AUTHORS%, %BEST_TIME%, %PLAYER_TIME%, %MEDAL%, %COUNT%, %TYPE%, %TIME%, %PLAYER%
+# %PARKOUR%, %BEST_TIME%, %PLAYER_TIME%, %MEDAL%, %COUNT%, %TYPE%, %TIME%, %PLAYER%
 
 scoreboard:
   display-name: 'Display name'
   content:
     - 'Current parkour: %PARKOUR%'
-    - 'Authors: %AUTHORS%'
     - ' '
     - 'Best time:'
     - '%BEST_TIME%'

@@ -9,16 +9,15 @@ import lombok.Data;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Scoreboard;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
-import org.jetbrains.annotations.NotNull;
 
 @Data
 public abstract class ParkourPlayer {
 	@NotNull
 	protected final Player player;
-	protected ParkourScoreboard parkourScoreboard;
 	protected int lastCheckpoint = 0;
 	protected boolean ignoring = false;
 	protected double time = 0;
@@ -35,12 +34,7 @@ public abstract class ParkourPlayer {
 		player.setLevel(0);
 	}
 
-	public ParkourScoreboard getParkourScoreboard() {
-		return parkourScoreboard;
-	}
-
 	public void setParkourScoreboard(@Nullable final ParkourScoreboard parkourScoreboard) {
-		this.parkourScoreboard = parkourScoreboard;
 		final Scoreboard scoreboard = Optional.ofNullable(parkourScoreboard)
 				.map(ParkourScoreboard::build)
 				.orElse(Bukkit.getScoreboardManager().getNewScoreboard());

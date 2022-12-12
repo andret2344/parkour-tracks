@@ -20,8 +20,8 @@ import eu.andret.ats.parkour.event.player.PlayerTeleportBackEvent;
 import eu.andret.ats.parkour.parkour.Effect;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourManager;
-import eu.andret.ats.parkour.parkour.Score;
 import eu.andret.ats.parkour.parkour.ParkourScoreboard;
+import eu.andret.ats.parkour.parkour.Score;
 import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.region.Checkpoint;
 import eu.andret.ats.parkour.region.Wall;
@@ -65,6 +65,7 @@ import org.bukkit.potion.PotionEffect;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -314,32 +315,6 @@ public class ParkourListeners implements Listener {
 			event.setCancelled(true);
 			player.closeInventory();
 		}
-		event.getGame().getOptions().getEffects().entrySet().stream()
-				.map(entry -> new PotionEffect(entry.getKey(), 99999999, entry.getValue()))
-				.forEach(joiningPlayer::addPotionEffect);
-		joiningPlayer.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("joinParkour").replace("%PARKOUR%", event.getGame().getDisplayName())));
-		plugin.getParkourManager().getAllGames().stream()
-				.filter(game -> !game.equals(event.getGame()))
-				.map(ParkourGame::getPlayers)
-				.flatMap(Collection::stream)
-				.map(ParkourPlayer::getPlayer)
-				.forEach(player -> {
-					player.hidePlayer(plugin, joiningPlayer);
-					joiningPlayer.hidePlayer(plugin, player);
-				});
-		parkourPlayer.setParkourScoreboard(ParkourScoreboard.builder()
-				.authors(event.getGame().getAuthors().toString())
-				.bestTime(1.23)
-				.count(1)
-				.parkourType(event.getGame().getOptions().getType())
-				.displayName(event.getGame().getDisplayName())
-				.medal(Medal.BRONZE)
-				.pattern(new ArrayList<>())
-				.playerTime(2.22)
-				.time(1.11)
-				.player(event.getPlayer().getPlayer().getName())
-				.build()
-		);
 	}
 
 	@EventHandler
@@ -391,6 +366,17 @@ public class ParkourListeners implements Listener {
 		player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("joined-parkour")
 				.replace(Constants.NAME, parkourGame.getName())
 				.replace(Constants.DISPLAY_NAME, parkourGame.getDisplayName())));
+		parkourPlayer.setParkourScoreboard(ParkourScoreboard.builder()
+				.bestTime(1.23)
+				.count(1)
+				.parkourType(event.getGame().getOptions().getType())
+				.displayName(event.getGame().getDisplayName())
+				.medal(event.getGame().getMedals().get(0).getMedal())
+				.pattern(new ArrayList<>())
+				.playerTime(2.22)
+				.time(1.11)
+				.player(event.getPlayer().getPlayer().getName())
+				.build());
 	}
 
 	@EventHandler

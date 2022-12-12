@@ -23,35 +23,12 @@ public final class PlayerManager {
 			return players.get(player);
 		}
 		final ParkourSinglePlayer parkourSinglePlayer = new ParkourSinglePlayer(player);
-		singlePlayers.put(player, parkourSinglePlayer);
+		players.put(player, parkourSinglePlayer);
 		return parkourSinglePlayer;
 	}
 
-	public ParkourCompetitorPlayer getParkourCompetitorPlayer(final Player player) {
-		if (competitorPlayers.containsKey(player)) {
-			return competitorPlayers.get(player);
-		}
-		final ParkourCompetitorPlayer parkourCompetitorPlayer = new ParkourCompetitorPlayer(player);
-		competitorPlayers.put(player, parkourCompetitorPlayer);
-		return parkourCompetitorPlayer;
-	}
-
-	public ParkourPlayer getParkourPlayer(final Player player) {
-		if (singlePlayers.containsKey(player)) {
-			return singlePlayers.get(player);
-		}
-		if (competitorPlayers.containsKey(player)) {
-			return competitorPlayers.get(player);
-		}
-		return null;
-	}
-
 	public ParkourPlayer remove(final Player player) {
-		final ParkourPlayer parkourPlayer = singlePlayers.remove(player);
-		if (parkourPlayer != null) {
-			return parkourPlayer;
-		}
-		return competitorPlayers.remove(player);
+		return players.remove(player);
 	}
 
 	public void teleportToCheckpoint(@NotNull final ParkourPlayer parkourPlayer, @Nullable final Checkpoint checkpoint) {
