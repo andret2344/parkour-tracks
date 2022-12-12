@@ -1,4 +1,4 @@
-image: gradle:jdk11
+image: gradle:jdk17
 
 cache: &wrapper
   paths:
@@ -32,17 +32,6 @@ compile:
     <<: *wrapper
     policy: pull
 
-delombok:
-  stage: build
-  script:
-    - ./gradlew delombok
-  artifacts:
-    paths:
-      - build/delombok/**
-  cache:
-    <<: *wrapper
-    policy: pull
-
 junit:
   stage: verify
   dependencies:
@@ -62,7 +51,7 @@ publish:
   stage: deploy
   script:
     - ./gradlew clean
-    - ./gradlew publish
+    - ./gradlew publish --debug
   rules:
     - if: '$CI_COMMIT_BRANCH == "master"'
       when: manual
@@ -70,6 +59,7 @@ publish:
   cache:
     <<: *wrapper
     policy: pull
+  allow_failure: true
 
 jar:
   stage: deploy
@@ -92,7 +82,6 @@ badges:
     - apt-get -qq install python3 python3-pip --yes
     - pip3 install anybadge
     - ./gradlew build -q
-    - anybadge -l version -v "$(./gradlew version -q)" -f version.svg -c "#007ec6"
     - anybadge -l spigot -v "$(./gradlew spigotVersion -q)" -f spigot.svg -c "#007ec6"
     - anybadge -l atsArguments -v "$(./gradlew argumentsVersion -q)" -f arguments.svg -c "#007ec6"
   artifacts:

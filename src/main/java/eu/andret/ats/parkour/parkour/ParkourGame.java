@@ -1,56 +1,76 @@
 /*
- * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2018-2022. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour.parkour;
 
 import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.region.BasicRegion;
-import eu.andret.ats.parkour.region.DirectionalRegion;
-import lombok.AccessLevel;
+import eu.andret.ats.parkour.region.Checkpoint;
+import eu.andret.ats.parkour.region.Wall;
 import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
 import lombok.ToString;
+import lombok.Value;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffectType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.stream.Collectors;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Stream;
 
 @Data
 @ToString
 public abstract class ParkourGame implements Comparable<ParkourGame> {
-	private boolean running;
-	private String name;
-	private World world;
-	private BasicRegion region;
-	private Location recordsBlock;
-	private Location teleportBlock;
-	private DirectionalRegion spawn;
-	private String displayName;
+	@NotNull
+	private final List<Checkpoint> checkpoints = new ArrayList<>();
+	@NotNull
+	private final List<Wall> walls = new ArrayList<>();
+	@NotNull
+	private final transient List<ParkourPlayer> players = new ArrayList<>();
+	@NotNull
+	private final List<Effect> effects = new ArrayList<>();
+	@NotNull
+	private final List<ParkourMedal> medals = new ArrayList<>();
+	@NotNull
+	private final UUID uuid;
 
+	@NotNull
+	private String name;
+	@NotNull
+	private String displayName;
+	private boolean running;
+	@NotNull
+	private World world;
+	@NotNull
+	private BasicRegion region;
+	@Nullable
+	private Location recordsBlock;
+	@Nullable
+	private Location teleportBlock;
+
+	@NotNull
 	private Options options = Options.builder().build();
 
-	private final List<DirectionalRegion> checkpoints = new ArrayList<>();
-	private final List<BasicRegion> walls = new ArrayList<>();
-	private final Set<String> authors = new TreeSet<>();
-	private final List<ParkourPlayer> players = new ArrayList<>();
-
-	public enum ParkourType {
+	public enum Type {
 		SERVER,
 		TRAINING,
 		PLAYERS
+	}
+
+	@Value
+	public static class Result {
+		@Nullable
+		Medal medal;
+		double reward;
 	}
 
 	@Data
@@ -73,67 +93,35 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 		@Builder.Default
 		private boolean vipOnly = false;
 		@Builder.Default
+		private double fee = 0;
+		@Builder.Default
+		private double reward = 0;
+		@Builder.Default
 		private int difficulty = 1;
-		@Builder.Default
-		private double bronze = 0;
-		@Builder.Default
-		private double silver = 0;
-		@Builder.Default
-		private double gold = 0;
-		@Builder.Default
-		private double platinum = 0;
-		@Getter(AccessLevel.NONE)
-		private final Map<PotionEffectType, Integer> effects = new HashMap<>();
 		@Builder.Default
 		private DyeColor color = DyeColor.WHITE;
 		@Builder.Default
-		private ParkourType type = ParkourType.SERVER;
-
-		public Medal getMedalByTime(final double time) {
-			if (platinum >= time) {
-				return Medal.PLATINUM;
-			}
-			if (gold >= time) {
-				return Medal.GOLD;
-			}
-			if (silver >= time) {
-				return Medal.SILVER;
-			}
-			if (bronze >= time) {
-				return Medal.BRONZE;
-			}
-			return Medal.NONE;
-		}
-
-		public void setEffect(final PotionEffectType effect, final int amplifier) {
-			effects.put(effect, amplifier);
-		}
-
-		public int removeEffect(final PotionEffectType effect) {
-			return effects.remove(effect);
-		}
-
-		public Map<PotionEffectType, Integer> getEffects() {
-			return new HashMap<>(effects);
-		}
+		private Type type = Type.SERVER;
 	}
 
-	protected ParkourGame(final String name, final BasicRegion region, final World world) {
+	protected ParkourGame(@NotNull final UUID uuid, @NotNull final String name, @NotNull final BasicRegion region,
+						  @NotNull final World world) {
+		this.uuid = uuid;
 		this.name = displayName = name;
 		this.region = region;
 		this.world = world;
 	}
 
+	@NotNull
 	public List<BasicRegion> getAllRegions() {
-		final List<BasicRegion> arr = new ArrayList<>();
-		arr.add(region);
-		arr.add(spawn);
-		arr.addAll(walls);
-		arr.addAll(checkpoints);
-		return arr.stream().filter(Objects::nonNull).collect(Collectors.toList());
+		return Stream.of(walls, checkpoints, Collections.singletonList(region))
+				.flatMap(Collection::stream)
+				.map(BasicRegion.class::cast)
+				.filter(Objects::nonNull)
+				.toList();
 	}
 
-	protected boolean addPlayer(final ParkourPlayer parkourPlayer) {
+	public boolean addPlayer(@NotNull final ParkourPlayer parkourPlayer) {
 		if (players.contains(parkourPlayer)) {
 			return false;
 		}
@@ -141,7 +129,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 		return true;
 	}
 
-	public boolean removePlayer(final ParkourPlayer parkourPlayer) {
+	public boolean removePlayer(@NotNull final ParkourPlayer parkourPlayer) {
 		if (!players.contains(parkourPlayer)) {
 			return false;
 		}
@@ -149,15 +137,42 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 		return true;
 	}
 
-	public abstract boolean addPlayer(Player player);
+	public boolean inSpawn(@NotNull final ParkourPlayer player) {
+		return Optional.of(checkpoints)
+				.map(list -> list.get(0))
+				.map(checkpoint -> checkpoint.contains(player))
+				.orElse(false);
+	}
+
+	public boolean inCheckpoint(@NotNull final ParkourPlayer player) {
+		return checkpoints.stream().anyMatch(checkpoint -> checkpoint.contains(player));
+	}
+
+	@NotNull
+	public Result getResult(final double time) {
+		double smallest = Double.POSITIVE_INFINITY;
+		Medal medal = null;
+		double reward = 0;
+		for (final ParkourMedal parkourMedal : medals) {
+			if (parkourMedal.getTime() < time) {
+				continue;
+			}
+			reward += parkourMedal.getReward();
+			if (parkourMedal.getTime() < smallest) {
+				smallest = parkourMedal.getTime();
+				medal = parkourMedal.getMedal();
+			}
+		}
+		return new Result(medal, reward);
+	}
 
 	@Override
-	public int compareTo(@Nonnull final ParkourGame parkourGame) {
+	public int compareTo(@NotNull final ParkourGame parkourGame) {
 		if (running && !parkourGame.running) {
-			return 1;
+			return -1;
 		}
 		if (!running && parkourGame.running) {
-			return -1;
+			return 1;
 		}
 		if (options.difficulty != parkourGame.options.difficulty) {
 			return options.difficulty - parkourGame.options.difficulty;

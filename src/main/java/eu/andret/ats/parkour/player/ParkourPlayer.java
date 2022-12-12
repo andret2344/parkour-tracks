@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2018-2022. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour.player;
@@ -12,21 +12,24 @@ import org.bukkit.scoreboard.Scoreboard;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
+import org.jetbrains.annotations.NotNull;
 
 @Data
 public abstract class ParkourPlayer {
+	@NotNull
 	protected final Player player;
 	protected ParkourScoreboard parkourScoreboard;
-	protected int lastCheckpoint = -1;
+	protected int lastCheckpoint = 0;
 	protected boolean ignoring = false;
 	protected double time = 0;
+	protected boolean hidden = false;
 
-	ParkourPlayer(final Player player) {
+	ParkourPlayer(@NotNull final Player player) {
 		this.player = player;
 	}
 
 	public void reset() {
-		lastCheckpoint = -1;
+		lastCheckpoint = 0;
 		time = 0;
 		player.setExp(0);
 		player.setLevel(0);

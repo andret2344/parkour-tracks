@@ -1,21 +1,25 @@
 /*
- * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2018-2022. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour.tasks.counter;
 
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public class ParkourCountdown implements Runnable {
 	private final int begin;
+	@Nullable
 	private final Runnable opening;
+	@Nullable
 	private final Consumer<Integer> step;
+	@Nullable
 	private final Runnable closing;
 	private int iterator;
 
-	public ParkourCountdown(final int begin, @NotNull final Runnable opening, @NotNull final Consumer<Integer> step, @NotNull final Runnable closing) {
+	public ParkourCountdown(final int begin, @Nullable final Runnable opening, @Nullable final Consumer<Integer> step, @Nullable final Runnable closing) {
 		this.begin = begin;
 		iterator = begin + 1;
 		this.opening = opening;
@@ -27,13 +31,13 @@ public class ParkourCountdown implements Runnable {
 	public void run() {
 		iterator--;
 		if (iterator == begin) {
-			opening.run();
+			Optional.ofNullable(opening).ifPresent(Runnable::run);
 			return;
 		}
 		if (iterator == 0) {
-			closing.run();
+			Optional.ofNullable(closing).ifPresent(Runnable::run);
 			return;
 		}
-		step.accept(iterator);
+		Optional.ofNullable(step).ifPresent(consumer -> consumer.accept(iterator));
 	}
 }

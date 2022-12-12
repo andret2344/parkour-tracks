@@ -1,27 +1,23 @@
 /*
- * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2018-2022. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour.parkour;
 
-import eu.andret.ats.parkour.player.PlayerManager;
 import eu.andret.ats.parkour.region.BasicRegion;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.Value;
 import org.bukkit.World;
-import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.UUID;
 
 @Value
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-public class Parkour extends ParkourGame {
-	public Parkour(final String name, final BasicRegion region, final World world) {
-		super(name, region, world);
-	}
-
-	@Override
-	public boolean addPlayer(final Player player) {
-		return super.addPlayer(PlayerManager.getParkourSinglePlayer(player));
+class Parkour extends ParkourGame {
+	Parkour(@NotNull final UUID uuid, @NotNull final String name, @NotNull final BasicRegion region, @NotNull final World world) {
+		super(uuid, name, region, world);
 	}
 }

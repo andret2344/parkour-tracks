@@ -1,22 +1,11 @@
 /*
- * Copyright Andret (c) 2019-2021. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2018-2022. Copying and modifying allowed only keeping git link reference.
  */
-
-import io.franzbecker.gradle.lombok.task.DelombokTask
-
-buildscript {
-	repositories {
-		jcenter()
-		maven { url 'https://plugins.gradle.org/m2/' }
-	}
-	dependencies { classpath 'io.franzbecker:gradle-lombok:2.0' }
-}
 
 plugins {
 	id 'de.jansauer.printcoverage' version '2.0.0'
-	id 'com.github.johnrengelman.shadow' version '5.2.0'
-	id 'kr.entree.spigradle' version '2.2.3'
-	id 'io.franzbecker.gradle-lombok' version '4.0.0'
+	id 'com.github.johnrengelman.shadow' version '7.0.0'
+	id 'kr.entree.spigradle' version '2.4.2'
 }
 
 apply plugin: 'idea'
@@ -24,30 +13,36 @@ apply plugin: 'java'
 apply plugin: 'jacoco'
 apply plugin: 'maven-publish'
 
-sourceCompatibility = JavaVersion.VERSION_11
-targetCompatibility = JavaVersion.VERSION_11
+sourceCompatibility = JavaVersion.VERSION_17
+targetCompatibility = JavaVersion.VERSION_17
 
 repositories {
 	mavenLocal()
 	mavenCentral()
 	spigot()
 	maven { url 'https://gitlab.com/api/v4/projects/12063927/packages/maven' }
-	maven { url "http://maven.sk89q.com/artifactory/repo" }
+	maven { url 'https://maven.enginehub.org/repo/' }
 }
 
 dependencies {
+	compileOnly group: 'com.google.code.gson', name: 'gson', version: '2.9.0'
+	compileOnly group: 'com.sk89q.worldedit', name: 'worldedit-bukkit', version: '7.2.9'
+	compileOnly group: 'org.jetbrains', name: 'annotations', version: '23.0.0'
+	compileOnly group: 'org.projectlombok', name: 'lombok', version: lombokVersion
 	compileOnly group: 'org.spigotmc', name: 'spigot-api', version: "${spigotVersion}-R0.1-SNAPSHOT"
-	compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.18'
-	compileOnly group: 'org.jetbrains', name: 'annotations', version: '20.1.0'
-	compileOnly group: 'com.sk89q.worldedit', name: 'worldedit-bukkit', version: '7.0.1'
 	implementation group: 'eu.andret', name: 'ats-arguments', version: argumentsVersion
-	implementation group: 'org.bstats', name: 'bstats-bukkit', version: '2.2.1'
-	implementation group: 'org.json', name: 'json', version: '20210307'
-	annotationProcessor group: "org.projectlombok", name: "lombok", version: "1.18.18"
+	implementation group: 'org.bstats', name: 'bstats-bukkit', version: '3.0.0'
+	annotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
 
-	testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.7.0'
-	testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.7.0'
-	testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-params', version: '5.7.0'
+	testCompileOnly group: 'org.jetbrains', name: 'annotations', version: '23.0.0'
+	testCompileOnly group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+	testImplementation group: 'com.sk89q.worldedit', name: 'worldedit-bukkit', version: '7.2.9'
+	testImplementation group: 'org.assertj', name: 'assertj-core', version: '3.23.1'
+	testImplementation group: 'org.mockito', name: 'mockito-core', version: '4.8.1'
+	testImplementation group: 'org.mockito', name: 'mockito-inline', version: '4.8.1'
+	testImplementation group: 'org.spigotmc', name: 'spigot-api', version: "${spigotVersion}-R0.1-SNAPSHOT"
+	testImplementation group: 'org.testng', name: 'testng', version: '7.6.1'
+	testAnnotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
 }
 
 compileJava.options.compilerArgs << '-parameters' << '-g' << '-Xlint:deprecation' << '-Xlint:unchecked'
@@ -55,11 +50,11 @@ compileTestJava.options.compilerArgs << '-parameters' << '-g' << '-Xlint:depreca
 
 spigot {
 	authors = ['Andret']
-	apiVersion = '1.16'
-	description = 'A plugin creating and play parkours.'
+	apiVersion = '1.17'
+	description = 'A plugin to create and play parkours.'
 	version = project.version
 	depends = ['WorldEdit']
-	softDepends = ['Multiverse']
+	libraries = ['com.google.code.gson:gson:2.9.0']
 
 	//noinspection GroovyAssignabilityCheck
 	commands {
@@ -118,8 +113,12 @@ spigot {
 }
 
 test {
-	useJUnitPlatform()
+	useTestNG()
 	finalizedBy jacocoTestCoverageVerification, printCoverage
+}
+
+jacoco {
+	toolVersion = '0.8.7'
 }
 
 jacocoTestReport {
@@ -144,13 +143,13 @@ javadoc {
 		setMemberLevel JavadocMemberLevel.PUBLIC
 		setAuthor true
 
-		links 'https://docs.oracle.com/en/java/javase/11/docs/api/'
+		links 'https://docs.oracle.com/en/java/javase/17/docs/api/'
 	}
 }
 
 task sourceJar(type: Jar) {
 	archiveClassifier.set('sources')
-	from sourceSets.main.allJava
+	from file('build/delombok')
 }
 
 task packageJavadoc(type: Jar) {
@@ -187,24 +186,13 @@ publishing {
 
 shadowJar {
 	archiveFileName = "${project.name}-${project.version}.jar"
-	relocate 'org.json', 'eu.andret.ats.parkour.json'
 	relocate 'eu.andret.arguments', 'eu.andret.ats.parkour.arguments'
-	relocate "org.bstats", "eu.andret.ats.parkour.bstats"
+	relocate 'org.bstats', 'eu.andret.ats.parkour.bstats'
 	project.configurations.implementation.canBeResolved = true
 	configurations = [project.configurations.implementation]
 }
 
 build.dependsOn(shadowJar)
-
-task delombok(type: DelombokTask, dependsOn: compileJava) {
-	ext.outputDir = file("$buildDir/delombok")
-	outputs.dir(outputDir)
-	sourceSets.main.java.srcDirs.each {
-		inputs.dir(it)
-		args(it, '-d', outputDir)
-	}
-	doFirst { outputDir.deleteDir() }
-}
 
 tasks.register('spigotVersion') {
 	doLast {
@@ -215,11 +203,5 @@ tasks.register('spigotVersion') {
 tasks.register('argumentsVersion') {
 	doLast {
 		println(argumentsVersion)
-	}
-}
-
-tasks.register('version') {
-	doLast {
-		println(version)
 	}
 }
