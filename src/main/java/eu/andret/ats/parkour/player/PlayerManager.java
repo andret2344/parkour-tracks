@@ -22,9 +22,9 @@ public final class PlayerManager {
 		if (players.containsKey(player)) {
 			return players.get(player);
 		}
-		final ParkourSinglePlayer parkourSinglePlayer = new ParkourSinglePlayer(player);
-		players.put(player, parkourSinglePlayer);
-		return parkourSinglePlayer;
+		final ParkourSinglePlayer parkourPlayer = new ParkourSinglePlayer(player);
+		players.put(player, parkourPlayer);
+		return parkourPlayer;
 	}
 
 	public ParkourPlayer remove(final Player player) {
