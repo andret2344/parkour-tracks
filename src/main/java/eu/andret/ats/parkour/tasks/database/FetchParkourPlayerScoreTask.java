@@ -5,6 +5,7 @@
 package eu.andret.ats.parkour.tasks.database;
 
 import eu.andret.ats.parkour.ParkourPlugin;
+import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.player.ParkourPlayer;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,30 +17,32 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.function.Consumer;
 
-public class FetchParkourPlayerScoreTask extends AbstractTask {
+public class FetchParkourPlayerScoreTask extends AbstractParkourTask {
 	@NotNull
 	private final ParkourPlayer player;
 	@NotNull
-	private final Consumer<ScoreboardResult> consumer;
+	private final Consumer<Result> consumer;
 
-	public record ScoreboardResult(double playerTime, double parkourTIme, @NotNull LocalDateTime lastRun, int count) {
+	public record Result(double playerTime, double parkourTIme, @NotNull LocalDateTime lastRun, int count) {
 	}
 
 	public FetchParkourPlayerScoreTask(@NotNull final ParkourPlugin plugin,
+									   @NotNull final ParkourGame game,
 									   @NotNull final ParkourPlayer player,
-									   @NotNull final Consumer<ScoreboardResult> consumer) {
-		super(plugin);
+									   @NotNull final Consumer<Result> consumer) {
+		super(plugin, game);
 		this.player = player;
 		this.consumer = consumer;
 	}
 
 	@Override
 	public void go(@NotNull final Connection connection) {
-		try (final PreparedStatement stat = connection.prepareStatement(plugin.load("sql/scoreboard.sql"))) {
+		try (final PreparedStatement stat = connection.prepareStatement(plugin.load("sql/player-best-score.sql"))) {
 			stat.setString(1, player.getPlayer().getUniqueId().toString());
+			stat.setString(2, game.getName());
 			final ResultSet rs = stat.executeQuery();
 			if (rs.next()) {
-				consumer.accept(new ScoreboardResult(
+				consumer.accept(new Result(
 						rs.getDouble("player_time"),
 						rs.getDouble("parkour_time"),
 						rs.getTimestamp("last_run").toLocalDateTime(),

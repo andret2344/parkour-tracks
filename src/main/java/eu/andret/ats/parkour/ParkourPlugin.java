@@ -102,8 +102,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class ParkourPlugin extends JavaPlugin {
-	public static final String PARKOUR = "parkour";
-
 	@Getter
 	@NotNull
 	private final Map<String, String> helpDescription = new LinkedHashMap<>();
@@ -311,21 +309,21 @@ public class ParkourPlugin extends JavaPlugin {
 	}
 
 	/**
-	 * Runs the {@link ParkourPlugin#updateSign(FetchParkourBestScoreTask.ParkourScore)} in a new, synchronous thread.
+	 * Runs the {@link ParkourPlugin#updateSign(FetchParkourBestScoreTask.Result)} in a new, synchronous thread.
 	 *
-	 * @param parkourScore The score to fill the sign with.
+	 * @param result The score to fill the sign with.
 	 */
-	public void updateSyncSign(@NotNull final FetchParkourBestScoreTask.ParkourScore parkourScore) {
-		getServer().getScheduler().scheduleSyncDelayedTask(this, () -> updateSign(parkourScore));
+	public void updateSyncSign(@NotNull final FetchParkourBestScoreTask.Result result) {
+		getServer().getScheduler().scheduleSyncDelayedTask(this, () -> updateSign(result));
 	}
 
 	/**
 	 * Updates the sign in the same thread.
 	 *
-	 * @param parkourScore The score to fill the sign with.
+	 * @param result The score to fill the sign with.
 	 */
-	public void updateSign(@NotNull final FetchParkourBestScoreTask.ParkourScore parkourScore) {
-		updateSign(parkourScore.game(), line -> replace(String.valueOf(line), parkourScore));
+	public void updateSign(@NotNull final FetchParkourBestScoreTask.Result result) {
+		updateSign(result.game(), line -> replace(String.valueOf(line), result));
 	}
 
 	/**
@@ -434,7 +432,7 @@ public class ParkourPlugin extends JavaPlugin {
 	public void hideCheckpoints(@NotNull final ParkourGame parkourGame) {
 		indicators.stream()
 				.filter(armorStand -> armorStand.getPersistentDataContainer()
-						.getOrDefault(new NamespacedKey(this, PARKOUR), PersistentDataType.STRING, "")
+						.getOrDefault(new NamespacedKey(this, Constants.PARKOUR), PersistentDataType.STRING, "")
 						.equals(parkourGame.getName()))
 				.forEach(Entity::remove);
 	}
@@ -476,7 +474,7 @@ public class ParkourPlugin extends JavaPlugin {
 		armorStand.setVisible(false);
 		armorStand.addEquipmentLock(EquipmentSlot.CHEST, ArmorStand.LockType.ADDING_OR_CHANGING);
 		armorStand.getPersistentDataContainer()
-				.set(new NamespacedKey(this, PARKOUR), PersistentDataType.STRING, parkourGame.getName());
+				.set(new NamespacedKey(this, Constants.PARKOUR), PersistentDataType.STRING, parkourGame.getName());
 		indicators.add(armorStand);
 	}
 
@@ -491,7 +489,7 @@ public class ParkourPlugin extends JavaPlugin {
 							   @NotNull final String text) {
 		indicators.stream()
 				.filter(armorStand -> armorStand.getPersistentDataContainer()
-						.getOrDefault(new NamespacedKey(this, PARKOUR), PersistentDataType.STRING, "")
+						.getOrDefault(new NamespacedKey(this, Constants.PARKOUR), PersistentDataType.STRING, "")
 						.equals(parkourGame.getName()))
 				.filter(armorStand -> text.equals(armorStand.getCustomName()))
 				.findAny()
@@ -524,21 +522,21 @@ public class ParkourPlugin extends JavaPlugin {
 	 * @param parkourGame The game the player is in.
 	 */
 	public void generateScoreboard(@NotNull final ParkourPlayer parkourPlayer, @NotNull final ParkourGame parkourGame) {
-		final Runnable task = new FetchParkourPlayerScoreTask(this, parkourPlayer, scoreboardResult -> {
-			final String medalDisplayName = Optional.of(scoreboardResult)
-					.map(FetchParkourPlayerScoreTask.ScoreboardResult::playerTime)
+		final Runnable task = new FetchParkourPlayerScoreTask(this, parkourGame, parkourPlayer, result -> {
+			final String medalDisplayName = Optional.of(result)
+					.map(FetchParkourPlayerScoreTask.Result::playerTime)
 					.map(parkourGame::getResult)
 					.map(ParkourGame.Result::medal)
 					.map(Medal::displayName)
 					.orElse("none");
 			final UnaryOperator<String> fillPlaceholders = text -> text
 					.replace("%PARKOUR%", parkourGame.getName())
-					.replace("%BEST_TIME%", formatTime(scoreboardResult.parkourTIme()))
-					.replace("%PLAYER_TIME%", formatTime(scoreboardResult.playerTime()))
+					.replace("%BEST_TIME%", formatTime(result.parkourTIme()))
+					.replace("%PLAYER_TIME%", formatTime(result.playerTime()))
 					.replace("%MEDAL%", medalDisplayName)
-					.replace("%COUNT%", String.valueOf(scoreboardResult.count()))
+					.replace("%COUNT%", String.valueOf(result.count()))
 					.replace("%TYPE%", parkourGame.getOptions().getType().name())
-					.replace("%LAST_DATE%", scoreboardResult.lastRun().format(getScoreboardDateTimeFormatter()))
+					.replace("%LAST_DATE%", result.lastRun().format(getScoreboardDateTimeFormatter()))
 					.replace("%PLAYER%", parkourPlayer.getPlayer().getDisplayName());
 			final String name = fillPlaceholders.apply(getScoreboardDisplayName());
 			final List<String> scoreboardPattern = getScoreboardPattern()
@@ -801,14 +799,14 @@ public class ParkourPlugin extends JavaPlugin {
 	}
 
 	@NotNull
-	private String replace(@NotNull final String source, @NotNull final FetchParkourBestScoreTask.ParkourScore parkourScore) {
-		final String playerName = Optional.of(parkourScore)
-				.map(FetchParkourBestScoreTask.ParkourScore::uuid)
+	private String replace(@NotNull final String source, @NotNull final FetchParkourBestScoreTask.Result result) {
+		final String playerName = Optional.of(result)
+				.map(FetchParkourBestScoreTask.Result::uuid)
 				.map(getServer()::getOfflinePlayer)
 				.map(OfflinePlayer::getName)
 				.orElse(Constants.PLACEHOLDER_NO_RECORD);
 		return source.replace(Constants.NICK, playerName)
-				.replace(Constants.PERSONAL_TIME, formatTime(parkourScore.time()));
+				.replace(Constants.PERSONAL_TIME, formatTime(result.time()));
 	}
 
 	@NotNull
@@ -834,7 +832,7 @@ public class ParkourPlugin extends JavaPlugin {
 			throw new IllegalArgumentException("Something went wrong with scoreboard manager");
 		}
 		final Scoreboard board = scoreboardManager.getNewScoreboard();
-		final Objective objective = board.registerNewObjective(PARKOUR, Criteria.DUMMY, PARKOUR);
+		final Objective objective = board.registerNewObjective(Constants.PARKOUR, Criteria.DUMMY, Constants.PARKOUR);
 		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 		objective.setDisplayName(ChatColor.translateAlternateColorCodes('&', name));
 		for (int i = 0; i < text.size(); i++) {

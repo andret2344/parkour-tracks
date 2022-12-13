@@ -774,7 +774,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			}
 			sender.sendMessage(plugin.msg(M.List.TOP.header));
 			for (int i = 0; i < result.size(); i++) {
-				final FetchParkourBestScoreTask.ParkourScore parkourScore = result.get(i);
+				final FetchParkourBestScoreTask.Result parkourScore = result.get(i);
 				final String name = plugin.getServer().getOfflinePlayer(parkourScore.uuid()).getName();
 				if (name == null) {
 					continue;

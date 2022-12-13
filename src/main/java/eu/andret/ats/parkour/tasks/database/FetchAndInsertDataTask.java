@@ -9,6 +9,7 @@ import eu.andret.ats.parkour.parkour.ParkourGame;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -23,16 +24,16 @@ public class FetchAndInsertDataTask extends AbstractParkourTask {
 	UUID uuid;
 	double duration;
 	@Nullable
-	Consumer<FetchResult> fetchDataCallback;
+	Consumer<@NotNull Result> fetchDataCallback;
 
-	public record FetchResult(int previousCount, double playerBestTime, double parkourBestTime) {
+	public record Result(int previousCount, double playerBestTime, double parkourBestTime) {
 	}
 
 	public FetchAndInsertDataTask(@NotNull final ParkourPlugin plugin,
 								  @NotNull final ParkourGame game,
 								  @NotNull final UUID uuid,
 								  final double duration,
-								  @Nullable final Consumer<FetchResult> fetchDataCallback) {
+								  @Nullable final Consumer<@NotNull Result> fetchDataCallback) {
 		super(plugin, game);
 		this.uuid = uuid;
 		this.duration = duration;
@@ -41,55 +42,30 @@ public class FetchAndInsertDataTask extends AbstractParkourTask {
 
 	@Override
 	public void go(@NotNull final Connection connection) {
-		final double playerBestTime = getPlayerBestTime(connection);
-		final double parkourBestTime = getParkourBestTime(connection);
-		final int playerPassCount = getPlayerPassCount(connection);
+		final Result result = getPlayerPassCount(connection);
 		insertNewTime(connection);
-		Optional.ofNullable(fetchDataCallback).ifPresent(callback -> callback.accept(new FetchResult(playerPassCount, playerBestTime, parkourBestTime)));
+		Optional.ofNullable(fetchDataCallback).ifPresent(callback ->
+				callback.accept(Optional.ofNullable(result)
+						.orElse(new Result(0, 999999999, 9999999))));
 	}
 
-	private int getPlayerPassCount(@NotNull final Connection connection) {
-		try (final PreparedStatement stat = connection.prepareStatement("SELECT COUNT(*) AS result FROM ats_parkour_records WHERE uuid = ? AND parkour = ?")) {
+	@Nullable
+	private FetchAndInsertDataTask.Result getPlayerPassCount(@NotNull final Connection connection) {
+		try (final PreparedStatement stat = connection.prepareStatement(plugin.load("sql/player-best-score.sql"))) {
 			stat.setString(1, uuid.toString());
 			stat.setString(2, game.getName());
 			final ResultSet rs = stat.executeQuery();
-			if (!rs.next()) {
-				return 0;
+			if (rs.next()) {
+				return new Result(
+						rs.getInt("count"),
+						rs.getDouble("player_time"),
+						rs.getDouble("parkour_time"));
 			}
-			return rs.getInt("result");
-		} catch (final SQLException ex) {
+			return null;
+		} catch (final SQLException | IOException ex) {
 			ex.printStackTrace();
 		}
-		return -1;
-	}
-
-	private double getPlayerBestTime(@NotNull final Connection connection) {
-		try (final PreparedStatement stat = connection.prepareStatement("SELECT duration FROM ats_parkour_records WHERE uuid = ? AND parkour = ? ORDER BY duration LIMIT 1")) {
-			stat.setString(1, uuid.toString());
-			stat.setString(2, game.getName());
-			final ResultSet rs = stat.executeQuery();
-			if (!rs.next()) {
-				return Double.POSITIVE_INFINITY;
-			}
-			return rs.getFloat("duration");
-		} catch (final SQLException ex) {
-			ex.printStackTrace();
-		}
-		return -1;
-	}
-
-	private double getParkourBestTime(@NotNull final Connection connection) {
-		try (final PreparedStatement stat = connection.prepareStatement("SELECT  duration FROM ats_parkour_records WHERE parkour = ? ORDER BY duration LIMIT 1")) {
-			stat.setString(1, game.getName());
-			final ResultSet rs = stat.executeQuery();
-			if (!rs.next()) {
-				return Double.POSITIVE_INFINITY;
-			}
-			return rs.getFloat("duration");
-		} catch (final SQLException ex) {
-			ex.printStackTrace();
-		}
-		return -1;
+		return null;
 	}
 
 	private void insertNewTime(@NotNull final Connection connection) {

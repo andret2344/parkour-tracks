@@ -4,13 +4,14 @@
 
 package eu.andret.ats.parkour.player;
 
+import lombok.AccessLevel;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 @Data
-@RequiredArgsConstructor
+@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 public abstract class ParkourPlayer {
 	@NotNull
 	protected final Player player;

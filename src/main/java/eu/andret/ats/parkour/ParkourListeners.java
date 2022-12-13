@@ -421,7 +421,7 @@ public class ParkourListeners implements Listener {
 		// this code has to be executed a tick later to make sure all data are correctly injected to the armor stand
 		plugin.getServer().getScheduler().runTask(plugin, () -> {
 			final String name = entity.getPersistentDataContainer()
-					.get(new NamespacedKey(plugin, ParkourPlugin.PARKOUR), PersistentDataType.STRING);
+					.get(new NamespacedKey(plugin, Constants.PARKOUR), PersistentDataType.STRING);
 			if (name == null) {
 				entity.remove();
 				return;
@@ -688,7 +688,7 @@ public class ParkourListeners implements Listener {
 				player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("new-parkour-best")
 						.replace(Constants.NAME, parkourGame.getName())
 						.replace(Constants.DISPLAY_NAME, parkourGame.getDisplayName())));
-				plugin.updateSyncSign(new FetchParkourBestScoreTask.ParkourScore(player.getUniqueId(), parkourGame, currentTime));
+				plugin.updateSyncSign(new FetchParkourBestScoreTask.Result(player.getUniqueId(), parkourGame, currentTime));
 			}
 			if (fetchResult.playerBestTime() > currentTime) {
 				player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("new-personal-best")
