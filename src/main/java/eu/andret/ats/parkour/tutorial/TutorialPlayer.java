@@ -111,7 +111,7 @@ public final class TutorialPlayer {
 							"Execute &b/parkour medal &3<name> &b<medal> &6time &e<value>&d providing time with a period.\n" +
 							"Sample command execution: &b/parkour medal &3fancy_parkour " + medal + " &6time &e10.0";
 			case 8 ->
-					"&dThat's an interesting choice... Ok, let's go further. Now the reward for the this medal is set using &b/parkour medal &3<name> &b<medal> &6reward &e<value>&d.\n" +
+					"&dThat's an interesting choice... Ok, let's go further. Now the reward for this medal is set using &b/parkour medal &3<name> &b<medal> &6reward &e<value>&d.\n" +
 							"Sample command execution: &b/parkour medal &3fancy_parkour " + medal + " &6reward &e100.0";
 			case 9 ->
 					"&dNice! The medal is done. You can now set the remaining medals as they're required (with at least time configured) before starting the parkour. " +
