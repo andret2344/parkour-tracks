@@ -443,9 +443,10 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		}
 		sender.sendMessage(plugin.msg(M.List.EFFECT.header));
 		return parkourGame.getEffects()
-				.stream().map(entry -> plugin.msg(M.List.EFFECT.item)
-						.replace(Constants.EFFECT, entry.getEffectType().getName())
-						.replace(Constants.AMPLIFIER, String.valueOf(entry.getAmplifier())))
+				.stream()
+				.map(effect -> plugin.msg(M.List.EFFECT.item)
+						.replace(Constants.EFFECT, effect.effectType().getName())
+						.replace(Constants.AMPLIFIER, String.valueOf(effect.amplifier())))
 				.map(text -> ChatColor.translateAlternateColorCodes('&', text))
 				.toList();
 	}
@@ -458,7 +459,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
 		if (power <= 0) {
-			parkourGame.getEffects().removeIf(effect -> effect.getEffectType().equals(type));
+			parkourGame.getEffects().removeIf(effect -> effect.effectType().equals(type));
 			return plugin.msg(M.Amplifier.EFFECT.removed)
 					.replace(Constants.EFFECT, type.getName());
 		}
@@ -868,7 +869,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 				}, () -> medals.add(medalData));
 		return plugin.msg(M.Option.MEDAL.set)
 				.replace(Constants.OPTION, option.toString().toLowerCase())
-				.replace(Constants.MEDAL, medal.getDisplayName())
+				.replace(Constants.MEDAL, medal.displayName())
 				.replace(Constants.VALUE, resultFunction.apply(value));
 	}
 
@@ -892,7 +893,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		final DoubleFunction<String> resultFunction = option.equals(MedalSetupOption.TIME) ? plugin::formatTime : plugin::formatMoney;
 		return plugin.msg(M.Option.MEDAL.get)
 				.replace(Constants.OPTION, option.toString().toLowerCase())
-				.replace(Constants.MEDAL, medal.getDisplayName())
+				.replace(Constants.MEDAL, medal.displayName())
 				.replace(Constants.VALUE, resultFunction.apply(option.get(data)));
 	}
 
@@ -908,7 +909,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		}
 		final ParkourMedal parkourMedal = medalData.get();
 		return plugin.msg(M.List.MEDAL.item)
-				.replace(Constants.MEDAL, medal.getDisplayName())
+				.replace(Constants.MEDAL, medal.displayName())
 				.replace(Constants.TIME, plugin.formatTime(parkourMedal.getTime()))
 				.replace(Constants.VALUE, plugin.formatMoney(parkourMedal.getReward()));
 	}
@@ -924,7 +925,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		return medals.stream()
 				.sorted((o1, o2) -> o2.getMedal().compareTo(o1.getMedal()))
 				.map(medalEntry -> plugin.msg(M.List.MEDAL.item)
-						.replace(Constants.MEDAL, medalEntry.getMedal().getDisplayName())
+						.replace(Constants.MEDAL, medalEntry.getMedal().displayName())
 						.replace(Constants.TIME, plugin.formatTime(medalEntry.getTime()))
 						.replace(Constants.VALUE, plugin.formatMoney(medalEntry.getReward())))
 				.map(text -> ChatColor.translateAlternateColorCodes('&', text))
@@ -1003,12 +1004,12 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 						   @NotNull final ToDoubleFunction<ParkourMedal> function,
 						   @NotNull final BiPredicate<Double, Double> relation) {
 		final boolean betterIsOk = parkourGame.getMedals().stream()
-				.filter(parkourMedal -> parkourMedal.getMedal().getImportance() < medalData.getMedal().getImportance())
+				.filter(parkourMedal -> parkourMedal.getMedal().importance() < medalData.getMedal().importance())
 				.findAny()
 				.filter(data -> function.applyAsDouble(data) > 0 && relation.test(function.applyAsDouble(data), value))
 				.isEmpty();
 		final boolean worseIsOk = parkourGame.getMedals().stream()
-				.filter(parkourMedal -> parkourMedal.getMedal().getImportance() > medalData.getMedal().getImportance())
+				.filter(parkourMedal -> parkourMedal.getMedal().importance() > medalData.getMedal().importance())
 				.findAny()
 				.filter(data -> function.applyAsDouble(data) > 0 && !relation.test(function.applyAsDouble(data), value))
 				.isEmpty();

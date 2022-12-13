@@ -207,22 +207,37 @@ public class ParkourPlugin extends JavaPlugin {
 		new Metrics(this, 10700);
 	}
 
-	public List<String> getScoreboardPattern() {
-		return scoreboard.getStringList("scoreboard.content");
-	}
-
-	public String getScoreboardDisplayName() {
-		return scoreboard.getString("scoreboard.display-name");
-	}
-
-	public DateTimeFormatter getScoreboardDateTimeFormatter() {
-		return DateTimeFormatter.ofPattern(scoreboard.getString("scoreboard.date-time-format", "yyyy-MM-dd'T'HH:mm:ss"));
-	}
-
 	@Override
 	public void onDisable() {
 		save();
 		getServer().getScheduler().cancelTasks(this);
+	}
+
+	/**
+	 * Reads the scoreboard config and gets lines to displays including placeholders to be replaced.
+	 *
+	 * @return The {@link List} of lines with placeholders to display on the scoreboard.
+	 */
+	public List<String> getScoreboardPattern() {
+		return scoreboard.getStringList("scoreboard.content");
+	}
+
+	/**
+	 * Gets the display name from the scoreboard config file that can include placeholders to be replaced.
+	 *
+	 * @return The placeholder text to display as the scoreboard name.
+	 */
+	public String getScoreboardDisplayName() {
+		return scoreboard.getString("scoreboard.display-name");
+	}
+
+	/**
+	 * The Scoreboard can contain dates (i.e., last run date) so this formatter allows formatting all those dates.
+	 *
+	 * @return The formatter to format all dates on the displayed Scoreboard.
+	 */
+	public DateTimeFormatter getScoreboardDateTimeFormatter() {
+		return DateTimeFormatter.ofPattern(scoreboard.getString("scoreboard.date-time-format", "yyyy-MM-dd'T'HH:mm:ss"));
 	}
 
 	/**
@@ -247,11 +262,16 @@ public class ParkourPlugin extends JavaPlugin {
 	public String msg(@NotNull final M.Message message) {
 		final StringBuilder result = new StringBuilder();
 		if (message.isError()) {
-			result.append(commands.getString("misc.prefix-error"));
+			result.append(misc("prefix-error"));
 		}
 		return ChatColor.translateAlternateColorCodes('&', result.append(commands.getString(message.toString())).toString());
 	}
 
+	/**
+	 * @param name The name of the misc config value to read from the commands.yml file.
+	 *
+	 * @return The colored text.
+	 */
 	@NotNull
 	public String misc(@NotNull final String name) {
 		return Optional.of(name)
@@ -290,10 +310,20 @@ public class ParkourPlugin extends JavaPlugin {
 				.map(Sound::valueOf);
 	}
 
+	/**
+	 * Runs the {@link ParkourPlugin#updateSign(FetchParkourBestScoreTask.ParkourScore)} in a new, synchronous thread.
+	 *
+	 * @param parkourScore The score to fill the sign with.
+	 */
 	public void updateSyncSign(@NotNull final FetchParkourBestScoreTask.ParkourScore parkourScore) {
 		getServer().getScheduler().scheduleSyncDelayedTask(this, () -> updateSign(parkourScore));
 	}
 
+	/**
+	 * Updates the sign in the same thread.
+	 *
+	 * @param parkourScore The score to fill the sign with.
+	 */
 	public void updateSign(@NotNull final FetchParkourBestScoreTask.ParkourScore parkourScore) {
 		updateSign(parkourScore.game(), line -> replace(String.valueOf(line), parkourScore));
 	}
@@ -343,20 +373,41 @@ public class ParkourPlugin extends JavaPlugin {
 		return String.format("%02d:%02d.%02d", minutes, seconds, milliseconds);
 	}
 
+	/**
+	 * Formats the given amount to configured format.
+	 *
+	 * @param money The money to be formatted.
+	 *
+	 * @return The String representation of formatted amount.
+	 */
 	@NotNull
 	public String formatMoney(final double money) {
 		return decimalFormat.format(money);
 	}
 
+	/**
+	 * Formats the given coord to {@code "%.2f"} format.
+	 *
+	 * @param coord The coord to be formatted.
+	 *
+	 * @return The String representation of formatted coord.
+	 */
 	@NotNull
 	public String formatCoord(final double coord) {
 		return String.format("%.2f", coord);
 	}
 
+	/**
+	 * Formats all the medals' display names and joins them with the given separator.
+	 *
+	 * @param separator The separator to join medals' display names.
+	 *
+	 * @return The String representation of all the medals' display names joined with the separator.
+	 */
 	@NotNull
 	public String getFormattedMedals(@NotNull final String separator) {
 		return getMedals().stream()
-				.map(Medal::getDisplayName)
+				.map(Medal::displayName)
 				.collect(Collectors.joining(separator));
 	}
 
@@ -447,6 +498,15 @@ public class ParkourPlugin extends JavaPlugin {
 				.ifPresent(armorStand -> armorStand.teleport(location));
 	}
 
+	/**
+	 * Loads the resource using the built-in class loader from {@link JavaPlugin#getClassLoader()}.
+	 *
+	 * @param filename The name of the resource file to be opened and read.
+	 *
+	 * @return The String content of opened resource file.
+	 *
+	 * @throws IOException If anything with the file went wrong.
+	 */
 	@NotNull
 	public String load(@NotNull final String filename) throws IOException {
 		try (final InputStream inputStream = getClassLoader().getResourceAsStream(filename)) {
@@ -457,13 +517,25 @@ public class ParkourPlugin extends JavaPlugin {
 		}
 	}
 
+	/**
+	 * Creates the Scoreboard for the player and the game and adds it to the player.
+	 *
+	 * @param parkourPlayer The player which data should appear on the scoreboard and who will see the scoreboard.
+	 * @param parkourGame The game the player is in.
+	 */
 	public void generateScoreboard(@NotNull final ParkourPlayer parkourPlayer, @NotNull final ParkourGame parkourGame) {
-		final FetchParkourPlayerScoreTask fetchParkourPlayerScoreTask = new FetchParkourPlayerScoreTask(this, parkourPlayer, scoreboardResult -> {
+		final Runnable task = new FetchParkourPlayerScoreTask(this, parkourPlayer, scoreboardResult -> {
+			final String medalDisplayName = Optional.of(scoreboardResult)
+					.map(FetchParkourPlayerScoreTask.ScoreboardResult::playerTime)
+					.map(parkourGame::getResult)
+					.map(ParkourGame.Result::medal)
+					.map(Medal::displayName)
+					.orElse("none");
 			final UnaryOperator<String> fillPlaceholders = text -> text
 					.replace("%PARKOUR%", parkourGame.getName())
-					.replace("%BEST_TIME%", String.format("%.2f", scoreboardResult.parkourTIme()))
-					.replace("%PLAYER_TIME%", String.format("%.2f", scoreboardResult.playerTime()))
-					.replace("%MEDAL%", parkourGame.getMedals().get(0).getMedal().getDisplayName())
+					.replace("%BEST_TIME%", formatTime(scoreboardResult.parkourTIme()))
+					.replace("%PLAYER_TIME%", formatTime(scoreboardResult.playerTime()))
+					.replace("%MEDAL%", medalDisplayName)
 					.replace("%COUNT%", String.valueOf(scoreboardResult.count()))
 					.replace("%TYPE%", parkourGame.getOptions().getType().name())
 					.replace("%LAST_DATE%", scoreboardResult.lastRun().format(getScoreboardDateTimeFormatter()))
@@ -476,7 +548,7 @@ public class ParkourPlugin extends JavaPlugin {
 			getServer().getScheduler().runTask(this, () ->
 					parkourPlayer.getPlayer().setScoreboard(build(name, scoreboardPattern)));
 		});
-		getServer().getScheduler().runTaskAsynchronously(this, fetchParkourPlayerScoreTask);
+		getServer().getScheduler().runTaskAsynchronously(this, task);
 	}
 
 	/**
@@ -572,7 +644,7 @@ public class ParkourPlugin extends JavaPlugin {
 		command.addTypeMapper(PotionEffectType.class, PotionEffectType::getByName, FallbackConstants.ON_NULL);
 		command.addTypeMapper(DyeColor.class, this::getDyeColor, FallbackConstants.ON_NULL);
 		command.addTypeMapper(Medal.class, name -> medals.stream()
-						.filter(medal -> medal.getName().equals(name))
+						.filter(medal -> medal.name().equals(name))
 						.findAny()
 						.orElse(null),
 				FallbackConstants.ON_NULL);
@@ -588,7 +660,7 @@ public class ParkourPlugin extends JavaPlugin {
 				.map(PotionEffectType::getName)
 				.toList());
 		command.addTypeCompleter(Medal.class, medals.stream()
-				.map(Medal::getName)
+				.map(Medal::name)
 				.toList());
 		command.addTypeCompleter(boolean.class, Arrays.asList(Boolean.FALSE.toString(), Boolean.TRUE.toString()));
 		command.addEnumCompleter(MedalSetupOption.class);

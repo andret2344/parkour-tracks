@@ -61,7 +61,6 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.vehicle.VehicleExitEvent;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.PluginManager;
-import org.bukkit.potion.PotionEffect;
 import org.bukkit.scoreboard.ScoreboardManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -361,7 +360,7 @@ public class ParkourListeners implements Listener {
 					plugin.getGameItemMap().iterate(player.getInventory()::setItem), 2);
 		}
 		parkourGame.getEffects().stream()
-				.map(entry -> new PotionEffect(entry.getEffectType(), 99999999, entry.getAmplifier()))
+				.map(Effect::toPotionEffect)
 				.forEach(player::addPotionEffect);
 		player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("joined-parkour")
 				.replace(Constants.NAME, parkourGame.getName())
@@ -487,7 +486,7 @@ public class ParkourListeners implements Listener {
 				.map(ScoreboardManager::getMainScoreboard)
 				.ifPresent(event.getPlayer().getPlayer()::setScoreboard);
 		event.getGame().getEffects().stream()
-				.map(Effect::getEffectType)
+				.map(Effect::effectType)
 				.forEach(player::removePotionEffect);
 		plugin.getPlayerManager().remove(player);
 	}
@@ -699,12 +698,12 @@ public class ParkourListeners implements Listener {
 			parkourGame.getPlayers().forEach(parkourPlayer -> plugin.generateScoreboard(parkourPlayer, parkourGame));
 			final ParkourGame.Result previousResult = parkourGame.getResult(fetchResult.playerBestTime());
 			final ParkourGame.Result result = parkourGame.getResult(currentTime);
-			if (result.getMedal() == null || result.getMedal().equals(previousResult.getMedal())) {
+			if (result.medal() == null || result.medal().equals(previousResult.medal())) {
 				return;
 			}
-			player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("medal-got").replace(Constants.MEDAL, result.getMedal().getDisplayName())));
+			player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("medal-got").replace(Constants.MEDAL, result.medal().displayName())));
 			plugin.getFinancialProvider().ifPresent(financialProvider -> {
-				final double finalReward = result.getReward() - previousResult.getReward();
+				final double finalReward = result.reward() - previousResult.reward();
 				if (finalReward > 0) {
 					financialProvider.addMoney(player, finalReward);
 					player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("reward-medal").replace(Constants.REWARD, plugin.formatMoney(finalReward))));

@@ -7,9 +7,8 @@ package eu.andret.ats.parkour.region;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import eu.andret.ats.parkour.player.ParkourPlayer;
-import lombok.AllArgsConstructor;
-import lombok.Value;
-import lombok.experimental.NonFinal;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -17,14 +16,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-@Value
-@NonFinal
-@AllArgsConstructor
+@Data
+@RequiredArgsConstructor
 public class BasicRegion {
 	@NotNull
-	protected BlockVector3 pos1;
+	protected final BlockVector3 pos1;
 	@NotNull
-	protected BlockVector3 pos2;
+	protected final BlockVector3 pos2;
 
 	public BasicRegion(@NotNull final CuboidRegion cuboidRegion) {
 		this(cuboidRegion.getPos1(), cuboidRegion.getPos2());

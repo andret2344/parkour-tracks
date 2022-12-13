@@ -4,13 +4,13 @@
 
 package eu.andret.ats.parkour.parkour;
 
-import lombok.Value;
+import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
 
-@Value
-public class Effect {
+public record Effect(@NotNull PotionEffectType effectType, int amplifier) {
 	@NotNull
-	PotionEffectType effectType;
-	int amplifier;
+	public PotionEffect toPotionEffect() {
+		return new PotionEffect(effectType, 99999999, amplifier);
+	}
 }
