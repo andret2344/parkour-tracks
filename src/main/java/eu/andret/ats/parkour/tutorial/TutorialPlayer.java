@@ -84,7 +84,7 @@ public final class TutorialPlayer {
 							"So, firstly the parkour lobby has to be set up. Let's check if it's done already using command &b/parkour lobby&d.\n" +
 							"Sample command execution: &b/parkour lobby";
 			case 1 ->
-					"&dAs you can see below, lobby is not yet configured. Go to the location where lobby should appear and execute &b/parkour setLobby&d.\n" +
+					"&dAs you can see below, the lobby is not yet configured. Go to the location where lobby should appear and execute &b/parkour setLobby&d.\n" +
 							"Sample command execution: &b/parkour setLobby";
 			case 2 -> "&dNice, the lobby is already set.\n" +
 					"&dNote: &nI can't say if it's a correct location for lobby. If not, you can reconfigure it with the correct location using &b&n/parkour setLobby&d&n command&r&d.";
@@ -111,10 +111,10 @@ public final class TutorialPlayer {
 							"Execute &b/parkour medal &3<name> &b<medal> &6time &e<value>&d providing time with a period.\n" +
 							"Sample command execution: &b/parkour medal &3fancy_parkour " + medal + " &6time &e10.0";
 			case 8 ->
-					"&dThat's an interesting choice... Ok, let's go further. Now reward for the that medal is set using &b/parkour medal &3<name> &b<medal> &6reward &e<value>&d.\n" +
+					"&dThat's an interesting choice... Ok, let's go further. Now the reward for the this medal is set using &b/parkour medal &3<name> &b<medal> &6reward &e<value>&d.\n" +
 							"Sample command execution: &b/parkour medal &3fancy_parkour " + medal + " &6reward &e100.0";
 			case 9 ->
-					"&dNice! The medal is done. You can now set up the remaining medals as they're required (with at least time configured) before starting the parkour. " +
+					"&dNice! The medal is done. You can now set the remaining medals as they're required (with at least time configured) before starting the parkour. " +
 							"Once you're done, we need to create a wall. Using &lWorldEdit&r&d, select the ground region and execute &b/parkour addWall &3<name>&r&d.\n" +
 							"&dNote: &nThe \"wall\" is a common name for region that will teleport back to last checkpoint or the spawn&r&d.\n" +
 							"&dNote: &nWalls are similar to checkpoints, they also have add-twin command in case of mistake: &b&n/parkour setWall &3&n<name> &e&n<id>&r&d.\n" +
