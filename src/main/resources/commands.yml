@@ -68,13 +68,19 @@ region:
     set:
       help: '&eReplaces the checkpoint of a parkour game.'
       success: '&aSuccessfully set the checkpoint no. &6%INDEX%&a.'
+    del:
+      help: '&eDeletes the checkpoint of a parkour game.'
+      success: '&aSuccessfully deleted the checkpoint no. &6%INDEX%&a.'
   wall:
     add:
       help: '&eAdds the wall to a parkour game.'
       success: '&aSuccessfully added the wall no. &6%INDEX%&a.'
     set:
-      help: '&eReplaces a wall of a parkour game.'
+      help: '&eReplaces the wall of a parkour game.'
       success: '&aSuccessfully set the wall no. &6%INDEX%&a.'
+    del:
+      help: '&eDeletes the wall of a parkour game.'
+      success: '&aSuccessfully deleted the wall no. &6%INDEX%&a.'
 
 option:
   always-spawn:

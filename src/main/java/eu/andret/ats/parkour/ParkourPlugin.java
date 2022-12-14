@@ -90,6 +90,7 @@ import java.util.function.UnaryOperator;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class ParkourPlugin extends JavaPlugin {
 	public static final String PARKOUR = "parkour";
@@ -537,6 +538,23 @@ public class ParkourPlugin extends JavaPlugin {
 		command.addTypeCompleter(boolean.class, Arrays.asList(Boolean.FALSE.toString(), Boolean.TRUE.toString()));
 		command.addEnumCompleter(MedalSetupOption.class);
 		command.addEnumCompleter(DyeColor.class);
+
+		command.addArgumentCompleter("wallIndex", (sender, strings) -> Stream.iterate(0, i -> i + 1)
+				.limit(getParkourByName(new ArrayList<>(strings).get(strings.size() - 2)).getWalls().size())
+				.map(String::valueOf)
+				.toList());
+		command.addArgumentCompleter("checkpointIndex", (sender, strings) -> Stream.iterate(0, i -> i + 1)
+				.limit(getParkourByName(new ArrayList<>(strings).get(strings.size() - 2)).getCheckpoints().size())
+				.map(String::valueOf)
+				.toList());
+	}
+
+	@NotNull
+	private ParkourGame getParkourByName(@NotNull final String name) {
+		return parkourManager.getAllGames().stream()
+				.filter(parkourGame -> parkourGame.getName().equals(name))
+				.findAny()
+				.orElseThrow();
 	}
 
 	@Nullable
@@ -661,8 +679,10 @@ public class ParkourPlugin extends JavaPlugin {
 		helpDescription.put("stop", msg(M.Executive.STOP.helpMessage));
 		helpDescription.put("addCheckpoint", msg(M.Region.Checkpoint.ADD.helpMessage));
 		helpDescription.put("setCheckpoint", msg(M.Region.Checkpoint.SET.helpMessage));
+		helpDescription.put("delCheckpoint", msg(M.Region.Checkpoint.DEL.helpMessage));
 		helpDescription.put("addWall", msg(M.Region.Wall.ADD.helpMessage));
 		helpDescription.put("setWall", msg(M.Region.Wall.SET.helpMessage));
+		helpDescription.put("delWall", msg(M.Region.Wall.DEL.helpMessage));
 		helpDescription.put("list|ls", msg(M.List.GAMES.helpMessage));
 		helpDescription.put("ignore|i", msg(M.General.IGNORE.helpMessage));
 		helpDescription.put("sprintForced", msg(M.Option.SPRINT_FORCED.helpMessage));

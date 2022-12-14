@@ -12,6 +12,7 @@ import com.sk89q.worldedit.regions.Region;
 import eu.andret.arguments.AnnotatedCommandExecutor;
 import eu.andret.arguments.api.annotation.Argument;
 import eu.andret.arguments.api.annotation.BaseCommand;
+import eu.andret.arguments.api.annotation.Completer;
 import eu.andret.arguments.api.annotation.TypeFallback;
 import eu.andret.arguments.api.entity.ExecutorType;
 import eu.andret.ats.parkour.entity.MedalRequirement;
@@ -372,7 +373,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@NotNull
 	@Argument(permission = "ats.parkour.setCheckpoint", description = "Sets specified parkour game checkpoint", executorType = ExecutorType.PLAYER)
-	public String setCheckpoint(@NotNull final ParkourGame parkourGame, final int index) {
+	public String setCheckpoint(@NotNull final ParkourGame parkourGame, @Completer("checkpointIndex") final int index) {
 		if (parkourGame.isRunning() && plugin.isEditLockActive()) {
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
@@ -397,6 +398,27 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 	}
 
 	@NotNull
+	@Argument(permission = "ats.parkour.delCheckpoint", description = "Deletes a checkpoint from parkour game")
+	public String delCheckpoint(@NotNull final ParkourGame parkourGame, @Completer("checkpointIndex") final int index) {
+		if (parkourGame.isRunning() && plugin.isEditLockActive()) {
+			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
+		}
+		final List<Checkpoint> checkpoints = parkourGame.getCheckpoints();
+		if (index <= 0) {
+			return plugin.msg(M.Error.DEFAULT.negativeNumber);
+		}
+		if (index > checkpoints.size()) {
+			return plugin.msg(M.Error.DEFAULT.tooLargeNumber);
+		}
+		final String indexString = String.valueOf(index);
+		plugin.hideCheckpoints(parkourGame);
+		checkpoints.remove(index);
+		plugin.showCheckpoints(parkourGame);
+		return plugin.msg(M.Region.Checkpoint.DEL.success)
+				.replace(Constants.INDEX, indexString);
+	}
+
+	@NotNull
 	@Argument(permission = "ats.parkour.addWall", description = "Adds wall to parkour game", executorType = ExecutorType.PLAYER)
 	public String addWall(@NotNull final ParkourGame parkourGame) {
 		if (parkourGame.isRunning() && plugin.isEditLockActive()) {
@@ -415,7 +437,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@NotNull
 	@Argument(permission = "ats.parkour.setWall", description = "Sets specified parkour game wall", executorType = ExecutorType.PLAYER)
-	public String setWall(@NotNull final ParkourGame parkourGame, final int index) {
+	public String setWall(@NotNull final ParkourGame parkourGame, @Completer("wallIndex") final int index) {
 		if (parkourGame.isRunning() && plugin.isEditLockActive()) {
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
@@ -434,6 +456,25 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		executeTutorial(player, 9, false);
 		return plugin.msg(M.Region.Wall.SET.success)
 				.replace(Constants.INDEX, String.valueOf(index));
+	}
+
+	@NotNull
+	@Argument(permission = "ats.parkour.delWall", description = "Deletes a wall from parkour game")
+	public String delWall(@NotNull final ParkourGame parkourGame, @Completer("wallIndex") final int index) {
+		if (parkourGame.isRunning() && plugin.isEditLockActive()) {
+			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
+		}
+		final List<Wall> walls = parkourGame.getWalls();
+		if (index <= 0) {
+			return plugin.msg(M.Error.DEFAULT.negativeNumber);
+		}
+		if (index > walls.size()) {
+			return plugin.msg(M.Error.DEFAULT.tooLargeNumber);
+		}
+		final String indexString = String.valueOf(index);
+		walls.remove(index);
+		return plugin.msg(M.Region.Wall.DEL.success)
+				.replace(Constants.INDEX, indexString);
 	}
 
 	@NotNull
