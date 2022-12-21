@@ -212,7 +212,7 @@ public class ParkourPlugin extends JavaPlugin {
 	}
 
 	/**
-	 * Reads the scoreboard config and gets lines to displays including placeholders to be replaced.
+	 * Reads the scoreboard config and gets lines to display including placeholders to be replaced.
 	 *
 	 * @return The {@link List} of lines with placeholders to display on the scoreboard.
 	 */
