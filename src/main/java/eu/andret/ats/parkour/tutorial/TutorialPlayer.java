@@ -97,7 +97,7 @@ public final class TutorialPlayer {
 							"The sample command execution: &b/parkour create &3fancy_parkour";
 			case 5 ->
 					"&dCool, our parkour region is set up. Now make another &lWorldEdit&r&d selection, this time for the parkour spawn region, then execute &b/parkour addCheckpoint &3<name>&d.\n" +
-							"&dNote: &nYou are adding a checkpoint, but keep in mind that the first checkpoint of the parkour becomes its spawn location&r&d.\n" +
+							"&dNote: &nYou are currently adding a checkpoint, but keep in mind that the first checkpoint of the parkour becomes its spawn location&r&d.\n" +
 							"&dNote: &nYour position and the direction you are facing will save and apply to players after teleporting to this region&r&d.\n" +
 							"The sample command execution: &b/parkour addCheckpoint &3fancy_parkour";
 			case 6 ->
@@ -117,7 +117,7 @@ public final class TutorialPlayer {
 					"&dNice! The medal is done. You can now set the remaining medals, as they're compulsory (with the time configured at least), before starting the parkour. " +
 							"Once you're done, we need to create a wall. Using &lWorldEdit&r&d, select the ground region and execute &b/parkour addWall &3<name>&r&d.\n" +
 							"&dNote: &nThe \"wall\" is a common name for region that will teleport a player back to the last checkpoint or the set spawn&r&d.\n" +
-							"&dNote: &nWalls are similar to checkpoints, they also have an alternative command in case of mistake: &b&n/parkour setWall &3&n<name> &e&n<id>&r&d.\n" +
+							"&dNote: &nWalls are similar to checkpoints, they also have an alternative command in case of a mistake: &b&n/parkour setWall &3&n<name> &e&n<id>&r&d.\n" +
 							"Sample command execution: &b/parkour addWall &3fancy_parkour\n" +
 							"Sample command execution: &b/parkour setWall &3fancy_parkour &e1";
 			case 10 ->
@@ -130,13 +130,13 @@ public final class TutorialPlayer {
 							"&6damageAllowed&r: &2boolean &r(default: &2&lfalse&r) -&d whether or not players should receive any damage during parkour game\n" +
 							"&6boat&r: &2boolean &r(default: &2&lfalse&r) -&d whether or not players should start in boats &7(note: be careful, this option is designed to use in water parkour, there is a possibility of side effects)\n" +
 							"&6modifyInventory&r: &2boolean &r(default: &2&ltrue&r) -&d whether or not should the player's equipment be modified when joining or leaving game " +
-							"&7(note: it means e.g., when joining, the inventory is cleared and two obligatory items appear in the hot bar, and once leaving the inventory it is cleared again)\n" +
+							"&7(note: it means e.g., when joining a game, the inventory is cleared and two obligatory items appear in the hot bar, and once leaving the inventory it is cleared again)\n" +
 							"&6vipOnly&r: &2boolean &r(default: &2&ltrue&r) -&d only a VIP player can join the parkour &7(note: requires RankProvider configured to function)\n" +
 							"&6fee&r: &2double &r(default: &2&l0.00&r) -&d the amount of money the player needs to pay before entering the parkour &7(note: requires FinancialProvider configured to function)\n" +
 							"&6reward&r: &2double &r(default: &2&l0.00&r) -&d the amount of money a player will earn after completing parkour, independently from the medals' rewards &7(note: requires FinancialProvider configured to function)\n" +
 							"&6difficulty&r: &2int &r(default: &2&l1&r) -&d the difficulty of the parkour &7(note: this option is mainly used in atsQuickParkour)\n" +
 							"&6color&r: &2dye/wool color &r(default: &lWHITE&r) -&d the color representing the parkour, chosen from dye/wool colors &7(note: this option is mainly used in atsQuickParkour)\n" +
-							"&6type&r: &2server, training or players &r(default: &2&lserver&r) -&d the type of parkour, from or for whom it is designed " +
+							"&6type&r: &2server, training or players &r(default: &2&lserver&r) -&d the type of parkour, from who or for whom it is designed " +
 							"&7(note: server - prepared by server admins; training - parkours with neither time nor records; players - parkours authored by players. There is a possibility that in the future there will be more types)&d.\n" +
 							"&dWell, is it clear? I strongly hope you got it. Let's configure one of them, let's say... Ah, &ndisplay name&r&d seems perfect to me! Just execute &b/parkour displayName &3<name> &9<displayName>&d.\n" +
 							"Sample command execution: &b/parkour displayName &3fancy_parkour&r %AMP%1My %AMP%2Fancy %AMP%3Parkour";
