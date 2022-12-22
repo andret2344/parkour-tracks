@@ -232,7 +232,7 @@ public class ParkourPlugin extends JavaPlugin {
 	/**
 	 * The Scoreboard can contain dates (i.e., last run date) so this formatter allows formatting all those dates.
 	 *
-	 * @return The formatter to format all dates on the displayed Scoreboard.
+	 * @return The formatter to format all the dates on the displayed Scoreboard.
 	 */
 	public DateTimeFormatter getScoreboardDateTimeFormatter() {
 		return DateTimeFormatter.ofPattern(scoreboard.getString("scoreboard.date-time-format", "yyyy-MM-dd'T'HH:mm:ss"));
