@@ -82,10 +82,10 @@ public final class TutorialPlayer {
 					"&dHello and welcome to the &natsParkour setup tutorial&r&d. I'm going to teach you how to correctly setup a working parkour. " +
 							"My name is &lAn&r&d, and I will lead you through this tutorial. " +
 							"So, at first the parkour's lobby has to be set up. Let's check if it's done already using the command &b/parkour lobby&d.\n" +
-							"The sample command execution: &b/parkour lobby";
+							"Sample command execution: &b/parkour lobby";
 			case 1 ->
 					"&dAs you can see below, the lobby is not yet configured. Go to the location where the lobby should appear and execute &b/parkour setLobby&d.\n" +
-							"The sample command execution: &b/parkour setLobby";
+							"Sample command execution: &b/parkour setLobby";
 			case 2 -> "&dNice, the lobby is already set.\n" +
 					"&dNote: &nI can't say if it's the correct location of the lobby. If not, you can reconfigure it with the correct location using &b&n/parkour setLobby&d&n command&r&d.";
 			case 3 -> "&dGreat, you have set up the lobby!\n" +
@@ -94,12 +94,12 @@ public final class TutorialPlayer {
 					"&dIt's about time to create your first parkour! Make a &lWorldEdit&r&d selection of the whole parkour region and type &b/parkour create &3<name>&d.\n" +
 							"&dNote: &nBear in mind, \"&l<name>&r\"&d&n and other similar components are only placeholders, don't blindly copy them.\n" +
 							"&dNote: &nThe name of any parkour can contain only lowercase and uppercase letters, numbers, the underscore sign (_) and the dash sign (-).\n" +
-							"The sample command execution: &b/parkour create &3fancy_parkour";
+							"Sample command execution: &b/parkour create &3fancy_parkour";
 			case 5 ->
 					"&dCool, our parkour region is set up. Now make another &lWorldEdit&r&d selection, this time for the parkour spawn region, then execute &b/parkour addCheckpoint &3<name>&d.\n" +
 							"&dNote: &nYou are currently adding a checkpoint, but keep in mind that the first checkpoint of the parkour becomes its spawn location&r&d.\n" +
 							"&dNote: &nYour position and the direction you are facing will save and apply to players after teleporting to this region&r&d.\n" +
-							"The sample command execution: &b/parkour addCheckpoint &3fancy_parkour";
+							"Sample command execution: &b/parkour addCheckpoint &3fancy_parkour";
 			case 6 ->
 					"&dOk, the spawn region is set. To start the parkour, a minimum of two checkpoints is necessary, because the last parkour checkpoint is its endpoint. " +
 							"It's your turn now! Add at least one more checkpoint again by selecting a region and executing &b/parkour addCheckpoint &3<name>&d.\n" +
