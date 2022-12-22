@@ -31,7 +31,7 @@ public class FetchParkourBestScoreTask extends AbstractParkourTask {
 	public FetchParkourBestScoreTask(@NotNull final ParkourPlugin plugin, @NotNull final ParkourGame game, final int count, @Nullable final Consumer<List<Result>> callback) {
 		super(plugin, game);
 		if (count <= 0) {
-			throw new IllegalArgumentException("Count must be positive, " + count + " provided!");
+			throw new IllegalArgumentException(String.format("Count must be a positive number, %d provided!", count));
 		}
 		this.count = count;
 		this.callback = callback;

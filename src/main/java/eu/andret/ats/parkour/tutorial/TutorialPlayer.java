@@ -81,7 +81,7 @@ public final class TutorialPlayer {
 			case 0 ->
 					"&dHello and welcome to the &natsParkour setup tutorial&r&d. I'm going to teach you how to correctly setup a working parkour. " +
 							"My name is &lAn&r&d, and I will lead you through this tutorial. " +
-							"So, firstly the parkour lobby has to be set up. Let's check if it's done already using the command &b/parkour lobby&d.\n" +
+							"So, at first the parkour's lobby has to be set up. Let's check if it's done already using the command &b/parkour lobby&d.\n" +
 							"The sample command execution: &b/parkour lobby";
 			case 1 ->
 					"&dAs you can see below, the lobby is not yet configured. Go to the location where the lobby should appear and execute &b/parkour setLobby&d.\n" +
@@ -91,8 +91,8 @@ public final class TutorialPlayer {
 			case 3 -> "&dGreat, you have set up the lobby!\n" +
 					"&dNote: &nYou can always reconfigure the lobby location using &b&n/parkour setLobby&d&n command again&r&d.";
 			case 4 ->
-					"&dIt's high time to create your first parkour! Make a &lWorldEdit&r&d selection of the whole parkour region and type &b/parkour create &3<name>&d.\n" +
-							"&dNote: &nBare in mind, \"&l<name>&r\"&d&n and other similar components are only placeholders, don't blindly copy them.\n" +
+					"&dIt's about time to create your first parkour! Make a &lWorldEdit&r&d selection of the whole parkour region and type &b/parkour create &3<name>&d.\n" +
+							"&dNote: &nBear in mind, \"&l<name>&r\"&d&n and other similar components are only placeholders, don't blindly copy them.\n" +
 							"&dNote: &nThe name of any parkour can contain only lowercase and uppercase letters, numbers, the underscore sign (_) and the dash sign (-).\n" +
 							"The sample command execution: &b/parkour create &3fancy_parkour";
 			case 5 ->
