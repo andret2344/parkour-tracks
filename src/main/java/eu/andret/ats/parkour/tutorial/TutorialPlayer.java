@@ -114,7 +114,7 @@ public final class TutorialPlayer {
 					"&dThat's an interesting choice... Ok, let's keep going. Now the reward for this medal must be set using &b/parkour medal &3<name> &b<medal> &6reward &e<value>&d.\n" +
 							"Sample command execution: &b/parkour medal &3fancy_parkour " + medal + " &6reward &e100.0";
 			case 9 ->
-					"&dNice! The medal is done. You can now set the remaining medals, as they're compulsory (with the time configured at least), before starting the parkour. " +
+					"&dNice! The medal is done. You can now set the remaining medals, as they're obligatory (with the time configured at least), before starting the parkour. " +
 							"Once you're done, we need to create a wall. Using &lWorldEdit&r&d, select the ground region and execute &b/parkour addWall &3<name>&r&d.\n" +
 							"&dNote: &nThe \"wall\" is a common name for region that will teleport a player back to the last checkpoint or the set spawn&r&d.\n" +
 							"&dNote: &nWalls are similar to checkpoints, they also have an alternative command in case of a mistake: &b&n/parkour setWall &3&n<name> &e&n<id>&r&d.\n" +
