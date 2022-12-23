@@ -88,6 +88,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -178,6 +179,7 @@ public class ParkourPlugin extends JavaPlugin {
 		setupCommand();
 		setupDatabase();
 		loadGames();
+		loadArmorStands();
 		getServer().getScheduler().scheduleSyncRepeatingTask(this, new KeepAliveTask(this), 20_000, 20_000);
 
 		final long backupFrequency = getConfig().getLong("backup-frequency", 1440L);
@@ -650,8 +652,9 @@ public class ParkourPlugin extends JavaPlugin {
 		command.addEnumMapper(MedalSetupOption.class);
 		command.addEnumMapper(SimpleLever.class);
 
-		command.addTypeCompleter(ParkourGame.class, () -> parkourManager.getAllGames().stream()
+		command.addTypeCompleter(ParkourGame.class, (sender, strings) -> parkourManager.getAllGames().stream()
 				.map(ParkourGame::getName)
+				.filter(name -> name.contains(new ArrayList<>(strings).get(strings.size() - 1)))
 				.toList());
 
 		command.addEnumCompleter(SimpleLever.class);
@@ -665,22 +668,52 @@ public class ParkourPlugin extends JavaPlugin {
 		command.addEnumCompleter(MedalSetupOption.class);
 		command.addEnumCompleter(DyeColor.class);
 
-		command.addArgumentCompleter("wallIndex", (sender, strings) -> Stream.iterate(0, i -> i + 1)
-				.limit(getParkourByName(new ArrayList<>(strings).get(strings.size() - 2)).getWalls().size())
-				.map(String::valueOf)
-				.toList());
-		command.addArgumentCompleter("checkpointIndex", (sender, strings) -> Stream.iterate(0, i -> i + 1)
-				.limit(getParkourByName(new ArrayList<>(strings).get(strings.size() - 2)).getCheckpoints().size())
-				.map(String::valueOf)
-				.toList());
+		command.addArgumentCompleter("wallIndex", (sender, strings) -> {
+			final ArrayList<String> arrayList = new ArrayList<>(strings);
+			return getWallIndices(arrayList.get(strings.size() - 2))
+					.filter(index -> {
+						final String lastArgument = arrayList.get(strings.size() - 1);
+						return lastArgument.equals("") || lastArgument.startsWith(index);
+					})
+					.toList();
+		});
+		command.addArgumentCompleter("checkpointIndex", (sender, strings) -> {
+			final ArrayList<String> arrayList = new ArrayList<>(strings);
+			return getCheckpointIndices(arrayList.get(strings.size() - 2))
+					.filter(index -> {
+						final String lastArgument = arrayList.get(strings.size() - 1);
+						return lastArgument.equals("") || lastArgument.startsWith(index);
+					})
+					.toList();
+		});
 	}
 
 	@NotNull
-	private ParkourGame getParkourByName(@NotNull final String name) {
-		return parkourManager.getAllGames().stream()
-				.filter(parkourGame -> parkourGame.getName().equals(name))
-				.findAny()
-				.orElseThrow();
+	private Stream<String> getCheckpointIndices(@NotNull final String name) {
+		return Optional.ofNullable(parkourManager.getParkour(name))
+				.map(ParkourGame::getCheckpoints)
+				.map(List::size)
+				.map(this::getIndices)
+				.stream()
+				.flatMap(Collection::stream);
+	}
+
+	@NotNull
+	private Stream<String> getWallIndices(@NotNull final String name) {
+		return Optional.ofNullable(parkourManager.getParkour(name))
+				.map(ParkourGame::getWalls)
+				.map(List::size)
+				.map(this::getIndices)
+				.stream()
+				.flatMap(Collection::stream);
+	}
+
+	@NotNull
+	private List<String> getIndices(final int limit) {
+		return Stream.iterate(0, i -> i + 1)
+				.limit(limit)
+				.map(String::valueOf)
+				.toList();
 	}
 
 	@Nullable
@@ -776,6 +809,17 @@ public class ParkourPlugin extends JavaPlugin {
 			getLogger().severe("An error occurred when trying to load parkour setting");
 			ex.printStackTrace();
 		}
+	}
+
+	private void loadArmorStands() {
+		getServer().getWorlds().stream()
+				.map(World::getEntities)
+				.flatMap(Collection::stream)
+				.filter(x -> x.getType().equals(EntityType.ARMOR_STAND))
+				.map(ArmorStand.class::cast)
+				.filter(armorStand -> armorStand.getPersistentDataContainer()
+						.has(new NamespacedKey(this, Constants.PARKOUR), PersistentDataType.STRING))
+				.forEach(indicators::add);
 	}
 
 	private void generate() {
