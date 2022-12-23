@@ -8,9 +8,11 @@ import com.sk89q.worldedit.regions.CuboidRegion;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.Value;
+import lombok.experimental.NonFinal;
 import org.jetbrains.annotations.NotNull;
 
 @Value
+@NonFinal
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public class Wall extends BasicRegion {

@@ -11,7 +11,6 @@ import eu.andret.ats.parkour.region.Wall;
 import lombok.Builder;
 import lombok.Data;
 import lombok.ToString;
-import lombok.Value;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -66,11 +65,7 @@ public abstract class ParkourGame implements Comparable<ParkourGame> {
 		PLAYERS
 	}
 
-	@Value
-	public static class Result {
-		@Nullable
-		Medal medal;
-		double reward;
+	public record Result(@Nullable Medal medal, double reward) {
 	}
 
 	@Data

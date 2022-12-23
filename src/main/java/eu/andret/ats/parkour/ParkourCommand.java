@@ -24,12 +24,11 @@ import eu.andret.ats.parkour.parkour.Effect;
 import eu.andret.ats.parkour.parkour.Medal;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourMedal;
-import eu.andret.ats.parkour.parkour.Score;
 import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.region.BasicRegion;
 import eu.andret.ats.parkour.region.Checkpoint;
 import eu.andret.ats.parkour.region.Wall;
-import eu.andret.ats.parkour.tasks.database.FetchParkourBestRecordTask;
+import eu.andret.ats.parkour.tasks.database.FetchParkourBestScoreTask;
 import eu.andret.ats.parkour.tutorial.TutorialManager;
 import eu.andret.ats.parkour.tutorial.TutorialPlayer;
 import eu.andret.ats.parkour.util.Constants;
@@ -75,20 +74,23 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		final Player player = (Player) sender;
 		final TutorialManager tutorialManager = plugin.getTutorialManager();
 		switch (lever) {
-			case ON:
+			case ON -> {
 				if (tutorialManager.hasPlayer(player)) {
 					return "&dYou are already in the tutorial... Be polite!";
 				}
 				tutorialManager.getPlayer(player).sendMessage();
 				return null;
-			case OFF:
+			}
+			case OFF -> {
 				if (!tutorialManager.hasPlayer(player)) {
 					return "&dYou are not in the tutorial... Be polite!";
 				}
 				tutorialManager.removePlayer(player);
 				return "&dOh, that's sad you don't want to learn anymore, but I appreciate your knowledge. Bye!";
-			default:
+			}
+			default -> {
 				return "&dWhat to do with tutorial? Set it to true or false? Please, specify";
+			}
 		}
 	}
 
@@ -160,15 +162,12 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@Argument(permission = "ats.parkour.fix", description = "Fixes signs after database connection troubles.")
 	public void fix() {
-		plugin.getConnection().ifPresentOrElse(connection -> {
-			plugin.getParkourManager().getAllGames()
-					.stream()
-					.map(parkourGame -> new FetchParkourBestRecordTask(connection, parkourGame, 1, data -> data.stream().findFirst()
-							.ifPresentOrElse(plugin::updateSyncSign, () -> plugin.updateSyncSign(parkourGame))
-					))
-					.forEach(fetchParkourBestRecordTask -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchParkourBestRecordTask));
-			sender.sendMessage(plugin.msg(M.General.FIX.success));
-		}, () -> sender.sendMessage(plugin.msg(M.Error.DEFAULT.notConnected)));
+		plugin.getParkourManager().getAllGames()
+				.stream()
+				.map(parkourGame -> new FetchParkourBestScoreTask(plugin, parkourGame, 1, data -> data.stream().findFirst()
+						.ifPresentOrElse(plugin::updateSyncSign, () -> plugin.updateSyncSign(parkourGame))))
+				.forEach(fetchParkourBestScoreTask -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchParkourBestScoreTask));
+		sender.sendMessage(plugin.msg(M.General.FIX.success));
 	}
 
 	@NotNull
@@ -444,9 +443,10 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		}
 		sender.sendMessage(plugin.msg(M.List.EFFECT.header));
 		return parkourGame.getEffects()
-				.stream().map(entry -> plugin.msg(M.List.EFFECT.item)
-						.replace(Constants.EFFECT, entry.getEffectType().getName())
-						.replace(Constants.AMPLIFIER, String.valueOf(entry.getAmplifier())))
+				.stream()
+				.map(effect -> plugin.msg(M.List.EFFECT.item)
+						.replace(Constants.EFFECT, effect.effectType().getName())
+						.replace(Constants.AMPLIFIER, String.valueOf(effect.amplifier())))
 				.map(text -> ChatColor.translateAlternateColorCodes('&', text))
 				.toList();
 	}
@@ -459,7 +459,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
 		if (power <= 0) {
-			parkourGame.getEffects().removeIf(effect -> effect.getEffectType().equals(type));
+			parkourGame.getEffects().removeIf(effect -> effect.effectType().equals(type));
 			return plugin.msg(M.Amplifier.EFFECT.removed)
 					.replace(Constants.EFFECT, type.getName());
 		}
@@ -767,26 +767,25 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@Argument(permission = "ats.parkour.top", description = "Shows top players for parkour game")
 	public void top(final ParkourGame parkourGame, final int count) {
-		plugin.getConnection()
-				.map(connection -> new FetchParkourBestRecordTask(connection, parkourGame, count, result -> {
-					if (result.isEmpty()) {
-						sender.sendMessage(plugin.msg(M.List.TOP.empty));
-						return;
-					}
-					sender.sendMessage(plugin.msg(M.List.TOP.header));
-					for (int i = 0; i < result.size(); i++) {
-						final Score score = result.get(i);
-						final String name = plugin.getServer().getOfflinePlayer(score.getUuid()).getName();
-						if (name == null) {
-							continue;
-						}
-						sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.List.TOP.item)
-								.replace(Constants.NUMBER, String.valueOf(i + 1))
-								.replace(Constants.PLAYER, name)
-								.replace(Constants.PERSONAL_TIME, plugin.formatTime(score.getTime()))));
-					}
-				}))
-				.ifPresent(topPlayersDataOperations -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, topPlayersDataOperations));
+		final FetchParkourBestScoreTask fetchParkourBestScoreTask = new FetchParkourBestScoreTask(plugin, parkourGame, count, result -> {
+			if (result.isEmpty()) {
+				sender.sendMessage(plugin.msg(M.List.TOP.empty));
+				return;
+			}
+			sender.sendMessage(plugin.msg(M.List.TOP.header));
+			for (int i = 0; i < result.size(); i++) {
+				final FetchParkourBestScoreTask.Result parkourScore = result.get(i);
+				final String name = plugin.getServer().getOfflinePlayer(parkourScore.uuid()).getName();
+				if (name == null) {
+					continue;
+				}
+				sender.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg(M.List.TOP.item)
+						.replace(Constants.NUMBER, String.valueOf(i + 1))
+						.replace(Constants.PLAYER, name)
+						.replace(Constants.PERSONAL_TIME, plugin.formatTime(parkourScore.time()))));
+			}
+		});
+		plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchParkourBestScoreTask);
 	}
 
 	@Nullable
@@ -810,12 +809,10 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 				.replace(Constants.COORD_YAW, plugin.formatCoord(location.getYaw()))
 				.replace(Constants.COORD_PITCH, plugin.formatCoord(location.getPitch()))));
 
-		plugin.getConnection()
-				.map(connection -> new FetchParkourBestRecordTask(connection, parkourGame, 1, data -> data.stream().findFirst()
-						.ifPresentOrElse(plugin::updateSyncSign, () -> plugin.updateSyncSign(parkourGame))))
-				.ifPresentOrElse(
-						fetchParkourBestRecordTask -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchParkourBestRecordTask),
-						() -> sender.sendMessage(plugin.msg(M.Error.DEFAULT.notConnected)));
+		final FetchParkourBestScoreTask fetchParkourBestScoreTask = new FetchParkourBestScoreTask(plugin, parkourGame, 1, data ->
+				data.stream().findFirst()
+						.ifPresentOrElse(plugin::updateSyncSign, () -> plugin.updateSyncSign(parkourGame)));
+		plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchParkourBestScoreTask);
 		return null;
 	}
 
@@ -872,7 +869,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 				}, () -> medals.add(medalData));
 		return plugin.msg(M.Option.MEDAL.set)
 				.replace(Constants.OPTION, option.toString().toLowerCase())
-				.replace(Constants.MEDAL, medal.getDisplayName())
+				.replace(Constants.MEDAL, medal.displayName())
 				.replace(Constants.VALUE, resultFunction.apply(value));
 	}
 
@@ -896,7 +893,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		final DoubleFunction<String> resultFunction = option.equals(MedalSetupOption.TIME) ? plugin::formatTime : plugin::formatMoney;
 		return plugin.msg(M.Option.MEDAL.get)
 				.replace(Constants.OPTION, option.toString().toLowerCase())
-				.replace(Constants.MEDAL, medal.getDisplayName())
+				.replace(Constants.MEDAL, medal.displayName())
 				.replace(Constants.VALUE, resultFunction.apply(option.get(data)));
 	}
 
@@ -912,7 +909,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		}
 		final ParkourMedal parkourMedal = medalData.get();
 		return plugin.msg(M.List.MEDAL.item)
-				.replace(Constants.MEDAL, medal.getDisplayName())
+				.replace(Constants.MEDAL, medal.displayName())
 				.replace(Constants.TIME, plugin.formatTime(parkourMedal.getTime()))
 				.replace(Constants.VALUE, plugin.formatMoney(parkourMedal.getReward()));
 	}
@@ -928,7 +925,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		return medals.stream()
 				.sorted((o1, o2) -> o2.getMedal().compareTo(o1.getMedal()))
 				.map(medalEntry -> plugin.msg(M.List.MEDAL.item)
-						.replace(Constants.MEDAL, medalEntry.getMedal().getDisplayName())
+						.replace(Constants.MEDAL, medalEntry.getMedal().displayName())
 						.replace(Constants.TIME, plugin.formatTime(medalEntry.getTime()))
 						.replace(Constants.VALUE, plugin.formatMoney(medalEntry.getReward())))
 				.map(text -> ChatColor.translateAlternateColorCodes('&', text))
@@ -1007,12 +1004,12 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 						   @NotNull final ToDoubleFunction<ParkourMedal> function,
 						   @NotNull final BiPredicate<Double, Double> relation) {
 		final boolean betterIsOk = parkourGame.getMedals().stream()
-				.filter(parkourMedal -> parkourMedal.getMedal().getImportance() < medalData.getMedal().getImportance())
+				.filter(parkourMedal -> parkourMedal.getMedal().importance() < medalData.getMedal().importance())
 				.findAny()
 				.filter(data -> function.applyAsDouble(data) > 0 && relation.test(function.applyAsDouble(data), value))
 				.isEmpty();
 		final boolean worseIsOk = parkourGame.getMedals().stream()
-				.filter(parkourMedal -> parkourMedal.getMedal().getImportance() > medalData.getMedal().getImportance())
+				.filter(parkourMedal -> parkourMedal.getMedal().importance() > medalData.getMedal().importance())
 				.findAny()
 				.filter(data -> function.applyAsDouble(data) > 0 && !relation.test(function.applyAsDouble(data), value))
 				.isEmpty();

@@ -26,13 +26,13 @@ public class MedalAdapter implements JsonSerializer<Medal>, JsonDeserializer<Med
 	@NotNull
 	@Override
 	public JsonElement serialize(@NotNull final Medal src, @NotNull final Type typeOfSrc, @NotNull final JsonSerializationContext context) {
-		return new JsonPrimitive(src.getName());
+		return new JsonPrimitive(src.name());
 	}
 
 	@Override
 	public Medal deserialize(@NotNull final JsonElement json, @NotNull final Type typeOfT, @NotNull final JsonDeserializationContext context) throws JsonParseException {
 		return plugin.getMedals().stream()
-				.filter(medal -> medal.getName().equals(json.getAsString()))
+				.filter(medal -> medal.name().equals(json.getAsString()))
 				.findAny()
 				.orElse(null);
 	}

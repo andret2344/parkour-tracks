@@ -24,9 +24,11 @@ import eu.andret.ats.parkour.parkour.Medal;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourGameCreator;
 import eu.andret.ats.parkour.parkour.ParkourManager;
-import eu.andret.ats.parkour.parkour.Score;
+import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.player.PlayerManager;
 import eu.andret.ats.parkour.region.Checkpoint;
+import eu.andret.ats.parkour.tasks.database.FetchParkourBestScoreTask;
+import eu.andret.ats.parkour.tasks.database.FetchParkourPlayerScoreTask;
 import eu.andret.ats.parkour.tasks.database.KeepAliveTask;
 import eu.andret.ats.parkour.tutorial.TutorialManager;
 import eu.andret.ats.parkour.util.Constants;
@@ -39,6 +41,7 @@ import eu.andret.ats.parkour.util.adapter.WorldAdapter;
 import lombok.Getter;
 import lombok.Setter;
 import org.bstats.bukkit.Metrics;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
@@ -60,6 +63,12 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scoreboard.Criteria;
+import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Score;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.ScoreboardManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,6 +85,7 @@ import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -92,8 +102,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class ParkourPlugin extends JavaPlugin {
-	public static final String PARKOUR = "parkour";
-
 	@Getter
 	@NotNull
 	private final Map<String, String> helpDescription = new LinkedHashMap<>();
@@ -103,6 +111,8 @@ public class ParkourPlugin extends JavaPlugin {
 	private final YamlConfiguration commands = new YamlConfiguration();
 	@NotNull
 	private final YamlConfiguration inventory = new YamlConfiguration();
+	@NotNull
+	private final YamlConfiguration scoreboard = new YamlConfiguration();
 	@Getter
 	@NotNull
 	private final Map<UUID, Integer> teleportCountdown = new HashMap<>();
@@ -167,9 +177,7 @@ public class ParkourPlugin extends JavaPlugin {
 		setupCommand();
 		setupDatabase();
 		loadGames();
-		getConnection()
-				.map(KeepAliveTask::new)
-				.ifPresent(keepAliveTask -> getServer().getScheduler().scheduleSyncRepeatingTask(this, keepAliveTask, 20_000, 20_000));
+		getServer().getScheduler().scheduleSyncRepeatingTask(this, new KeepAliveTask(this), 20_000, 20_000);
 
 		final long backupFrequency = getConfig().getLong("backup-frequency", 1440L);
 		if (backupFrequency > 0) {
@@ -204,6 +212,33 @@ public class ParkourPlugin extends JavaPlugin {
 	}
 
 	/**
+	 * Reads the scoreboard config and gets lines to display including placeholders to be replaced.
+	 *
+	 * @return The {@link List} of lines with placeholders to display on the scoreboard.
+	 */
+	public List<String> getScoreboardPattern() {
+		return scoreboard.getStringList("scoreboard.content");
+	}
+
+	/**
+	 * Gets the display name from the scoreboard config file that can include placeholders to be replaced.
+	 *
+	 * @return The placeholder text to display as the scoreboard name.
+	 */
+	public String getScoreboardDisplayName() {
+		return scoreboard.getString("scoreboard.display-name");
+	}
+
+	/**
+	 * The Scoreboard can contain dates (i.e., last run date) so this formatter allows formatting all those dates.
+	 *
+	 * @return The formatter to format all the dates on the displayed Scoreboard.
+	 */
+	public DateTimeFormatter getScoreboardDateTimeFormatter() {
+		return DateTimeFormatter.ofPattern(scoreboard.getString("scoreboard.date-time-format", "yyyy-MM-dd'T'HH:mm:ss"));
+	}
+
+	/**
 	 * @param path The YML path to message from messages.yml file
 	 *
 	 * @return The colored message or empty string if invalid path provided.
@@ -225,11 +260,16 @@ public class ParkourPlugin extends JavaPlugin {
 	public String msg(@NotNull final M.Message message) {
 		final StringBuilder result = new StringBuilder();
 		if (message.isError()) {
-			result.append(commands.getString("misc.prefix-error"));
+			result.append(misc("prefix-error"));
 		}
 		return ChatColor.translateAlternateColorCodes('&', result.append(commands.getString(message.toString())).toString());
 	}
 
+	/**
+	 * @param name The name of the misc config value to read from the commands.yml file.
+	 *
+	 * @return The colored text.
+	 */
 	@NotNull
 	public String misc(@NotNull final String name) {
 		return Optional.of(name)
@@ -268,12 +308,22 @@ public class ParkourPlugin extends JavaPlugin {
 				.map(Sound::valueOf);
 	}
 
-	public void updateSyncSign(@NotNull final Score score) {
-		getServer().getScheduler().scheduleSyncDelayedTask(this, () -> updateSign(score));
+	/**
+	 * Runs the {@link ParkourPlugin#updateSign(FetchParkourBestScoreTask.Result)} in a new, synchronous thread.
+	 *
+	 * @param result The score to fill the sign with.
+	 */
+	public void updateSyncSign(@NotNull final FetchParkourBestScoreTask.Result result) {
+		getServer().getScheduler().scheduleSyncDelayedTask(this, () -> updateSign(result));
 	}
 
-	public void updateSign(@NotNull final Score score) {
-		updateSign(score.getGame(), line -> replace(String.valueOf(line), score));
+	/**
+	 * Updates the sign in the same thread.
+	 *
+	 * @param result The score to fill the sign with.
+	 */
+	public void updateSign(@NotNull final FetchParkourBestScoreTask.Result result) {
+		updateSign(result.game(), line -> replace(String.valueOf(line), result));
 	}
 
 	/**
@@ -321,20 +371,41 @@ public class ParkourPlugin extends JavaPlugin {
 		return String.format("%02d:%02d.%02d", minutes, seconds, milliseconds);
 	}
 
+	/**
+	 * Formats the given amount to configured format.
+	 *
+	 * @param money The money to be formatted.
+	 *
+	 * @return The String representation of formatted amount.
+	 */
 	@NotNull
 	public String formatMoney(final double money) {
 		return decimalFormat.format(money);
 	}
 
+	/**
+	 * Formats the given coord to {@code "%.2f"} format.
+	 *
+	 * @param coord The coord to be formatted.
+	 *
+	 * @return The String representation of formatted coord.
+	 */
 	@NotNull
 	public String formatCoord(final double coord) {
 		return String.format("%.2f", coord);
 	}
 
+	/**
+	 * Formats all the medals' display names and joins them with the given separator.
+	 *
+	 * @param separator The separator to join medals' display names.
+	 *
+	 * @return The String representation of all the medals' display names joined with the separator.
+	 */
 	@NotNull
 	public String getFormattedMedals(@NotNull final String separator) {
 		return getMedals().stream()
-				.map(Medal::getDisplayName)
+				.map(Medal::displayName)
 				.collect(Collectors.joining(separator));
 	}
 
@@ -361,7 +432,7 @@ public class ParkourPlugin extends JavaPlugin {
 	public void hideCheckpoints(@NotNull final ParkourGame parkourGame) {
 		indicators.stream()
 				.filter(armorStand -> armorStand.getPersistentDataContainer()
-						.getOrDefault(new NamespacedKey(this, PARKOUR), PersistentDataType.STRING, "")
+						.getOrDefault(new NamespacedKey(this, Constants.PARKOUR), PersistentDataType.STRING, "")
 						.equals(parkourGame.getName()))
 				.forEach(Entity::remove);
 	}
@@ -403,7 +474,7 @@ public class ParkourPlugin extends JavaPlugin {
 		armorStand.setVisible(false);
 		armorStand.addEquipmentLock(EquipmentSlot.CHEST, ArmorStand.LockType.ADDING_OR_CHANGING);
 		armorStand.getPersistentDataContainer()
-				.set(new NamespacedKey(this, PARKOUR), PersistentDataType.STRING, parkourGame.getName());
+				.set(new NamespacedKey(this, Constants.PARKOUR), PersistentDataType.STRING, parkourGame.getName());
 		indicators.add(armorStand);
 	}
 
@@ -418,11 +489,64 @@ public class ParkourPlugin extends JavaPlugin {
 							   @NotNull final String text) {
 		indicators.stream()
 				.filter(armorStand -> armorStand.getPersistentDataContainer()
-						.getOrDefault(new NamespacedKey(this, PARKOUR), PersistentDataType.STRING, "")
+						.getOrDefault(new NamespacedKey(this, Constants.PARKOUR), PersistentDataType.STRING, "")
 						.equals(parkourGame.getName()))
 				.filter(armorStand -> text.equals(armorStand.getCustomName()))
 				.findAny()
 				.ifPresent(armorStand -> armorStand.teleport(location));
+	}
+
+	/**
+	 * Loads the resource using the built-in class loader from {@link JavaPlugin#getClassLoader()}.
+	 *
+	 * @param filename The name of the resource file to be opened and read.
+	 *
+	 * @return The String content of opened resource file.
+	 *
+	 * @throws IOException If anything with the file went wrong.
+	 */
+	@NotNull
+	public String load(@NotNull final String filename) throws IOException {
+		try (final InputStream inputStream = getClassLoader().getResourceAsStream(filename)) {
+			if (inputStream == null) {
+				throw new IOException("Cannot open resource as stream: " + filename);
+			}
+			return new String(inputStream.readAllBytes());
+		}
+	}
+
+	/**
+	 * Creates the Scoreboard for the player and the game and adds it to the player.
+	 *
+	 * @param parkourPlayer The player which data should appear on the scoreboard and who will see the scoreboard.
+	 * @param parkourGame The game the player is in.
+	 */
+	public void generateScoreboard(@NotNull final ParkourPlayer parkourPlayer, @NotNull final ParkourGame parkourGame) {
+		final Runnable task = new FetchParkourPlayerScoreTask(this, parkourGame, parkourPlayer, result -> {
+			final String medalDisplayName = Optional.of(result)
+					.map(FetchParkourPlayerScoreTask.Result::playerTime)
+					.map(parkourGame::getResult)
+					.map(ParkourGame.Result::medal)
+					.map(Medal::displayName)
+					.orElse("none");
+			final UnaryOperator<String> fillPlaceholders = text -> text
+					.replace("%PARKOUR%", parkourGame.getName())
+					.replace("%BEST_TIME%", formatTime(result.parkourTIme()))
+					.replace("%PLAYER_TIME%", formatTime(result.playerTime()))
+					.replace("%MEDAL%", medalDisplayName)
+					.replace("%COUNT%", String.valueOf(result.count()))
+					.replace("%TYPE%", parkourGame.getOptions().getType().name())
+					.replace("%LAST_DATE%", result.lastRun().format(getScoreboardDateTimeFormatter()))
+					.replace("%PLAYER%", parkourPlayer.getPlayer().getDisplayName());
+			final String name = fillPlaceholders.apply(getScoreboardDisplayName());
+			final List<String> scoreboardPattern = getScoreboardPattern()
+					.stream()
+					.map(fillPlaceholders)
+					.toList();
+			getServer().getScheduler().runTask(this, () ->
+					parkourPlayer.getPlayer().setScoreboard(build(name, scoreboardPattern)));
+		});
+		getServer().getScheduler().runTaskAsynchronously(this, task);
 	}
 
 	/**
@@ -477,10 +601,12 @@ public class ParkourPlugin extends JavaPlugin {
 		saveResource("commands.yml", false);
 		saveResource("messages.yml", false);
 		saveResource("inventory.yml", false);
+		saveResource("scoreboard.yml", false);
 		try {
 			commands.load(new File(getDataFolder(), "commands.yml"));
 			messages.load(new File(getDataFolder(), "messages.yml"));
 			inventory.load(new File(getDataFolder(), "inventory.yml"));
+			scoreboard.load(new File(getDataFolder(), "scoreboard.yml"));
 		} catch (final IOException | InvalidConfigurationException ex) {
 			getLogger().info("An error occurred when loading messages");
 			ex.printStackTrace();
@@ -516,7 +642,7 @@ public class ParkourPlugin extends JavaPlugin {
 		command.addTypeMapper(PotionEffectType.class, PotionEffectType::getByName, FallbackConstants.ON_NULL);
 		command.addTypeMapper(DyeColor.class, this::getDyeColor, FallbackConstants.ON_NULL);
 		command.addTypeMapper(Medal.class, name -> medals.stream()
-						.filter(medal -> medal.getName().equals(name))
+						.filter(medal -> medal.name().equals(name))
 						.findAny()
 						.orElse(null),
 				FallbackConstants.ON_NULL);
@@ -532,7 +658,7 @@ public class ParkourPlugin extends JavaPlugin {
 				.map(PotionEffectType::getName)
 				.toList());
 		command.addTypeCompleter(Medal.class, medals.stream()
-				.map(Medal::getName)
+				.map(Medal::name)
 				.toList());
 		command.addTypeCompleter(boolean.class, Arrays.asList(Boolean.FALSE.toString(), Boolean.TRUE.toString()));
 		command.addEnumCompleter(MedalSetupOption.class);
@@ -576,27 +702,12 @@ public class ParkourPlugin extends JavaPlugin {
 
 	private void initDatabase() {
 		getConnection().ifPresent(conn -> {
-			try (final InputStream inputStream = getClassLoader().getResourceAsStream("setup.sql")) {
-				if (inputStream == null) {
-					return;
-				}
-				Optional.ofNullable(inputStream.readAllBytes())
-						.map(String::new)
-						.map(content -> content.split(";"))
-						.stream()
-						.flatMap(Arrays::stream)
-						.filter(query -> !query.isBlank())
-						.forEach(query -> {
-							try (final PreparedStatement statement = conn.prepareStatement(query)) {
-								statement.execute();
-							} catch (final SQLException e) {
-								getLogger().log(Level.SEVERE, "An error occurred when trying to execute query", e);
-							}
-						});
-				getLogger().info("§2Database setup complete.");
-			} catch (final IOException e) {
-				getLogger().log(Level.SEVERE, "Cannot execute SQL statement", e);
+			try (final PreparedStatement statement = conn.prepareStatement(load("sql/setup.sql"))) {
+				statement.execute();
+			} catch (final SQLException | IOException e) {
+				getLogger().log(Level.SEVERE, "An error occurred when trying to execute query", e);
 			}
+			getLogger().info("§2Database setup complete.");
 		});
 	}
 
@@ -688,14 +799,14 @@ public class ParkourPlugin extends JavaPlugin {
 	}
 
 	@NotNull
-	private String replace(@NotNull final String source, @NotNull final Score score) {
-		final String name = Optional.of(score)
-				.map(Score::getUuid)
-				.map(uuid -> getServer().getOfflinePlayer(uuid))
+	private String replace(@NotNull final String source, @NotNull final FetchParkourBestScoreTask.Result result) {
+		final String playerName = Optional.of(result)
+				.map(FetchParkourBestScoreTask.Result::uuid)
+				.map(getServer()::getOfflinePlayer)
 				.map(OfflinePlayer::getName)
 				.orElse(Constants.PLACEHOLDER_NO_RECORD);
-		return source.replace(Constants.NICK, name)
-				.replace(Constants.PERSONAL_TIME, formatTime(score.getTime()));
+		return source.replace(Constants.NICK, playerName)
+				.replace(Constants.PERSONAL_TIME, formatTime(result.time()));
 	}
 
 	@NotNull
@@ -709,8 +820,25 @@ public class ParkourPlugin extends JavaPlugin {
 		decimalFormatSymbols.setCurrencySymbol(economySection.getString("currency-symbol", "{@}"));
 		decimalFormatSymbols.setDecimalSeparator(economySection.getString("decimal-separator", ".").charAt(0));
 		decimalFormatSymbols.setGroupingSeparator(economySection.getString("group-separator", " ").charAt(0));
-		final DecimalFormat format = new DecimalFormat(economySection.getString("pattern", "+###,##0.00\u00A4;-###,##0.00\u00A4"), decimalFormatSymbols);
+		final DecimalFormat format = new DecimalFormat(economySection.getString("pattern", "+###,##0.00¤;-###,##0.00¤"), decimalFormatSymbols);
 		format.setGroupingSize(economySection.getInt("group-size", 3));
 		return format;
+	}
+
+	@NotNull
+	private Scoreboard build(final String name, final List<String> text) {
+		final ScoreboardManager scoreboardManager = Bukkit.getScoreboardManager();
+		if (scoreboardManager == null) {
+			throw new IllegalArgumentException("Something went wrong with scoreboard manager");
+		}
+		final Scoreboard board = scoreboardManager.getNewScoreboard();
+		final Objective objective = board.registerNewObjective(Constants.PARKOUR, Criteria.DUMMY, Constants.PARKOUR);
+		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+		objective.setDisplayName(ChatColor.translateAlternateColorCodes('&', name));
+		for (int i = 0; i < text.size(); i++) {
+			final Score score = objective.getScore(ChatColor.translateAlternateColorCodes('&', text.get(i)));
+			score.setScore(text.size() - i);
+		}
+		return board;
 	}
 }

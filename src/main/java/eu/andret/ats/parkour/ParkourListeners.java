@@ -20,17 +20,18 @@ import eu.andret.ats.parkour.event.player.PlayerTeleportBackEvent;
 import eu.andret.ats.parkour.parkour.Effect;
 import eu.andret.ats.parkour.parkour.ParkourGame;
 import eu.andret.ats.parkour.parkour.ParkourManager;
-import eu.andret.ats.parkour.parkour.Score;
 import eu.andret.ats.parkour.player.ParkourPlayer;
 import eu.andret.ats.parkour.region.Checkpoint;
 import eu.andret.ats.parkour.region.Wall;
 import eu.andret.ats.parkour.tasks.counter.ParkourCountdown;
 import eu.andret.ats.parkour.tasks.counter.TimeCounter;
 import eu.andret.ats.parkour.tasks.database.FetchAndInsertDataTask;
+import eu.andret.ats.parkour.tasks.database.FetchParkourBestScoreTask;
 import eu.andret.ats.parkour.util.Constants;
 import eu.andret.ats.parkour.util.Data;
 import eu.andret.ats.parkour.util.M;
 import lombok.AllArgsConstructor;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -60,7 +61,7 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.vehicle.VehicleExitEvent;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.PluginManager;
-import org.bukkit.potion.PotionEffect;
+import org.bukkit.scoreboard.ScoreboardManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -359,11 +360,12 @@ public class ParkourListeners implements Listener {
 					plugin.getGameItemMap().iterate(player.getInventory()::setItem), 2);
 		}
 		parkourGame.getEffects().stream()
-				.map(entry -> new PotionEffect(entry.getEffectType(), 99999999, entry.getAmplifier()))
+				.map(Effect::toPotionEffect)
 				.forEach(player::addPotionEffect);
 		player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("joined-parkour")
 				.replace(Constants.NAME, parkourGame.getName())
 				.replace(Constants.DISPLAY_NAME, parkourGame.getDisplayName())));
+		plugin.generateScoreboard(parkourPlayer, parkourGame);
 	}
 
 	@EventHandler
@@ -419,7 +421,7 @@ public class ParkourListeners implements Listener {
 		// this code has to be executed a tick later to make sure all data are correctly injected to the armor stand
 		plugin.getServer().getScheduler().runTask(plugin, () -> {
 			final String name = entity.getPersistentDataContainer()
-					.get(new NamespacedKey(plugin, ParkourPlugin.PARKOUR), PersistentDataType.STRING);
+					.get(new NamespacedKey(plugin, Constants.PARKOUR), PersistentDataType.STRING);
 			if (name == null) {
 				entity.remove();
 				return;
@@ -480,8 +482,11 @@ public class ParkourListeners implements Listener {
 			plugin.getServer().getScheduler().cancelTask(plugin.getTeleportCountdown().get(uniqueId));
 			plugin.getTeleportCountdown().remove(uniqueId);
 		}
+		Optional.ofNullable(Bukkit.getScoreboardManager())
+				.map(ScoreboardManager::getMainScoreboard)
+				.ifPresent(event.getPlayer().getPlayer()::setScoreboard);
 		event.getGame().getEffects().stream()
-				.map(Effect::getEffectType)
+				.map(Effect::effectType)
 				.forEach(player::removePotionEffect);
 		plugin.getPlayerManager().remove(player);
 	}
@@ -677,34 +682,34 @@ public class ParkourListeners implements Listener {
 	}
 
 	private void performDatabaseOperations(@NotNull final Player player, @NotNull final ParkourGame parkourGame, final double currentTime) {
-		plugin.getConnection()
-				.map(connection -> new FetchAndInsertDataTask(connection, parkourGame, player.getUniqueId(), currentTime, (previousCount, previousPlayerBest, previousParkourBest) -> {
-					player.sendMessage(plugin.msg("completes-count").replace(Constants.COUNT, String.valueOf(previousCount + 1)));
-					if (previousParkourBest > currentTime) {
-						player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("new-parkour-best")
-								.replace(Constants.NAME, parkourGame.getName())
-								.replace(Constants.DISPLAY_NAME, parkourGame.getDisplayName())));
-						plugin.updateSyncSign(new Score(player.getUniqueId(), parkourGame, currentTime));
-					}
-					if (previousPlayerBest > currentTime) {
-						player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("new-personal-best")
-								.replace(Constants.NAME, parkourGame.getName())
-								.replace(Constants.DISPLAY_NAME, parkourGame.getDisplayName())));
-					}
-					final ParkourGame.Result previousResult = parkourGame.getResult(previousPlayerBest);
-					final ParkourGame.Result result = parkourGame.getResult(currentTime);
-					if (result.getMedal() == null || result.getMedal().equals(previousResult.getMedal())) {
-						return;
-					}
-					player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("medal-got").replace(Constants.MEDAL, result.getMedal().getDisplayName())));
-					plugin.getFinancialProvider().ifPresent(financialProvider -> {
-						final double finalReward = result.getReward() - previousResult.getReward();
-						if (finalReward > 0) {
-							financialProvider.addMoney(player, finalReward);
-							player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("reward-medal").replace(Constants.REWARD, plugin.formatMoney(finalReward))));
-						}
-					});
-				}))
-				.ifPresent(fetchAndInsertDataTask -> plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchAndInsertDataTask));
+		final FetchAndInsertDataTask fetchAndInsertDataTask = new FetchAndInsertDataTask(plugin, parkourGame, player.getUniqueId(), currentTime, fetchResult -> {
+			player.sendMessage(plugin.msg("completes-count").replace(Constants.COUNT, String.valueOf(fetchResult.previousCount() + 1)));
+			if (fetchResult.parkourBestTime() > currentTime) {
+				player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("new-parkour-best")
+						.replace(Constants.NAME, parkourGame.getName())
+						.replace(Constants.DISPLAY_NAME, parkourGame.getDisplayName())));
+				plugin.updateSyncSign(new FetchParkourBestScoreTask.Result(player.getUniqueId(), parkourGame, currentTime));
+			}
+			if (fetchResult.playerBestTime() > currentTime) {
+				player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("new-personal-best")
+						.replace(Constants.NAME, parkourGame.getName())
+						.replace(Constants.DISPLAY_NAME, parkourGame.getDisplayName())));
+			}
+			parkourGame.getPlayers().forEach(parkourPlayer -> plugin.generateScoreboard(parkourPlayer, parkourGame));
+			final ParkourGame.Result previousResult = parkourGame.getResult(fetchResult.playerBestTime());
+			final ParkourGame.Result result = parkourGame.getResult(currentTime);
+			if (result.medal() == null || result.medal().equals(previousResult.medal())) {
+				return;
+			}
+			player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("medal-got").replace(Constants.MEDAL, result.medal().displayName())));
+			plugin.getFinancialProvider().ifPresent(financialProvider -> {
+				final double finalReward = result.reward() - previousResult.reward();
+				if (finalReward > 0) {
+					financialProvider.addMoney(player, finalReward);
+					player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.msg("reward-medal").replace(Constants.REWARD, plugin.formatMoney(finalReward))));
+				}
+			});
+		});
+		plugin.getServer().getScheduler().runTaskAsynchronously(plugin, fetchAndInsertDataTask);
 	}
 }
