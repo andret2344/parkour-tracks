@@ -4,17 +4,9 @@
 
 package eu.andret.ats.parkour.parkour;
 
-import lombok.Value;
 import org.jetbrains.annotations.NotNull;
 
-@Value
-public class Medal implements Comparable<Medal> {
-	@NotNull
-	String name;
-	@NotNull
-	String displayName;
-	int importance;
-
+public record Medal(@NotNull String name, @NotNull String displayName, int importance) implements Comparable<Medal> {
 	@Override
 	public int compareTo(@NotNull final Medal other) {
 		return other.importance - importance;

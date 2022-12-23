@@ -4,11 +4,14 @@
 
 package eu.andret.ats.parkour.player;
 
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 @Data
+@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 public abstract class ParkourPlayer {
 	@NotNull
 	protected final Player player;
@@ -16,10 +19,6 @@ public abstract class ParkourPlayer {
 	protected boolean ignoring = false;
 	protected double time = 0;
 	protected boolean hidden = false;
-
-	ParkourPlayer(@NotNull final Player player) {
-		this.player = player;
-	}
 
 	public void reset() {
 		lastCheckpoint = 0;
