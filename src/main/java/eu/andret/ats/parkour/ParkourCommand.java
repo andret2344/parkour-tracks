@@ -257,6 +257,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (parkourGame.isRunning() && plugin.isEditLockActive()) {
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
+		plugin.hideCheckpoints(parkourGame);
 		plugin.getParkourManager().removeParkour(parkourGame);
 		return plugin.msg(M.Executive.REMOVE.success)
 				.replace(Constants.NAME, parkourGame.getName())
