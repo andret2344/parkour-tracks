@@ -365,8 +365,9 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		}
 		final Location location = player.getLocation();
 		final String sizeString = String.valueOf(parkourGame.getCheckpoints().size());
+		plugin.hideCheckpoints(parkourGame);
 		parkourGame.getCheckpoints().add(new Checkpoint(region, location));
-		plugin.createArmorStand(parkourGame, location, sizeString);
+		plugin.showCheckpoints(parkourGame);
 		return plugin.msg(M.Region.Checkpoint.ADD.success)
 				.replace(Constants.INDEX, sizeString);
 	}
