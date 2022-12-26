@@ -458,30 +458,6 @@ public class ParkourPlugin extends JavaPlugin {
 	}
 
 	/**
-	 * Creates and stores a single invisible invulnerable armor stand assigned to the passed {@link ParkourGame}.
-	 *
-	 * @param parkourGame The game which checkpoint will be assigned to.
-	 * @param location The target location where the armor stand will appear.
-	 * @param text The indicator (armor stand name) text.
-	 */
-	public void createArmorStand(@NotNull final ParkourGame parkourGame, @NotNull final Location location,
-								 @NotNull final String text) {
-		final World world = location.getWorld();
-		if (world == null) {
-			return;
-		}
-		final ArmorStand armorStand = (ArmorStand) world.spawnEntity(location, EntityType.ARMOR_STAND);
-		armorStand.setGravity(false);
-		armorStand.setCustomName(text);
-		armorStand.setCustomNameVisible(true);
-		armorStand.setVisible(false);
-		armorStand.addEquipmentLock(EquipmentSlot.CHEST, ArmorStand.LockType.ADDING_OR_CHANGING);
-		armorStand.getPersistentDataContainer()
-				.set(new NamespacedKey(this, Constants.PARKOUR), PersistentDataType.STRING, parkourGame.getName());
-		indicators.add(armorStand);
-	}
-
-	/**
 	 * Moves the found armor stand to the new location.
 	 *
 	 * @param parkourGame The owning game which armor stand should be moved.
@@ -615,6 +591,30 @@ public class ParkourPlugin extends JavaPlugin {
 			ex.printStackTrace();
 		}
 		generate();
+	}
+
+	/**
+	 * Creates and stores a single invisible invulnerable armor stand assigned to the passed {@link ParkourGame}.
+	 *
+	 * @param parkourGame The game to which checkpoint will be assigned.
+	 * @param location The target location where the armor stand will appear.
+	 * @param text The indicator (armor stand's name) text.
+	 */
+	private void createArmorStand(@NotNull final ParkourGame parkourGame, @NotNull final Location location,
+								  @NotNull final String text) {
+		final World world = location.getWorld();
+		if (world == null) {
+			return;
+		}
+		final ArmorStand armorStand = (ArmorStand) world.spawnEntity(location, EntityType.ARMOR_STAND);
+		armorStand.setGravity(false);
+		armorStand.setCustomName(text);
+		armorStand.setCustomNameVisible(true);
+		armorStand.setVisible(false);
+		armorStand.addEquipmentLock(EquipmentSlot.CHEST, ArmorStand.LockType.ADDING_OR_CHANGING);
+		armorStand.getPersistentDataContainer()
+				.set(new NamespacedKey(this, Constants.PARKOUR), PersistentDataType.STRING, parkourGame.getName());
+		indicators.add(armorStand);
 	}
 
 	@NotNull
