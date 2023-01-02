@@ -79,8 +79,8 @@ the [plugin's main class](https://gitlab.com/andret-tools-system/spigot/ats-park
 
 #### Rank extension
 
-If parkours should might be limited so that only players with VIP rank can enter
-them,
+If parkours should have the possibility to be limited so that only players with
+VIP rank can enter them,
 the [RankProvider](https://gitlab.com/andret-tools-system/spigot/ats-parkour/-/blob/master/src/main/java/eu/andret/ats/parkour/api/RankProvider.java)
 class must be inherited and its implementation has to be injected into
 the [plugin's main class](https://gitlab.com/andret-tools-system/spigot/ats-parkour/-/blob/master/src/main/java/eu/andret/ats/parkour/ParkourPlugin.java).
@@ -111,7 +111,7 @@ adds the inventory-based GUI in which players can teleport to a parkour of their
 choice. In the GUI, each parkour is represented as colored block of wool set as
 an option which can be seen in the [Basic setting](#basic-settings). If a player
 completed a parkour, its wool block glows with an enchanting effect. Hovering a
-cursor over this wool block, the popup will contain all the data that can be get
+cursor over this wool block, the popup will contain all the data that can be got
 from database and a part of data from parkour's settings.
 
 ### Medals
