@@ -32,9 +32,9 @@ This section describes settings that don't require any additional piece of code.
 | `alwaysSpawn`     | `false`  | Hitting a wall will always teleport to spawn, ignoring checkpoints                              |
 | `savingResults`   | `true`   | Results will be persisted in a database.                                                        |
 | `damageAllowed`   | `false`  | Players will take damage in all usual ways.                                                     |
-| `boat`            | `false`  | Players will always spawn as a passenger of a boat that can't be left.                          |
+| `boat`            | `false`  | Players will always spawn as passengers of a boats that can't be left.                          |
 | `modifyInventory` | `true`   | Entering and leaving a parkour will clear the inventory and place special items in the hot-bar. |
-| `type`            | `SERVER` | From who and from whom is the parkour. Possible are: `SERVER`, `TRAINING`, `PLAYERS`.           |
+| `type`            | `SERVER` | For who and from whom is the parkour. Possible are: `SERVER`, `TRAINING`, `PLAYERS`.            |
 
 #### Economy-related settings
 
