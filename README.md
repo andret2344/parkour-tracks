@@ -4,15 +4,16 @@
 
 ## Description
 
-This plugin allows to create multiple parkours (obstacle paths that players
-pass) on the server. Each parkour can have checkpoints (regions that save the
-progress), walls (regions that force teleporting back), results stored in a
-database and many more.
+This plugin allows to create multiple parkours (obstacle paths that each player
+can pass) on the server. For correct setup, WorldEdit plugin must be also
+present as its regions are widely used. Each parkour can have checkpoints (
+regions that save the progress), walls (regions that force teleporting back),
+results stored in a database and many more.
 
 ## Details
 
-Each parkour is completely independent on others. The only setting that is
-shared across all parkours is the lobby, to where the player is teleported after
+Each parkour is completely independent of others. The only setting that is
+shared across all parkours is the lobby, to where players are teleported after
 finishing a parkour or leaving on demand (R-click on designed item in the
 hot-bar).
 
@@ -27,7 +28,7 @@ This section describes settings that don't require any additional piece of code.
 
 | setting           | default  | description                                                                                     |
 |-------------------|----------|-------------------------------------------------------------------------------------------------|
-| `springForced`    | `false`  | Running always turns the sprint on                                                              |
+| `sprintForced`    | `false`  | Running always turns the sprint on                                                              |
 | `alwaysSpawn`     | `false`  | Hitting a wall will always teleport to spawn, ignoring checkpoints                              |
 | `savingResults`   | `true`   | Results will be persisted in a database.                                                        |
 | `damageAllowed`   | `false`  | Players will take damage in all usual ways.                                                     |
@@ -40,10 +41,10 @@ This section describes settings that don't require any additional piece of code.
 This section describes settings that require the FinanceProvider implementation.
 See [Extending -> Financial extension](#financial-extension) for more details.
 
-| setting  | default | description                                                                                   |
-|----------|---------|-----------------------------------------------------------------------------------------------|
-| `fee`    | `0`     | How much does it cost to enter the parkour 1 time (will be denied if player can't afford it). |
-| `reward` | `0`     | How much will player get for finishing the parkour.                                           |
+| setting  | default | description                                                                                            |
+|----------|---------|--------------------------------------------------------------------------------------------------------|
+| `fee`    | `0`     | How much does it cost to enter the parkour 1 time (will be denied if entering player can't afford it). |
+| `reward` | `0`     | How much will player get for finishing the parkour.                                                    |
 
 #### Rank-related settings
 
