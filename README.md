@@ -107,13 +107,13 @@ public class MyPlugin extends JavaPlugin {
 #### atsQuickParkour
 
 [atsQuickParkour](https://gitlab.com/andret-tools-system/spigot/ats-quick-parkour/)
-is another custom plugin which is used an extension to the atsParkour plugin. It
-adds the inventory-based GUI in which players can teleport to a parkour of their
-choice. In the GUI, each parkour is represented as colored block of wool set as
-an option which can be seen in the [Basic setting](#basic-settings). If a player
-completed a parkour, its wool block glows with an enchanting effect. Hovering a
-cursor over this wool block, the popup will contain all the data that can be got
-from database and a part of data from parkour's settings.
+is another custom plugin which is used as an extension to the atsParkour plugin.
+It adds the inventory-based GUI in which players can teleport to a parkour of
+their choice. In the GUI, each parkour is represented as colored block of wool
+set as an option which can be seen in the [Basic setting](#basic-settings). If a
+player completed a parkour, its wool block glows with an enchanting effect.
+Hovering a cursor over this wool block, the popup will contain all the data that
+can be got from database and a part of data from parkour's settings.
 
 ### Medals
 
