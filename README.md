@@ -90,8 +90,9 @@ the [plugin's main class](https://gitlab.com/andret-tools-system/spigot/ats-park
 
 If parkour should be extended of a custom metadata, it's
 class [ParkourGame](https://gitlab.com/andret-tools-system/spigot/ats-parkour/-/blob/master/src/main/java/eu/andret/ats/parkour/parkour/ParkourGame.java)
-must be inherited with custom implementation. Then the class creators (with and
-without the data) must be injected in two different places (see below and
+must be inherited with custom implementation. Then the class creators (the one
+with data and the one without the data) must be injected in two different
+places (see below and
 the [sample code](https://gitlab.com/andret-tools-system/spigot/ats-parkour/-/tree/master/sample/src/main/java/eu/andret/ats/parkour/sample)).
 
 ```java
@@ -119,9 +120,9 @@ can be got from database and a part of data from parkour's settings.
 
 In the config, medals can be configured. Their names don't matter, but
 the `importance` does. It shows which medal is more or less important than
-others to be able to control their required times and rewards. With importance,
-rewards must increase and required times must decrease. Config keys are used in
-commands.
+others so their required times and rewards can be customized correctly. With
+importance, rewards must increase and required times must decrease. Config keys
+are used in commands.
 
 ### Config
 
