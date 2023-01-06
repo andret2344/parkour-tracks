@@ -815,7 +815,7 @@ public class ParkourPlugin extends JavaPlugin {
 		getServer().getWorlds().stream()
 				.map(World::getEntities)
 				.flatMap(Collection::stream)
-				.filter(x -> x.getType().equals(EntityType.ARMOR_STAND))
+				.filter(entity -> entity.getType().equals(EntityType.ARMOR_STAND))
 				.map(ArmorStand.class::cast)
 				.filter(armorStand -> armorStand.getPersistentDataContainer()
 						.has(new NamespacedKey(this, Constants.PARKOUR), PersistentDataType.STRING))
