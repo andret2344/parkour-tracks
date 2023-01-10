@@ -383,7 +383,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (region == null) {
 			return plugin.msg(M.Error.DEFAULT.invalidSelection);
 		}
-		if (index <= 0) {
+		if (index < 0) {
 			return plugin.msg(M.Error.DEFAULT.negativeNumber);
 		}
 		if (index >= parkourGame.getCheckpoints().size()) {
@@ -404,17 +404,17 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (parkourGame.isRunning() && plugin.isEditLockActive()) {
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
-		final List<Checkpoint> checkpoints = parkourGame.getCheckpoints();
-		if (index <= 0) {
+		if (index < 0) {
 			return plugin.msg(M.Error.DEFAULT.negativeNumber);
 		}
+		final List<Checkpoint> checkpoints = parkourGame.getCheckpoints();
 		if (index >= checkpoints.size()) {
 			return plugin.msg(M.Error.DEFAULT.tooLargeNumber);
 		}
-		final String indexString = String.valueOf(index);
 		plugin.hideCheckpoints(parkourGame);
 		checkpoints.remove(index);
 		plugin.showCheckpoints(parkourGame);
+		final String indexString = String.valueOf(index);
 		return plugin.msg(M.Region.Checkpoint.DEL.success)
 				.replace(Constants.INDEX, indexString);
 	}
@@ -447,7 +447,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (region == null) {
 			return plugin.msg(M.Error.DEFAULT.invalidSelection);
 		}
-		if (index <= 0) {
+		if (index < 0) {
 			return plugin.msg(M.Error.DEFAULT.negativeNumber);
 		}
 		if (index >= parkourGame.getWalls().size()) {
@@ -465,15 +465,15 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (parkourGame.isRunning() && plugin.isEditLockActive()) {
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
-		final List<Wall> walls = parkourGame.getWalls();
-		if (index <= 0) {
+		if (index < 0) {
 			return plugin.msg(M.Error.DEFAULT.negativeNumber);
 		}
+		final List<Wall> walls = parkourGame.getWalls();
 		if (index >= walls.size()) {
 			return plugin.msg(M.Error.DEFAULT.tooLargeNumber);
 		}
-		final String indexString = String.valueOf(index);
 		walls.remove(index);
+		final String indexString = String.valueOf(index);
 		return plugin.msg(M.Region.Wall.DEL.success)
 				.replace(Constants.INDEX, indexString);
 	}
