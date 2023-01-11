@@ -594,7 +594,7 @@ public class ParkourPlugin extends JavaPlugin {
 	}
 
 	/**
-	 * Creates and stores a single invisible invulnerable armor stand assigned to the passed {@link ParkourGame}.
+	 * Creates and stores a single invisible, invulnerable armor stand assigned to the passed {@link ParkourGame}.
 	 *
 	 * @param parkourGame The game to which checkpoint will be assigned.
 	 * @param location The target location where the armor stand will appear.
