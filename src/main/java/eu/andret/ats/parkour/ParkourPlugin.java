@@ -88,6 +88,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -100,6 +101,7 @@ import java.util.function.UnaryOperator;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class ParkourPlugin extends JavaPlugin {
 	@Getter
@@ -177,6 +179,7 @@ public class ParkourPlugin extends JavaPlugin {
 		setupCommand();
 		setupDatabase();
 		loadGames();
+		loadArmorStands();
 		getServer().getScheduler().scheduleSyncRepeatingTask(this, new KeepAliveTask(this), 20_000, 20_000);
 
 		final long backupFrequency = getConfig().getLong("backup-frequency", 1440L);
@@ -455,30 +458,6 @@ public class ParkourPlugin extends JavaPlugin {
 	}
 
 	/**
-	 * Creates and stores a single invisible invulnerable armor stand assigned to the passed {@link ParkourGame}.
-	 *
-	 * @param parkourGame The game which checkpoint will be assigned to.
-	 * @param location The target location where the armor stand will appear.
-	 * @param text The indicator (armor stand name) text.
-	 */
-	public void createArmorStand(@NotNull final ParkourGame parkourGame, @NotNull final Location location,
-								 @NotNull final String text) {
-		final World world = location.getWorld();
-		if (world == null) {
-			return;
-		}
-		final ArmorStand armorStand = (ArmorStand) world.spawnEntity(location, EntityType.ARMOR_STAND);
-		armorStand.setGravity(false);
-		armorStand.setCustomName(text);
-		armorStand.setCustomNameVisible(true);
-		armorStand.setVisible(false);
-		armorStand.addEquipmentLock(EquipmentSlot.CHEST, ArmorStand.LockType.ADDING_OR_CHANGING);
-		armorStand.getPersistentDataContainer()
-				.set(new NamespacedKey(this, Constants.PARKOUR), PersistentDataType.STRING, parkourGame.getName());
-		indicators.add(armorStand);
-	}
-
-	/**
 	 * Moves the found armor stand to the new location.
 	 *
 	 * @param parkourGame The owning game which armor stand should be moved.
@@ -614,6 +593,30 @@ public class ParkourPlugin extends JavaPlugin {
 		generate();
 	}
 
+	/**
+	 * Creates and stores a single invisible, invulnerable armor stand assigned to the passed {@link ParkourGame}.
+	 *
+	 * @param parkourGame The game to which the armor stand will be assigned.
+	 * @param location The target location where the armor stand will appear.
+	 * @param text The indicator (armor stand's name) text.
+	 */
+	private void createArmorStand(@NotNull final ParkourGame parkourGame, @NotNull final Location location,
+								  @NotNull final String text) {
+		final World world = location.getWorld();
+		if (world == null) {
+			return;
+		}
+		final ArmorStand armorStand = (ArmorStand) world.spawnEntity(location, EntityType.ARMOR_STAND);
+		armorStand.setGravity(false);
+		armorStand.setCustomName(text);
+		armorStand.setCustomNameVisible(true);
+		armorStand.setVisible(false);
+		armorStand.addEquipmentLock(EquipmentSlot.CHEST, ArmorStand.LockType.ADDING_OR_CHANGING);
+		armorStand.getPersistentDataContainer()
+				.set(new NamespacedKey(this, Constants.PARKOUR), PersistentDataType.STRING, parkourGame.getName());
+		indicators.add(armorStand);
+	}
+
 	@NotNull
 	private ItemStack createItem(@NotNull final String path) {
 		final ConfigurationSection section = inventory.getConfigurationSection(String.join(".", "game", path));
@@ -649,8 +652,9 @@ public class ParkourPlugin extends JavaPlugin {
 		command.addEnumMapper(MedalSetupOption.class);
 		command.addEnumMapper(SimpleLever.class);
 
-		command.addTypeCompleter(ParkourGame.class, () -> parkourManager.getAllGames().stream()
+		command.addTypeCompleter(ParkourGame.class, (sender, strings) -> parkourManager.getAllGames().stream()
 				.map(ParkourGame::getName)
+				.filter(name -> name.contains(new ArrayList<>(strings).get(strings.size() - 1)))
 				.toList());
 
 		command.addEnumCompleter(SimpleLever.class);
@@ -663,6 +667,53 @@ public class ParkourPlugin extends JavaPlugin {
 		command.addTypeCompleter(boolean.class, Arrays.asList(Boolean.FALSE.toString(), Boolean.TRUE.toString()));
 		command.addEnumCompleter(MedalSetupOption.class);
 		command.addEnumCompleter(DyeColor.class);
+
+		command.addArgumentCompleter("wallIndex", (sender, strings) -> {
+			final ArrayList<String> arrayList = new ArrayList<>(strings);
+			return getWallIndices(arrayList.get(strings.size() - 2))
+					.filter(index -> {
+						final String lastArgument = arrayList.get(strings.size() - 1);
+						return lastArgument.equals("") || lastArgument.startsWith(index);
+					})
+					.toList();
+		});
+		command.addArgumentCompleter("checkpointIndex", (sender, strings) -> {
+			final ArrayList<String> arrayList = new ArrayList<>(strings);
+			return getCheckpointIndices(arrayList.get(strings.size() - 2))
+					.filter(index -> {
+						final String lastArgument = arrayList.get(strings.size() - 1);
+						return lastArgument.equals("") || lastArgument.startsWith(index);
+					})
+					.toList();
+		});
+	}
+
+	@NotNull
+	private Stream<String> getCheckpointIndices(@NotNull final String name) {
+		return Optional.ofNullable(parkourManager.getParkour(name))
+				.map(ParkourGame::getCheckpoints)
+				.map(List::size)
+				.map(this::getIndices)
+				.stream()
+				.flatMap(Collection::stream);
+	}
+
+	@NotNull
+	private Stream<String> getWallIndices(@NotNull final String name) {
+		return Optional.ofNullable(parkourManager.getParkour(name))
+				.map(ParkourGame::getWalls)
+				.map(List::size)
+				.map(this::getIndices)
+				.stream()
+				.flatMap(Collection::stream);
+	}
+
+	@NotNull
+	private List<String> getIndices(final int limit) {
+		return Stream.iterate(0, i -> i + 1)
+				.limit(limit)
+				.map(String::valueOf)
+				.toList();
 	}
 
 	@Nullable
@@ -760,6 +811,17 @@ public class ParkourPlugin extends JavaPlugin {
 		}
 	}
 
+	private void loadArmorStands() {
+		getServer().getWorlds().stream()
+				.map(World::getEntities)
+				.flatMap(Collection::stream)
+				.filter(entity -> entity.getType().equals(EntityType.ARMOR_STAND))
+				.map(ArmorStand.class::cast)
+				.filter(armorStand -> armorStand.getPersistentDataContainer()
+						.has(new NamespacedKey(this, Constants.PARKOUR), PersistentDataType.STRING))
+				.forEach(indicators::add);
+	}
+
 	private void generate() {
 		helpDescription.put("help|?", msg(M.List.HELP.helpMessage));
 		helpDescription.put("lobby", msg(M.General.LOBBY.helpMessage));
@@ -772,8 +834,10 @@ public class ParkourPlugin extends JavaPlugin {
 		helpDescription.put("stop", msg(M.Executive.STOP.helpMessage));
 		helpDescription.put("addCheckpoint", msg(M.Region.Checkpoint.ADD.helpMessage));
 		helpDescription.put("setCheckpoint", msg(M.Region.Checkpoint.SET.helpMessage));
+		helpDescription.put("delCheckpoint", msg(M.Region.Checkpoint.DEL.helpMessage));
 		helpDescription.put("addWall", msg(M.Region.Wall.ADD.helpMessage));
 		helpDescription.put("setWall", msg(M.Region.Wall.SET.helpMessage));
+		helpDescription.put("delWall", msg(M.Region.Wall.DEL.helpMessage));
 		helpDescription.put("list|ls", msg(M.List.GAMES.helpMessage));
 		helpDescription.put("ignore|i", msg(M.General.IGNORE.helpMessage));
 		helpDescription.put("sprintForced", msg(M.Option.SPRINT_FORCED.helpMessage));

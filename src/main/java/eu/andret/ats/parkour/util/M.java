@@ -21,6 +21,7 @@ public class M {
 	private static final String COLOR = "color";
 	private static final String CREATE = "create";
 	private static final String DAMAGE_ALLOWED = "damage-allowed";
+	private static final String DEL = "del";
 	private static final String DIFFICULTY = "difficulty";
 	private static final String DISPLAY_NAME = "display-name";
 	private static final String EFFECT = "effect";
@@ -199,6 +200,7 @@ public class M {
 		public static final class Checkpoint extends Section {
 			public static final Checkpoint ADD = new Checkpoint(M.ADD);
 			public static final Checkpoint SET = new Checkpoint(M.SET);
+			public static final Checkpoint DEL = new Checkpoint(M.DEL);
 
 			public final Message helpMessage = new Message(this, HELP);
 			public final Message success = new Message(this, SUCCESS);
@@ -211,6 +213,7 @@ public class M {
 		public static final class Wall extends Section {
 			public static final Wall ADD = new Wall(M.ADD);
 			public static final Wall SET = new Wall(M.SET);
+			public static final Wall DEL = new Wall(M.DEL);
 
 			public final Message helpMessage = new Message(this, HELP);
 			public final Message success = new Message(this, SUCCESS);

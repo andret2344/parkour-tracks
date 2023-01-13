@@ -12,6 +12,7 @@ import com.sk89q.worldedit.regions.Region;
 import eu.andret.arguments.AnnotatedCommandExecutor;
 import eu.andret.arguments.api.annotation.Argument;
 import eu.andret.arguments.api.annotation.BaseCommand;
+import eu.andret.arguments.api.annotation.Completer;
 import eu.andret.arguments.api.annotation.TypeFallback;
 import eu.andret.arguments.api.entity.ExecutorType;
 import eu.andret.ats.parkour.entity.MedalRequirement;
@@ -256,6 +257,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (parkourGame.isRunning() && plugin.isEditLockActive()) {
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
+		plugin.hideCheckpoints(parkourGame);
 		plugin.getParkourManager().removeParkour(parkourGame);
 		return plugin.msg(M.Executive.REMOVE.success)
 				.replace(Constants.NAME, parkourGame.getName())
@@ -362,16 +364,17 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 			executeTutorial(player, 6, false);
 		}
 		final Location location = player.getLocation();
-		parkourGame.getCheckpoints().add(new Checkpoint(region, location));
 		final String sizeString = String.valueOf(parkourGame.getCheckpoints().size());
-		plugin.createArmorStand(parkourGame, location, sizeString);
+		plugin.hideCheckpoints(parkourGame);
+		parkourGame.getCheckpoints().add(new Checkpoint(region, location));
+		plugin.showCheckpoints(parkourGame);
 		return plugin.msg(M.Region.Checkpoint.ADD.success)
 				.replace(Constants.INDEX, sizeString);
 	}
 
 	@NotNull
 	@Argument(permission = "ats.parkour.setCheckpoint", description = "Sets specified parkour game checkpoint", executorType = ExecutorType.PLAYER)
-	public String setCheckpoint(@NotNull final ParkourGame parkourGame, final int index) {
+	public String setCheckpoint(@NotNull final ParkourGame parkourGame, @Completer("checkpointIndex") final int index) {
 		if (parkourGame.isRunning() && plugin.isEditLockActive()) {
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
@@ -380,10 +383,10 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (region == null) {
 			return plugin.msg(M.Error.DEFAULT.invalidSelection);
 		}
-		if (index <= 0) {
+		if (index < 0) {
 			return plugin.msg(M.Error.DEFAULT.negativeNumber);
 		}
-		if (index > parkourGame.getCheckpoints().size()) {
+		if (index >= parkourGame.getCheckpoints().size()) {
 			return plugin.msg(M.Error.DEFAULT.tooLargeNumber);
 		}
 		final Location location = player.getLocation();
@@ -393,6 +396,27 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		executeTutorial(player, 6, false);
 		return plugin.msg(M.Region.Checkpoint.SET.success)
 				.replace(Constants.INDEX, stringIndex);
+	}
+
+	@NotNull
+	@Argument(permission = "ats.parkour.delCheckpoint", description = "Deletes a checkpoint from parkour game")
+	public String delCheckpoint(@NotNull final ParkourGame parkourGame, @Completer("checkpointIndex") final int index) {
+		if (parkourGame.isRunning() && plugin.isEditLockActive()) {
+			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
+		}
+		if (index < 0) {
+			return plugin.msg(M.Error.DEFAULT.negativeNumber);
+		}
+		final List<Checkpoint> checkpoints = parkourGame.getCheckpoints();
+		if (index >= checkpoints.size()) {
+			return plugin.msg(M.Error.DEFAULT.tooLargeNumber);
+		}
+		plugin.hideCheckpoints(parkourGame);
+		checkpoints.remove(index);
+		plugin.showCheckpoints(parkourGame);
+		final String indexString = String.valueOf(index);
+		return plugin.msg(M.Region.Checkpoint.DEL.success)
+				.replace(Constants.INDEX, indexString);
 	}
 
 	@NotNull
@@ -414,7 +438,7 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 
 	@NotNull
 	@Argument(permission = "ats.parkour.setWall", description = "Sets specified parkour game wall", executorType = ExecutorType.PLAYER)
-	public String setWall(@NotNull final ParkourGame parkourGame, final int index) {
+	public String setWall(@NotNull final ParkourGame parkourGame, @Completer("wallIndex") final int index) {
 		if (parkourGame.isRunning() && plugin.isEditLockActive()) {
 			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
 		}
@@ -423,16 +447,35 @@ public final class ParkourCommand extends AnnotatedCommandExecutor<ParkourPlugin
 		if (region == null) {
 			return plugin.msg(M.Error.DEFAULT.invalidSelection);
 		}
-		if (index <= 0) {
+		if (index < 0) {
 			return plugin.msg(M.Error.DEFAULT.negativeNumber);
 		}
-		if (index > parkourGame.getWalls().size()) {
+		if (index >= parkourGame.getWalls().size()) {
 			return plugin.msg(M.Error.DEFAULT.tooLargeNumber);
 		}
 		parkourGame.getWalls().set(index, new Wall(region));
 		executeTutorial(player, 9, false);
 		return plugin.msg(M.Region.Wall.SET.success)
 				.replace(Constants.INDEX, String.valueOf(index));
+	}
+
+	@NotNull
+	@Argument(permission = "ats.parkour.delWall", description = "Deletes a wall from parkour game")
+	public String delWall(@NotNull final ParkourGame parkourGame, @Completer("wallIndex") final int index) {
+		if (parkourGame.isRunning() && plugin.isEditLockActive()) {
+			return plugin.msg(M.Error.DEFAULT.forbiddenModification);
+		}
+		if (index < 0) {
+			return plugin.msg(M.Error.DEFAULT.negativeNumber);
+		}
+		final List<Wall> walls = parkourGame.getWalls();
+		if (index >= walls.size()) {
+			return plugin.msg(M.Error.DEFAULT.tooLargeNumber);
+		}
+		walls.remove(index);
+		final String indexString = String.valueOf(index);
+		return plugin.msg(M.Region.Wall.DEL.success)
+				.replace(Constants.INDEX, indexString);
 	}
 
 	@NotNull
