@@ -3,15 +3,14 @@
  */
 
 plugins {
-	id 'de.jansauer.printcoverage' version '2.0.0'
-	id 'com.github.johnrengelman.shadow' version '7.0.0'
-	id 'kr.entree.spigradle' version '2.4.2'
+	id 'idea'
+	id 'java'
+	id 'jacoco'
+	id 'maven-publish'
+	id 'org.barfuin.gradle.jacocolog' version '3.1.0'
+	id 'com.github.johnrengelman.shadow' version '8.1.1'
+	id 'kr.entree.spigradle' version '2.4.3'
 }
-
-apply plugin: 'idea'
-apply plugin: 'java'
-apply plugin: 'jacoco'
-apply plugin: 'maven-publish'
 
 sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
@@ -114,15 +113,7 @@ spigot {
 
 test {
 	useTestNG()
-	finalizedBy jacocoTestCoverageVerification, printCoverage
-}
-
-jacoco {
-	toolVersion = '0.8.7'
-}
-
-jacocoTestReport {
-	reports.xml.enabled true
+	finalizedBy jacocoTestCoverageVerification, jacocoAggregatedReport
 }
 
 jacocoTestCoverageVerification {
