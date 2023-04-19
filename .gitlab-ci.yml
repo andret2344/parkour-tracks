@@ -21,6 +21,7 @@ build:
   artifacts:
     paths:
       - build/libs/*.jar
+    when: always
   cache:
     <<: *wrapper
     policy: pull
@@ -50,17 +51,6 @@ publish:
     <<: *wrapper
     policy: pull
   allow_failure: true
-
-jar:
-  stage: deploy
-  dependencies:
-    - build
-  artifacts:
-    paths:
-      - build/libs/*.jar
-  cache:
-    <<: *wrapper
-    policy: pull
 
 badges:
   stage: deploy
