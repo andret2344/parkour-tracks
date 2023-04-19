@@ -5,6 +5,9 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/atsParkour.main.iml" filepath="$PROJECT_DIR$/.idea/modules/atsParkour.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/sample/atsParkour.sample.main.iml" filepath="$PROJECT_DIR$/.idea/modules/sample/atsParkour.sample.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/atsParkour.test.iml" filepath="$PROJECT_DIR$/.idea/modules/atsParkour.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/eu.andret.ats.atsParkour.main.iml" filepath="$PROJECT_DIR$/.idea/modules/eu.andret.ats.atsParkour.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/eu.andret.ats.atsParkour.test.iml" filepath="$PROJECT_DIR$/.idea/modules/eu.andret.ats.atsParkour.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/sample/eu.andret.ats.parkour.atsParkour.sample.main.iml" filepath="$PROJECT_DIR$/.idea/modules/sample/eu.andret.ats.parkour.atsParkour.sample.main.iml" />
     </modules>
   </component>
 </project>
