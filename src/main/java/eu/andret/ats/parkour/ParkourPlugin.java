@@ -649,8 +649,9 @@ public class ParkourPlugin extends JavaPlugin {
 						.findAny()
 						.orElse(null),
 				FallbackConstants.ON_NULL);
-		command.addEnumMapper(MedalSetupOption.class);
-		command.addEnumMapper(SimpleLever.class);
+		command.addEnumMapper(ParkourGame.Type.class, FallbackConstants.ON_NULL);
+		command.addEnumMapper(MedalSetupOption.class, FallbackConstants.ON_NULL);
+		command.addEnumMapper(SimpleLever.class, FallbackConstants.ON_NULL);
 
 		command.addTypeCompleter(ParkourGame.class, (sender, strings) -> parkourManager.getAllGames().stream()
 				.map(ParkourGame::getName)
@@ -667,6 +668,7 @@ public class ParkourPlugin extends JavaPlugin {
 		command.addTypeCompleter(boolean.class, Arrays.asList(Boolean.FALSE.toString(), Boolean.TRUE.toString()));
 		command.addEnumCompleter(MedalSetupOption.class);
 		command.addEnumCompleter(DyeColor.class);
+		command.addEnumCompleter(ParkourGame.Type.class);
 
 		command.addArgumentCompleter("wallIndex", (sender, strings) -> {
 			final ArrayList<String> arrayList = new ArrayList<>(strings);

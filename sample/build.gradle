@@ -24,10 +24,12 @@ dependencies {
 	compileOnly rootProject
 	compileOnly group: 'org.projectlombok', name: 'lombok', version: rootProject.lombokVersion
 	compileOnly group: 'org.spigotmc', name: 'spigot-api', version: "${rootProject.spigotVersion}-R0.1-SNAPSHOT"
-	compileOnly group: 'org.jetbrains', name: 'annotations', version: '23.0.0'
+	compileOnly group: 'org.jetbrains', name: 'annotations', version: '24.0.1'
 	implementation group: 'eu.andret', name: 'ats-arguments', version: rootProject.argumentsVersion
 	annotationProcessor group: 'org.projectlombok', name: 'lombok', version: rootProject.lombokVersion
 }
+
+compileJava.dependsOn rootProject.tasks.jar
 
 compileJava.options.compilerArgs << '-parameters' << '-g' << '-Xlint:deprecation' << '-Xlint:unchecked'
 
