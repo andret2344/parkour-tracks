@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2018-2022. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2018. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour.sample;
@@ -51,18 +51,22 @@ public class ParkourPluginSampleCommand extends AnnotatedCommandExecutor<Parkour
 	public String balance(@NotNull final BalanceInteraction interaction, final double amount) {
 		final Player player = (Player) sender;
 		switch (interaction) {
-			case ADD:
+			case ADD -> {
 				plugin.getFinancialProvider().addMoney(player, amount);
 				return "Added " + plugin.getParkourPlugin().formatMoney(amount);
-			case SUB:
+			}
+			case SUB -> {
 				plugin.getFinancialProvider().addMoney(player, -amount);
 				return "Subtracted " + plugin.getParkourPlugin().formatMoney(amount);
-			case SET:
+			}
+			case SET -> {
 				final double targetAmount = Math.max(amount, 0);
 				plugin.getFinancialProvider().getFinances().put(player.getUniqueId(), targetAmount);
 				return "Set balance to " + plugin.getParkourPlugin().formatMoney(targetAmount);
-			default:
+			}
+			default -> {
 				return null;
+			}
 		}
 	}
 }

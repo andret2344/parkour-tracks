@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2018-2022. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2018. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour;
@@ -52,6 +52,7 @@ import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
+import org.bukkit.block.sign.Side;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -775,7 +776,7 @@ public class ParkourPlugin extends JavaPlugin {
 				.ifPresent(sign -> {
 					IntStream.of(0, 1, 2, 3).forEach(i -> {
 						final String lineText = getConfig().getString("recordSign.line" + (i + 1));
-						sign.setLine(i, ChatColor.translateAlternateColorCodes('&', replaceFunction.apply(lineText)));
+						sign.getSide(Side.FRONT).setLine(i, ChatColor.translateAlternateColorCodes('&', replaceFunction.apply(lineText)));
 					});
 					sign.update();
 				});

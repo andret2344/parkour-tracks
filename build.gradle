@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2018-2022. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2018. Copying and modifying allowed only keeping git link reference.
  */
 
 plugins {
@@ -24,23 +24,23 @@ repositories {
 }
 
 dependencies {
-	compileOnly group: 'com.google.code.gson', name: 'gson', version: '2.9.0'
+	implementation group: 'com.google.code.gson', name: 'gson', version: '2.10.1'
 	compileOnly group: 'com.sk89q.worldedit', name: 'worldedit-bukkit', version: '7.2.9'
-	compileOnly group: 'org.jetbrains', name: 'annotations', version: '23.0.0'
+	compileOnly group: 'org.jetbrains', name: 'annotations', version: '24.0.1'
 	compileOnly group: 'org.projectlombok', name: 'lombok', version: lombokVersion
 	compileOnly group: 'org.spigotmc', name: 'spigot-api', version: "${spigotVersion}-R0.1-SNAPSHOT"
 	implementation group: 'eu.andret', name: 'ats-arguments', version: argumentsVersion
-	implementation group: 'org.bstats', name: 'bstats-bukkit', version: '3.0.0'
+	implementation group: 'org.bstats', name: 'bstats-bukkit', version: '3.0.2'
 	annotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
 
-	testCompileOnly group: 'org.jetbrains', name: 'annotations', version: '23.0.0'
+	testCompileOnly group: 'org.jetbrains', name: 'annotations', version: '24.0.1'
 	testCompileOnly group: 'org.projectlombok', name: 'lombok', version: lombokVersion
 	testImplementation group: 'com.sk89q.worldedit', name: 'worldedit-bukkit', version: '7.2.9'
-	testImplementation group: 'org.assertj', name: 'assertj-core', version: '3.23.1'
-	testImplementation group: 'org.mockito', name: 'mockito-core', version: '4.8.1'
-	testImplementation group: 'org.mockito', name: 'mockito-inline', version: '4.8.1'
+	testImplementation group: 'org.assertj', name: 'assertj-core', version: '3.24.2'
+	testImplementation group: 'org.mockito', name: 'mockito-core', version: '5.3.1'
+	testImplementation group: 'org.mockito', name: 'mockito-inline', version: '5.2.0'
 	testImplementation group: 'org.spigotmc', name: 'spigot-api', version: "${spigotVersion}-R0.1-SNAPSHOT"
-	testImplementation group: 'org.testng', name: 'testng', version: '7.6.1'
+	testImplementation group: 'org.testng', name: 'testng', version: '7.8.0'
 	testAnnotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
 }
 
@@ -179,8 +179,6 @@ shadowJar {
 	archiveFileName = "${project.name}-${project.version}.jar"
 	relocate 'eu.andret.arguments', 'eu.andret.ats.parkour.arguments'
 	relocate 'org.bstats', 'eu.andret.ats.parkour.bstats'
-	project.configurations.implementation.canBeResolved = true
-	configurations = [project.configurations.implementation]
 }
 
 build.dependsOn(shadowJar)

@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2018-2022. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2018. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour.util;
@@ -56,7 +56,6 @@ public class M {
 	private static final String MODIFY_INVENTORY = "modify-inventory";
 	private static final String NEGATIVE_NUMBER = "negative-number";
 	private static final String NOT_BLOCK = "not-block";
-	private static final String NOT_CONNECTED = "not-connected";
 	private static final String NOT_SIGN = "not-sign";
 	private static final String NO_ECONOMY = "no-economy";
 	private static final String NO_LOBBY = "no-lobby";
@@ -266,7 +265,6 @@ public class M {
 		public final Message noLobby = new Message(this, NO_LOBBY, true);
 		public final Message noMedal = new Message(this, NO_MEDAL, true);
 		public final Message notBlock = new Message(this, NOT_BLOCK, true);
-		public final Message notConnected = new Message(this, NOT_CONNECTED, true);
 		public final Message notSign = new Message(this, NOT_SIGN, true);
 		public final Message tooLargeNumber = new Message(this, TOO_LARGE_NUMBER, true);
 

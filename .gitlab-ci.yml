@@ -1,12 +1,6 @@
 image: gradle:8-jdk17-alpine
 
-cache: &wrapper
-  paths:
-    - .gradle/wrapper
-    - .gradle/caches
-
 before_script:
-  - export GRADLE_USER_HOME=`pwd`/.gradle
   - chmod a+x gradlew
 
 stages:
@@ -22,9 +16,6 @@ build:
     paths:
       - build/libs/*.jar
     when: always
-  cache:
-    <<: *wrapper
-    policy: pull
 
 testng:
   stage: verify
@@ -35,21 +26,15 @@ testng:
   artifacts:
     reports:
       junit: build/test-results/test/**.xml
-  cache:
-    <<: *wrapper
-    policy: pull
 
 publish:
   stage: deploy
   script:
     - ./gradlew clean publish
   rules:
-    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
       when: manual
     - when: never
-  cache:
-    <<: *wrapper
-    policy: pull
   allow_failure: true
 
 badges:
@@ -68,6 +53,6 @@ badges:
       - arguments.svg
     expire_in: 4 weeks
   rules:
-    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
       when: manual
     - when: never
