@@ -24,7 +24,7 @@ repositories {
 }
 
 dependencies {
-	implementation group: 'com.google.code.gson', name: 'gson', version: '2.10.1'
+	compileOnly group: 'com.google.code.gson', name: 'gson', version: '2.10.1'
 	compileOnly group: 'com.sk89q.worldedit', name: 'worldedit-bukkit', version: '7.2.9'
 	compileOnly group: 'org.jetbrains', name: 'annotations', version: '24.0.1'
 	compileOnly group: 'org.projectlombok', name: 'lombok', version: lombokVersion
