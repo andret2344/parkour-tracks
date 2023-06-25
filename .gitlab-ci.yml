@@ -8,34 +8,45 @@ stages:
   - verify
   - deploy
 
-build:
+compile:
   stage: build
   script:
-    - ./gradlew jar
+    - ./gradlew assemble
   artifacts:
     paths:
+      - build/classes/**
       - build/libs/*.jar
-    when: always
 
-testng:
+unit:
   stage: verify
+  dependencies:
+    - compile
   script:
     - ./gradlew test
   coverage: '/    - Instruction Coverage: ([0-9.]+)%/'
-  when: on_success
   artifacts:
     reports:
       junit: build/test-results/test/**.xml
+    paths:
+      - build/reports/jacoco/jacocoAggregatedReport/html/
 
 publish:
   stage: deploy
   script:
-    - ./gradlew clean publish
+    - ./gradlew publish
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
       when: manual
     - when: never
-  allow_failure: true
+
+jar:
+  stage: deploy
+  script:
+    - ./gradlew build
+  artifacts:
+    paths:
+      - build/libs/*.jar
+  when: manual
 
 badges:
   stage: deploy
@@ -48,7 +59,6 @@ badges:
     - anybadge -l atsArguments -v "$(./gradlew argumentsVersion -q)" -f arguments.svg -c "#007ec6"
   artifacts:
     paths:
-      - version.svg
       - spigot.svg
       - arguments.svg
     expire_in: 4 weeks
@@ -56,3 +66,16 @@ badges:
     - if: '$CI_COMMIT_BRANCH == "main"'
       when: manual
     - when: never
+
+pages:
+  stage: deploy
+  dependencies:
+    - unit
+  script:
+    - mv build/reports/jacoco/jacocoAggregatedReport/html/ public/
+  artifacts:
+    paths:
+      - public/**
+  only:
+    - main
+  when: manual
