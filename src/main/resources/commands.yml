@@ -197,6 +197,5 @@ error:
   no-lobby: '&cNo lobby has been set.'
   no-medal: '&cThere is no such a medal. Choose one of: %MEDALS%.'
   not-block: '&cYou have to target the correct block.'
-  not-connected: '&cThe database connection is not established, did nothing.'
   not-sign: '&cThis block is not a sign.'
   too-large-number: '&cNumber is too large.'

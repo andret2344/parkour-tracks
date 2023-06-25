@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2018-2022. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret (c) 2018. Copying and modifying allowed only keeping git link reference.
  */
 
 plugins {
@@ -52,8 +52,6 @@ spigot {
 shadowJar {
 	archiveFileName = "${project.name}-${project.version}.jar"
 	relocate 'eu.andret.arguments', 'eu.andret.ats.parkour.sample.arguments'
-	project.configurations.implementation.canBeResolved = true
-	configurations = [project.configurations.implementation]
 }
 
 build.dependsOn(shadowJar)
