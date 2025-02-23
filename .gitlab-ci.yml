@@ -48,25 +48,6 @@ jar:
       - build/libs/*.jar
   when: manual
 
-badges:
-  stage: deploy
-  script:
-    - apt-get -qq update
-    - apt-get -qq install python3 python3-pip --yes
-    - pip3 install anybadge
-    - ./gradlew build -q
-    - anybadge -l spigot -v "$(./gradlew spigotVersion -q)" -f spigot.svg -c "#007ec6"
-    - anybadge -l atsArguments -v "$(./gradlew argumentsVersion -q)" -f arguments.svg -c "#007ec6"
-  artifacts:
-    paths:
-      - spigot.svg
-      - arguments.svg
-    expire_in: 4 weeks
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
-      when: manual
-    - when: never
-
 pages:
   stage: deploy
   dependencies:

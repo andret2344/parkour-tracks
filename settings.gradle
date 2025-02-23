@@ -1,6 +1,0 @@
-/*
- * Copyright Andret (c) 2018. Copying and modifying allowed only keeping git link reference.
- */
-
-rootProject.name = 'atsParkour'
-include 'sample'

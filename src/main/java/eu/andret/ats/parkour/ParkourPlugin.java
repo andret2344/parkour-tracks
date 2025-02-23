@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2018. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret Tools System (c) 2025. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour;
@@ -244,7 +244,6 @@ public class ParkourPlugin extends JavaPlugin {
 
 	/**
 	 * @param path The YML path to message from messages.yml file
-	 *
 	 * @return The colored message or empty string if invalid path provided.
 	 */
 	@NotNull
@@ -257,7 +256,6 @@ public class ParkourPlugin extends JavaPlugin {
 
 	/**
 	 * @param message The message key to lookup in commands.yml file.
-	 *
 	 * @return The colored message.
 	 */
 	@NotNull
@@ -271,7 +269,6 @@ public class ParkourPlugin extends JavaPlugin {
 
 	/**
 	 * @param name The name of the misc config value to read from the commands.yml file.
-	 *
 	 * @return The colored text.
 	 */
 	@NotNull
@@ -301,7 +298,6 @@ public class ParkourPlugin extends JavaPlugin {
 
 	/**
 	 * @param eventSound The event that may produce sound to its executor player.
-	 *
 	 * @return The {@link Optional} wrapper of matching {@link Sound} found in config.yml.
 	 */
 	@NotNull
@@ -364,7 +360,6 @@ public class ParkourPlugin extends JavaPlugin {
 
 	/**
 	 * @param time Time in milliseconds.
-	 *
 	 * @return The time formatted to 12:34.56 (12 minutes, 34 seconds, 56 millis).
 	 */
 	@NotNull
@@ -379,7 +374,6 @@ public class ParkourPlugin extends JavaPlugin {
 	 * Formats the given amount to configured format.
 	 *
 	 * @param money The money to be formatted.
-	 *
 	 * @return The String representation of formatted amount.
 	 */
 	@NotNull
@@ -391,7 +385,6 @@ public class ParkourPlugin extends JavaPlugin {
 	 * Formats the given coord to {@code "%.2f"} format.
 	 *
 	 * @param coord The coord to be formatted.
-	 *
 	 * @return The String representation of formatted coord.
 	 */
 	@NotNull
@@ -403,7 +396,6 @@ public class ParkourPlugin extends JavaPlugin {
 	 * Formats all the medals' display names and joins them with the given separator.
 	 *
 	 * @param separator The separator to join medals' display names.
-	 *
 	 * @return The String representation of all the medals' display names joined with the separator.
 	 */
 	@NotNull
@@ -415,7 +407,7 @@ public class ParkourPlugin extends JavaPlugin {
 
 	/**
 	 * @return The {@link MedalRequirement} read from config.yml. {@link MedalRequirement#ALL} if invalid or no value
-	 * 		present.
+	 * present.
 	 */
 	@NotNull
 	public MedalRequirement getMedalRequirement() {
@@ -462,8 +454,8 @@ public class ParkourPlugin extends JavaPlugin {
 	 * Moves the found armor stand to the new location.
 	 *
 	 * @param parkourGame The owning game which armor stand should be moved.
-	 * @param location The new location of the armor stand.
-	 * @param text Current armor stand name to precisely select the correct one.
+	 * @param location    The new location of the armor stand.
+	 * @param text        Current armor stand name to precisely select the correct one.
 	 */
 	public void moveArmorStand(@NotNull final ParkourGame parkourGame, @NotNull final Location location,
 							   @NotNull final String text) {
@@ -480,9 +472,7 @@ public class ParkourPlugin extends JavaPlugin {
 	 * Loads the resource using the built-in class loader from {@link JavaPlugin#getClassLoader()}.
 	 *
 	 * @param filename The name of the resource file to be opened and read.
-	 *
 	 * @return The String content of opened resource file.
-	 *
 	 * @throws IOException If anything with the file went wrong.
 	 */
 	@NotNull
@@ -499,7 +489,7 @@ public class ParkourPlugin extends JavaPlugin {
 	 * Creates the Scoreboard for the player and the game and adds it to the player.
 	 *
 	 * @param parkourPlayer The player which data should appear on the scoreboard and who will see the scoreboard.
-	 * @param parkourGame The game the player is in.
+	 * @param parkourGame   The game the player is in.
 	 */
 	public void generateScoreboard(@NotNull final ParkourPlayer parkourPlayer, @NotNull final ParkourGame parkourGame) {
 		final Runnable task = new FetchParkourPlayerScoreTask(this, parkourGame, parkourPlayer, result -> {
@@ -598,8 +588,8 @@ public class ParkourPlugin extends JavaPlugin {
 	 * Creates and stores a single invisible, invulnerable armor stand assigned to the passed {@link ParkourGame}.
 	 *
 	 * @param parkourGame The game to which the armor stand will be assigned.
-	 * @param location The target location where the armor stand will appear.
-	 * @param text The indicator (armor stand's name) text.
+	 * @param location    The target location where the armor stand will appear.
+	 * @param text        The indicator (armor stand's name) text.
 	 */
 	private void createArmorStand(@NotNull final ParkourGame parkourGame, @NotNull final Location location,
 								  @NotNull final String text) {

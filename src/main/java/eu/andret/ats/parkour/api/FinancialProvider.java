@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2018. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret Tools System (c) 2025. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour.api;
@@ -20,7 +20,6 @@ public interface FinancialProvider {
 	 *
 	 * @param player The player whom balance should be modified.
 	 * @param amount The amount to add, pass negative value to subtract.
-	 *
 	 * @return {@code true} if addition or subtraction was successful, {@code false} otherwise.
 	 */
 	boolean addMoney(@NotNull OfflinePlayer player, double amount);
@@ -29,7 +28,6 @@ public interface FinancialProvider {
 	 * The method to get current player's balance.
 	 *
 	 * @param player The player whom balance is to be checked.
-	 *
 	 * @return The current balance of the passed player.
 	 */
 	double getMoney(@NotNull OfflinePlayer player);

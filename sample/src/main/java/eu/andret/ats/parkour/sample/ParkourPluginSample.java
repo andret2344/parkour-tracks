@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2018. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret Tools System (c) 2025. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour.sample;
@@ -9,13 +9,11 @@ import eu.andret.arguments.CommandManager;
 import eu.andret.ats.parkour.ParkourPlugin;
 import eu.andret.ats.parkour.sample.provider.SampleFinancialProvider;
 import eu.andret.ats.parkour.sample.provider.SampleRankProvider;
-import lombok.Getter;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-@Getter
 public class ParkourPluginSample extends JavaPlugin {
 	@NotNull
 	SampleFinancialProvider financialProvider = new SampleFinancialProvider();
@@ -36,5 +34,15 @@ public class ParkourPluginSample extends JavaPlugin {
 	@NotNull
 	ParkourPlugin getParkourPlugin() {
 		return getPlugin(ParkourPlugin.class);
+	}
+
+	@NotNull
+	public SampleFinancialProvider getFinancialProvider() {
+		return financialProvider;
+	}
+
+	@NotNull
+	public SampleRankProvider getRankProvider() {
+		return rankProvider;
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2018. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret Tools System (c) 2025. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour;
@@ -113,7 +113,7 @@ public class ParkourListeners implements Listener {
 			return;
 		}
 		player.setFoodLevel(20);
-		Optional.ofNullable(player.getAttribute(Attribute.GENERIC_MAX_HEALTH))
+		Optional.ofNullable(player.getAttribute(Attribute.MAX_HEALTH))
 				.map(AttributeInstance::getValue)
 				.ifPresent(player::setHealth);
 		player.setExhaustion(0);
@@ -265,7 +265,7 @@ public class ParkourListeners implements Listener {
 		if (location.getWorld() == null) {
 			return;
 		}
-		final Boat boat = (Boat) location.getWorld().spawnEntity(location, EntityType.BOAT);
+		final Boat boat = (Boat) location.getWorld().spawnEntity(location, EntityType.OAK_BOAT);
 		boat.addPassenger(event.getPlayer().getPlayer());
 	}
 

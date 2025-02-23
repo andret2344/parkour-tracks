@@ -1,20 +1,23 @@
 /dataSources/
-/libraries/
+/httpRequests/
 /modules/
 /shelf/
 /sonarlint/
 
 /atsParkour.iml
-/codestream.xml
 /compiler.xml
 /dataSources.local.xml
 /dataSources.xml
 /discord.xml
+/git_toolbox_blame.xml
+/git_toolbox_prj.xml
 /gradle.xml
 /intellij-javadocs-4.0.1.xml
 /jarRepositories.xml
 /jpa-buddy.xml
 /libraries-with-intellij-classes.xml
+/misc.xml
+/modules.xml
 /sqldialects.xml
 /uiDesigner.xml
 /workspace.xml

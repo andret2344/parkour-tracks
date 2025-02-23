@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2018. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret Tools System (c) 2025. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour.api;
@@ -20,7 +20,6 @@ public interface RankProvider {
 	 * rank.
 	 *
 	 * @param player The player to test whether he has a VIP rank.
-	 *
 	 * @return {@code true} if player should be allowed to VIP-only parkours, {@code false} otherwise.
 	 */
 	boolean isVip(@NotNull OfflinePlayer player);

@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2018. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret Tools System (c) 2025. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour.util;
@@ -24,9 +24,9 @@ public final class Data {
 	@NotNull
 	public static final List<PotionEffectType> ALLOWED_EFFECTS = List.of(
 			PotionEffectType.SPEED,
-			PotionEffectType.SLOW,
-			PotionEffectType.JUMP,
-			PotionEffectType.CONFUSION,
+			PotionEffectType.SLOWNESS,
+			PotionEffectType.JUMP_BOOST,
+			PotionEffectType.NAUSEA,
 			PotionEffectType.FIRE_RESISTANCE,
 			PotionEffectType.WATER_BREATHING,
 			PotionEffectType.INVISIBILITY,

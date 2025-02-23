@@ -1,5 +1,5 @@
 /*
- * Copyright Andret (c) 2018. Copying and modifying allowed only keeping git link reference.
+ * Copyright Andret Tools System (c) 2025. Copying and modifying allowed only keeping git link reference.
  */
 
 package eu.andret.ats.parkour.event.player;
@@ -21,7 +21,7 @@ public class PlayerCompleteParkourEvent extends AbstractParkourPlayerEvent {
 	/**
 	 * Constructor.
 	 *
-	 * @param game The game that player is in.
+	 * @param game   The game that player is in.
 	 * @param player The player that triggers the event.
 	 */
 	public PlayerCompleteParkourEvent(@NotNull final ParkourGame game, @NotNull final ParkourPlayer player) {
