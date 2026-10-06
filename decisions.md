@@ -344,6 +344,17 @@ Details `decisions.md` did not settle, chosen while coding. Review them; anythin
   medal, the five biggest recipients) and a four-digit code; `/ptracks reconcile <track> <code>` pays them, within a
   minute (1200 ticks), for the same sender, and only if exactly the same payments are still owed. Every payment and
   every failure is logged.
+- The "block or sign" that opens the menu and the teleport block are signs: `[ptmenu]` opens the menu, `[ptjoin]`
+  with a track name on the second line enters that track (confirming a fee first, like the menu). Writing them needs
+  `parkourtracks.edit`; what a sign does lives in its PDC (`parkourtracks:sign`), and right-clicking it uses it
+  instead of opening the sign editor. Their lines are rendered when written.
+- The menu game item (slot 4, compass) is the fifth game item. Choosing another track from a game switches to it.
+- With only one category holding running tracks the menu opens it right away. Categories follow the order of the
+  types (server, training, players). Tracks are sorted by difficulty, then name; a page holds 45, with previous,
+  back and next in the bottom row. Completed tracks glow. The default category icons are a nether star (server), a
+  player head (players) and leather boots (training).
+- The track lore is one message, `menu-track-lore`, its lines separated by `<br>`; tracks by players get the
+  `menu-track-authors` line too.
 
 ## Open questions
 

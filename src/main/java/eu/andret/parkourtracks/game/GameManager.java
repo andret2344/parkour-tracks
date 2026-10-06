@@ -104,6 +104,7 @@ public final class GameManager {
 		switch (item) {
 			case BACK -> goBack(player, session);
 			case RESTART -> restart(player, session);
+			case MENU -> plugin.getMenus().open(player);
 			case HIDE -> toggleHiding(player, session);
 			case EXIT -> leave(player, LeaveReason.EXIT);
 		}

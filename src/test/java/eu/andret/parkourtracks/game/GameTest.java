@@ -1,11 +1,8 @@
 package eu.andret.parkourtracks.game;
 
 import eu.andret.parkourtracks.helper.PluginTest;
-import eu.andret.parkourtracks.track.Checkpoint;
-import eu.andret.parkourtracks.track.Cuboid;
-import eu.andret.parkourtracks.track.Spot;
+import eu.andret.parkourtracks.helper.TestTracks;
 import eu.andret.parkourtracks.track.Track;
-import eu.andret.parkourtracks.track.WorldSpot;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.jetbrains.annotations.NotNull;
@@ -13,28 +10,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
 /**
- * A running track along the x axis, at y 1 to 3 and z 1 to 3:
- * <pre>
- * spawn x 1-3 | checkpoint 1 x 8 | checkpoint 2 x 12 | finish x 17-19, a wall at y 0 under all of it
- * </pre>
- * The region is 0,0,0 - 20,20,20 in {@code world}; the lobby is at 100, 64, 100.
+ * Games on {@link TestTracks#tower}.
  */
 abstract class GameTest extends PluginTest {
 	protected Track track;
 
 	@BeforeEach
 	void setUpTrack() {
-		// New players appear at the world spawn, which must not be on the track
-		world.setSpawnLocation(50, 1, 2);
-		track = plugin.getTrackRegistry().create("tower", "world", new Cuboid(0, 0, 0, 20, 20, 20));
-		track.setSpawn(new Checkpoint(new Cuboid(1, 1, 1, 3, 3, 3), new Spot(2.5, 1, 2.5, 0, 0)));
-		track.addCheckpoint(0, new Checkpoint(new Cuboid(8, 1, 1, 8, 3, 3), new Spot(8.5, 1, 2.5, 0, 0)));
-		track.addCheckpoint(1, new Checkpoint(new Cuboid(12, 1, 1, 12, 3, 3), new Spot(12.5, 1, 2.5, 0, 0)));
-		track.setFinish(new Checkpoint(new Cuboid(17, 1, 1, 19, 3, 3), new Spot(18.5, 1, 2.5, 0, 0)));
-		track.addWall(new Cuboid(0, 0, 0, 20, 0, 20));
-		track.setRunning(true);
-		plugin.getTrackRegistry().setLobby(new WorldSpot("world", new Spot(100, 64, 100, 0, 0)));
-		plugin.getTrackRegistry().save();
+		track = TestTracks.tower(plugin, world);
 	}
 
 	@NotNull

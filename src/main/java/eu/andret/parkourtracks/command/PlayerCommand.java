@@ -48,6 +48,13 @@ public final class PlayerCommand {
 		games.teleport(sender, lobby);
 	}
 
+	@Subcommand("menu")
+	@Description("Opens the track selection menu")
+	@CommandPermission(Permissions.PLAY)
+	public void menu(@NotNull final Player sender) {
+		support.plugin().getMenus().open(sender);
+	}
+
 	@Subcommand("ignore")
 	@Description("Switches ignoring tracks, to walk through them without starting a game")
 	@CommandPermission(Permissions.IGNORE)

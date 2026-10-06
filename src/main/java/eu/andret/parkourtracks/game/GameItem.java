@@ -18,6 +18,10 @@ public enum GameItem {
 	 */
 	RESTART(Message.ITEM_RESTART),
 	/**
+	 * Opens the track selection menu.
+	 */
+	MENU(Message.ITEM_MENU),
+	/**
 	 * Hides the other players of the track, or shows them again.
 	 */
 	HIDE(Message.ITEM_HIDE),

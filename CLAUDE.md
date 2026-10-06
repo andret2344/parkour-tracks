@@ -34,7 +34,8 @@ during implementation and recorded in its "Chosen during implementation" section
 Packages under `eu.andret.parkourtracks`: the root holds the plugin; `config` the content of `config.yml`; `message`
 the texts of `messages.yml`; `track` the track model, its rules and its storage; `selection` WorldEdit selections;
 `command` the Lamp commands; `game` the games played on tracks; `result` the results database and backups;
-`display` the sidebar and the record signs; `economy` money through Vault; `util` formatting helpers. WorldEdit is a hard dependency (`depend` in `plugin.yml`).
+`display` the sidebar and the record signs; `economy` money through Vault; `menu` the track selection menu and the
+signs that open it or enter a track; `util` formatting helpers. WorldEdit is a hard dependency (`depend` in `plugin.yml`).
 
 - `ParkourTracksPlugin` - entry point. `onEnable` saves the default `config.yml` and `messages.yml`, reads both by
   hand (Bukkit's `getConfig()` only logs a broken file and goes on empty), loads the tracks and registers the
@@ -104,6 +105,11 @@ the texts of `messages.yml`; `track` the track model, its rules and its storage;
 - `command/ReconcileCommand` - pays owed medal rewards: the preview stores what it showed with a code; the code pays
   only when the recomputed payments equal it. Callbacks after a database query run outside Lamp, so they send their
   failures instead of throwing `MessageException`.
+- `menu/Menus` - builds the menu windows: categories, pages of tracks (results fetched first, then the window opens
+  on the server thread), the fee confirmation. Each window's holder is a `Menu` mapping slots to actions;
+  `MenuListener` cancels every click and drag in one and runs the action of the clicked top slot. `MenuSigns` makes
+  and handles `[ptmenu]` and `[ptjoin]` signs. Multi-line messages (`menu-track-lore`) are split on `<br>` via
+  `Messages#template`.
 - `track/TrackOption` - every option `/ptracks set` changes: how its value is parsed, checked against the other
   options (`boat` excludes `sprintForced` and `enderPearls`), stored and shown. Problems are `OptionException`s the
   command turns into messages.
@@ -136,8 +142,11 @@ the texts of `messages.yml`; `track` the track model, its rules and its storage;
   and the world is a `TileEntityWorld`, whose chunks implement `getTileEntities` (MockBukkit leaves it
   unimplemented); MockBukkit counts a chunk as loaded only after `Chunk#load`. `admin` adds an operator standing
   somewhere, `tower` a stopped track, `messages` takes the plain text of the messages a player got.
-  `MockBukkit.load` ignores `depend`, so the plugin loads without WorldEdit. Tests of plain logic (`track`, `config`)
-  are plain JUnit tests without a server; Bukkit enums such as `Material` work without one.
+  `MockBukkit.load` ignores `depend`, so the plugin loads without WorldEdit. Tests of plain logic (`track`, `result`)
+  are plain JUnit tests without a server; Bukkit enum constants such as `Material.LADDER` work without one, but
+  anything reaching Paper's registries (`Material#isItem`, potion effect types) needs `MockBukkit.mock()`, and a
+  failed registry load breaks every later test in the same JVM.
+- `helper/TestTracks` builds playable tracks: `tower` (the one `GameTest` uses) and `small`.
 - Game tests extend `game/GameTest`: a running track along x (spawn, two one-block checkpoints, finish, a wall at
   y 0), the lobby set and the world spawn moved off the track (new players appear there). `onSpawn`/`running` give
   players at those stages; `walkTo` moves one block per `simulatePlayerMove`. MockBukkit's `simulatePlayerMove`

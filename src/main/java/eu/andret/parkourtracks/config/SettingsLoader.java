@@ -35,6 +35,7 @@ public final class SettingsLoader {
 	private static final Map<GameItem, GameItemSlot> DEFAULT_GAME_ITEMS = Map.of(
 			GameItem.BACK, new GameItemSlot(GameItem.BACK, 0, Material.SLIME_BALL),
 			GameItem.RESTART, new GameItemSlot(GameItem.RESTART, 1, Material.CLOCK),
+			GameItem.MENU, new GameItemSlot(GameItem.MENU, 4, Material.COMPASS),
 			GameItem.HIDE, new GameItemSlot(GameItem.HIDE, 7, Material.ENDER_EYE),
 			GameItem.EXIT, new GameItemSlot(GameItem.EXIT, 8, Material.RED_BED));
 	@NotNull

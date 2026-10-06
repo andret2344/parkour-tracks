@@ -31,6 +31,10 @@ game-items:
     enabled: true
     slot: 1
     material: clock
+  menu:
+    enabled: true
+    slot: 4
+    material: compass
   hide:
     enabled: true
     slot: 7

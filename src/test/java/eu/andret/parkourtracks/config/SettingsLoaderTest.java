@@ -5,7 +5,10 @@ import org.bukkit.Material;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockbukkit.mockbukkit.MockBukkit;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,6 +21,17 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 
 class SettingsLoaderTest {
+	// Checking that a material is an item reads Paper's registries, which only a mocked server provides
+	@BeforeEach
+	void mockServer() {
+		MockBukkit.mock();
+	}
+
+	@AfterEach
+	void unmockServer() {
+		MockBukkit.unmock();
+	}
+
 	@NotNull
 	static YamlConfiguration yaml(@NotNull final String content) throws InvalidConfigurationException {
 		final YamlConfiguration config = new YamlConfiguration();
@@ -98,8 +112,8 @@ class SettingsLoaderTest {
 		assertThat(settings.sprintGraceTicks()).isEqualTo(5);
 		assertThat(settings.timerDisplay()).isEqualTo(TimerDisplay.ACTION_BAR);
 		assertThat(settings.gameItems()).extracting(GameItemSlot::item, GameItemSlot::slot)
-				.containsExactly(tuple(GameItem.BACK, 0), tuple(GameItem.RESTART, 1), tuple(GameItem.HIDE, 7),
-						tuple(GameItem.EXIT, 8));
+				.containsExactly(tuple(GameItem.BACK, 0), tuple(GameItem.RESTART, 1), tuple(GameItem.MENU, 4),
+						tuple(GameItem.HIDE, 7), tuple(GameItem.EXIT, 8));
 	}
 
 	@Test
@@ -113,7 +127,7 @@ class SettingsLoaderTest {
 				  back:
 				    enabled: false
 				  exit:
-				    slot: 4
+				    slot: 5
 				    material: barrier
 				"""));
 
@@ -122,7 +136,7 @@ class SettingsLoaderTest {
 		assertThat(settings.sprintGraceTicks()).isEqualTo(10);
 		assertThat(settings.timerDisplay()).isEqualTo(TimerDisplay.XP_BAR);
 		assertThat(settings.gameItems()).extracting(GameItemSlot::item).doesNotContain(GameItem.BACK);
-		assertThat(settings.gameItems()).contains(new GameItemSlot(GameItem.EXIT, 4, Material.BARRIER));
+		assertThat(settings.gameItems()).contains(new GameItemSlot(GameItem.EXIT, 5, Material.BARRIER));
 	}
 
 	@Test

@@ -43,6 +43,14 @@ public final class Messages {
 		return new Messages(templates);
 	}
 
+	/**
+	 * The message as written in the file, before any placeholder is filled in.
+	 */
+	@NotNull
+	public String template(@NotNull final Message message) {
+		return templates.get(message);
+	}
+
 	@NotNull
 	public Component get(@NotNull final Message message, @NotNull final TagResolver... resolvers) {
 		return MINI_MESSAGE.deserialize(templates.get(message), resolvers);

@@ -118,7 +118,7 @@ class RecordSignsTest extends PluginTest {
 		final SignChangeEvent ordinary = write(admin, block, "Hello", "tower", "", "");
 
 		// then
-		assertThat(messages(player)).containsExactly("You cannot make record signs.");
+		assertThat(messages(player)).containsExactly("You cannot make ParkourTracks signs.");
 		assertThat(messages(admin)).containsExactly("There is no track named cave.",
 				"The third line is the place in the ranking: 1-1000, or empty for 1.");
 		assertThat(PlainTextComponentSerializer.plainText().serialize(noPermission.line(0))).isEqualTo("[ptracks]");

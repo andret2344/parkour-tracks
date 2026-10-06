@@ -56,7 +56,7 @@ class GameItemTest extends GameTest {
 		writeConfig("""
 				game-items:
 				  exit:
-				    slot: 4
+				    slot: 5
 				    material: barrier
 				  hide:
 				    enabled: false
@@ -67,7 +67,7 @@ class GameItemTest extends GameTest {
 		final PlayerMock player = onSpawn();
 
 		// then
-		assertThat(player.getInventory().getItem(4).getType()).isEqualTo(Material.BARRIER);
+		assertThat(player.getInventory().getItem(5).getType()).isEqualTo(Material.BARRIER);
 		assertThat(player.getInventory().getItem(8)).isNull();
 		assertThat(player.getInventory().contains(Material.ENDER_EYE)).isFalse();
 		assertThat(player.getInventory().getItem(0).getType()).isEqualTo(Material.SLIME_BALL);
