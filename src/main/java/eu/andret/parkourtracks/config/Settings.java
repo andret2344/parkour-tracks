@@ -13,9 +13,13 @@ import java.util.Optional;
  * @param timerDisplay       where the running time is shown
  * @param sprintGraceTicks   how long a player on a sprint-forced track may stop sprinting before going back
  * @param gameItems          the game items turned on, with their slots
+ * @param scoreboard         whether players in a game get the plugin's sidebar
+ * @param backupFrequencyMinutes how often backups are made, 0 for never
+ * @param backupKeep         how many backups are kept
  */
 public record Settings(@NotNull List<Medal> medals, int finishDelaySeconds, @NotNull TimerDisplay timerDisplay,
-					   int sprintGraceTicks, @NotNull List<GameItemSlot> gameItems) {
+					   int sprintGraceTicks, @NotNull List<GameItemSlot> gameItems, boolean scoreboard,
+					   int backupFrequencyMinutes, int backupKeep) {
 	public Settings {
 		medals = List.copyOf(medals);
 		gameItems = List.copyOf(gameItems);

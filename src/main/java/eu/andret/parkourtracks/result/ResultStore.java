@@ -206,6 +206,20 @@ public final class ResultStore implements AutoCloseable {
 	}
 
 	/**
+	 * Writes a consistent copy of the database to the file, which must not exist yet.
+	 */
+	@NotNull
+	public CompletableFuture<Void> backUp(@NotNull final Path file) {
+		return submit(connection -> {
+			try (final PreparedStatement vacuum = connection.prepareStatement("VACUUM INTO ?")) {
+				vacuum.setString(1, file.toAbsolutePath().toString());
+				vacuum.execute();
+			}
+			return null;
+		});
+	}
+
+	/**
 	 * Waits until everything asked for so far is done; for tests.
 	 */
 	public void flush() {

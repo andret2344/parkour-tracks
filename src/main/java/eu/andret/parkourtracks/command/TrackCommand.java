@@ -159,6 +159,7 @@ public final class TrackCommand {
 		final String old = track.getName();
 		support.registry().rename(track, name);
 		support.save();
+		support.plugin().getRecordSigns().refresh(track.getId());
 		support.send(sender, Message.RENAMED, CommandSupport.text("old", old), CommandSupport.track(track));
 	}
 

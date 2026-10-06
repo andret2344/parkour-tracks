@@ -14,12 +14,15 @@ import eu.andret.parkourtracks.track.TrackRules;
 import eu.andret.parkourtracks.track.TrackType;
 import eu.andret.parkourtracks.track.WorldSpot;
 import eu.andret.parkourtracks.util.Ticks;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.Registry;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
@@ -450,6 +453,14 @@ public final class GameManager {
 	 */
 	private void announce(@NotNull final UUID id, @NotNull final Track track, final int ticks,
 						  @NotNull final ResultStore.RunOutcome outcome) {
+		plugin.getRecordSigns().refresh(track.getId());
+		// The record, or someone's best, may have changed for everyone on the track
+		sessions.values()
+				.stream()
+				.filter(session -> session.getTrack().equals(track))
+				.toList()
+				.forEach(session -> Optional.ofNullable(plugin.getServer().getPlayer(session.getPlayer()))
+						.ifPresent(other -> refreshSidebar(other, session)));
 		final Player player = plugin.getServer().getPlayer(id);
 		if (player == null) {
 			return;
@@ -558,6 +569,7 @@ public final class GameManager {
 		if (entry != Entry.SIDE) {
 			plugin.getMessages().send(player, Message.JOINED, track(track), displayName(track));
 		}
+		refreshSidebar(player, session);
 		return session;
 	}
 
@@ -585,6 +597,7 @@ public final class GameManager {
 			}
 		});
 		removeBoat(player, session);
+		plugin.getSidebar().hide(player);
 		sessions.remove(player.getUniqueId());
 		if (session.getFinishTask() != -1) {
 			plugin.getServer().getScheduler().cancelTask(session.getFinishTask());
@@ -711,6 +724,63 @@ public final class GameManager {
 			plugin.getMessages().send(player, Message.SPRINT_STOPPED);
 			goBack(player, session);
 		}
+	}
+
+	// ======= The sidebar =======
+
+	/**
+	 * Shows the player's results on the track in the sidebar, once they come from the database; not on training
+	 * tracks, which keep no results, and not when the sidebar is turned off.
+	 */
+	private void refreshSidebar(@NotNull final Player player, @NotNull final GameSession session) {
+		final Track track = session.getTrack();
+		if (!plugin.getSettings().scoreboard() || track.getType() == TrackType.TRAINING) {
+			return;
+		}
+		plugin.getResults().playerResult(track.getId(), player.getUniqueId())
+				.thenCombine(plugin.getResults().ranked(track.getId(), 1), (result, record) -> {
+					plugin.runOnMainThread(() -> {
+						if (sessions.get(player.getUniqueId()) == session) {
+							showSidebar(player, track, result, record);
+						}
+					});
+					return null;
+				});
+	}
+
+	private void showSidebar(@NotNull final Player player, @NotNull final Track track,
+							 @NotNull final Optional<ResultStore.PlayerResult> result,
+							 @NotNull final Optional<ResultStore.Ranked> record) {
+		final Component none = plugin.getMessages().get(Message.VALUE_NONE);
+		final Component nobody = plugin.getMessages().get(Message.SIGN_NOBODY);
+		final Component best = result.<Component>map(found -> Component.text(Ticks.format(found.bestTicks()))).orElse(none);
+		final Component recordTime = record.<Component>map(found -> Component.text(Ticks.format(found.ticks()))).orElse(none);
+		final Component holder = record.<Component>map(found -> Component.text(playerName(found.player()))).orElse(nobody);
+		final Component medal = result
+				.flatMap(found -> TrackRules.bestMedal(plugin.getSettings().medals(), track.getMedals(), found.bestTicks()))
+				.<Component>map(found -> MiniMessage.miniMessage().deserialize(found.displayName()))
+				.orElse(none);
+		final TagResolver[] resolvers = {
+				track(track), displayName(track),
+				Placeholder.component("time", best),
+				Placeholder.component("medal", medal),
+				Placeholder.unparsed("count", String.valueOf(result.map(ResultStore.PlayerResult::completions).orElse(0)))
+		};
+		final List<Component> lines = new ArrayList<>();
+		lines.add(plugin.getMessages().get(Message.SCOREBOARD_BEST, resolvers));
+		lines.add(plugin.getMessages().get(Message.SCOREBOARD_RECORD, track(track), Placeholder.component("time", recordTime),
+				Placeholder.component("holder", holder)));
+		lines.add(plugin.getMessages().get(Message.SCOREBOARD_MEDAL, resolvers));
+		lines.add(plugin.getMessages().get(Message.SCOREBOARD_COMPLETIONS, resolvers));
+		// An empty text in messages.yml leaves its line out
+		lines.removeIf(line -> PlainTextComponentSerializer.plainText().serialize(line).isEmpty());
+		plugin.getSidebar().show(player, plugin.getMessages().get(Message.SCOREBOARD_TITLE, resolvers), lines);
+	}
+
+	@NotNull
+	private String playerName(@NotNull final UUID id) {
+		final OfflinePlayer player = plugin.getServer().getOfflinePlayer(id);
+		return player.getName() == null ? id.toString() : player.getName();
 	}
 
 	// ======= Boats =======

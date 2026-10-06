@@ -33,8 +33,8 @@ during implementation and recorded in its "Chosen during implementation" section
 
 Packages under `eu.andret.parkourtracks`: the root holds the plugin; `config` the content of `config.yml`; `message`
 the texts of `messages.yml`; `track` the track model, its rules and its storage; `selection` WorldEdit selections;
-`command` the Lamp commands; `game` the games played on tracks; `result` the results database; `util` formatting
-helpers. WorldEdit is a hard dependency (`depend` in `plugin.yml`).
+`command` the Lamp commands; `game` the games played on tracks; `result` the results database and backups;
+`display` the sidebar and the record signs; `util` formatting helpers. WorldEdit is a hard dependency (`depend` in `plugin.yml`).
 
 - `ParkourTracksPlugin` - entry point. `onEnable` saves the default `config.yml` and `messages.yml`, reads both by
   hand (Bukkit's `getConfig()` only logs a broken file and goes on empty), loads the tracks and registers the
@@ -87,6 +87,15 @@ helpers. WorldEdit is a hard dependency (`depend` in `plugin.yml`).
   `ParkourTracksPlugin#runOnMainThread` (skipped once the plugin is disabled). `recordRun` reads the player's and the
   track's best before inserting, so the finish can announce records. The driver comes from `libraries` in
   `plugin.yml` (its coordinates are expanded from the version catalog); tests have it on the runtime classpath.
+- `result/Backups` - copies `tracks.json` and the database (`ResultStore#backUp`, `VACUUM INTO` on the database
+  thread) to `backups/<timestamp>/` on a schedule restarted by `reload`, pruning to the newest `backup-keep`.
+- `display/Sidebar` - the in-game sidebar; `PaperSidebar` builds a scoreboard per player (blank number format,
+  custom line names) and gives back the previous one on `hide` if ours is still shown. `GameManager` fills it
+  (`refreshSidebar`) on joining and after completions; tests replace it with `helper/FakeSidebar`.
+- `display/RecordSigns` - record signs: `[ptracks]`, track, place written on a side (`SignChangeEvent`) store
+  `track;place;side` under `parkourtracks:record` in the sign's PDC. Signs of loaded chunks are indexed by track
+  (chunk load and unload, `loadAll` on start), so `refresh(track)` touches only that track's signs, asking the
+  database for each place and writing the lines on the server thread.
 - `track/TrackOption` - every option `/ptracks set` changes: how its value is parsed, checked against the other
   options (`boat` excludes `sprintForced` and `enderPearls`), stored and shown. Problems are `OptionException`s the
   command turns into messages.
@@ -115,8 +124,10 @@ helpers. WorldEdit is a hard dependency (`depend` in `plugin.yml`).
   `helper/PluginTest` base class (extended from other packages) and overridden API methods.
 - Tests extend `helper/PluginTest`, which starts `MockBukkit.mock()`, loads the real plugin with the shipped
   `config.yml` and adds the world `world` before every test; `writeConfig`/`writeMessages` replace the files on
-  disk. WorldEdit is replaced by selections set with `select`; `admin` adds an operator standing somewhere, `tower`
-  a stopped track, `messages` takes the plain text of the messages a player got.
+  disk. WorldEdit is replaced by selections set with `select`, the sidebar by `FakeSidebar` (`sidebar.of(player)`),
+  and the world is a `TileEntityWorld`, whose chunks implement `getTileEntities` (MockBukkit leaves it
+  unimplemented); MockBukkit counts a chunk as loaded only after `Chunk#load`. `admin` adds an operator standing
+  somewhere, `tower` a stopped track, `messages` takes the plain text of the messages a player got.
   `MockBukkit.load` ignores `depend`, so the plugin loads without WorldEdit. Tests of plain logic (`track`, `config`)
   are plain JUnit tests without a server; Bukkit enums such as `Material` work without one.
 - Game tests extend `game/GameTest`: a running track along x (spawn, two one-block checkpoints, finish, a wall at

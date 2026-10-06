@@ -15,11 +15,15 @@ import eu.andret.parkourtracks.command.TrackSettingsCommand;
 import eu.andret.parkourtracks.config.Medal;
 import eu.andret.parkourtracks.config.Settings;
 import eu.andret.parkourtracks.config.SettingsLoader;
+import eu.andret.parkourtracks.display.PaperSidebar;
+import eu.andret.parkourtracks.display.RecordSigns;
+import eu.andret.parkourtracks.display.Sidebar;
 import eu.andret.parkourtracks.game.GameItemListener;
 import eu.andret.parkourtracks.game.GameListener;
 import eu.andret.parkourtracks.game.GameManager;
 import eu.andret.parkourtracks.game.TrackGuard;
 import eu.andret.parkourtracks.message.Messages;
+import eu.andret.parkourtracks.result.Backups;
 import eu.andret.parkourtracks.result.ResultStore;
 import eu.andret.parkourtracks.selection.Selections;
 import eu.andret.parkourtracks.selection.WorldEditSelections;
@@ -54,6 +58,10 @@ public class ParkourTracksPlugin extends JavaPlugin {
 	private TrackRegistry trackRegistry;
 	private GameManager games;
 	private ResultStore results;
+	private RecordSigns recordSigns;
+	private Backups backups;
+	@NotNull
+	private Sidebar sidebar = new PaperSidebar();
 	@NotNull
 	private Selections selections = new WorldEditSelections();
 
@@ -72,6 +80,11 @@ public class ParkourTracksPlugin extends JavaPlugin {
 		trackRegistry = new TrackRegistry(new TrackStore(getDataFolder().toPath().resolve(TRACKS_FILE)));
 		trackRegistry.load();
 		results = ResultStore.open(getDataFolder().toPath().resolve(RESULTS_FILE));
+		backups = new Backups(this, getDataFolder().toPath().resolve(TRACKS_FILE));
+		backups.schedule();
+		recordSigns = new RecordSigns(this);
+		getServer().getPluginManager().registerEvents(recordSigns, this);
+		recordSigns.loadAll();
 		games = new GameManager(this);
 		getServer().getPluginManager().registerEvents(new GameListener(games), this);
 		getServer().getPluginManager().registerEvents(new GameItemListener(games), this);
@@ -116,6 +129,7 @@ public class ParkourTracksPlugin extends JavaPlugin {
 		final Messages newMessages = readMessages();
 		settings = newSettings;
 		messages = newMessages;
+		backups.schedule();
 	}
 
 	private void setUpCommands() {
@@ -189,6 +203,28 @@ public class ParkourTracksPlugin extends JavaPlugin {
 	@NotNull
 	public TrackRegistry getTrackRegistry() {
 		return trackRegistry;
+	}
+
+	@NotNull
+	public RecordSigns getRecordSigns() {
+		return recordSigns;
+	}
+
+	@NotNull
+	public Backups getBackups() {
+		return backups;
+	}
+
+	@NotNull
+	public Sidebar getSidebar() {
+		return sidebar;
+	}
+
+	/**
+	 * Replaces the sidebar; for tests, as MockBukkit does not implement the parts of scoreboards it uses.
+	 */
+	public void setSidebar(@NotNull final Sidebar sidebar) {
+		this.sidebar = sidebar;
 	}
 
 	@NotNull

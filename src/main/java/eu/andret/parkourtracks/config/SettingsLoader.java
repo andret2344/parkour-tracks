@@ -25,6 +25,11 @@ public final class SettingsLoader {
 	private static final String SPRINT_GRACE = "sprint-grace-ticks";
 	private static final int DEFAULT_SPRINT_GRACE = 5;
 	private static final String GAME_ITEMS = "game-items";
+	private static final String SCOREBOARD = "scoreboard";
+	private static final String BACKUP_FREQUENCY = "backup-frequency";
+	private static final int DEFAULT_BACKUP_FREQUENCY = 1440;
+	private static final String BACKUP_KEEP = "backup-keep";
+	private static final int DEFAULT_BACKUP_KEEP = 10;
 	private static final int HOTBAR_SIZE = 9;
 	@NotNull
 	private static final Map<GameItem, GameItemSlot> DEFAULT_GAME_ITEMS = Map.of(
@@ -43,7 +48,9 @@ public final class SettingsLoader {
 		return new Settings(loadMedals(config),
 				loadNonNegative(config, FINISH_DELAY, DEFAULT_FINISH_DELAY, "a whole number of seconds"),
 				loadTimerDisplay(config), loadNonNegative(config, SPRINT_GRACE, DEFAULT_SPRINT_GRACE, "a whole number of ticks"),
-				loadGameItems(config));
+				loadGameItems(config), config.getBoolean(SCOREBOARD, true),
+				loadNonNegative(config, BACKUP_FREQUENCY, DEFAULT_BACKUP_FREQUENCY, "a whole number of minutes"),
+				loadNonNegative(config, BACKUP_KEEP, DEFAULT_BACKUP_KEEP, "a whole number"));
 	}
 
 	private static int loadNonNegative(@NotNull final ConfigurationSection config, @NotNull final String path,

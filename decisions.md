@@ -230,6 +230,9 @@ Design decisions for the migration, agreed on before coding. Deferred features a
 
 - Boat mode follows a player's moves through `VehicleMoveEvent` and ignores `PlayerMoveEvent` while riding; on a
   real server, check that `VehicleMoveEvent` fires for a boat the player steers, on ice and on water.
+- The sidebar (`PaperSidebar`): MockBukkit implements neither hiding the score numbers nor custom line names, so it
+  is only tested through a fake; check on a real server that it shows without red numbers and that leaving gives
+  back the scoreboard of another plugin.
 
 ## Chosen during implementation
 
@@ -316,6 +319,17 @@ Details `decisions.md` did not settle, chosen while coding. Review them; anythin
 - `/ptracks stats` lists the tracks by name with the best time and completions; with a track it shows the best time,
   completions, the last completion (`yyyy-MM-dd HH:mm`, the server's time zone), the medal and the track record.
   Results of removed tracks are kept but not shown. Training runs are not saved.
+- The sidebar shows the track's display name, the player's best, the record and its holder, the medal and the
+  completions; an empty text in `messages.yml` leaves its line out. It refreshes on joining and after any completion
+  on the track, for everyone on it. No sidebar on training tracks. `scoreboard: false` in `config.yml` turns it off.
+- A record sign is a side whose lines are `[ptracks]` (any case), the track name and the place (1-1000, empty for
+  1), written by a player with `parkourtracks.edit`; others get a message and the sign stays as written. Its lines
+  come from `sign-line-1` to `sign-line-4` in `messages.yml`. Signs refresh when made, after a completion on the
+  track, when the track is renamed or its display name changes, and when their chunk loads. A sign of a removed
+  track says so.
+- Backups go to `backups/<yyyy-MM-dd_HH-mm-ss-SSS>/` with `tracks.json` and `results.db` (copied by SQLite's
+  `VACUUM INTO`), every `backup-frequency` minutes (default 1440, 0 for never, counted from the start), keeping the
+  newest `backup-keep` (default 10).
 
 ## Open questions
 

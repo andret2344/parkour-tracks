@@ -28,12 +28,15 @@ import java.util.UUID;
 
 /**
  * Starts a mocked server with the plugin loaded before every test. WorldEdit is replaced by selections the test sets
- * with {@link #select}.
+ * with {@link #select}, the scoreboard sidebar by {@link FakeSidebar}, and the world's chunks list their tile
+ * entities ({@link TileEntityWorld}).
  */
 public abstract class PluginTest {
 	protected ServerMock server;
 	protected ParkourTracksPlugin plugin;
 	protected WorldMock world;
+	@NotNull
+	protected final FakeSidebar sidebar = new FakeSidebar();
 	@NotNull
 	private final Map<UUID, Selection> selections = new HashMap<>();
 
@@ -41,7 +44,9 @@ public abstract class PluginTest {
 	void setUpServer() {
 		server = MockBukkit.mock();
 		plugin = MockBukkit.load(ParkourTracksPlugin.class);
-		world = server.addSimpleWorld("world");
+		world = new TileEntityWorld("world");
+		server.addWorld(world);
+		plugin.setSidebar(sidebar);
 		plugin.setSelections(player -> {
 			final Selection selection = selections.get(player.getUniqueId());
 			if (selection == null) {

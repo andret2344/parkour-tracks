@@ -57,6 +57,9 @@ public final class TrackSettingsCommand {
 			throw optionFailure(option, ex);
 		}
 		support.save();
+		if (option == TrackOption.DISPLAY_NAME) {
+			support.plugin().getRecordSigns().refresh(track.getId());
+		}
 		support.send(sender, Message.OPTION_SET, CommandSupport.track(track),
 				CommandSupport.text("option", option.getName()), CommandSupport.text("value", option.display(track)));
 	}

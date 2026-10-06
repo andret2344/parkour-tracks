@@ -39,3 +39,12 @@ game-items:
     enabled: true
     slot: 8
     material: red_bed
+
+# Whether players in a game see a sidebar with their best time, the record and their medal. Turn it off when another
+# plugin shows a sidebar. The texts are in messages.yml; an empty text leaves its line out.
+scoreboard: true
+
+# Every how many minutes the tracks and the results are copied to backups/; 0 turns backups off.
+backup-frequency: 1440
+# How many of the newest backups are kept; older ones are deleted.
+backup-keep: 10
