@@ -238,3 +238,13 @@ Design decisions for the migration, agreed on before coding. Deferred features a
 Details `decisions.md` did not settle, chosen while coding. Review them; anything here can still change.
 
 - The first version is `1.0.0`; `minecraftVersions` is `26.2,26.3`, like the other plugins.
+- A track name is 1-32 letters, digits, `_` or `-`; names are unique and looked up ignoring case.
+- Medal thresholds are stored in ticks; a threshold of 0 ticks means "no time set yet" and is never awarded.
+- Medals in `config.yml` are a map from the key (lowercase letters, digits, `_`, `-`) to the MiniMessage display
+  name, in order, best first.
+- `tracks.json` holds the tracks and the global lobby. Worlds are stored by name, effects by the key of their type
+  (e.g. `minecraft:jump_boost`).
+- A broken `tracks.json` stops the plugin and is never overwritten, like a broken `config.yml`.
+- The tracks file is written on the main thread right after each change: it is small, and writing it in order is
+  simpler than ordering asynchronous writes.
+- The old `enabled` option is gone: starting and stopping a track covers it.

@@ -16,6 +16,8 @@ jacoco {
 	toolVersion = libs.versions.jacoco.get()
 }
 
+val artifact = providers.gradleProperty("artifact").get()
+
 configurations {
 	// Tests run against the same server API that the plugin compiles against
 	testImplementation {
@@ -81,6 +83,14 @@ tasks {
 
 	build {
 		dependsOn(shadowJar)
+	}
+
+	withType<Jar> {
+		// The suffix stops the LICENSE and NOTICE files of the shaded libraries from replacing ours
+		metaInf {
+			from("LICENSE", "NOTICE")
+			rename { "$it-$artifact" }
+		}
 	}
 
 	shadowJar {

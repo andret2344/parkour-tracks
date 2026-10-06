@@ -31,16 +31,38 @@ during implementation and recorded in its "Chosen during implementation" section
 
 ## Architecture
 
-Package `eu.andret.parkourtracks`. `ParkourTracksPlugin` is the entry point. WorldEdit is a hard dependency
-(`depend` in `plugin.yml`).
+Packages under `eu.andret.parkourtracks`: the root holds the plugin; `config` the content of `config.yml`; `track` the
+track model and its storage. WorldEdit is a hard dependency (`depend` in `plugin.yml`).
+
+- `ParkourTracksPlugin` - entry point. `onEnable` saves the default config, reads it by hand (Bukkit's `getConfig()`
+  only logs a broken file and goes on empty) and loads the tracks; an invalid config or tracks file throws, which stops
+  the plugin. `reload()` reads the config into new `Settings` and replaces them only when valid.
+- `config/SettingsLoader` - parses `config.yml` into the `Settings` record; errors are `IllegalArgumentException`s
+  naming the config path. `medals` is a map from key to MiniMessage display name; its order (best first) is the order
+  of the medals.
+- `track/Track` - a mutable track: id (UUID, the key of everything stored about it), name, display name, type, world
+  name, main region, spawn, checkpoints in between, finish, walls, authors, medal thresholds by medal key, effects,
+  own lobby, running flag and `TrackOptions`. `Cuboid` (block box, both corners included, no world - a track's regions
+  all lie in its world), `Spot` (position and direction, no world), `Checkpoint` (area plus spot) and `WorldSpot` are
+  records. Equality is by id only.
+- `track/TrackStore` - reads and writes `tracks.json` with Gson. A write goes to `tracks.json.tmp` and is moved over
+  the file atomically. Gson runs the field initializers through the private no-arg constructor of `Track`, so fields
+  missing from the file get their defaults; `Track#checkLoaded` checks what Gson cannot. Gson wraps exceptions of
+  record constructors, so the error message is taken from the root cause.
+- `track/TrackRegistry` - all tracks and the global lobby; names are unique ignoring case, regions of tracks in one
+  world never overlap, a running track cannot be removed. Callers save after each change with `save()`.
 
 ## Tests
 
 - JUnit 6 + AssertJ + MockBukkit, `// given` / `// when` / `// then` structure. No Mockito.
 - Test classes, their methods and test-only helpers are package-private. `public` stays only where Java needs it: the
   `helper/PluginTest` base class (extended from other packages) and overridden API methods.
-- Tests extend `helper/PluginTest`, which starts `MockBukkit.mock()`, loads the real plugin and adds the world `world`
-  before every test. `MockBukkit.load` ignores `depend`, so the plugin loads without WorldEdit.
+- Tests extend `helper/PluginTest`, which starts `MockBukkit.mock()`, loads the real plugin with the shipped
+  `config.yml` and adds the world `world` before every test; `writeConfig` replaces the config on disk.
+  `MockBukkit.load` ignores `depend`, so the plugin loads without WorldEdit. Tests of plain logic (`track`, `config`)
+  are plain JUnit tests without a server; Bukkit enums such as `Material` work without one.
+- MockBukkit's `enablePlugin` lets an exception from `onEnable` through (a real server catches it and disables the
+  plugin), so "does not start" tests assert that enabling throws.
 - Every rule in `decisions.md` has its own test.
 - MockBukkit throws `UnimplementedOperationException`, a `TestAbortedException`, from what it does not implement, and
   JUnit reports that as **skipped**. The `test` task fails the build when any test is skipped, so a test never passes
@@ -55,6 +77,8 @@ Package `eu.andret.parkourtracks`. `ParkourTracksPlugin` is the entry point. Wor
 - One word for one thing: a parkour is a *track* everywhere - code, commands, messages.
 - User-facing changes go under `## Unreleased` in `CHANGELOG.md` (`org.jetbrains.changelog` format); release notes
   are extracted from it. Never bump the version or add version sections by hand.
+- Apache 2.0: the jar's `META-INF` carries `LICENSE`/`NOTICE` renamed with the `-parkour-tracks` suffix so shaded
+  libraries' files do not overwrite them.
 - Build script reads project properties through `project.group`/`project.version` and
   `providers.gradleProperty(...)`, never `project.properties[...]`.
 - CI is GitHub Actions: `build.yml` builds every push and PR and uploads the JaCoCo XML report to Codecov with the

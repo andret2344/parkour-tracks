@@ -1,0 +1,9 @@
+# The medals of every track, best first. Each track sets its own time and reward for them with a command.
+# The key identifies a medal, in commands and in the record of paid rewards: renaming a key makes a new medal,
+# which is paid again. The value is the name shown to players, in MiniMessage
+# (https://docs.advntr.dev/minimessage/format.html).
+medals:
+  platinum: '<aqua>Platinum'
+  gold: '<gold>Gold'
+  silver: '<gray>Silver'
+  bronze: '<#cd7f32>Bronze'
