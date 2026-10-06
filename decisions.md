@@ -355,6 +355,12 @@ Details `decisions.md` did not settle, chosen while coding. Review them; anythin
   player head (players) and leather boots (training).
 - The track lore is one message, `menu-track-lore`, its lines separated by `<br>`; tracks by players get the
   `menu-track-authors` line too.
+- The events are `TrackJoinEvent` (cancellable, after the track permission and before the fee; a cancelled join
+  sends the player to the lobby, the cancelling plugin says why), `TrackLeaveEvent` (with the `LeaveReason`),
+  `TrackCompleteEvent` (once the run is saved: ticks, best medal key, personal best, track record; none for
+  training) and `TrackPaymentEvent` (`FEE`, `REFUND`, `REWARD`, `MEDAL`, `RECONCILIATION`, with the medal key and the
+  amount), all in `eu.andret.parkourtracks.api`. They give the track's id and name, not the internal `Track`,
+  which other plugins must not change. `game.Entry` and `game.LeaveReason` are part of this API.
 
 ## Open questions
 

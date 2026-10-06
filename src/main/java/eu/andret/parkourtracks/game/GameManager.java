@@ -1,6 +1,10 @@
 package eu.andret.parkourtracks.game;
 
 import eu.andret.parkourtracks.ParkourTracksPlugin;
+import eu.andret.parkourtracks.api.TrackCompleteEvent;
+import eu.andret.parkourtracks.api.TrackJoinEvent;
+import eu.andret.parkourtracks.api.TrackLeaveEvent;
+import eu.andret.parkourtracks.api.TrackPaymentEvent;
 import eu.andret.parkourtracks.config.Medal;
 import eu.andret.parkourtracks.config.TimerDisplay;
 import eu.andret.parkourtracks.economy.Bank;
@@ -437,6 +441,7 @@ public final class GameManager {
 			if (reward > 0 && plugin.getBank().deposit(player, reward)) {
 				plugin.getMessages().send(player, Message.REWARD_PAID, track(track),
 						Placeholder.unparsed("amount", plugin.getBank().format(reward)));
+				paid(player, track, TrackPaymentEvent.Kind.REWARD, null, reward);
 			}
 			plugin.getResults().recordRun(track.getId(), player.getUniqueId(), ticks, Instant.now())
 					.thenAcceptAsync(outcome -> announce(player.getUniqueId(), track, ticks, outcome), plugin::runOnMainThread)
@@ -477,6 +482,10 @@ public final class GameManager {
 				.toList()
 				.forEach(session -> Optional.ofNullable(plugin.getServer().getPlayer(session.getPlayer()))
 						.ifPresent(other -> refreshSidebar(other, session)));
+		final Optional<Medal> best = TrackRules.bestMedal(plugin.getSettings().medals(), track.getMedals(), ticks);
+		plugin.getServer().getPluginManager().callEvent(new TrackCompleteEvent(plugin.getServer().getOfflinePlayer(id),
+				track.getId(), track.getName(), ticks, best.map(Medal::key).orElse(null), outcome.isPersonalBest(ticks),
+				outcome.isTrackRecord(ticks)));
 		final Player player = plugin.getServer().getPlayer(id);
 		if (player == null) {
 			return;
@@ -487,7 +496,7 @@ public final class GameManager {
 			plugin.getMessages().send(player, Message.NEW_PERSONAL_BEST, track(track));
 		}
 		final List<Medal> medals = plugin.getSettings().medals();
-		final Optional<Medal> earned = TrackRules.bestMedal(medals, track.getMedals(), ticks);
+		final Optional<Medal> earned = best;
 		final Optional<Medal> before = outcome.previousBest().isPresent()
 				? TrackRules.bestMedal(medals, track.getMedals(), outcome.previousBest().getAsInt())
 				: Optional.empty();
@@ -516,6 +525,7 @@ public final class GameManager {
 			plugin.getResults().recordPayout(track.getId(), player.getUniqueId(), due.medal().key(), due.amount(), Instant.now());
 			plugin.getMessages().send(player, Message.MEDAL_PAID, Placeholder.parsed("medal", due.medal().displayName()),
 					Placeholder.unparsed("amount", bank.format(due.amount())));
+			paid(player, track, TrackPaymentEvent.Kind.MEDAL, due.medal().key(), due.amount());
 		}
 	}
 
@@ -591,6 +601,9 @@ public final class GameManager {
 			plugin.getMessages().send(player, Message.NO_TRACK_PERMISSION, track(track));
 			return null;
 		}
+		if (!new TrackJoinEvent(player, track.getId(), track.getName(), entry).callEvent()) {
+			return null;
+		}
 		final double fee = chargeFee(player, track, entry);
 		if (fee < 0) {
 			return null;
@@ -647,6 +660,7 @@ public final class GameManager {
 			return -1;
 		}
 		plugin.getMessages().send(player, Message.FEE_PAID, track(track), amount);
+		paid(player, track, TrackPaymentEvent.Kind.FEE, null, fee);
 		return fee;
 	}
 
@@ -691,6 +705,7 @@ public final class GameManager {
 				&& plugin.getBank().deposit(player, session.getPaidFee())) {
 			plugin.getMessages().send(player, Message.FEE_REFUNDED, track(session.getTrack()),
 					Placeholder.unparsed("amount", plugin.getBank().format(session.getPaidFee())));
+			paid(player, session.getTrack(), TrackPaymentEvent.Kind.REFUND, null, session.getPaidFee());
 		}
 		if (reason != LeaveReason.DISCONNECT) {
 			player.getPersistentDataContainer().remove(sessionKey);
@@ -700,6 +715,17 @@ public final class GameManager {
 		if (reason.isToLobby()) {
 			lobby(session.getTrack()).ifPresent(lobby -> teleport(player, lobby));
 		}
+		plugin.getServer().getPluginManager().callEvent(
+				new TrackLeaveEvent(player, session.getTrack().getId(), session.getTrack().getName(), reason));
+	}
+
+	/**
+	 * Tells other plugins that money moved because of the track.
+	 */
+	private void paid(@NotNull final OfflinePlayer player, @NotNull final Track track,
+					  @NotNull final TrackPaymentEvent.Kind kind, @Nullable final String medal, final double amount) {
+		plugin.getServer().getPluginManager().callEvent(
+				new TrackPaymentEvent(player, track.getId(), track.getName(), kind, medal, amount));
 	}
 
 	/**

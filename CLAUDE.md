@@ -35,7 +35,7 @@ Packages under `eu.andret.parkourtracks`: the root holds the plugin; `config` th
 the texts of `messages.yml`; `track` the track model, its rules and its storage; `selection` WorldEdit selections;
 `command` the Lamp commands; `game` the games played on tracks; `result` the results database and backups;
 `display` the sidebar and the record signs; `economy` money through Vault; `menu` the track selection menu and the
-signs that open it or enter a track; `util` formatting helpers. WorldEdit is a hard dependency (`depend` in `plugin.yml`).
+signs that open it or enter a track; `api` the events other plugins listen to; `util` formatting helpers. WorldEdit is a hard dependency (`depend` in `plugin.yml`).
 
 - `ParkourTracksPlugin` - entry point. `onEnable` saves the default `config.yml` and `messages.yml`, reads both by
   hand (Bukkit's `getConfig()` only logs a broken file and goes on empty), loads the tracks and registers the
@@ -110,6 +110,11 @@ signs that open it or enter a track; `util` formatting helpers. WorldEdit is a h
   `MenuListener` cancels every click and drag in one and runs the action of the clicked top slot. `MenuSigns` makes
   and handles `[ptmenu]` and `[ptjoin]` signs. Multi-line messages (`menu-track-lore`) are split on `<br>` via
   `Messages#template`.
+- `api/` - the public events, a promise not to break other plugins: change them only by adding. They carry the
+  track's id and name, never the mutable `Track`. `GameManager` fires `TrackJoinEvent` (cancellable) in `join`,
+  `TrackLeaveEvent` at the end of `leave`, `TrackCompleteEvent` in `announce` and `TrackPaymentEvent` (`paid`) after
+  every successful money movement; `ReconcileCommand` fires the reconciliation payments. `game.Entry` and
+  `game.LeaveReason` are part of the API.
 - `track/TrackOption` - every option `/ptracks set` changes: how its value is parsed, checked against the other
   options (`boat` excludes `sprintForced` and `enderPearls`), stored and shown. Problems are `OptionException`s the
   command turns into messages.

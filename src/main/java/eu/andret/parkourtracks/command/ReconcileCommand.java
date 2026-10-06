@@ -1,6 +1,7 @@
 package eu.andret.parkourtracks.command;
 
 import eu.andret.parkourtracks.ParkourTracksPlugin;
+import eu.andret.parkourtracks.api.TrackPaymentEvent;
 import eu.andret.parkourtracks.config.Medal;
 import eu.andret.parkourtracks.economy.Bank;
 import eu.andret.parkourtracks.economy.MedalPayouts;
@@ -157,6 +158,8 @@ public final class ReconcileCommand {
 					payment.amount(), Instant.now());
 			support.plugin().getLogger().info("Reconciling " + track.getName() + " by " + sender.getName() + ": paid "
 					+ name(payment.player()) + " " + payment.amount() + " for " + payment.medal().key());
+			support.plugin().getServer().getPluginManager().callEvent(new TrackPaymentEvent(player, track.getId(),
+					track.getName(), TrackPaymentEvent.Kind.RECONCILIATION, payment.medal().key(), payment.amount()));
 			paid++;
 			total += payment.amount();
 		}
