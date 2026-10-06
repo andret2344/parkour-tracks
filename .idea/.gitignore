@@ -4,10 +4,8 @@
 /shelf/
 /sonarlint/
 
-/atsParkour.iml
 /compiler.xml
 /dataSources.local.xml
-/dataSources.xml
 /discord.xml
 /git_toolbox_blame.xml
 /git_toolbox_prj.xml
@@ -15,9 +13,8 @@
 /intellij-javadocs-4.0.1.xml
 /jarRepositories.xml
 /jpa-buddy.xml
-/libraries-with-intellij-classes.xml
+/libraries
 /misc.xml
 /modules.xml
-/sqldialects.xml
 /uiDesigner.xml
 /workspace.xml

@@ -1,101 +1,93 @@
-/*
- * Copyright Andret Tools System (c) 2025. Copying and modifying allowed only keeping git link reference.
- */
-
 plugins {
-    java
-    jacoco
-    `maven-publish`
-    id("org.barfuin.gradle.jacocolog") version "3.1.0"
-    id("com.gradleup.shadow") version "8.3.6"
+	java
+	jacoco
+	alias(libs.plugins.jacocolog)
+	alias(libs.plugins.changelog)
+	alias(libs.plugins.shadow)
 }
 
-val mockitoAgent = configurations.create("mockitoAgent")
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(libs.versions.java.get())
+	}
+}
+
+jacoco {
+	toolVersion = libs.versions.jacoco.get()
+}
+
+configurations {
+	// Tests run against the same server API that the plugin compiles against
+	testImplementation {
+		extendsFrom(configurations.compileOnly.get())
+	}
+}
 
 dependencies {
-    compileOnly(libs.gson)
-    compileOnly(libs.worldedit.bukkit)
-    compileOnly(libs.jetbrains.annotations)
-    compileOnly(libs.lombok)
-    compileOnly(libs.spigot.api)
-    implementation(libs.ats.arguments)
-    implementation(libs.bstats.bukkit)
-    annotationProcessor(libs.lombok)
+	compileOnly(libs.paper.api)
+	compileOnly(libs.jetbrains.annotations)
 
-    testCompileOnly(libs.jetbrains.annotations)
-    testCompileOnly(libs.lombok)
-    testImplementation(libs.spigot.api)
-    testImplementation(libs.worldedit.bukkit)
-    testImplementation(libs.assertj.core)
-    testImplementation(libs.mockito.core)
-    testImplementation(libs.testng)
-    testAnnotationProcessor(libs.lombok)
+	testImplementation(libs.assertj.core)
+	testImplementation(libs.mockbukkit)
+	testImplementation(platform(libs.junit.bom))
+	testImplementation(libs.junit.jupiter)
+	testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 tasks {
-    compileJava {
-        sourceCompatibility = JavaVersion.VERSION_17.toString()
-        targetCompatibility = JavaVersion.VERSION_17.toString()
-        options.compilerArgs.addAll(listOf("-parameters", "-g", "-Xlint:deprecation", "-Xlint:unchecked"))
-    }
+	withType<JavaCompile> {
+		options.compilerArgs.addAll(listOf("-parameters", "-Xlint:deprecation", "-Xlint:unchecked"))
+	}
 
-    test {
-        useTestNG()
-        finalizedBy(jacocoTestCoverageVerification, jacocoAggregatedReport)
-        jvmArgs("-javaagent:${mockitoAgent.asPath}")
-    }
+	processResources {
+		val version = project.version.toString()
+		inputs.property("version", version)
+		filesMatching("plugin.yml") {
+			expand("version" to version)
+		}
+	}
 
-    jacocoTestReport {
-        classDirectories.setFrom(classDirectories.files.map {
-            fileTree(it).matching {
-                exclude("**/*Plugin.*")
-            }
-        })
-    }
+	test {
+		useJUnitPlatform()
+		finalizedBy(jacocoTestCoverageVerification, jacocoLogTestCoverage)
+		// MockBukkit throws UnimplementedOperationException, a TestAbortedException, from what it does not implement,
+		// so JUnit reports such a test as skipped. Fail instead of passing without running it.
+		addTestListener(object : TestListener {
+			override fun beforeSuite(suite: TestDescriptor) {}
+			override fun beforeTest(testDescriptor: TestDescriptor) {}
+			override fun afterTest(testDescriptor: TestDescriptor, result: TestResult) {}
+			override fun afterSuite(suite: TestDescriptor, result: TestResult) {
+				if (suite.parent == null && result.skippedTestCount > 0) {
+					throw GradleException("${result.skippedTestCount} test(s) skipped, most likely by MockBukkit's UnimplementedOperationException")
+				}
+			}
+		})
+	}
 
-    jacocoTestCoverageVerification {
-        violationRules {
-            rule {
-                classDirectories.setFrom(jacocoTestReport.get().classDirectories)
-                limit {
-                    minimum = "0.8".toBigDecimal()
-                }
-            }
-        }
-    }
+	jacocoTestCoverageVerification {
+		violationRules {
+			rule {
+				limit {
+					minimum = "0.8".toBigDecimal()
+				}
+			}
+		}
+	}
 
-    build {
-        dependsOn(shadowJar)
-    }
+	// The shadow jar is the only jar - the plain one would miss the shaded libraries
+	jar {
+		enabled = false
+	}
 
-    shadowJar {
-        archiveFileName.set("${project.name}-${project.version}.jar")
-        relocate("org.bstats", "${project.group}.parkour.bstats")
-        relocate("eu.andret.arguments", "${project.group}.parkour.arguments")
-    }
+	build {
+		dependsOn(shadowJar)
+	}
 
-    publishing {
-        publications {
-            create<MavenPublication>("maven") {
-                artifact(jar)
-                groupId = project.properties["group"].toString()
-                version = project.properties["version"].toString()
-                artifactId = project.properties["artifact"].toString()
-            }
-        }
-        repositories {
-            maven {
-                name = "GitLab"
+	shadowJar {
+		archiveFileName.set("${project.name}-${project.version}.jar")
+	}
+}
 
-                url = uri("https://gitlab.com/api/v4/projects/6426481/packages/maven")
-                credentials(HttpHeaderCredentials::class) {
-                    name = "Job-Token"
-                    value = System.getenv("CI_JOB_TOKEN")
-                }
-                authentication {
-                    create<HttpHeaderAuthentication>("header")
-                }
-            }
-        }
-    }
+changelog {
+	groups.empty()
 }

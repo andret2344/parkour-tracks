@@ -1,59 +1,9 @@
-name: atsParkour
-main: eu.andret.ats.parkour.ParkourPlugin
-version: 1.0.0-SNAPSHOT
-api-version: 1.17
-description: A plugin to create and play parkours.
-authors:
-  - Andret
+name: ParkourTracks
+main: eu.andret.parkourtracks.ParkourTracksPlugin
+version: ${version}
+author: Andret
+api-version: '26.2'
+description: Parkour tracks built from WorldEdit regions, with checkpoints, medals and a track selection menu.
+website: https://github.com/andret2344/parkour-tracks
 depend:
   - WorldEdit
-libraries:
-  - com.google.code.gson:gson:2.9.0
-
-commands:
-  parkour:
-    aliases: [ pk ]
-    description: The atsParkour command
-
-permissions:
-  ats.parkour.*:
-    children:
-      ats.parkour.help: true
-      ats.parkour.create: true
-      ats.parkour.remove: true
-      ats.parkour.rename: true
-      ats.parkour.info: true
-      ats.parkour.setSpawn: true
-      ats.parkour.recreate: true
-      ats.parkour.start: true
-      ats.parkour.stop: true
-      ats.parkour.addCheckpoint: true
-      ats.parkour.setCheckpoint: true
-      ats.parkour.addWall: true
-      ats.parkour.setWall: true
-      ats.parkour.list: true
-      ats.parkour.ignore: true
-      ats.parkour.sprintForced: true
-      ats.parkour.alwaysSpawn: true
-      ats.parkour.savingResults: true
-      ats.parkour.ignoreRecords: true
-      ats.parkour.damageAllowed: true
-      ats.parkour.effects: true
-      ats.parkour.setEffect: true
-      ats.parkour.boat: true
-      ats.parkour.enabled: true
-      ats.parkour.modifyInventory: true
-      ats.parkour.recordsBlock: true
-      ats.parkour.teleportBlock: true
-      ats.parkour.teleport: true
-      ats.parkour.fix: true
-      ats.parkour.color: true
-      ats.parkour.difficulty: true
-      ats.parkour.type: true
-      ats.parkour.displayName: true
-      ats.parkour.authors: true
-      ats.parkour.vip: true
-      ats.parkour.bronze: true
-      ats.parkour.silver: true
-      ats.parkour.gold: true
-      ats.parkour.platinum: true

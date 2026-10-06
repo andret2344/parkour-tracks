@@ -232,3 +232,9 @@ Design decisions for the migration, agreed on before coding. Deferred features a
 - Whether `PlayerRiptideEvent` can be cancelled on Paper 26.x; if not, riptide sends the player back to the last
   checkpoint instead.
 - Whether Paper 26.x still ships an SQLite JDBC driver, or it has to be added.
+
+## Chosen during implementation
+
+Details `decisions.md` did not settle, chosen while coding. Review them; anything here can still change.
+
+- The first version is `1.0.0`; `minecraftVersions` is `26.2,26.3`, like the other plugins.

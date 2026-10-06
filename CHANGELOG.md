@@ -1,0 +1,3 @@
+# ParkourTracks changelog
+
+## Unreleased
