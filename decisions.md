@@ -229,8 +229,6 @@ Design decisions for the migration, agreed on before coding. Deferred features a
 ## To verify before coding
 
 - Whether `PlayerMoveEvent` fires for a player riding a boat, or region handling needs `VehicleMoveEvent`.
-- Whether `PlayerRiptideEvent` can be cancelled on Paper 26.x; if not, riptide sends the player back to the last
-  checkpoint instead.
 - Whether Paper 26.x still ships an SQLite JDBC driver, or it has to be added.
 
 ## Chosen during implementation
@@ -287,3 +285,17 @@ Details `decisions.md` did not settle, chosen while coding. Review them; anythin
 - The session marker is `parkourtracks:session` (the track's UUID) and the snapshot `parkourtracks:snapshot` (YAML
   text) in the player's PDC. Disabling the plugin (a restart) ends every game like a disconnect: everyone gets their
   state back right away and returns to the spawn without paying.
+- The game items so far: back (slot 0, slime ball), restart (slot 1, clock), hide (slot 7, ender eye), exit (slot 8,
+  red bed); the menu item comes with the menu. Slots and materials are in `config.yml` under `game-items`, each can be
+  turned off; the names are in `messages.yml`. An item is used by clicking with it in the main hand.
+- A game item found outside a game (a leftover) is removed when used.
+- Players in a game pick up no items: their inventory is given back as it was when they leave.
+- Hiding hides only the other players of the same track, players joining later included, and ends when the hider
+  leaves; a player leaving the game becomes visible again to those hiding them.
+- The edit lock on the world covers breaking and placing blocks, buckets, fire (burning, igniting, spreading),
+  melting and forming (ice, snow), liquids flowing in, leaf decay, mobs and falling blocks changing blocks,
+  explosions (the track's blocks are taken out of the explosion), pistons pushing or pulling across the region's edge
+  and item frames or paintings breaking. Using doors, trapdoors, buttons and levers is not blocked.
+- `sprintForced` is checked every tick of a running run: outside the spawn, the checkpoints and the finish, a player
+  not sprinting for more than `sprint-grace-ticks` (default 5) is told so and sent back.
+- Chorus fruit teleports, starting to glide and riptide are cancelled during a game.

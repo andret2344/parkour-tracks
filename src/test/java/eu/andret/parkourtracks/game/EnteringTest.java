@@ -106,7 +106,8 @@ class EnteringTest extends GameTest {
 		player.simulatePlayerMove(at(2.5, 1, 2.5));
 
 		// then
-		assertThat(player.getInventory().isEmpty()).isTrue();
+		assertThat(player.getInventory().contains(Material.DIAMOND)).isFalse();
+		assertThat(player.getInventory().getItem(0)).extracting(ItemStack::getType).isEqualTo(Material.SLIME_BALL);
 		assertThat(player.getActivePotionEffects()).extracting(PotionEffect::getType)
 				.containsExactly(PotionEffectType.JUMP_BOOST);
 		assertThat(player.getPotionEffect(PotionEffectType.JUMP_BOOST).isInfinite()).isTrue();

@@ -15,3 +15,27 @@ finish-delay: 5
 # Where the running time of a run is shown: action-bar (the text above the hotbar), xp-bar (the level shows the
 # seconds) or both. The experience a player had is given back when they leave.
 timer-display: action-bar
+
+# How many ticks (20 per second) a player on a track with sprintForced may stop sprinting outside a checkpoint before
+# being sent back. A little leeway keeps a sprint broken by bumping into a block from counting.
+sprint-grace-ticks: 5
+
+# The items players get in the hotbar during a game. slot is 0-8 (0 is the leftmost); set enabled to false to
+# leave an item out. Their names are in messages.yml.
+game-items:
+  back:
+    enabled: true
+    slot: 0
+    material: slime_ball
+  restart:
+    enabled: true
+    slot: 1
+    material: clock
+  hide:
+    enabled: true
+    slot: 7
+    material: ender_eye
+  exit:
+    enabled: true
+    slot: 8
+    material: red_bed

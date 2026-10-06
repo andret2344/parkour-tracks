@@ -59,6 +59,8 @@ public final class GameManager {
 	private final NamespacedKey sessionKey;
 	@NotNull
 	private final NamespacedKey snapshotKey;
+	@NotNull
+	private final GameItems items;
 	/**
 	 * Set while the plugin itself teleports a player, so the teleport listener leaves that teleport alone.
 	 */
@@ -68,6 +70,57 @@ public final class GameManager {
 		this.plugin = plugin;
 		sessionKey = new NamespacedKey(plugin, "session");
 		snapshotKey = new NamespacedKey(plugin, "snapshot");
+		items = new GameItems(plugin);
+	}
+
+	@NotNull
+	public GameItems getItems() {
+		return items;
+	}
+
+	/**
+	 * Does what the game item stands for.
+	 */
+	public void use(@NotNull final Player player, @NotNull final GameItem item) {
+		final GameSession session = sessions.get(player.getUniqueId());
+		if (session == null) {
+			return;
+		}
+		switch (item) {
+			case BACK -> goBack(player, session);
+			case RESTART -> restart(player, session);
+			case HIDE -> toggleHiding(player, session);
+			case EXIT -> leave(player, LeaveReason.EXIT);
+		}
+	}
+
+	/**
+	 * Hides the other players of the track from the player, or shows them again.
+	 */
+	public void toggleHiding(@NotNull final Player player, @NotNull final GameSession session) {
+		session.setHiding(!session.isHiding());
+		otherPlayers(session).forEach(other -> {
+			if (session.isHiding()) {
+				player.hidePlayer(plugin, other);
+			} else {
+				player.showPlayer(plugin, other);
+			}
+		});
+		plugin.getMessages().send(player, session.isHiding() ? Message.PLAYERS_HIDDEN : Message.PLAYERS_SHOWN);
+	}
+
+	/**
+	 * The online players in the same game as the session's player, without them.
+	 */
+	@NotNull
+	private List<Player> otherPlayers(@NotNull final GameSession session) {
+		return sessions.values()
+				.stream()
+				.filter(other -> other != session)
+				.filter(other -> other.getTrack().equals(session.getTrack()))
+				.map(other -> plugin.getServer().getPlayer(other.getPlayer()))
+				.filter(Objects::nonNull)
+				.toList();
 	}
 
 	@NotNull
@@ -433,7 +486,17 @@ public final class GameManager {
 		player.setAllowFlight(false);
 		player.setLevel(0);
 		player.setExp(0);
-		sessions.put(player.getUniqueId(), new GameSession(player.getUniqueId(), track));
+		player.setGliding(false);
+		items.give(player);
+		final GameSession session = new GameSession(player.getUniqueId(), track);
+		sessions.put(player.getUniqueId(), session);
+		// Those hiding the others hide the newcomer too
+		sessions.values()
+				.stream()
+				.filter(other -> other != session && other.isHiding() && other.getTrack().equals(track))
+				.map(other -> plugin.getServer().getPlayer(other.getPlayer()))
+				.filter(Objects::nonNull)
+				.forEach(hider -> hider.hidePlayer(plugin, player));
 		if (entry != Entry.SIDE) {
 			plugin.getMessages().send(player, Message.JOINED, track(track), displayName(track));
 		}
@@ -451,10 +514,18 @@ public final class GameManager {
 	 * Ends the player's game and gives them back what they had.
 	 */
 	public void leave(@NotNull final Player player, @NotNull final LeaveReason reason) {
-		final GameSession session = sessions.remove(player.getUniqueId());
+		final GameSession session = sessions.get(player.getUniqueId());
 		if (session == null) {
 			return;
 		}
+		// Hiding ends with the game, both ways
+		otherPlayers(session).forEach(other -> {
+			player.showPlayer(plugin, other);
+			if (sessions.get(other.getUniqueId()).isHiding()) {
+				other.showPlayer(plugin, player);
+			}
+		});
+		sessions.remove(player.getUniqueId());
 		if (session.getFinishTask() != -1) {
 			plugin.getServer().getScheduler().cancelTask(session.getFinishTask());
 		}
@@ -538,16 +609,17 @@ public final class GameManager {
 	 */
 	public void tick() {
 		final TimerDisplay display = plugin.getSettings().timerDisplay();
-		for (final GameSession session : sessions.values()) {
+		for (final GameSession session : List.copyOf(sessions.values())) {
+			final Player player = plugin.getServer().getPlayer(session.getPlayer());
+			if (player == null) {
+				continue;
+			}
+			checkSprint(player, session);
 			if (session.getTrack().getType() == TrackType.TRAINING) {
 				continue;
 			}
 			if (session.getPhase() == Phase.RUNNING && !session.isPaused()) {
 				session.tick();
-			}
-			final Player player = plugin.getServer().getPlayer(session.getPlayer());
-			if (player == null) {
-				continue;
 			}
 			// On the spawn the run has not started: the experience bar shows zero, the action bar nothing
 			if (display.showsActionBar() && session.getPhase() != Phase.WAITING) {
@@ -558,6 +630,26 @@ public final class GameManager {
 				player.setLevel(session.getTicks() / Ticks.PER_SECOND);
 				player.setExp((session.getTicks() % Ticks.PER_SECOND) / (float) Ticks.PER_SECOND);
 			}
+		}
+	}
+
+	/**
+	 * On a sprint-forced track, a running player who stops sprinting outside the checkpoints for longer than the
+	 * grace period goes back.
+	 */
+	private void checkSprint(@NotNull final Player player, @NotNull final GameSession session) {
+		final Track track = session.getTrack();
+		if (!track.getOptions().isSprintForced() || session.getPhase() != Phase.RUNNING) {
+			return;
+		}
+		final Location location = player.getLocation();
+		final boolean resting = contains(Objects.requireNonNull(track.getSpawn()).area(), location)
+				|| contains(Objects.requireNonNull(track.getFinish()).area(), location)
+				|| track.getCheckpoints().stream().anyMatch(checkpoint -> contains(checkpoint.area(), location));
+		if (session.countNotSprinting(player.isSprinting() || resting) > plugin.getSettings().sprintGraceTicks()) {
+			session.countNotSprinting(true);
+			plugin.getMessages().send(player, Message.SPRINT_STOPPED);
+			goBack(player, session);
 		}
 	}
 

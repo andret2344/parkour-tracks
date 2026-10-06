@@ -14,8 +14,10 @@ import eu.andret.parkourtracks.command.TrackSettingsCommand;
 import eu.andret.parkourtracks.config.Medal;
 import eu.andret.parkourtracks.config.Settings;
 import eu.andret.parkourtracks.config.SettingsLoader;
+import eu.andret.parkourtracks.game.GameItemListener;
 import eu.andret.parkourtracks.game.GameListener;
 import eu.andret.parkourtracks.game.GameManager;
+import eu.andret.parkourtracks.game.TrackGuard;
 import eu.andret.parkourtracks.message.Messages;
 import eu.andret.parkourtracks.selection.Selections;
 import eu.andret.parkourtracks.selection.WorldEditSelections;
@@ -67,6 +69,8 @@ public class ParkourTracksPlugin extends JavaPlugin {
 		trackRegistry.load();
 		games = new GameManager(this);
 		getServer().getPluginManager().registerEvents(new GameListener(games), this);
+		getServer().getPluginManager().registerEvents(new GameItemListener(games), this);
+		getServer().getPluginManager().registerEvents(new TrackGuard(this), this);
 		getServer().getScheduler().runTaskTimer(this, games::tick, 1, 1);
 		// Players online already never join the server for the plugin, e.g. after a reload
 		getServer().getOnlinePlayers().forEach(games::arrive);

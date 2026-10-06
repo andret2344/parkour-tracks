@@ -68,8 +68,14 @@ the texts of `messages.yml`; `track` the track model, its rules and its storage;
   the snapshot and clears the marker, except on `DISCONNECT`, which keeps it so `arrive` (server join, or plugin
   start for online players) returns the player to the spawn as `Entry.RETURN`. A snapshot still in the PDC on
   `arrive` is from a crash and is given back first. `tick` runs every tick from the plugin: it counts the ticks of
-  running, unpaused, non-training runs and shows them per `timer-display`. `shutdown` (plugin disable) ends every game
-  as a disconnect.
+  running, unpaused, non-training runs and shows them per `timer-display`, and checks `sprintForced` (ticks without
+  sprinting outside the spawn, checkpoints and finish, over `sprint-grace-ticks`, send back). `shutdown` (plugin
+  disable) ends every game as a disconnect. Hiding is per session and kept consistent on join and leave.
+- `game/GameItems` - makes the game items (`GameItem`: back, restart, hide, exit) for the slots in `Settings` and
+  recognizes them by the `parkourtracks:game-item` tag in their PDC; `GameItemListener` uses them on a main-hand click
+  and stops them from being moved, dropped, swapped or put away, and players in a game from picking anything up.
+- `game/TrackGuard` - the edit lock on the world: every block change in the region of a running track is cancelled
+  (explosions lose the track's blocks from their list; pistons are checked on both sides of the region's edge).
 - `track/TrackOption` - every option `/ptracks set` changes: how its value is parsed, checked against the other
   options (`boat` excludes `sprintForced` and `enderPearls`), stored and shown. Problems are `OptionException`s the
   command turns into messages.

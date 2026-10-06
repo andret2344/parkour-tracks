@@ -12,6 +12,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityToggleGlideEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
@@ -19,6 +20,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.PlayerRiptideEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerToggleFlightEvent;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +50,11 @@ public final class GameListener implements Listener {
 			return;
 		}
 		final Player player = event.getPlayer();
+		if (event.getCause() == PlayerTeleportEvent.TeleportCause.CONSUMABLE_EFFECT && games.getSession(player).isPresent()) {
+			// Chorus fruit
+			event.setCancelled(true);
+			return;
+		}
 		final boolean pearl = event.getCause() == PlayerTeleportEvent.TeleportCause.ENDER_PEARL
 				&& games.getSession(player)
 				.map(GameSession::getTrack)
@@ -107,6 +114,20 @@ public final class GameListener implements Listener {
 		if (event.getEntity() instanceof final Player player && games.getSession(player).isPresent()) {
 			event.setCancelled(true);
 			player.setFoodLevel(20);
+		}
+	}
+
+	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+	public void glide(@NotNull final EntityToggleGlideEvent event) {
+		if (event.isGliding() && event.getEntity() instanceof final Player player && games.getSession(player).isPresent()) {
+			event.setCancelled(true);
+		}
+	}
+
+	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+	public void riptide(@NotNull final PlayerRiptideEvent event) {
+		if (games.getSession(event.getPlayer()).isPresent()) {
+			event.setCancelled(true);
 		}
 	}
 

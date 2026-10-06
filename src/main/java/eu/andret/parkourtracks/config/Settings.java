@@ -11,10 +11,14 @@ import java.util.Optional;
  * @param medals             the medals of the server, best first
  * @param finishDelaySeconds how long a player who finished waits before being sent to the lobby
  * @param timerDisplay       where the running time is shown
+ * @param sprintGraceTicks   how long a player on a sprint-forced track may stop sprinting before going back
+ * @param gameItems          the game items turned on, with their slots
  */
-public record Settings(@NotNull List<Medal> medals, int finishDelaySeconds, @NotNull TimerDisplay timerDisplay) {
+public record Settings(@NotNull List<Medal> medals, int finishDelaySeconds, @NotNull TimerDisplay timerDisplay,
+					   int sprintGraceTicks, @NotNull List<GameItemSlot> gameItems) {
 	public Settings {
 		medals = List.copyOf(medals);
+		gameItems = List.copyOf(gameItems);
 	}
 
 	@NotNull

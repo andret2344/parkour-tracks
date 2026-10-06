@@ -24,6 +24,8 @@ public final class GameSession {
 	private int ticks;
 	private boolean paused;
 	private int finishTask = -1;
+	private boolean hiding;
+	private int ticksNotSprinting;
 
 	public GameSession(@NotNull final UUID player, @NotNull final Track track) {
 		this.player = player;
@@ -94,6 +96,27 @@ public final class GameSession {
 
 	void setPaused(final boolean paused) {
 		this.paused = paused;
+	}
+
+	/**
+	 * Whether the player hides the other players of the track.
+	 */
+	public boolean isHiding() {
+		return hiding;
+	}
+
+	void setHiding(final boolean hiding) {
+		this.hiding = hiding;
+	}
+
+	/**
+	 * Counts a tick without sprinting outside the checkpoints, or starts over when sprinting.
+	 *
+	 * @return the ticks without sprinting in a row
+	 */
+	int countNotSprinting(final boolean sprinting) {
+		ticksNotSprinting = sprinting ? 0 : ticksNotSprinting + 1;
+		return ticksNotSprinting;
 	}
 
 	int getFinishTask() {
