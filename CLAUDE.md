@@ -71,6 +71,11 @@ the texts of `messages.yml`; `track` the track model, its rules and its storage;
   running, unpaused, non-training runs and shows them per `timer-display`, and checks `sprintForced` (ticks without
   sprinting outside the spawn, checkpoints and finish, over `sprint-grace-ticks`, send back). `shutdown` (plugin
   disable) ends every game as a disconnect. Hiding is per session and kept consistent on join and leave.
+  Every teleport onto the track goes through `sendTo`, which on a boat track removes the old boat and puts the player
+  into a new, non-persistent one (`isBoating` lets the vehicle listener allow it; nested calls keep the flag); the
+  tick sends a player found without a valid boat back. `GameListener` follows riders through `VehicleMoveEvent`
+  (ignoring `PlayerMoveEvent` while riding), cancels getting out of a game boat, anyone else getting in, game
+  players getting into any other vehicle, and damage to game boats.
 - `game/GameItems` - makes the game items (`GameItem`: back, restart, hide, exit) for the slots in `Settings` and
   recognizes them by the `parkourtracks:game-item` tag in their PDC; `GameItemListener` uses them on a main-hand click
   and stops them from being moved, dropped, swapped or put away, and players in a game from picking anything up.
@@ -113,7 +118,8 @@ the texts of `messages.yml`; `track` the track model, its rules and its storage;
   players at those stages; `walkTo` moves one block per `simulatePlayerMove`. MockBukkit's `simulatePlayerMove`
   sets the location before calling the event, so `PlayerMoveEvent#setTo` would not show in tests: going back from a
   move teleports. MockBukkit ignores `PlayerDeathEvent#setKeepInventory` (it follows only the game rule), so death
-  tests check the event.
+  tests check the event. MockBukkit cannot teleport a vehicle with a passenger, so boat tests (`BoatTest#driveTo`)
+  fire `VehicleMoveEvent`s with the positions instead.
 - MockBukkit's `enablePlugin` lets an exception from `onEnable` through (a real server catches it and disables the
   plugin), so "does not start" tests assert that enabling throws.
 - Every rule in `decisions.md` has its own test.

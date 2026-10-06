@@ -23,7 +23,14 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerRiptideEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerToggleFlightEvent;
+import org.bukkit.event.vehicle.VehicleDamageEvent;
+import org.bukkit.event.vehicle.VehicleDestroyEvent;
+import org.bukkit.event.vehicle.VehicleEnterEvent;
+import org.bukkit.event.vehicle.VehicleExitEvent;
+import org.bukkit.event.vehicle.VehicleMoveEvent;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * Reports to the {@link GameManager} what players do; decides nothing itself. Handlers of cancellable events ignore
@@ -37,10 +44,62 @@ public final class GameListener implements Listener {
 		this.games = games;
 	}
 
+	/**
+	 * A player riding moves with the vehicle, which {@link #vehicleMove} handles.
+	 */
 	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
 	public void move(@NotNull final PlayerMoveEvent event) {
-		if (event.hasChangedPosition()) {
+		if (event.hasChangedPosition() && !event.getPlayer().isInsideVehicle()) {
 			games.move(event.getPlayer(), event.getFrom(), event.getTo(), true);
+		}
+	}
+
+	@EventHandler
+	public void vehicleMove(@NotNull final VehicleMoveEvent event) {
+		for (final Entity passenger : List.copyOf(event.getVehicle().getPassengers())) {
+			if (passenger instanceof final Player player) {
+				games.move(player, event.getFrom(), event.getTo(), true);
+			}
+		}
+	}
+
+	/**
+	 * A player on a boat track stays in their boat; only the plugin takes them out.
+	 */
+	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+	public void vehicleExit(@NotNull final VehicleExitEvent event) {
+		if (!games.isBoating() && event.getExited() instanceof final Player player
+				&& games.getSession(player).map(session -> session.getTrack().getOptions().isBoat()).orElse(false)) {
+			event.setCancelled(true);
+		}
+	}
+
+	/**
+	 * Nothing but its player gets into a game boat, and players in a game get into no other vehicle: riding, their
+	 * moves along the track would not be checked.
+	 */
+	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+	public void vehicleEnter(@NotNull final VehicleEnterEvent event) {
+		if (games.isBoating()) {
+			return;
+		}
+		final boolean inGame = event.getEntered() instanceof final Player player && games.getSession(player).isPresent();
+		if (inGame || games.isGameBoat(event.getVehicle())) {
+			event.setCancelled(true);
+		}
+	}
+
+	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+	public void vehicleDamage(@NotNull final VehicleDamageEvent event) {
+		if (games.isGameBoat(event.getVehicle())) {
+			event.setCancelled(true);
+		}
+	}
+
+	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+	public void vehicleDestroy(@NotNull final VehicleDestroyEvent event) {
+		if (games.isGameBoat(event.getVehicle())) {
+			event.setCancelled(true);
 		}
 	}
 

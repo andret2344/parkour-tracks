@@ -2,6 +2,7 @@ package eu.andret.parkourtracks.game;
 
 import eu.andret.parkourtracks.track.Track;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
@@ -25,6 +26,8 @@ public final class GameSession {
 	private boolean paused;
 	private int finishTask = -1;
 	private boolean hiding;
+	@Nullable
+	private UUID boat;
 	private int ticksNotSprinting;
 
 	public GameSession(@NotNull final UUID player, @NotNull final Track track) {
@@ -96,6 +99,18 @@ public final class GameSession {
 
 	void setPaused(final boolean paused) {
 		this.paused = paused;
+	}
+
+	/**
+	 * The boat the plugin put the player in, on a boat track.
+	 */
+	@Nullable
+	public UUID getBoat() {
+		return boat;
+	}
+
+	void setBoat(@Nullable final UUID boat) {
+		this.boat = boat;
 	}
 
 	/**

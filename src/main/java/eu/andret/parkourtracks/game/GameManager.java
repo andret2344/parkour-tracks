@@ -19,11 +19,13 @@ import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
 import org.bukkit.World;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,6 +67,10 @@ public final class GameManager {
 	 * Set while the plugin itself teleports a player, so the teleport listener leaves that teleport alone.
 	 */
 	private boolean teleporting;
+	/**
+	 * Set while the plugin puts a player into a boat or takes them out, so the vehicle listener lets it happen.
+	 */
+	private boolean boating;
 
 	public GameManager(@NotNull final ParkourTracksPlugin plugin) {
 		this.plugin = plugin;
@@ -138,6 +144,20 @@ public final class GameManager {
 	 */
 	public boolean isTeleporting() {
 		return teleporting;
+	}
+
+	public boolean isBoating() {
+		return boating;
+	}
+
+	/**
+	 * Whether the entity is the boat of a player in a game.
+	 */
+	public boolean isGameBoat(@Nullable final Entity entity) {
+		if (entity == null) {
+			return false;
+		}
+		return sessions.values().stream().anyMatch(session -> entity.getUniqueId().equals(session.getBoat()));
 	}
 
 	public boolean isIgnoring(@NotNull final Player player) {
@@ -232,11 +252,13 @@ public final class GameManager {
 		findRunningTrack(to).ifPresent(track -> {
 			final Checkpoint spawn = Objects.requireNonNull(track.getSpawn());
 			if (contains(spawn.area(), to)) {
-				join(player, track, Entry.SPAWN);
+				final GameSession session = join(player, track, Entry.SPAWN);
+				if (track.getOptions().isBoat()) {
+					sendTo(player, session, spawnLocation(track));
+				}
 				return;
 			}
-			join(player, track, Entry.SIDE);
-			teleport(player, spawnLocation(track));
+			sendTo(player, join(player, track, Entry.SIDE), spawnLocation(track));
 			plugin.getMessages().send(player, Message.SENT_TO_SPAWN, track(track));
 		});
 	}
@@ -395,8 +417,8 @@ public final class GameManager {
 		}
 		switch (track.getOptions().getAfterFinish()) {
 			case SPAWN -> {
-				teleport(player, spawnLocation(track));
 				session.resetToSpawn();
+				sendTo(player, session, spawnLocation(track));
 			}
 			case LOBBY -> {
 				final int delay = plugin.getSettings().finishDelaySeconds();
@@ -417,7 +439,7 @@ public final class GameManager {
 	 * where the run starts over.
 	 */
 	public void goBack(@NotNull final Player player, @NotNull final GameSession session) {
-		teleport(player, backTarget(session));
+		sendTo(player, session, backTarget(session));
 	}
 
 	/**
@@ -442,7 +464,7 @@ public final class GameManager {
 	 */
 	public void restart(@NotNull final Player player, @NotNull final GameSession session) {
 		session.resetToSpawn();
-		teleport(player, spawnLocation(session.getTrack()));
+		sendTo(player, session, spawnLocation(session.getTrack()));
 	}
 
 	/**
@@ -462,14 +484,14 @@ public final class GameManager {
 		if (sessions.containsKey(player.getUniqueId())) {
 			leave(player, LeaveReason.TELEPORT);
 		}
-		join(player, track, Entry.DIRECT);
-		teleport(player, spawnLocation(track));
+		sendTo(player, join(player, track, Entry.DIRECT), spawnLocation(track));
 	}
 
 	/**
 	 * Starts a game for the player: their state goes into a snapshot, they get the track's effects.
 	 */
-	private void join(@NotNull final Player player, @NotNull final Track track, @NotNull final Entry entry) {
+	@NotNull
+	private GameSession join(@NotNull final Player player, @NotNull final Track track, @NotNull final Entry entry) {
 		final PersistentDataContainer data = player.getPersistentDataContainer();
 		// A snapshot left from before (a crash) is the player's real state; never overwrite it with game items
 		if (!data.has(snapshotKey, PersistentDataType.STRING)) {
@@ -500,6 +522,7 @@ public final class GameManager {
 		if (entry != Entry.SIDE) {
 			plugin.getMessages().send(player, Message.JOINED, track(track), displayName(track));
 		}
+		return session;
 	}
 
 	private static void applyEffect(@NotNull final Player player, @NotNull final TrackEffect effect) {
@@ -525,6 +548,7 @@ public final class GameManager {
 				other.showPlayer(plugin, player);
 			}
 		});
+		removeBoat(player, session);
 		sessions.remove(player.getUniqueId());
 		if (session.getFinishTask() != -1) {
 			plugin.getServer().getScheduler().cancelTask(session.getFinishTask());
@@ -585,8 +609,7 @@ public final class GameManager {
 		}
 		findRunningTrack(player.getLocation()).ifPresent(track -> {
 			final boolean returning = track.getId().toString().equals(marker);
-			join(player, track, returning ? Entry.RETURN : Entry.SIDE);
-			teleport(player, spawnLocation(track));
+			sendTo(player, join(player, track, returning ? Entry.RETURN : Entry.SIDE), spawnLocation(track));
 			if (!returning) {
 				plugin.getMessages().send(player, Message.SENT_TO_SPAWN, track(track));
 			}
@@ -615,6 +638,7 @@ public final class GameManager {
 				continue;
 			}
 			checkSprint(player, session);
+			checkBoat(player, session);
 			if (session.getTrack().getType() == TrackType.TRAINING) {
 				continue;
 			}
@@ -649,6 +673,64 @@ public final class GameManager {
 		if (session.countNotSprinting(player.isSprinting() || resting) > plugin.getSettings().sprintGraceTicks()) {
 			session.countNotSprinting(true);
 			plugin.getMessages().send(player, Message.SPRINT_STOPPED);
+			goBack(player, session);
+		}
+	}
+
+	// ======= Boats =======
+
+	/**
+	 * Sends the player somewhere on their track: on a boat track, in a new boat standing still.
+	 */
+	private void sendTo(@NotNull final Player player, @NotNull final GameSession session, @NotNull final Location location) {
+		if (!session.getTrack().getOptions().isBoat()) {
+			teleport(player, location);
+			return;
+		}
+		final boolean wasBoating = boating;
+		boating = true;
+		try {
+			removeBoat(player, session);
+			teleport(player, location);
+			final Entity boat = location.getWorld().spawnEntity(location, session.getTrack().getOptions().getBoatType());
+			// Never saved with the world, so neither a crash nor a restart leaves boats behind
+			boat.setPersistent(false);
+			boat.setVelocity(new Vector());
+			boat.addPassenger(player);
+			session.setBoat(boat.getUniqueId());
+		} finally {
+			boating = wasBoating;
+		}
+	}
+
+	/**
+	 * Takes the player out of their boat, and out of any other vehicle, and removes the boat.
+	 */
+	private void removeBoat(@NotNull final Player player, @NotNull final GameSession session) {
+		// Called from sendTo too, which is boating already and stays so
+		final boolean wasBoating = boating;
+		boating = true;
+		try {
+			player.leaveVehicle();
+			if (session.getBoat() != null) {
+				Optional.ofNullable(plugin.getServer().getEntity(session.getBoat())).ifPresent(Entity::remove);
+				session.setBoat(null);
+			}
+		} finally {
+			boating = wasBoating;
+		}
+	}
+
+	/**
+	 * On a boat track, a player who is not in their boat (it was destroyed, or they got out somehow) goes back.
+	 */
+	private void checkBoat(@NotNull final Player player, @NotNull final GameSession session) {
+		if (!session.getTrack().getOptions().isBoat() || session.getPhase() == Phase.FINISHED || player.isDead()) {
+			return;
+		}
+		final Entity vehicle = player.getVehicle();
+		// A removed boat can still hold the player when getting out was cancelled
+		if (vehicle == null || !vehicle.isValid() || !vehicle.getUniqueId().equals(session.getBoat())) {
 			goBack(player, session);
 		}
 	}

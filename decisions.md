@@ -228,7 +228,8 @@ Design decisions for the migration, agreed on before coding. Deferred features a
 
 ## To verify before coding
 
-- Whether `PlayerMoveEvent` fires for a player riding a boat, or region handling needs `VehicleMoveEvent`.
+- Boat mode follows a player's moves through `VehicleMoveEvent` and ignores `PlayerMoveEvent` while riding; on a
+  real server, check that `VehicleMoveEvent` fires for a boat the player steers, on ice and on water.
 - Whether Paper 26.x still ships an SQLite JDBC driver, or it has to be added.
 
 ## Chosen during implementation
@@ -299,3 +300,16 @@ Details `decisions.md` did not settle, chosen while coding. Review them; anythin
 - `sprintForced` is checked every tick of a running run: outside the spawn, the checkpoints and the finish, a player
   not sprinting for more than `sprint-grace-ticks` (default 5) is told so and sent back.
 - Chorus fruit teleports, starting to glide and riptide are cancelled during a game.
+- On a boat track, every way onto the spawn or a checkpoint (entering, going back, restarting, the finish's spawn
+  option, coming back after a disconnect) removes the old boat and puts the player into a new one of the track's
+  type, standing still, never saved with the world. A player found without their boat (it was removed by something
+  else, or they left it somehow) goes back, checked every tick.
+- Players in a game get into no other vehicle, on any track: their moves would not be checked while riding.
+
+## Open questions
+
+- `enderPearls` cannot be used yet: the inventory is cleared on entering and nothing is picked up in a game, so
+  players have no pearls. Options: the track gives a number of pearls when a run starts (recommended), pearls alone
+  can be picked up in a game, or the option goes.
+- Doors, trapdoors, buttons and levers can be used during a game; one player opening a trapdoor changes the track for
+  the others. Keep it, block it, or make it a track option?
