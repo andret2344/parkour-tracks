@@ -15,6 +15,7 @@ permissions:
       parkourtracks.play: true
       parkourtracks.edit: true
       parkourtracks.manage: true
+      parkourtracks.ignore: true
   parkourtracks.play:
     description: Allows to use the player commands.
     default: true
@@ -23,4 +24,7 @@ permissions:
     default: op
   parkourtracks.manage:
     description: Allows to start, stop and remove tracks, to set the lobby and to reload the plugin.
+    default: op
+  parkourtracks.ignore:
+    description: Allows to ignore tracks, walking through them without starting a game.
     default: op

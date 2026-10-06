@@ -6,6 +6,7 @@ import eu.andret.parkourtracks.command.MedalParameterType;
 import eu.andret.parkourtracks.command.OptionParameterType;
 import eu.andret.parkourtracks.command.OptionValue;
 import eu.andret.parkourtracks.command.PlaceholderCondition;
+import eu.andret.parkourtracks.command.PlayerCommand;
 import eu.andret.parkourtracks.command.TrackCommand;
 import eu.andret.parkourtracks.command.TrackParameterType;
 import eu.andret.parkourtracks.command.TrackPartsCommand;
@@ -13,6 +14,8 @@ import eu.andret.parkourtracks.command.TrackSettingsCommand;
 import eu.andret.parkourtracks.config.Medal;
 import eu.andret.parkourtracks.config.Settings;
 import eu.andret.parkourtracks.config.SettingsLoader;
+import eu.andret.parkourtracks.game.GameListener;
+import eu.andret.parkourtracks.game.GameManager;
 import eu.andret.parkourtracks.message.Messages;
 import eu.andret.parkourtracks.selection.Selections;
 import eu.andret.parkourtracks.selection.WorldEditSelections;
@@ -44,6 +47,7 @@ public class ParkourTracksPlugin extends JavaPlugin {
 	private Settings settings;
 	private Messages messages;
 	private TrackRegistry trackRegistry;
+	private GameManager games;
 	@NotNull
 	private Selections selections = new WorldEditSelections();
 
@@ -61,7 +65,23 @@ public class ParkourTracksPlugin extends JavaPlugin {
 		messages = readMessages();
 		trackRegistry = new TrackRegistry(new TrackStore(getDataFolder().toPath().resolve(TRACKS_FILE)));
 		trackRegistry.load();
+		games = new GameManager(this);
+		getServer().getPluginManager().registerEvents(new GameListener(games), this);
+		getServer().getScheduler().runTaskTimer(this, games::tick, 1, 1);
+		// Players online already never join the server for the plugin, e.g. after a reload
+		getServer().getOnlinePlayers().forEach(games::arrive);
 		setUpCommands();
+	}
+
+	/**
+	 * Ends every game as if the players disconnected: they get their own state back now, and return to the spawn
+	 * without paying.
+	 */
+	@Override
+	public void onDisable() {
+		if (games != null) {
+			games.shutdown();
+		}
 	}
 
 	/**
@@ -84,15 +104,15 @@ public class ParkourTracksPlugin extends JavaPlugin {
 						.addParameterType(Medal.class, new MedalParameterType(support))
 						.addParameterType(optionClass(), new OptionParameterType(support)))
 				.suggestionProviders(providers -> providers
-						.addProviderForAnnotation(OptionValue.class, annotation -> context -> {
+						.addProviderForAnnotation(OptionValue.class, _ -> context -> {
 							final TrackOption<?> option = context.getResolvedArgumentOrNull("option");
 							return option == null ? List.of() : option.getSuggestions();
 						})
-						.addProviderForAnnotation(EffectType.class,
-								annotation -> context -> TrackSettingsCommand.effectKeys()))
+						.addProviderForAnnotation(EffectType.class, _ -> _ -> TrackSettingsCommand.effectKeys()))
 				.commandCondition(new PlaceholderCondition())
 				.build();
-		lamp.register(new TrackCommand(support), new TrackPartsCommand(support), new TrackSettingsCommand(support));
+		lamp.register(new TrackCommand(support), new TrackPartsCommand(support), new TrackSettingsCommand(support),
+				new PlayerCommand(support, games));
 	}
 
 	/**
@@ -147,6 +167,11 @@ public class ParkourTracksPlugin extends JavaPlugin {
 	@NotNull
 	public TrackRegistry getTrackRegistry() {
 		return trackRegistry;
+	}
+
+	@NotNull
+	public GameManager getGames() {
+		return games;
 	}
 
 	@NotNull

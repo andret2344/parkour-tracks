@@ -200,6 +200,7 @@ public final class TrackCommand {
 		}
 		track.setRunning(false);
 		support.save();
+		support.plugin().getGames().stop(track);
 		support.send(sender, Message.STOPPED, CommandSupport.track(track));
 	}
 

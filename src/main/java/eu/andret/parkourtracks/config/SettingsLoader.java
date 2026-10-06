@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
@@ -13,6 +14,9 @@ import java.util.regex.Pattern;
  */
 public final class SettingsLoader {
 	private static final String MEDALS = "medals";
+	private static final String FINISH_DELAY = "finish-delay";
+	private static final String TIMER_DISPLAY = "timer-display";
+	private static final int DEFAULT_FINISH_DELAY = 5;
 	@NotNull
 	private static final Pattern MEDAL_KEY = Pattern.compile("[a-z0-9_-]+");
 
@@ -21,7 +25,27 @@ public final class SettingsLoader {
 
 	@NotNull
 	public static Settings load(@NotNull final ConfigurationSection config) {
-		return new Settings(loadMedals(config));
+		return new Settings(loadMedals(config), loadFinishDelay(config), loadTimerDisplay(config));
+	}
+
+	private static int loadFinishDelay(@NotNull final ConfigurationSection config) {
+		if (!config.contains(FINISH_DELAY)) {
+			return DEFAULT_FINISH_DELAY;
+		}
+		if (!config.isInt(FINISH_DELAY) || config.getInt(FINISH_DELAY) < 0) {
+			throw new IllegalArgumentException("'" + FINISH_DELAY + "' in config.yml has to be a whole number of seconds, 0 or more");
+		}
+		return config.getInt(FINISH_DELAY);
+	}
+
+	@NotNull
+	private static TimerDisplay loadTimerDisplay(@NotNull final ConfigurationSection config) {
+		final String value = config.getString(TIMER_DISPLAY, TimerDisplay.ACTION_BAR.name());
+		try {
+			return TimerDisplay.valueOf(value.toUpperCase(Locale.ROOT).replace('-', '_'));
+		} catch (final IllegalArgumentException ex) {
+			throw new IllegalArgumentException("'" + TIMER_DISPLAY + "' in config.yml has to be action-bar, xp-bar or both", ex);
+		}
 	}
 
 	@NotNull

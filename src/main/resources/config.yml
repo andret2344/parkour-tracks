@@ -7,3 +7,11 @@ medals:
   gold: '<gold>Gold'
   silver: '<gray>Silver'
   bronze: '<#cd7f32>Bronze'
+
+# How many seconds a player who reached the finish waits before being sent to the lobby (for tracks whose
+# afterFinish option is lobby). 0 sends them right away.
+finish-delay: 5
+
+# Where the running time of a run is shown: action-bar (the text above the hotbar), xp-bar (the level shows the
+# seconds) or both. The experience a player had is given back when they leave.
+timer-display: action-bar

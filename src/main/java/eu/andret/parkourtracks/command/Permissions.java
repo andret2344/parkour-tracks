@@ -16,6 +16,10 @@ public final class Permissions {
 	 * Starting, stopping and removing tracks, the lobby, reloading.
 	 */
 	public static final String MANAGE = "parkourtracks.manage";
+	/**
+	 * Ignoring tracks, to walk through them without starting a game.
+	 */
+	public static final String IGNORE = "parkourtracks.ignore";
 
 	private Permissions() {
 	}

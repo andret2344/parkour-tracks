@@ -267,3 +267,23 @@ Details `decisions.md` did not settle, chosen while coding. Review them; anythin
   raft without a chest) and `afterFinish`.
 - Lamp's own errors (a wrong argument type, a missing argument, no permission) keep Lamp's English texts; everything
   the plugin says itself is in `messages.yml`.
+- Walking back into the spawn during a run starts the run over.
+- A teleport is the plugin's own only while the plugin makes it; any other one (commands, other plugins, chorus
+  fruit, an ender pearl the track does not allow) is foreign. An allowed ender pearl counts where it lands, as if the
+  player had walked there in one step, without checking what it flew over.
+- Leaving the region by walking out or by a foreign teleport leaves the player where they are; the exit item,
+  `/ptracks leave`, `/ptracks lobby`, stopping the track and the finish send them to the lobby (the track's own,
+  else the global one).
+- `/ptracks ignore` (permission `parkourtracks.ignore`) switches ignoring tracks; it is not kept over a restart.
+- Entering a game takes the snapshot, then clears the inventory and the effects, fills health and food, turns flight
+  off (toggling flight is cancelled during the game) and gives the track's effects with an infinite duration.
+- After a death the player comes back to life where going back would take them (the last checkpoint, or the spawn
+  before the first one and on hardcore tracks).
+- A player who finished and waits for the lobby is no longer checked against walls, checkpoints or teleports inside
+  the region.
+- `finish-delay` in `config.yml` (default 5 seconds) is the wait before the lobby; `timer-display` (`action-bar` by
+  default, `xp-bar` or `both`) is where the running time shows. On the XP bar the level is the seconds, the bar their
+  fraction.
+- The session marker is `parkourtracks:session` (the track's UUID) and the snapshot `parkourtracks:snapshot` (YAML
+  text) in the player's PDC. Disabling the plugin (a restart) ends every game like a disconnect: everyone gets their
+  state back right away and returns to the spawn without paying.

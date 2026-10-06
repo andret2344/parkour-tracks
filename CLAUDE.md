@@ -33,7 +33,7 @@ during implementation and recorded in its "Chosen during implementation" section
 
 Packages under `eu.andret.parkourtracks`: the root holds the plugin; `config` the content of `config.yml`; `message`
 the texts of `messages.yml`; `track` the track model, its rules and its storage; `selection` WorldEdit selections;
-`command` the Lamp commands; `util` formatting helpers. WorldEdit is a hard dependency (`depend` in `plugin.yml`).
+`command` the Lamp commands; `game` the games played on tracks; `util` formatting helpers. WorldEdit is a hard dependency (`depend` in `plugin.yml`).
 
 - `ParkourTracksPlugin` - entry point. `onEnable` saves the default `config.yml` and `messages.yml`, reads both by
   hand (Bukkit's `getConfig()` only logs a broken file and goes on empty), loads the tracks and registers the
@@ -54,6 +54,22 @@ the texts of `messages.yml`; `track` the track model, its rules and its storage;
   arguments; `@OptionValue` and `@EffectType` mark arguments completed by providers set up in
   `ParkourTracksPlugin#setUpCommands`. `PlaceholderCondition` stops the help placeholder from swallowing errors of
   subcommands. Lamp needs `-parameters` and is shaded and relocated under `eu.andret.parkourtracks.lamp`.
+- `game/GameManager` - the one place deciding who is in which game and what happens to them; `GameListener` only
+  reports events to it. A `GameSession` holds the track, the `Phase` (`WAITING` on the spawn, `RUNNING`, `FINISHED`),
+  the last checkpoint passed (`SPAWN` = -1), the ticks and the pause flag. `move` handles a move: outside a session a
+  running track's region is entered (`Entry.SPAWN` through the spawn, `Entry.SIDE` elsewhere, then sent to the spawn);
+  in one, leaving the region ends the game, leaving the spawn starts the run, and the walls, the spawn, the checkpoints
+  and the finish the move went through are handled in the order it reached them (`Segments.entry`, a ray-box test, so
+  a fast move cannot skip a thin region). Skipping follows `SkipMode`; the finish is the checkpoint after the last.
+  `goBack` sends to the last checkpoint, or to the spawn (restarting the run) before the first one and on hardcore
+  tracks. `teleported` handles foreign teleports (the plugin marks its own with `isTeleporting`): out of the region
+  ends the game, inside it goes back instead (`setTo`), an allowed ender pearl is handled a tick later as a jump.
+  `join` stores a `Snapshot` (YAML text) and the session marker (track UUID) in the player's PDC; `leave` restores
+  the snapshot and clears the marker, except on `DISCONNECT`, which keeps it so `arrive` (server join, or plugin
+  start for online players) returns the player to the spawn as `Entry.RETURN`. A snapshot still in the PDC on
+  `arrive` is from a crash and is given back first. `tick` runs every tick from the plugin: it counts the ticks of
+  running, unpaused, non-training runs and shows them per `timer-display`. `shutdown` (plugin disable) ends every game
+  as a disconnect.
 - `track/TrackOption` - every option `/ptracks set` changes: how its value is parsed, checked against the other
   options (`boat` excludes `sprintForced` and `enderPearls`), stored and shown. Problems are `OptionException`s the
   command turns into messages.
@@ -86,6 +102,12 @@ the texts of `messages.yml`; `track` the track model, its rules and its storage;
   a stopped track, `messages` takes the plain text of the messages a player got.
   `MockBukkit.load` ignores `depend`, so the plugin loads without WorldEdit. Tests of plain logic (`track`, `config`)
   are plain JUnit tests without a server; Bukkit enums such as `Material` work without one.
+- Game tests extend `game/GameTest`: a running track along x (spawn, two one-block checkpoints, finish, a wall at
+  y 0), the lobby set and the world spawn moved off the track (new players appear there). `onSpawn`/`running` give
+  players at those stages; `walkTo` moves one block per `simulatePlayerMove`. MockBukkit's `simulatePlayerMove`
+  sets the location before calling the event, so `PlayerMoveEvent#setTo` would not show in tests: going back from a
+  move teleports. MockBukkit ignores `PlayerDeathEvent#setKeepInventory` (it follows only the game rule), so death
+  tests check the event.
 - MockBukkit's `enablePlugin` lets an exception from `onEnable` through (a real server catches it and disables the
   plugin), so "does not start" tests assert that enabling throws.
 - Every rule in `decisions.md` has its own test.
