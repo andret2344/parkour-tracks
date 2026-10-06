@@ -7,6 +7,7 @@ import eu.andret.parkourtracks.command.OptionParameterType;
 import eu.andret.parkourtracks.command.OptionValue;
 import eu.andret.parkourtracks.command.PlaceholderCondition;
 import eu.andret.parkourtracks.command.PlayerCommand;
+import eu.andret.parkourtracks.command.ReconcileCommand;
 import eu.andret.parkourtracks.command.StatsCommand;
 import eu.andret.parkourtracks.command.TrackCommand;
 import eu.andret.parkourtracks.command.TrackParameterType;
@@ -18,6 +19,9 @@ import eu.andret.parkourtracks.config.SettingsLoader;
 import eu.andret.parkourtracks.display.PaperSidebar;
 import eu.andret.parkourtracks.display.RecordSigns;
 import eu.andret.parkourtracks.display.Sidebar;
+import eu.andret.parkourtracks.economy.Bank;
+import eu.andret.parkourtracks.economy.NoBank;
+import eu.andret.parkourtracks.economy.VaultBank;
 import eu.andret.parkourtracks.game.GameItemListener;
 import eu.andret.parkourtracks.game.GameListener;
 import eu.andret.parkourtracks.game.GameManager;
@@ -62,6 +66,7 @@ public class ParkourTracksPlugin extends JavaPlugin {
 	private Backups backups;
 	@NotNull
 	private Sidebar sidebar = new PaperSidebar();
+	private Bank bank;
 	@NotNull
 	private Selections selections = new WorldEditSelections();
 
@@ -80,6 +85,8 @@ public class ParkourTracksPlugin extends JavaPlugin {
 		trackRegistry = new TrackRegistry(new TrackStore(getDataFolder().toPath().resolve(TRACKS_FILE)));
 		trackRegistry.load();
 		results = ResultStore.open(getDataFolder().toPath().resolve(RESULTS_FILE));
+		// Vault's classes exist only with Vault installed, so VaultBank is not even loaded without it
+		bank = getServer().getPluginManager().getPlugin("Vault") == null ? new NoBank() : new VaultBank(getServer());
 		backups = new Backups(this, getDataFolder().toPath().resolve(TRACKS_FILE));
 		backups.schedule();
 		recordSigns = new RecordSigns(this);
@@ -148,7 +155,7 @@ public class ParkourTracksPlugin extends JavaPlugin {
 				.commandCondition(new PlaceholderCondition())
 				.build();
 		lamp.register(new TrackCommand(support), new TrackPartsCommand(support), new TrackSettingsCommand(support),
-				new PlayerCommand(support, games), new StatsCommand(support));
+				new PlayerCommand(support, games), new StatsCommand(support), new ReconcileCommand(support));
 	}
 
 	/**
@@ -213,6 +220,18 @@ public class ParkourTracksPlugin extends JavaPlugin {
 	@NotNull
 	public Backups getBackups() {
 		return backups;
+	}
+
+	@NotNull
+	public Bank getBank() {
+		return bank;
+	}
+
+	/**
+	 * Replaces the economy; for tests, which have no Vault.
+	 */
+	public void setBank(@NotNull final Bank bank) {
+		this.bank = bank;
 	}
 
 	@NotNull

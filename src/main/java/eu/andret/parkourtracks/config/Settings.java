@@ -16,10 +16,11 @@ import java.util.Optional;
  * @param scoreboard         whether players in a game get the plugin's sidebar
  * @param backupFrequencyMinutes how often backups are made, 0 for never
  * @param backupKeep         how many backups are kept
+ * @param refundOnStop       whether players get their fee back when an admin stops the track
  */
 public record Settings(@NotNull List<Medal> medals, int finishDelaySeconds, @NotNull TimerDisplay timerDisplay,
 					   int sprintGraceTicks, @NotNull List<GameItemSlot> gameItems, boolean scoreboard,
-					   int backupFrequencyMinutes, int backupKeep) {
+					   int backupFrequencyMinutes, int backupKeep, boolean refundOnStop) {
 	public Settings {
 		medals = List.copyOf(medals);
 		gameItems = List.copyOf(gameItems);

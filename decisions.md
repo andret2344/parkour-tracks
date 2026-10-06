@@ -233,6 +233,8 @@ Design decisions for the migration, agreed on before coding. Deferred features a
 - The sidebar (`PaperSidebar`): MockBukkit implements neither hiding the score numbers nor custom line names, so it
   is only tested through a fake; check on a real server that it shows without red numbers and that leaving gives
   back the scoreboard of another plugin.
+- Vault (`VaultBank`) is only tested through a fake economy; check fees, rewards and payouts with a real economy
+  plugin, including paying an offline player.
 
 ## Chosen during implementation
 
@@ -330,6 +332,18 @@ Details `decisions.md` did not settle, chosen while coding. Review them; anythin
 - Backups go to `backups/<yyyy-MM-dd_HH-mm-ss-SSS>/` with `tracks.json` and `results.db` (copied by SQLite's
   `VACUUM INTO`), every `backup-frequency` minutes (default 1440, 0 for never, counted from the start), keeping the
   newest `backup-keep` (default 10).
+- The economy is Vault's, looked up on every use (an economy plugin may register after ParkourTracks starts). The Vault
+  API comes from JitPack (`com.github.MilkBowl:VaultAPI`).
+- The track's `permission` is checked before the fee; a player refused either way gets a message and is sent to the
+  lobby (a teleport into the track goes to the lobby instead). Coming back after a disconnect pays no fee.
+- The completion `reward` is paid on every completion (not on training tracks).
+- Medal rewards are paid when a run's time earns them, every unpaid one it earns (a gold time also earns silver).
+  Only payments that went through are noted; a medal with a reward of 0 is never noted, so raising its reward later
+  makes it owed. A failed payment stays owed.
+- `/ptracks reconcile <track>` (permission `parkourtracks.reconcile`) shows the owed rewards (players, total, per
+  medal, the five biggest recipients) and a four-digit code; `/ptracks reconcile <track> <code>` pays them, within a
+  minute (1200 ticks), for the same sender, and only if exactly the same payments are still owed. Every payment and
+  every failure is logged.
 
 ## Open questions
 

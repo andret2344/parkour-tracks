@@ -34,6 +34,10 @@ dependencies {
 		exclude(group = "org.spigotmc")
 		exclude(group = "io.papermc.paper")
 	}
+	compileOnly(libs.vault.api) {
+		// The server API comes from Paper
+		exclude(group = "org.bukkit")
+	}
 	implementation(libs.lamp.common)
 	implementation(libs.lamp.bukkit)
 

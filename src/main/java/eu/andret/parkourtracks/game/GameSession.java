@@ -29,6 +29,7 @@ public final class GameSession {
 	@Nullable
 	private UUID boat;
 	private int ticksNotSprinting;
+	private double paidFee;
 
 	public GameSession(@NotNull final UUID player, @NotNull final Track track) {
 		this.player = player;
@@ -99,6 +100,17 @@ public final class GameSession {
 
 	void setPaused(final boolean paused) {
 		this.paused = paused;
+	}
+
+	/**
+	 * The fee the player paid to enter, 0 when they paid none.
+	 */
+	public double getPaidFee() {
+		return paidFee;
+	}
+
+	void setPaidFee(final double paidFee) {
+		this.paidFee = paidFee;
 	}
 
 	/**

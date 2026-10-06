@@ -3,6 +3,8 @@ package eu.andret.parkourtracks.game;
 import eu.andret.parkourtracks.ParkourTracksPlugin;
 import eu.andret.parkourtracks.config.Medal;
 import eu.andret.parkourtracks.config.TimerDisplay;
+import eu.andret.parkourtracks.economy.Bank;
+import eu.andret.parkourtracks.economy.MedalPayouts;
 import eu.andret.parkourtracks.message.Message;
 import eu.andret.parkourtracks.result.ResultStore;
 import eu.andret.parkourtracks.track.Checkpoint;
@@ -258,15 +260,18 @@ public final class GameManager {
 		}
 		findRunningTrack(to).ifPresent(track -> {
 			final Checkpoint spawn = Objects.requireNonNull(track.getSpawn());
-			if (contains(spawn.area(), to)) {
-				final GameSession session = join(player, track, Entry.SPAWN);
-				if (track.getOptions().isBoat()) {
-					sendTo(player, session, spawnLocation(track));
-				}
+			final boolean throughSpawn = contains(spawn.area(), to);
+			final GameSession session = join(player, track, throughSpawn ? Entry.SPAWN : Entry.SIDE);
+			if (session == null) {
+				turnAway(player, track);
 				return;
 			}
-			sendTo(player, join(player, track, Entry.SIDE), spawnLocation(track));
-			plugin.getMessages().send(player, Message.SENT_TO_SPAWN, track(track));
+			if (!throughSpawn) {
+				sendTo(player, session, spawnLocation(track));
+				plugin.getMessages().send(player, Message.SENT_TO_SPAWN, track(track));
+			} else if (track.getOptions().isBoat()) {
+				sendTo(player, session, spawnLocation(track));
+			}
 		});
 	}
 
@@ -286,11 +291,16 @@ public final class GameManager {
 				return null;
 			}
 			final Optional<Track> track = findRunningTrack(to);
-			if (track.isEmpty() || contains(Objects.requireNonNull(track.get().getSpawn()).area(), to)) {
-				track.ifPresent(found -> join(player, found, Entry.SPAWN));
+			if (track.isEmpty()) {
 				return null;
 			}
-			join(player, track.get(), Entry.SIDE);
+			final boolean intoSpawn = contains(Objects.requireNonNull(track.get().getSpawn()).area(), to);
+			if (join(player, track.get(), intoSpawn ? Entry.SPAWN : Entry.SIDE) == null) {
+				return lobby(track.get()).orElse(from);
+			}
+			if (intoSpawn) {
+				return null;
+			}
 			plugin.getMessages().send(player, Message.SENT_TO_SPAWN, track(track.get()));
 			return spawnLocation(track.get());
 		}
@@ -422,6 +432,11 @@ public final class GameManager {
 			final int ticks = session.getTicks();
 			plugin.getMessages().send(player, Message.FINISHED, track(track),
 					Placeholder.unparsed("time", Ticks.format(ticks)));
+			final double reward = track.getOptions().getReward();
+			if (reward > 0 && plugin.getBank().deposit(player, reward)) {
+				plugin.getMessages().send(player, Message.REWARD_PAID, track(track),
+						Placeholder.unparsed("amount", plugin.getBank().format(reward)));
+			}
 			plugin.getResults().recordRun(track.getId(), player.getUniqueId(), ticks, Instant.now())
 					.thenAcceptAsync(outcome -> announce(player.getUniqueId(), track, ticks, outcome), plugin::runOnMainThread)
 					.exceptionally(ex -> {
@@ -479,6 +494,28 @@ public final class GameManager {
 			plugin.getMessages().send(player, Message.MEDAL_EARNED,
 					Placeholder.parsed("medal", earned.get().displayName()));
 		}
+		payMedals(player, track, ticks, outcome.paidMedals());
+	}
+
+	/**
+	 * Pays the medal rewards the run is owed, each once ever; a failed payment is not noted, so it stays owed.
+	 */
+	private void payMedals(@NotNull final Player player, @NotNull final Track track, final int ticks,
+						   @NotNull final Set<String> paid) {
+		final Bank bank = plugin.getBank();
+		if (!bank.isAvailable()) {
+			return;
+		}
+		for (final MedalPayouts.Due due : MedalPayouts.due(plugin.getSettings().medals(), track.getMedals(), ticks, paid)) {
+			if (!bank.deposit(player, due.amount())) {
+				plugin.getLogger().warning("Could not pay " + player.getName() + " the reward of " + due.medal().key()
+						+ " on " + track.getName());
+				continue;
+			}
+			plugin.getResults().recordPayout(track.getId(), player.getUniqueId(), due.medal().key(), due.amount(), Instant.now());
+			plugin.getMessages().send(player, Message.MEDAL_PAID, Placeholder.parsed("medal", due.medal().displayName()),
+					Placeholder.unparsed("amount", bank.format(due.amount())));
+		}
 	}
 
 	/**
@@ -531,14 +568,32 @@ public final class GameManager {
 		if (sessions.containsKey(player.getUniqueId())) {
 			leave(player, LeaveReason.TELEPORT);
 		}
-		sendTo(player, join(player, track, Entry.DIRECT), spawnLocation(track));
+		final GameSession session = join(player, track, Entry.DIRECT);
+		if (session != null) {
+			sendTo(player, session, spawnLocation(track));
+		}
 	}
 
 	/**
 	 * Starts a game for the player: their state goes into a snapshot, they get the track's effects.
 	 */
-	@NotNull
+	/**
+	 * Starts a game for the player, when they may enter and pay the fee: their state goes into a snapshot, they get
+	 * the track's effects.
+	 *
+	 * @return the session, or {@code null} when the player was refused and told why
+	 */
+	@Nullable
 	private GameSession join(@NotNull final Player player, @NotNull final Track track, @NotNull final Entry entry) {
+		final String permission = track.getOptions().getPermission();
+		if (permission != null && !player.hasPermission(permission)) {
+			plugin.getMessages().send(player, Message.NO_TRACK_PERMISSION, track(track));
+			return null;
+		}
+		final double fee = chargeFee(player, track, entry);
+		if (fee < 0) {
+			return null;
+		}
 		final PersistentDataContainer data = player.getPersistentDataContainer();
 		// A snapshot left from before (a crash) is the player's real state; never overwrite it with game items
 		if (!data.has(snapshotKey, PersistentDataType.STRING)) {
@@ -558,6 +613,7 @@ public final class GameManager {
 		player.setGliding(false);
 		items.give(player);
 		final GameSession session = new GameSession(player.getUniqueId(), track);
+		session.setPaidFee(fee);
 		sessions.put(player.getUniqueId(), session);
 		// Those hiding the others hide the newcomer too
 		sessions.values()
@@ -571,6 +627,33 @@ public final class GameManager {
 		}
 		refreshSidebar(player, session);
 		return session;
+	}
+
+	/**
+	 * Takes the track's fee, on every way in but coming back after a disconnect; nothing without an economy.
+	 *
+	 * @return the fee taken, 0 for none, or -1 when the player cannot afford it and was told so
+	 */
+	private double chargeFee(@NotNull final Player player, @NotNull final Track track, @NotNull final Entry entry) {
+		final double fee = track.getOptions().getFee();
+		final Bank bank = plugin.getBank();
+		if (fee <= 0 || entry == Entry.RETURN || !bank.isAvailable()) {
+			return 0;
+		}
+		final TagResolver amount = Placeholder.unparsed("amount", bank.format(fee));
+		if (!bank.withdraw(player, fee)) {
+			plugin.getMessages().send(player, Message.FEE_TOO_HIGH, track(track), amount);
+			return -1;
+		}
+		plugin.getMessages().send(player, Message.FEE_PAID, track(track), amount);
+		return fee;
+	}
+
+	/**
+	 * Sends a player refused at the track's edge to the lobby, so they do not stand in its region.
+	 */
+	private void turnAway(@NotNull final Player player, @NotNull final Track track) {
+		lobby(track).ifPresent(lobby -> teleport(player, lobby));
 	}
 
 	private static void applyEffect(@NotNull final Player player, @NotNull final TrackEffect effect) {
@@ -603,6 +686,11 @@ public final class GameManager {
 			plugin.getServer().getScheduler().cancelTask(session.getFinishTask());
 		}
 		restore(player);
+		if (reason == LeaveReason.STOPPED && session.getPaidFee() > 0 && plugin.getSettings().refundOnStop()
+				&& plugin.getBank().deposit(player, session.getPaidFee())) {
+			plugin.getMessages().send(player, Message.FEE_REFUNDED, track(session.getTrack()),
+					Placeholder.unparsed("amount", plugin.getBank().format(session.getPaidFee())));
+		}
 		if (reason != LeaveReason.DISCONNECT) {
 			player.getPersistentDataContainer().remove(sessionKey);
 			plugin.getMessages().send(player, reason == LeaveReason.STOPPED ? Message.TRACK_STOPPED : Message.LEFT,
@@ -658,7 +746,12 @@ public final class GameManager {
 		}
 		findRunningTrack(player.getLocation()).ifPresent(track -> {
 			final boolean returning = track.getId().toString().equals(marker);
-			sendTo(player, join(player, track, returning ? Entry.RETURN : Entry.SIDE), spawnLocation(track));
+			final GameSession session = join(player, track, returning ? Entry.RETURN : Entry.SIDE);
+			if (session == null) {
+				turnAway(player, track);
+				return;
+			}
+			sendTo(player, session, spawnLocation(track));
 			if (!returning) {
 				plugin.getMessages().send(player, Message.SENT_TO_SPAWN, track(track));
 			}

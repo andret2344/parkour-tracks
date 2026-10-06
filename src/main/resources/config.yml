@@ -48,3 +48,7 @@ scoreboard: true
 backup-frequency: 1440
 # How many of the newest backups are kept; older ones are deleted.
 backup-keep: 10
+
+# Fees and rewards need Vault and an economy plugin; without them tracks are free and pay nothing.
+# Whether players get their fee back when an admin stops the track they are on.
+refund-on-stop: true

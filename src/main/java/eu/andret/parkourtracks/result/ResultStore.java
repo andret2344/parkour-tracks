@@ -11,9 +11,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -36,6 +38,18 @@ public final class ResultStore implements AutoCloseable {
 			)""";
 	private static final String TRACK_INDEX = "CREATE INDEX IF NOT EXISTS runs_track ON runs (track, ticks)";
 	private static final String PLAYER_INDEX = "CREATE INDEX IF NOT EXISTS runs_player ON runs (player, track)";
+	/**
+	 * The register of medal rewards paid: a medal is paid once per player and track, whatever changes later.
+	 */
+	private static final String PAYOUTS = """
+			CREATE TABLE IF NOT EXISTS medal_payouts (
+				track TEXT NOT NULL,
+				player TEXT NOT NULL,
+				medal TEXT NOT NULL,
+				amount REAL NOT NULL,
+				paid_at INTEGER NOT NULL,
+				PRIMARY KEY (track, player, medal)
+			)""";
 
 	@NotNull
 	private final Connection connection;
@@ -66,6 +80,7 @@ public final class ResultStore implements AutoCloseable {
 				statement.execute(SCHEMA);
 				statement.execute(TRACK_INDEX);
 				statement.execute(PLAYER_INDEX);
+				statement.execute(PAYOUTS);
 			} catch (final SQLException ex) {
 				// Left open, the connection would keep the file locked
 				connection.close();
@@ -94,10 +109,11 @@ public final class ResultStore implements AutoCloseable {
 	}
 
 	/**
-	 * What a finished run changed: the player's and the track's best times before it, and the player's completions
-	 * with it.
+	 * What a finished run changed: the player's and the track's best times before it, the player's completions with
+	 * it, and the medals of the track already paid to the player.
 	 */
-	public record RunOutcome(@NotNull OptionalInt previousBest, @NotNull OptionalInt previousRecord, int completions) {
+	public record RunOutcome(@NotNull OptionalInt previousBest, @NotNull OptionalInt previousRecord, int completions,
+							 @NotNull Set<String> paidMedals) {
 		public boolean isTrackRecord(final int ticks) {
 			return previousRecord.isEmpty() || ticks < previousRecord.getAsInt();
 		}
@@ -124,7 +140,61 @@ public final class ResultStore implements AutoCloseable {
 				insert.setLong(4, finishedAt.toEpochMilli());
 				insert.executeUpdate();
 			}
-			return new RunOutcome(previousBest, previousRecord, completions(connection, track, player));
+			return new RunOutcome(previousBest, previousRecord, completions(connection, track, player),
+					paidMedals(connection, track, player));
+		});
+	}
+
+	/**
+	 * Notes a medal reward as paid; a second note of the same medal is ignored.
+	 */
+	@NotNull
+	public CompletableFuture<Void> recordPayout(@NotNull final UUID track, @NotNull final UUID player,
+												@NotNull final String medal, final double amount,
+												@NotNull final Instant paidAt) {
+		return submit(connection -> {
+			try (final PreparedStatement insert = connection.prepareStatement(
+					"INSERT OR IGNORE INTO medal_payouts (track, player, medal, amount, paid_at) VALUES (?, ?, ?, ?, ?)")) {
+				insert.setString(1, track.toString());
+				insert.setString(2, player.toString());
+				insert.setString(3, medal);
+				insert.setDouble(4, amount);
+				insert.setLong(5, paidAt.toEpochMilli());
+				insert.executeUpdate();
+			}
+			return null;
+		});
+	}
+
+	/**
+	 * A player who completed a track: their best time, and the medals of the track already paid to them.
+	 */
+	public record Standing(@NotNull UUID player, int bestTicks, @NotNull Set<String> paidMedals) {
+	}
+
+	/**
+	 * Every player who completed the track, for paying medals retroactively.
+	 */
+	@NotNull
+	public CompletableFuture<List<Standing>> standings(@NotNull final UUID track) {
+		return submit(connection -> {
+			final List<Standing> standings = new ArrayList<>();
+			try (final PreparedStatement select = connection.prepareStatement(
+					"SELECT player, MIN(ticks) FROM runs WHERE track = ? GROUP BY player ORDER BY player")) {
+				select.setString(1, track.toString());
+				try (final ResultSet rows = select.executeQuery()) {
+					while (rows.next()) {
+						final UUID player = UUID.fromString(rows.getString(1));
+						standings.add(new Standing(player, rows.getInt(2), Set.of()));
+					}
+				}
+			}
+			final List<Standing> withPayouts = new ArrayList<>();
+			for (final Standing standing : standings) {
+				withPayouts.add(new Standing(standing.player(), standing.bestTicks(),
+						paidMedals(connection, track, standing.player())));
+			}
+			return withPayouts;
 		});
 	}
 
@@ -263,6 +333,23 @@ public final class ResultStore implements AutoCloseable {
 		try (final PreparedStatement select = connection.prepareStatement("SELECT MIN(ticks) FROM runs WHERE track = ?")) {
 			select.setString(1, track.toString());
 			return single(select);
+		}
+	}
+
+	@NotNull
+	private static Set<String> paidMedals(@NotNull final Connection connection, @NotNull final UUID track,
+										  @NotNull final UUID player) throws SQLException {
+		try (final PreparedStatement select = connection.prepareStatement(
+				"SELECT medal FROM medal_payouts WHERE track = ? AND player = ?")) {
+			select.setString(1, track.toString());
+			select.setString(2, player.toString());
+			try (final ResultSet rows = select.executeQuery()) {
+				final Set<String> medals = new HashSet<>();
+				while (rows.next()) {
+					medals.add(rows.getString(1));
+				}
+				return Set.copyOf(medals);
+			}
 		}
 	}
 

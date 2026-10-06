@@ -34,7 +34,7 @@ during implementation and recorded in its "Chosen during implementation" section
 Packages under `eu.andret.parkourtracks`: the root holds the plugin; `config` the content of `config.yml`; `message`
 the texts of `messages.yml`; `track` the track model, its rules and its storage; `selection` WorldEdit selections;
 `command` the Lamp commands; `game` the games played on tracks; `result` the results database and backups;
-`display` the sidebar and the record signs; `util` formatting helpers. WorldEdit is a hard dependency (`depend` in `plugin.yml`).
+`display` the sidebar and the record signs; `economy` money through Vault; `util` formatting helpers. WorldEdit is a hard dependency (`depend` in `plugin.yml`).
 
 - `ParkourTracksPlugin` - entry point. `onEnable` saves the default `config.yml` and `messages.yml`, reads both by
   hand (Bukkit's `getConfig()` only logs a broken file and goes on empty), loads the tracks and registers the
@@ -96,6 +96,14 @@ the texts of `messages.yml`; `track` the track model, its rules and its storage;
   `track;place;side` under `parkourtracks:record` in the sign's PDC. Signs of loaded chunks are indexed by track
   (chunk load and unload, `loadAll` on start), so `refresh(track)` touches only that track's signs, asking the
   database for each place and writing the lines on the server thread.
+- `economy/Bank` - the economy: `VaultBank` (the only class touching Vault, created only when Vault is installed),
+  else `NoBank` (no fees, no rewards); tests use `helper/FakeBank` through `setBank`. `GameManager#join` checks the
+  track's permission and takes the fee (not for `Entry.RETURN`) and returns `null` when the player is refused;
+  stopping refunds per `refund-on-stop`; the finish pays the reward, and the medal rewards `MedalPayouts.due` lists
+  for the run, noting each paid one in `medal_payouts` (`ResultStore#recordPayout`).
+- `command/ReconcileCommand` - pays owed medal rewards: the preview stores what it showed with a code; the code pays
+  only when the recomputed payments equal it. Callbacks after a database query run outside Lamp, so they send their
+  failures instead of throwing `MessageException`.
 - `track/TrackOption` - every option `/ptracks set` changes: how its value is parsed, checked against the other
   options (`boat` excludes `sprintForced` and `enderPearls`), stored and shown. Problems are `OptionException`s the
   command turns into messages.

@@ -50,7 +50,8 @@ public final class SettingsLoader {
 				loadTimerDisplay(config), loadNonNegative(config, SPRINT_GRACE, DEFAULT_SPRINT_GRACE, "a whole number of ticks"),
 				loadGameItems(config), config.getBoolean(SCOREBOARD, true),
 				loadNonNegative(config, BACKUP_FREQUENCY, DEFAULT_BACKUP_FREQUENCY, "a whole number of minutes"),
-				loadNonNegative(config, BACKUP_KEEP, DEFAULT_BACKUP_KEEP, "a whole number"));
+				loadNonNegative(config, BACKUP_KEEP, DEFAULT_BACKUP_KEEP, "a whole number"),
+				config.getBoolean("refund-on-stop", true));
 	}
 
 	private static int loadNonNegative(@NotNull final ConfigurationSection config, @NotNull final String path,

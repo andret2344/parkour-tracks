@@ -24,6 +24,10 @@ public final class Permissions {
 	 * Seeing the results of other players with {@code /ptracks stats}; everyone by default.
 	 */
 	public static final String STATS_OTHERS = "parkourtracks.stats.others";
+	/**
+	 * Paying medal rewards retroactively; money, so on its own.
+	 */
+	public static final String RECONCILE = "parkourtracks.reconcile";
 
 	private Permissions() {
 	}
