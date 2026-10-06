@@ -68,10 +68,11 @@ public final class CommandSupport {
 	}
 
 	/**
-	 * Saves the tracks file; called after every change.
+	 * Saves the tracks file and shows the change in the markers; called after every change.
 	 */
 	public void save() {
 		registry().save();
+		plugin.getMarkers().refresh();
 	}
 
 	/**

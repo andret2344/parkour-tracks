@@ -115,6 +115,9 @@ signs that open it or enter a track; `api` the events other plugins listen to; `
   `TrackLeaveEvent` at the end of `leave`, `TrackCompleteEvent` in `announce` and `TrackPaymentEvent` (`paid`) after
   every successful money movement; `ReconcileCommand` fires the reconciliation payments. `game.Entry` and
   `game.LeaveReason` are part of the API.
+- `display/Markers` - labels over the spawn, checkpoints and finish of stopped tracks: marker armor stands,
+  non-persistent, hidden from players without `parkourtracks.edit`; `CommandSupport#save` refreshes them after every
+  change, a chunk load of a track makes its ones.
 - `track/TrackOption` - every option `/ptracks set` changes: how its value is parsed, checked against the other
   options (`boat` excludes `sprintForced` and `enderPearls`), stored and shown. Problems are `OptionException`s the
   command turns into messages.
@@ -182,4 +185,7 @@ signs that open it or enter a track; `api` the events other plugins listen to; `
 - Build script reads project properties through `project.group`/`project.version` and
   `providers.gradleProperty(...)`, never `project.properties[...]`.
 - CI is GitHub Actions: `build.yml` builds every push and PR and uploads the JaCoCo XML report to Codecov with the
-  `CODECOV_TOKEN` secret. The release and publish workflows come before the first release.
+  `CODECOV_TOKEN` secret. `release.yml` is run by hand from the Actions tab on `main` with a `version` input: it sets
+  the version in `gradle.properties`, builds and tests, runs `patchChangelog` (fails when "Unreleased" is empty),
+  commits both files as `Released <version>.` by github-actions and creates a **draft** GitHub release with the jar.
+  Releases are never made by pushing tags. Uploading to Modrinth and Hangar (`publish.yml`) is not set up yet.

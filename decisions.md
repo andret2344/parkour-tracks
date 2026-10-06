@@ -361,6 +361,13 @@ Details `decisions.md` did not settle, chosen while coding. Review them; anythin
   training) and `TrackPaymentEvent` (`FEE`, `REFUND`, `REWARD`, `MEDAL`, `RECONCILIATION`, with the medal key and the
   amount), all in `eu.andret.parkourtracks.api`. They give the track's id and name, not the internal `Track`,
   which other plugins must not change. `game.Entry` and `game.LeaveReason` are part of this API.
+- Markers are invisible marker armor stands with their name shown, one block above the spot of the spawn, each
+  checkpoint and the finish of stopped tracks, never saved with the world. They are hidden from every player without
+  `parkourtracks.edit` (when made and when a player joins), made again after every change saved by a command, and
+  made when a chunk of a track loads (none are made in unloaded chunks). A text display would face one way only;
+  MockBukkit cannot make one face the viewer.
+- Releasing works like the other plugins (`release.yml`, a draft GitHub release). Publishing to Modrinth and Hangar
+  (`publish.yml`, `hangarPublish`) comes with bStats, once the projects exist.
 
 ## Open questions
 

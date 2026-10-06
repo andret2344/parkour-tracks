@@ -16,6 +16,7 @@ import eu.andret.parkourtracks.command.TrackSettingsCommand;
 import eu.andret.parkourtracks.config.Medal;
 import eu.andret.parkourtracks.config.Settings;
 import eu.andret.parkourtracks.config.SettingsLoader;
+import eu.andret.parkourtracks.display.Markers;
 import eu.andret.parkourtracks.display.PaperSidebar;
 import eu.andret.parkourtracks.display.RecordSigns;
 import eu.andret.parkourtracks.display.Sidebar;
@@ -71,6 +72,7 @@ public class ParkourTracksPlugin extends JavaPlugin {
 	private Sidebar sidebar = new PaperSidebar();
 	private Bank bank;
 	private Menus menus;
+	private Markers markers;
 	@NotNull
 	private Selections selections = new WorldEditSelections();
 
@@ -96,6 +98,9 @@ public class ParkourTracksPlugin extends JavaPlugin {
 		recordSigns = new RecordSigns(this);
 		getServer().getPluginManager().registerEvents(recordSigns, this);
 		recordSigns.loadAll();
+		markers = new Markers(this);
+		getServer().getPluginManager().registerEvents(markers, this);
+		markers.refresh();
 		menus = new Menus(this);
 		getServer().getPluginManager().registerEvents(new MenuListener(), this);
 		getServer().getPluginManager().registerEvents(new MenuSigns(this), this);
@@ -117,6 +122,9 @@ public class ParkourTracksPlugin extends JavaPlugin {
 	public void onDisable() {
 		if (games != null) {
 			games.shutdown();
+		}
+		if (markers != null) {
+			markers.removeAll();
 		}
 		if (results != null) {
 			results.close();
@@ -227,6 +235,11 @@ public class ParkourTracksPlugin extends JavaPlugin {
 	@NotNull
 	public Backups getBackups() {
 		return backups;
+	}
+
+	@NotNull
+	public Markers getMarkers() {
+		return markers;
 	}
 
 	@NotNull
