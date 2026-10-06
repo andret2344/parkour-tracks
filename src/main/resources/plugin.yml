@@ -7,3 +7,20 @@ description: Parkour tracks built from WorldEdit regions, with checkpoints, meda
 website: https://github.com/andret2344/parkour-tracks
 depend:
   - WorldEdit
+
+permissions:
+  parkourtracks.*:
+    description: Grants all ParkourTracks permissions.
+    children:
+      parkourtracks.play: true
+      parkourtracks.edit: true
+      parkourtracks.manage: true
+  parkourtracks.play:
+    description: Allows to use the player commands.
+    default: true
+  parkourtracks.edit:
+    description: Allows to create and edit tracks.
+    default: op
+  parkourtracks.manage:
+    description: Allows to start, stop and remove tracks, to set the lobby and to reload the plugin.
+    default: op

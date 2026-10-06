@@ -98,4 +98,19 @@ class ParkourTracksPluginTest extends PluginTest {
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessageStartingWith("Could not read config.yml");
 	}
+
+	@Test
+	void doesNotEnableWithInvalidMessages() throws IOException {
+		// given
+		server.getPluginManager().disablePlugin(plugin);
+		writeMessages("""
+				created:
+				  text: x
+				""");
+
+		// when / then: the server stops a plugin whose onEnable throws
+		assertThatThrownBy(() -> server.getPluginManager().enablePlugin(plugin))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessageContaining("'created'");
+	}
 }

@@ -248,3 +248,22 @@ Details `decisions.md` did not settle, chosen while coding. Review them; anythin
 - The tracks file is written on the main thread right after each change: it is small, and writing it in order is
   simpler than ordering asynchronous writes.
 - The old `enabled` option is gone: starting and stopping a track covers it.
+- Commands: `list`, `info`, `create`, `region set`, `rename`, `spawn`, `finish`, `checkpoint add|set|remove`,
+  `wall add|set|remove`, `set`, `medal time|reward|remove`, `effect set|remove`, `author add|remove` and
+  `track lobby set|clear` need `parkourtracks.edit`; `remove`, `start`, `stop`, `setlobby` and `reload` need
+  `parkourtracks.manage`.
+- Positions of checkpoints and walls in commands count from 1; `checkpoint add` without a position appends.
+- The spot of the spawn, the finish or a checkpoint is where the admin stands; they have to stand inside the selected
+  area, in the track's world.
+- Neither the global lobby nor a track's own lobby can lie inside any track's region: players sent there would walk
+  straight into it.
+- Effects are set by level as the game shows it (1 is the weakest, up to 256); the stored amplifier is one less.
+- Medal times are typed in seconds (`30.5`) and rounded to the nearest tick; a better medal needs a strictly shorter
+  time than every worse one that has a time.
+- Authors are added by the name of a player who has played on the server, and only on tracks of type `players`.
+- Track options in `set`: `displayName` (MiniMessage), `type`, `difficulty`, `icon` (an item or `none`),
+  `permission` (lowercase node of letters, digits, `_`, `.`, `-`, or `none`), `fee`, `reward`, `hardcore`,
+  `skipMode`, `pauseOnCheckpoints`, `sprintForced`, `damageAllowed`, `enderPearls`, `boat`, `boatType` (a boat or
+  raft without a chest) and `afterFinish`.
+- Lamp's own errors (a wrong argument type, a missing argument, no permission) keep Lamp's English texts; everything
+  the plugin says itself is in `messages.yml`.

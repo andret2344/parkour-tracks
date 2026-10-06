@@ -31,12 +31,35 @@ during implementation and recorded in its "Chosen during implementation" section
 
 ## Architecture
 
-Packages under `eu.andret.parkourtracks`: the root holds the plugin; `config` the content of `config.yml`; `track` the
-track model and its storage. WorldEdit is a hard dependency (`depend` in `plugin.yml`).
+Packages under `eu.andret.parkourtracks`: the root holds the plugin; `config` the content of `config.yml`; `message`
+the texts of `messages.yml`; `track` the track model, its rules and its storage; `selection` WorldEdit selections;
+`command` the Lamp commands; `util` formatting helpers. WorldEdit is a hard dependency (`depend` in `plugin.yml`).
 
-- `ParkourTracksPlugin` - entry point. `onEnable` saves the default config, reads it by hand (Bukkit's `getConfig()`
-  only logs a broken file and goes on empty) and loads the tracks; an invalid config or tracks file throws, which stops
-  the plugin. `reload()` reads the config into new `Settings` and replaces them only when valid.
+- `ParkourTracksPlugin` - entry point. `onEnable` saves the default `config.yml` and `messages.yml`, reads both by
+  hand (Bukkit's `getConfig()` only logs a broken file and goes on empty), loads the tracks and registers the
+  commands; an invalid file throws, which stops the plugin. `reload()` reads both files and replaces the settings and
+  the messages only when both are valid. Selections come from `WorldEditSelections` unless replaced with
+  `setSelections` (tests).
+- `message/Messages` - every `Message` enum constant is a key of `messages.yml` (the name in lowercase with dashes);
+  a key missing from the admin's file falls back to the shipped one. Values go into the MiniMessage templates as
+  placeholders (`Placeholder.unparsed`, never parsed as tags).
+- `selection/WorldEditSelections` - the only class touching the WorldEdit API: the player's cuboid selection, or a
+  `SelectionException` (incomplete, not a cuboid).
+- `command/` - three Lamp command classes on `/parkourtracks` (alias `/ptracks`), registered in code, not in
+  `plugin.yml`: `TrackCommand` (help placeholder, list, info, create, region, rename, remove, start, stop, lobbies,
+  reload), `TrackPartsCommand` (spawn, finish, checkpoints, walls; positions count from 1) and `TrackSettingsCommand`
+  (options, medals, effects, authors). They share `CommandSupport`: messages, the edit lock (`requireStopped`),
+  selections and saving after every change. A failure is thrown as `MessageException`, a Lamp `SendableException`
+  that replies with a component. `TrackParameterType`, `MedalParameterType` and `OptionParameterType` resolve the
+  arguments; `@OptionValue` and `@EffectType` mark arguments completed by providers set up in
+  `ParkourTracksPlugin#setUpCommands`. `PlaceholderCondition` stops the help placeholder from swallowing errors of
+  subcommands. Lamp needs `-parameters` and is shaded and relocated under `eu.andret.parkourtracks.lamp`.
+- `track/TrackOption` - every option `/ptracks set` changes: how its value is parsed, checked against the other
+  options (`boat` excludes `sprintForced` and `enderPearls`), stored and shown. Problems are `OptionException`s the
+  command turns into messages.
+- `track/TrackRules` - where parts of a track may lie (in its world, inside its region, the spot inside the area),
+  whether a new region overlaps another track or leaves parts out, the order of medal times and what a track misses
+  before it can start.
 - `config/SettingsLoader` - parses `config.yml` into the `Settings` record; errors are `IllegalArgumentException`s
   naming the config path. `medals` is a map from key to MiniMessage display name; its order (best first) is the order
   of the medals.
@@ -58,7 +81,9 @@ track model and its storage. WorldEdit is a hard dependency (`depend` in `plugin
 - Test classes, their methods and test-only helpers are package-private. `public` stays only where Java needs it: the
   `helper/PluginTest` base class (extended from other packages) and overridden API methods.
 - Tests extend `helper/PluginTest`, which starts `MockBukkit.mock()`, loads the real plugin with the shipped
-  `config.yml` and adds the world `world` before every test; `writeConfig` replaces the config on disk.
+  `config.yml` and adds the world `world` before every test; `writeConfig`/`writeMessages` replace the files on
+  disk. WorldEdit is replaced by selections set with `select`; `admin` adds an operator standing somewhere, `tower`
+  a stopped track, `messages` takes the plain text of the messages a player got.
   `MockBukkit.load` ignores `depend`, so the plugin loads without WorldEdit. Tests of plain logic (`track`, `config`)
   are plain JUnit tests without a server; Bukkit enums such as `Material` work without one.
 - MockBukkit's `enablePlugin` lets an exception from `onEnable` through (a real server catches it and disables the

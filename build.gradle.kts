@@ -28,6 +28,14 @@ configurations {
 dependencies {
 	compileOnly(libs.paper.api)
 	compileOnly(libs.jetbrains.annotations)
+	compileOnly(libs.worldedit.bukkit) {
+		// The server API comes from Paper; WorldEdit's own copy would clash with it
+		exclude(group = "org.bukkit")
+		exclude(group = "org.spigotmc")
+		exclude(group = "io.papermc.paper")
+	}
+	implementation(libs.lamp.common)
+	implementation(libs.lamp.bukkit)
 
 	testImplementation(libs.assertj.core)
 	testImplementation(libs.mockbukkit)
@@ -38,6 +46,7 @@ dependencies {
 
 tasks {
 	withType<JavaCompile> {
+		// Lamp reads the parameter names to build the command usage
 		options.compilerArgs.addAll(listOf("-parameters", "-Xlint:deprecation", "-Xlint:unchecked"))
 	}
 
@@ -95,6 +104,7 @@ tasks {
 
 	shadowJar {
 		archiveFileName.set("${project.name}-${project.version}.jar")
+		relocate("revxrsal.commands", "${project.group}.parkourtracks.lamp")
 	}
 }
 
