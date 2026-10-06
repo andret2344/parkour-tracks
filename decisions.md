@@ -1,0 +1,234 @@
+# Decisions
+
+Design decisions for the migration, agreed on before coding. Deferred features are in `backlog.md`.
+
+## Product
+
+- The name is ParkourTracks: package `eu.andret.parkourtracks`, PDC namespace and permission root `parkourtracks`,
+  command `/parkourtracks` with the alias `/ptracks`, repository `git@github.com:andret2344/parkour-tracks.git`.
+- The name is final before the first release: the PDC namespace holds inventory snapshots, renaming it later loses
+  players' items.
+- One word for one thing: a parkour is a *track* everywhere, in code (`ParkourGame` becomes `Track`), commands
+  (`/ptracks create <track>`) and messages. Below, "parkour" means a track.
+- ats-parkour and ats-quick-parkour become one plugin; the parkour selection GUI is part of it.
+- The plugin is public (no own server runs it), so it has to work for any admin out of the box.
+- It was never public: no import of old MySQL data, no compatibility with the old `setting.json` format.
+
+## Storage
+
+- MySQL is removed. Results live in an SQLite file in the plugin folder.
+- Every completion is stored (full history); best times, completion counts and records are queried from it.
+- Results are keyed by the parkour's UUID, not its name, so a rename keeps the history.
+- Tracks (regions, options, medals, authors) live in a JSON file, saved on every change, atomically (temporary file,
+  then rename).
+- Removing a track keeps everything it left in SQLite: results, the payout register, all of it.
+- Backups stay and cover the SQLite file too, copied safely through the database (the medal payout register is money).
+
+## Events
+
+- Events are the public API for those who want results in their own database, on Discord and so on.
+- Notifications after the fact (e.g. a completion with its time, medal and record flag) plus cancellable events before
+  an action (e.g. joining a game).
+- The game logic itself does not run through Bukkit events, so a foreign listener cannot break it halfway.
+- The set of events is kept small; each one is a promise not to break other plugins' code. Four of them:
+  - joining a game, before the fact and cancellable (e.g. a combat tag plugin denies the entry),
+  - leaving a game, after the fact, with the reason: exit item, leaving the region, teleport, disconnect, parkour
+    stopped,
+  - a completion, after the fact: player, parkour, time in ticks, medal, whether it is a personal or a parkour record,
+  - a payout, after the fact: medal, fee, reward or reconciliation, with the amount.
+- Left out until someone asks: checkpoints (split times), the start of a run, going back to a checkpoint, an admin
+  starting or stopping a parkour. Adding an event later costs nothing; removing one breaks someone's code.
+
+## Economy
+
+- Economy through Vault as a `softdepend`; without Vault there are no fees and no rewards. `FinancialProvider`,
+  `RankProvider` and the `sample` module are removed.
+- `vipOnly` is replaced by a per-parkour permission option; who has it is up to the permission plugin.
+- The fee is always the admin's decision (0 is fine, `TRAINING` included). It is charged on every way into the game:
+  teleport block, GUI, command, walking in from the side.
+- The fee is made visible in the message when it is charged, in `/pk info`, in the GUI and in the admin documentation
+  (draw the region so it does not overlap paths, entering from the side costs).
+- The flat completion `reward` stays.
+
+## Medals
+
+- One set of medals for the whole server, in `config.yml` (key and display name); each track sets its own time
+  thresholds and rewards by command.
+- The medals are ordered by their position in the config list, best first; `importance` is removed.
+- Setting a threshold that breaks the order is rejected: a better medal needs a shorter time. Rewards are free (a
+  prestige-only gold next to a paid bronze is fine).
+- `/ptracks info` and the GUI list a track's medals with thresholds and rewards; the GUI also shows which one the
+  player has.
+- A medal is paid once. Every payout goes to a register in SQLite: player, parkour, medal, when, how much.
+- A medal is identified by its config key: renaming the key makes a new medal (documented, or warned about on start).
+- A raised reward of an already paid medal is not topped up; tightened thresholds take nothing back.
+- A medal without a time set is simply not awarded; `require-medals` is removed.
+- A run that beats a threshold pays the medal right away. There are no automatic retroactive payouts.
+- Retroactive payouts only through an admin command, per parkour:
+  - a preview with numbers first: how many players, the total, the split by medal, the biggest recipients,
+  - the confirmation is bound to that preview: it expires, only the same sender can give it, and it is void when
+    the thresholds or the results change in between,
+  - offline players are paid through Vault; only successful payouts are recorded, failures are reported and the same
+    command retries them,
+  - every reconciliation is logged (who, when, how much, to whom).
+
+## Parkour types
+
+- `type` stays. `SERVER` is the basic one. `TRAINING` has no timer, no results, no medals and no completion reward.
+  `PLAYERS` has authors.
+- `savingResults` is removed; the type decides.
+- `PLAYERS`: an admin creates the parkour and sets its authors (UUIDs, several allowed). Authors get no editing rights.
+  Payouts and statistics for authors are in `backlog.md`.
+
+## Rules of play
+
+- Time is counted in ticks.
+- Pausing the timer on checkpoints is a per-parkour option.
+- Skipping a checkpoint is a per-parkour option: `ALLOW`, `NOTIFY`, `FAIL` (back to the last checkpoint). Default
+  `FAIL`.
+- Nothing counts until the player has passed the spawn: a run starts only when they leave the spawn region.
+- A player in the region who did not come through the spawn is teleported to the spawn and charged the fee. Not
+  affected: a stopped parkour, players in `ignore` mode, players in creative or spectator.
+- Only survival and adventure players are parkour players; creative and spectator are treated like `ignore`.
+- Entering a region is checked along the segment from `from` to `to`, so fast movement cannot skip thin regions.
+- Ender pearls are a per-parkour option. Chorus fruit, elytra and riptide tridents are blocked. Gliding into the
+  region turns gliding off.
+- A teleport during a run that does not come from the plugin: a destination outside the region leaves the game, a
+  destination inside it sends the player back to the last checkpoint.
+- `sprintForced`: stopping sprinting outside a checkpoint sends the player back to the last checkpoint, after a short
+  grace period (about 5 ticks).
+- Flying stays blocked.
+- Leaving the region during a run leaves the game and the run is lost. Walls are the admin's responsibility.
+- Death during a run: respawn on the last checkpoint, the run goes on, nothing is dropped.
+- Session marker: entering a game writes the parkour's UUID into the player's PDC, leaving clears it. A player who
+  rejoins (or is online when the plugin starts) in the region of the parkour of their marker goes to its spawn without
+  paying; anyone else follows the "not through the spawn" rule. A marker of a removed parkour is ignored and cleared.
+
+- Lobby: a global lobby is required before any track can start (listed in `/ptracks info`); a track can override it
+  with its own.
+- During a run only the track's effects apply; the snapshot on entering takes off the player's own.
+- `alwaysSpawn` becomes `hardcore`: every way back (wall, death, stopping sprinting, a foreign teleport inside the
+  region, a skipped checkpoint under `FAIL`, the back item) sends the player to the spawn and the run starts over.
+- `damageAllowed` is about damage from the environment (cactus, falling and so on). Damage from other players (hits,
+  arrows, knocking off the track) is always blocked during a game.
+- Hunger is always off during a game, whatever `damageAllowed` says.
+
+## Track geometry and lifecycle
+
+- Tracks never overlap: creating or changing a region that overlaps another track's region is rejected.
+- The spawn, the finish, checkpoints and walls lie wholly inside the track's region and in its world; a command that
+  breaks it is rejected, a change of the main region that would leave something outside included.
+- Regions are cuboids only.
+- After the finish: a per-track option, either the lobby after X seconds (default) or straight back to the spawn for
+  another try.
+- `stop` sends the players to the lobby with a message, their runs are lost. Whether they get their fee back is a
+  global config setting (no per-track override), on by default.
+- `remove` works only on a stopped track.
+
+## Edit lock
+
+- Always on, no option. While a parkour runs, nobody changes its route or its configuration, `ignore` players and
+  admins included (`ignore` only means not being a parkour player); to edit, stop the parkour.
+- While a parkour runs, every block change in its region is blocked: players, explosions, pistons, fire, mobs,
+  liquids, leaf decay.
+
+## Boat mode
+
+- Stays and works on ice and on water.
+- The run always starts in a boat, on every way into the game.
+- Getting out is blocked during the game. Leaving through the exit item, leaving the region or a teleport out removes
+  the boat.
+- Back to a checkpoint: the old boat is removed, the player gets a new one with zero velocity.
+- No passengers.
+- The boat type is a per-parkour option.
+- Destroying the boat is blocked; if it happens anyway, back to the last checkpoint.
+- `boat` together with `sprintForced` or with allowed ender pearls is rejected when the option is set, with a message
+  saying why.
+
+## Inventory
+
+- The inventory is always modified; `modifyInventory` is removed.
+- On entering, a snapshot is stored in the player's PDC: inventory, armor, off hand, XP, potion effects, health, food.
+  It is restored on leaving.
+- Five game items: exit, hide players, menu, back to the checkpoint, restart. Each has a configurable slot and can be
+  turned off.
+- Game items are recognized by a PDC tag and cannot be moved, dropped, swapped to the other hand or put in a container.
+- Hiding players hides only the players of the same parkour, those joining later included, and ends when the player
+  leaves the game.
+
+## GUI
+
+- Opened with `/pk menu` and with a block or a sign that opens it. No item outside the game: servers that want one bind
+  it to the command with a plugin like ItemJoin.
+- A main menu with a category per `type`; empty categories are hidden.
+- Stopped parkours are hidden; parkours the player has no permission for are shown with a lock.
+- `icon` replaces `color`: any material per parkour, by default wool coloured by difficulty (1 lime, 2 yellow,
+  3 orange, 4 red, 5 black), the mapping fixed in code.
+- Difficulty is 1-5; anything else is rejected.
+- The lore is a MiniMessage template with placeholders in the config.
+- Clicking a parkour with a fee opens a second window to confirm the payment.
+- Pages when a category has more parkours than fit.
+
+## What the player sees
+
+- Record signs are made by writing on a sign (with `parkourtracks.edit`): `[ptracks]`, the track, the ranking place.
+  Signs for places 1, 2, 3 side by side make a podium. The data lives in the sign's PDC, not in the tracks file; a track
+  can have any number of signs.
+- The sidebar scoreboard during a game can be turned off in the config, on by default. Leaving the game restores the
+  scoreboard the player had before, not the server's main one.
+- The running time is shown in the action bar, the XP bar or both, set in the config; the action bar by default.
+- Checkpoint markers of a stopped track are visible only to players with `parkourtracks.edit`.
+
+## Commands
+
+- Lamp, registered in code.
+- Track options: one `/ptracks set <track> <option> <value>`, with value completion by the option's type; all options
+  are shown by `/ptracks info <track>`.
+- The spawn and the finish are separate from the checkpoint list: `/ptracks spawn <track>`, `/ptracks finish <track>`,
+  and `/ptracks checkpoint add <track> [position]` for checkpoints in between, insertable in the middle. Adding a
+  checkpoint never turns the finish into a checkpoint.
+- Grouped by noun: `checkpoint add|set|remove`, `wall add|set|remove`, `region set`.
+- Player commands: `menu`, `lobby`, `leave` (the same as the exit item) and `stats [track]`: without a track a short
+  summary of all tracks the player completed, with one the details (best time, completions, last completion, medal,
+  and the track record to compare with). `stats [track] [player]` shows another player's results, under its own
+  permission `parkourtracks.stats.others`, granted to everyone by default.
+- Permissions in a few groups: `parkourtracks.play` (player commands, everyone by default), `parkourtracks.edit`
+  (creating and editing tracks), `parkourtracks.manage` (start, stop, remove, lobby), `parkourtracks.ignore`, and
+  `parkourtracks.reconcile` on its own, since it pays out money.
+
+## Messages and config
+
+- Every text is MiniMessage, with MiniMessage placeholders (`<time>`, `<track>`); no `&` codes, no `ChatColor`.
+- English only; the admin translates `messages.yml` if they want another language.
+- Two files: `config.yml` (settings, game item slots included) and `messages.yml` (every text: messages, scoreboard,
+  record sign, GUI lore).
+- `/ptracks reload` reloads both; an invalid file gives a message and changes nothing.
+- The tracks file is storage, not for editing by hand; tracks change only through commands.
+- An invalid config on start stops the plugin with a readable message (no silent start on defaults, even though a
+  stopped plugin means no edit lock).
+
+## Project
+
+- The git history of ats-parkour moves to the new repository; the history of ats-quick-parkour does not.
+- The same stack as TeleSign, BlockGens and BlastPotion: Java 25, Paper only (26.2), Lamp, JUnit 6 with AssertJ and
+  MockBukkit, JaCoCo, shadow, `org.jetbrains.changelog`, GitHub Actions (`build`, `release`, `publish` to Modrinth and
+  Hangar).
+- bStats is left out until everything else is done and the plugin is about to be published; it then gets a new ID (the
+  old `10700` was shared by both old plugins).
+- No Lombok: records for data, plain classes for state.
+- Test coverage: 80% as a hard threshold, and every rule in this file has its own test.
+- WorldEdit stays a hard dependency for selecting regions (FAWE works too).
+
+## Features
+
+- Removed: the tutorial, `require-medals`, `fix`, the MySQL keep-alive.
+- `/pk info` grows instead of the tutorial: what a parkour still needs before it can start, and what can be set.
+- Stay: medals, the record sign, the scoreboard, hiding players, effects, `damageAllowed`, `hardcore` (was `alwaysSpawn`), the lobby, the
+  flight block, the teleport block (as one of the ways into the game).
+
+## To verify before coding
+
+- Whether `PlayerMoveEvent` fires for a player riding a boat, or region handling needs `VehicleMoveEvent`.
+- Whether `PlayerRiptideEvent` can be cancelled on Paper 26.x; if not, riptide sends the player back to the last
+  checkpoint instead.
+- Whether Paper 26.x still ships an SQLite JDBC driver, or it has to be added.
