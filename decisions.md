@@ -230,7 +230,6 @@ Design decisions for the migration, agreed on before coding. Deferred features a
 
 - Boat mode follows a player's moves through `VehicleMoveEvent` and ignores `PlayerMoveEvent` while riding; on a
   real server, check that `VehicleMoveEvent` fires for a boat the player steers, on ice and on water.
-- Whether Paper 26.x still ships an SQLite JDBC driver, or it has to be added.
 
 ## Chosen during implementation
 
@@ -305,6 +304,18 @@ Details `decisions.md` did not settle, chosen while coding. Review them; anythin
   type, standing still, never saved with the world. A player found without their boat (it was removed by something
   else, or they left it somehow) goes back, checked every tick.
 - Players in a game get into no other vehicle, on any track: their moves would not be checked while riding.
+- The SQLite driver (`org.xerial:sqlite-jdbc`) is declared under `libraries` in `plugin.yml`: Paper downloads it
+  from Maven Central on the first start, whether or not the server ships one.
+- Results are in `results.db` in the plugin folder: one row per completion (track UUID, player UUID, ticks, when).
+  All database work runs on one thread of its own, in order; results come back to the server thread. A broken
+  `results.db` stops the plugin, like a broken config.
+- A track's ranking has every player once, with their best time; at equal times whoever got there first is ahead.
+- After a completion the player is told about a new track record, or else a new personal best (the first completion
+  is one), and about a medal better than the one their previous best earned.
+- The medal a player has on a track is the best one their best time earns under the current thresholds.
+- `/ptracks stats` lists the tracks by name with the best time and completions; with a track it shows the best time,
+  completions, the last completion (`yyyy-MM-dd HH:mm`, the server's time zone), the medal and the track record.
+  Results of removed tracks are kept but not shown. Training runs are not saved.
 
 ## Open questions
 

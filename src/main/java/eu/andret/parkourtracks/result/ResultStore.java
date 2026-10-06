@@ -1,0 +1,275 @@
+package eu.andret.parkourtracks.result;
+
+import org.jetbrains.annotations.NotNull;
+
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * The results of every run, in an SQLite file. Each completion is a row; best times, counts and rankings are queried
+ * from them. All work runs on one thread of its own, in the order it was asked for, never on the server thread.
+ */
+public final class ResultStore implements AutoCloseable {
+	private static final String SCHEMA = """
+			CREATE TABLE IF NOT EXISTS runs (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				track TEXT NOT NULL,
+				player TEXT NOT NULL,
+				ticks INTEGER NOT NULL,
+				finished_at INTEGER NOT NULL
+			)""";
+	private static final String TRACK_INDEX = "CREATE INDEX IF NOT EXISTS runs_track ON runs (track, ticks)";
+	private static final String PLAYER_INDEX = "CREATE INDEX IF NOT EXISTS runs_player ON runs (player, track)";
+
+	@NotNull
+	private final Connection connection;
+	@NotNull
+	private final ExecutorService executor;
+
+	private ResultStore(@NotNull final Connection connection) {
+		this.connection = connection;
+		executor = Executors.newSingleThreadExecutor(runnable -> {
+			final Thread thread = new Thread(runnable, "ParkourTracks results");
+			thread.setDaemon(true);
+			return thread;
+		});
+	}
+
+	/**
+	 * Opens the file, creating it and its tables when missing.
+	 *
+	 * @throws IllegalStateException when the database cannot be opened
+	 */
+	@NotNull
+	public static ResultStore open(@NotNull final Path file) {
+		try {
+			// The driver is loaded by the plugin's class loader, which DriverManager does not search by itself
+			Class.forName("org.sqlite.JDBC");
+			final Connection connection = DriverManager.getConnection("jdbc:sqlite:" + file.toAbsolutePath());
+			try (final Statement statement = connection.createStatement()) {
+				statement.execute(SCHEMA);
+				statement.execute(TRACK_INDEX);
+				statement.execute(PLAYER_INDEX);
+			} catch (final SQLException ex) {
+				// Left open, the connection would keep the file locked
+				connection.close();
+				throw ex;
+			}
+			return new ResultStore(connection);
+		} catch (final ClassNotFoundException | SQLException ex) {
+			throw new IllegalStateException("Could not open the results database: " + ex.getMessage(), ex);
+		}
+	}
+
+	@FunctionalInterface
+	private interface Query<T> {
+		T run(@NotNull Connection connection) throws SQLException;
+	}
+
+	@NotNull
+	private <T> CompletableFuture<T> submit(@NotNull final Query<T> query) {
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				return query.run(connection);
+			} catch (final SQLException ex) {
+				throw new CompletionException(ex);
+			}
+		}, executor);
+	}
+
+	/**
+	 * What a finished run changed: the player's and the track's best times before it, and the player's completions
+	 * with it.
+	 */
+	public record RunOutcome(@NotNull OptionalInt previousBest, @NotNull OptionalInt previousRecord, int completions) {
+		public boolean isTrackRecord(final int ticks) {
+			return previousRecord.isEmpty() || ticks < previousRecord.getAsInt();
+		}
+
+		public boolean isPersonalBest(final int ticks) {
+			return previousBest.isEmpty() || ticks < previousBest.getAsInt();
+		}
+	}
+
+	/**
+	 * Stores a completion.
+	 */
+	@NotNull
+	public CompletableFuture<RunOutcome> recordRun(@NotNull final UUID track, @NotNull final UUID player, final int ticks,
+												   @NotNull final Instant finishedAt) {
+		return submit(connection -> {
+			final OptionalInt previousBest = best(connection, track, player);
+			final OptionalInt previousRecord = record(connection, track);
+			try (final PreparedStatement insert = connection.prepareStatement(
+					"INSERT INTO runs (track, player, ticks, finished_at) VALUES (?, ?, ?, ?)")) {
+				insert.setString(1, track.toString());
+				insert.setString(2, player.toString());
+				insert.setInt(3, ticks);
+				insert.setLong(4, finishedAt.toEpochMilli());
+				insert.executeUpdate();
+			}
+			return new RunOutcome(previousBest, previousRecord, completions(connection, track, player));
+		});
+	}
+
+	/**
+	 * A player's results on one track.
+	 */
+	public record PlayerResult(int bestTicks, int completions, @NotNull Instant lastFinished) {
+	}
+
+	@NotNull
+	public CompletableFuture<Optional<PlayerResult>> playerResult(@NotNull final UUID track, @NotNull final UUID player) {
+		return submit(connection -> {
+			try (final PreparedStatement select = connection.prepareStatement(
+					"SELECT MIN(ticks), COUNT(*), MAX(finished_at) FROM runs WHERE track = ? AND player = ?")) {
+				select.setString(1, track.toString());
+				select.setString(2, player.toString());
+				try (final ResultSet rows = select.executeQuery()) {
+					if (!rows.next() || rows.getInt(2) == 0) {
+						return Optional.empty();
+					}
+					return Optional.of(new PlayerResult(rows.getInt(1), rows.getInt(2),
+							Instant.ofEpochMilli(rows.getLong(3))));
+				}
+			}
+		});
+	}
+
+	/**
+	 * A player's best on a track, as ranked against the other players.
+	 */
+	public record Ranked(@NotNull UUID player, int ticks) {
+	}
+
+	/**
+	 * The player at the given place of a track's ranking: every player once, with their best time, the faster first
+	 * and, at equal times, whoever got there first.
+	 *
+	 * @param place 1 for the record
+	 */
+	@NotNull
+	public CompletableFuture<Optional<Ranked>> ranked(@NotNull final UUID track, final int place) {
+		return submit(connection -> {
+			// SQLite takes the other columns of an aggregate query from the row MIN() picked
+			try (final PreparedStatement select = connection.prepareStatement("""
+					SELECT player, MIN(ticks) AS best, finished_at FROM runs WHERE track = ?
+					GROUP BY player ORDER BY best, finished_at LIMIT 1 OFFSET ?""")) {
+				select.setString(1, track.toString());
+				select.setInt(2, place - 1);
+				try (final ResultSet rows = select.executeQuery()) {
+					return rows.next()
+							? Optional.of(new Ranked(UUID.fromString(rows.getString(1)), rows.getInt(2)))
+							: Optional.empty();
+				}
+			}
+		});
+	}
+
+	/**
+	 * A player's results on a track, for the summary of all tracks.
+	 */
+	public record TrackResult(@NotNull UUID track, int bestTicks, int completions) {
+	}
+
+	@NotNull
+	public CompletableFuture<List<TrackResult>> playerSummary(@NotNull final UUID player) {
+		return submit(connection -> {
+			try (final PreparedStatement select = connection.prepareStatement(
+					"SELECT track, MIN(ticks), COUNT(*) FROM runs WHERE player = ? GROUP BY track")) {
+				select.setString(1, player.toString());
+				try (final ResultSet rows = select.executeQuery()) {
+					final List<TrackResult> results = new ArrayList<>();
+					while (rows.next()) {
+						results.add(new TrackResult(UUID.fromString(rows.getString(1)), rows.getInt(2), rows.getInt(3)));
+					}
+					return results;
+				}
+			}
+		});
+	}
+
+	/**
+	 * Waits until everything asked for so far is done; for tests.
+	 */
+	public void flush() {
+		submit(connection -> null).join();
+	}
+
+	/**
+	 * Finishes what was asked for, then closes the file.
+	 */
+	@Override
+	public void close() {
+		executor.shutdown();
+		try {
+			if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+				executor.shutdownNow();
+			}
+		} catch (final InterruptedException ex) {
+			Thread.currentThread().interrupt();
+		}
+		try {
+			connection.close();
+		} catch (final SQLException ignored) {
+			// Closing on shutdown; nothing is left to save
+		}
+	}
+
+	@NotNull
+	private static OptionalInt best(@NotNull final Connection connection, @NotNull final UUID track,
+									@NotNull final UUID player) throws SQLException {
+		try (final PreparedStatement select = connection.prepareStatement(
+				"SELECT MIN(ticks) FROM runs WHERE track = ? AND player = ?")) {
+			select.setString(1, track.toString());
+			select.setString(2, player.toString());
+			return single(select);
+		}
+	}
+
+	@NotNull
+	private static OptionalInt record(@NotNull final Connection connection, @NotNull final UUID track)
+			throws SQLException {
+		try (final PreparedStatement select = connection.prepareStatement("SELECT MIN(ticks) FROM runs WHERE track = ?")) {
+			select.setString(1, track.toString());
+			return single(select);
+		}
+	}
+
+	private static int completions(@NotNull final Connection connection, @NotNull final UUID track,
+								   @NotNull final UUID player) throws SQLException {
+		try (final PreparedStatement select = connection.prepareStatement(
+				"SELECT COUNT(*) FROM runs WHERE track = ? AND player = ?")) {
+			select.setString(1, track.toString());
+			select.setString(2, player.toString());
+			return single(select).orElse(0);
+		}
+	}
+
+	@NotNull
+	private static OptionalInt single(@NotNull final PreparedStatement select) throws SQLException {
+		try (final ResultSet rows = select.executeQuery()) {
+			if (!rows.next()) {
+				return OptionalInt.empty();
+			}
+			final int value = rows.getInt(1);
+			return rows.wasNull() ? OptionalInt.empty() : OptionalInt.of(value);
+		}
+	}
+}

@@ -7,6 +7,8 @@ description: Parkour tracks built from WorldEdit regions, with checkpoints, meda
 website: https://github.com/andret2344/parkour-tracks
 depend:
   - WorldEdit
+libraries:
+  - ${sqlite}
 
 permissions:
   parkourtracks.*:
@@ -16,6 +18,7 @@ permissions:
       parkourtracks.edit: true
       parkourtracks.manage: true
       parkourtracks.ignore: true
+      parkourtracks.stats.others: true
   parkourtracks.play:
     description: Allows to use the player commands.
     default: true
@@ -28,3 +31,6 @@ permissions:
   parkourtracks.ignore:
     description: Allows to ignore tracks, walking through them without starting a game.
     default: op
+  parkourtracks.stats.others:
+    description: Allows to see the results of other players with /ptracks stats.
+    default: true

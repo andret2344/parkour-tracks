@@ -33,7 +33,8 @@ during implementation and recorded in its "Chosen during implementation" section
 
 Packages under `eu.andret.parkourtracks`: the root holds the plugin; `config` the content of `config.yml`; `message`
 the texts of `messages.yml`; `track` the track model, its rules and its storage; `selection` WorldEdit selections;
-`command` the Lamp commands; `game` the games played on tracks; `util` formatting helpers. WorldEdit is a hard dependency (`depend` in `plugin.yml`).
+`command` the Lamp commands; `game` the games played on tracks; `result` the results database; `util` formatting
+helpers. WorldEdit is a hard dependency (`depend` in `plugin.yml`).
 
 - `ParkourTracksPlugin` - entry point. `onEnable` saves the default `config.yml` and `messages.yml`, reads both by
   hand (Bukkit's `getConfig()` only logs a broken file and goes on empty), loads the tracks and registers the
@@ -81,6 +82,11 @@ the texts of `messages.yml`; `track` the track model, its rules and its storage;
   and stops them from being moved, dropped, swapped or put away, and players in a game from picking anything up.
 - `game/TrackGuard` - the edit lock on the world: every block change in the region of a running track is cancelled
   (explosions lose the track's blocks from their list; pistons are checked on both sides of the region's edge).
+- `result/ResultStore` - the SQLite file `results.db`, one row per completion in `runs`. Every query runs on one
+  thread of its own and returns a `CompletableFuture`; callers hand results back to the server thread with
+  `ParkourTracksPlugin#runOnMainThread` (skipped once the plugin is disabled). `recordRun` reads the player's and the
+  track's best before inserting, so the finish can announce records. The driver comes from `libraries` in
+  `plugin.yml` (its coordinates are expanded from the version catalog); tests have it on the runtime classpath.
 - `track/TrackOption` - every option `/ptracks set` changes: how its value is parsed, checked against the other
   options (`boat` excludes `sprintForced` and `enderPearls`), stored and shown. Problems are `OptionException`s the
   command turns into messages.
@@ -120,6 +126,8 @@ the texts of `messages.yml`; `track` the track model, its rules and its storage;
   move teleports. MockBukkit ignores `PlayerDeathEvent#setKeepInventory` (it follows only the game rule), so death
   tests check the event. MockBukkit cannot teleport a vehicle with a passenger, so boat tests (`BoatTest#driveTo`)
   fire `VehicleMoveEvent`s with the positions instead.
+- Results come back asynchronously: tests call `plugin.getResults().flush()` (waits for the queued queries) and then
+  `server.getScheduler().performTicks(1)` (runs the callbacks on the server thread).
 - MockBukkit's `enablePlugin` lets an exception from `onEnable` through (a real server catches it and disables the
   plugin), so "does not start" tests assert that enabling throws.
 - Every rule in `decisions.md` has its own test.

@@ -147,6 +147,21 @@ public final class TrackRules {
 	}
 
 	/**
+	 * The best medal a run of the given ticks earns on a track: the first medal, in the config's order, whose
+	 * threshold has a time the run did not exceed.
+	 */
+	@NotNull
+	public static Optional<Medal> bestMedal(@NotNull final List<Medal> medals,
+											@NotNull final Map<String, MedalThreshold> thresholds, final int ticks) {
+		return medals.stream()
+				.filter(medal -> {
+					final MedalThreshold threshold = thresholds.get(medal.key());
+					return threshold != null && threshold.hasTime() && ticks <= threshold.ticks();
+				})
+				.findFirst();
+	}
+
+	/**
 	 * What a track misses before it can start.
 	 */
 	public enum Missing {

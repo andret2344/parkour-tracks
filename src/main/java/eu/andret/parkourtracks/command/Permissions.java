@@ -20,6 +20,10 @@ public final class Permissions {
 	 * Ignoring tracks, to walk through them without starting a game.
 	 */
 	public static final String IGNORE = "parkourtracks.ignore";
+	/**
+	 * Seeing the results of other players with {@code /ptracks stats}; everyone by default.
+	 */
+	public static final String STATS_OTHERS = "parkourtracks.stats.others";
 
 	private Permissions() {
 	}

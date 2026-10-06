@@ -7,6 +7,7 @@ import eu.andret.parkourtracks.command.OptionParameterType;
 import eu.andret.parkourtracks.command.OptionValue;
 import eu.andret.parkourtracks.command.PlaceholderCondition;
 import eu.andret.parkourtracks.command.PlayerCommand;
+import eu.andret.parkourtracks.command.StatsCommand;
 import eu.andret.parkourtracks.command.TrackCommand;
 import eu.andret.parkourtracks.command.TrackParameterType;
 import eu.andret.parkourtracks.command.TrackPartsCommand;
@@ -19,6 +20,7 @@ import eu.andret.parkourtracks.game.GameListener;
 import eu.andret.parkourtracks.game.GameManager;
 import eu.andret.parkourtracks.game.TrackGuard;
 import eu.andret.parkourtracks.message.Messages;
+import eu.andret.parkourtracks.result.ResultStore;
 import eu.andret.parkourtracks.selection.Selections;
 import eu.andret.parkourtracks.selection.WorldEditSelections;
 import eu.andret.parkourtracks.track.Track;
@@ -45,11 +47,13 @@ public class ParkourTracksPlugin extends JavaPlugin {
 	private static final String CONFIG_FILE = "config.yml";
 	private static final String MESSAGES_FILE = "messages.yml";
 	private static final String TRACKS_FILE = "tracks.json";
+	private static final String RESULTS_FILE = "results.db";
 
 	private Settings settings;
 	private Messages messages;
 	private TrackRegistry trackRegistry;
 	private GameManager games;
+	private ResultStore results;
 	@NotNull
 	private Selections selections = new WorldEditSelections();
 
@@ -67,6 +71,7 @@ public class ParkourTracksPlugin extends JavaPlugin {
 		messages = readMessages();
 		trackRegistry = new TrackRegistry(new TrackStore(getDataFolder().toPath().resolve(TRACKS_FILE)));
 		trackRegistry.load();
+		results = ResultStore.open(getDataFolder().toPath().resolve(RESULTS_FILE));
 		games = new GameManager(this);
 		getServer().getPluginManager().registerEvents(new GameListener(games), this);
 		getServer().getPluginManager().registerEvents(new GameItemListener(games), this);
@@ -85,6 +90,19 @@ public class ParkourTracksPlugin extends JavaPlugin {
 	public void onDisable() {
 		if (games != null) {
 			games.shutdown();
+		}
+		if (results != null) {
+			results.close();
+		}
+	}
+
+	/**
+	 * Runs the task on the server thread, unless the plugin was disabled meanwhile; for results coming back from the
+	 * database.
+	 */
+	public void runOnMainThread(@NotNull final Runnable task) {
+		if (isEnabled()) {
+			getServer().getScheduler().runTask(this, task);
 		}
 	}
 
@@ -116,7 +134,7 @@ public class ParkourTracksPlugin extends JavaPlugin {
 				.commandCondition(new PlaceholderCondition())
 				.build();
 		lamp.register(new TrackCommand(support), new TrackPartsCommand(support), new TrackSettingsCommand(support),
-				new PlayerCommand(support, games));
+				new PlayerCommand(support, games), new StatsCommand(support));
 	}
 
 	/**
@@ -171,6 +189,11 @@ public class ParkourTracksPlugin extends JavaPlugin {
 	@NotNull
 	public TrackRegistry getTrackRegistry() {
 		return trackRegistry;
+	}
+
+	@NotNull
+	public ResultStore getResults() {
+		return results;
 	}
 
 	@NotNull

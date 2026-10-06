@@ -1,13 +1,16 @@
 package eu.andret.parkourtracks.game;
 
 import eu.andret.parkourtracks.ParkourTracksPlugin;
+import eu.andret.parkourtracks.config.Medal;
 import eu.andret.parkourtracks.config.TimerDisplay;
 import eu.andret.parkourtracks.message.Message;
+import eu.andret.parkourtracks.result.ResultStore;
 import eu.andret.parkourtracks.track.Checkpoint;
 import eu.andret.parkourtracks.track.Cuboid;
 import eu.andret.parkourtracks.track.SkipMode;
 import eu.andret.parkourtracks.track.Track;
 import eu.andret.parkourtracks.track.TrackEffect;
+import eu.andret.parkourtracks.track.TrackRules;
 import eu.andret.parkourtracks.track.TrackType;
 import eu.andret.parkourtracks.track.WorldSpot;
 import eu.andret.parkourtracks.util.Ticks;
@@ -29,6 +32,7 @@ import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -412,8 +416,15 @@ public final class GameManager {
 		if (track.getType() == TrackType.TRAINING) {
 			plugin.getMessages().send(player, Message.FINISHED_TRAINING, track(track));
 		} else {
+			final int ticks = session.getTicks();
 			plugin.getMessages().send(player, Message.FINISHED, track(track),
-					Placeholder.unparsed("time", Ticks.format(session.getTicks())));
+					Placeholder.unparsed("time", Ticks.format(ticks)));
+			plugin.getResults().recordRun(track.getId(), player.getUniqueId(), ticks, Instant.now())
+					.thenAcceptAsync(outcome -> announce(player.getUniqueId(), track, ticks, outcome), plugin::runOnMainThread)
+					.exceptionally(ex -> {
+						plugin.getLogger().severe("Could not save a run on " + track + ": " + ex.getMessage());
+						return null;
+					});
 		}
 		switch (track.getOptions().getAfterFinish()) {
 			case SPAWN -> {
@@ -431,6 +442,31 @@ public final class GameManager {
 				session.setFinishTask(plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin,
 						() -> leave(player, LeaveReason.FINISHED), (long) delay * Ticks.PER_SECOND));
 			}
+		}
+	}
+
+	/**
+	 * Tells a player who finished what the run achieved: a track record, a personal best, a better medal.
+	 */
+	private void announce(@NotNull final UUID id, @NotNull final Track track, final int ticks,
+						  @NotNull final ResultStore.RunOutcome outcome) {
+		final Player player = plugin.getServer().getPlayer(id);
+		if (player == null) {
+			return;
+		}
+		if (outcome.isTrackRecord(ticks)) {
+			plugin.getMessages().send(player, Message.NEW_TRACK_RECORD, track(track));
+		} else if (outcome.isPersonalBest(ticks)) {
+			plugin.getMessages().send(player, Message.NEW_PERSONAL_BEST, track(track));
+		}
+		final List<Medal> medals = plugin.getSettings().medals();
+		final Optional<Medal> earned = TrackRules.bestMedal(medals, track.getMedals(), ticks);
+		final Optional<Medal> before = outcome.previousBest().isPresent()
+				? TrackRules.bestMedal(medals, track.getMedals(), outcome.previousBest().getAsInt())
+				: Optional.empty();
+		if (earned.isPresent() && (before.isEmpty() || medals.indexOf(earned.get()) < medals.indexOf(before.get()))) {
+			plugin.getMessages().send(player, Message.MEDAL_EARNED,
+					Placeholder.parsed("medal", earned.get().displayName()));
 		}
 	}
 

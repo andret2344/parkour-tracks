@@ -37,6 +37,9 @@ dependencies {
 	implementation(libs.lamp.common)
 	implementation(libs.lamp.bukkit)
 
+	// Loaded by the server from Maven Central through `libraries` in plugin.yml, so it is not shaded
+	testRuntimeOnly(libs.sqlite.jdbc)
+
 	testImplementation(libs.assertj.core)
 	testImplementation(libs.mockbukkit)
 	testImplementation(platform(libs.junit.bom))
@@ -52,9 +55,11 @@ tasks {
 
 	processResources {
 		val version = project.version.toString()
+		val sqlite = libs.sqlite.jdbc.get().toString()
 		inputs.property("version", version)
+		inputs.property("sqlite", sqlite)
 		filesMatching("plugin.yml") {
-			expand("version" to version)
+			expand("version" to version, "sqlite" to sqlite)
 		}
 	}
 
