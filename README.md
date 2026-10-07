@@ -1,6 +1,6 @@
 <div align="center">
 
-# ParkourTracks
+![ParkourTracks - timed parkour tracks with checkpoints and medals for Paper](.github/assets/banner.png)
 
 Parkour tracks for Paper servers, built from WorldEdit regions: checkpoints, walls, a timer counted in ticks, medals,
 records, a track selection menu, and optional fees and rewards through Vault.
