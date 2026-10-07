@@ -1,6 +1,6 @@
 # Decisions
 
-Design decisions for the migration, agreed on before coding. Deferred features are in `backlog.md`.
+Design decisions for the migration, agreed on before coding. Deferred features are GitHub issues.
 
 ## Product
 
@@ -78,7 +78,7 @@ Design decisions for the migration, agreed on before coding. Deferred features a
   `PLAYERS` has authors.
 - `savingResults` is removed; the type decides.
 - `PLAYERS`: an admin creates the parkour and sets its authors (UUIDs, several allowed). Authors get no editing rights.
-  Payouts and statistics for authors are in `backlog.md`.
+  Payouts and statistics for authors are issues #1 and #2.
 
 ## Rules of play
 
@@ -180,6 +180,17 @@ Design decisions for the migration, agreed on before coding. Deferred features a
   can have any number of signs.
 - The sidebar scoreboard during a game can be turned off in the config, on by default. Leaving the game restores the
   scoreboard the player had before, not the server's main one.
+- Sounds come back as the old plugin had them: `config.yml` sets a sound for joining, starting the run, reaching a
+  checkpoint, completing the track and leaving, each a sound or none. By default only starting
+  (`block.lever.click`) and completing (`entity.player.levelup`) make a sound. Only the player hears it, at volume
+  and pitch 0.5.
+- `[ptjoin]` signs can show every option of their track: each option is a placeholder named after it (`<hardcore>`,
+  `<skipMode>`, ...) in the sign's lines in `messages.yml`. Values that are words (true and false, the choices of
+  `type`, `skipMode`, `afterFinish`) are shown through texts in `messages.yml`, so the admin words them; numbers stay
+  numbers. They can also show the track's record: its time and the player who holds it, or a text from
+  `messages.yml` while there is none (always on `training` tracks, which keep no results).
+- `[ptjoin]` signs refresh like record signs: after any change of their track, after a completion on it and when
+  their chunk loads. `/ptracks sign refresh [track]` redraws the signs of one track, or of all, by hand.
 - The running time is shown in the action bar, the XP bar or both, set in the config; the action bar by default.
 - Checkpoint markers of a stopped track are visible only to players with `parkourtracks.edit`.
 
@@ -369,7 +380,8 @@ Details `decisions.md` did not settle, chosen while coding. Review them; anythin
 - The "block or sign" that opens the menu and the teleport block are signs: `[ptmenu]` opens the menu, `[ptjoin]`
   with a track name on the second line enters that track (confirming a fee first, like the menu). Writing them needs
   `parkourtracks.edit`; what a sign does lives in its PDC (`parkourtracks:sign`), and right-clicking it uses it
-  instead of opening the sign editor. Their lines are rendered when written.
+  instead of opening the sign editor. Their lines are rendered when written and refreshed after every change of the
+  track.
 - The menu game item (slot 4, compass) is the fifth game item. Choosing another track from a game switches to it.
 - With only one category holding running tracks the menu opens it right away. Categories follow the order of the
   types (server, training, players). Tracks are sorted by difficulty, then name; a page holds 45, with previous,

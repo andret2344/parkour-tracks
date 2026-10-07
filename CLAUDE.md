@@ -11,8 +11,8 @@ regions. Paper-only on purpose: Spigot is not supported, Paper API is fine to us
 
 The plugin is being rewritten from scratch in stages. How it has to behave is agreed in `decisions.md` - read it
 before changing behavior, and follow it over the old code in the git history. Details it does not settle are chosen
-during implementation and recorded in its "Chosen during implementation" section. Deferred features are in
-`backlog.md`.
+during implementation and recorded in its "Chosen during implementation" section. Deferred features are GitHub
+issues (`gh issue list`), not a file in the repository; new ones go there too.
 
 ## Commands
 
