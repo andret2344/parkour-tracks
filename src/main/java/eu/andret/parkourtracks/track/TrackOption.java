@@ -11,6 +11,9 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.ObjDoubleConsumer;
+import java.util.function.Predicate;
+import java.util.function.ToDoubleFunction;
 import java.util.regex.Pattern;
 
 /**
@@ -45,9 +48,9 @@ public final class TrackOption<T> {
 	private final Function<Track, Optional<String>> conflict;
 
 	private TrackOption(@NotNull final String name, @NotNull final Function<String, T> parser,
-						@NotNull final Function<Track, T> getter, @NotNull final BiConsumer<Track, T> setter,
-						@NotNull final Function<T, String> formatter, @NotNull final List<String> suggestions,
-						@NotNull final Function<Track, Optional<String>> conflict) {
+			@NotNull final Function<Track, T> getter, @NotNull final BiConsumer<Track, T> setter,
+			@NotNull final Function<T, String> formatter, @NotNull final List<String> suggestions,
+			@NotNull final Function<Track, Optional<String>> conflict) {
 		this.name = name;
 		this.parser = parser;
 		this.getter = getter;
@@ -58,43 +61,43 @@ public final class TrackOption<T> {
 	}
 
 	@NotNull
-	private static Optional<String> noConflict(@NotNull final Track track) {
+	private static Optional<String> skipConflictCheck(@NotNull final Track track) {
 		return Optional.empty();
 	}
 
 	@NotNull
-	private static TrackOption<Boolean> flag(@NotNull final String name, @NotNull final Function<TrackOptions, Boolean> getter,
-											 @NotNull final BiConsumer<TrackOptions, Boolean> setter,
-											 @NotNull final Function<Track, Optional<String>> conflict) {
-		return new TrackOption<>(name, TrackOption::parseBoolean, track -> getter.apply(track.getOptions()),
+	private static TrackOption<Boolean> createFlag(@NotNull final String name, @NotNull final Predicate<TrackOptions> getter,
+			@NotNull final BiConsumer<TrackOptions, Boolean> setter,
+			@NotNull final Function<Track, Optional<String>> conflict) {
+		return new TrackOption<>(name, TrackOption::parseBoolean, track -> getter.test(track.getOptions()),
 				(track, value) -> setter.accept(track.getOptions(), value), String::valueOf, BOOLEANS,
 				conflict);
 	}
 
 	@NotNull
-	private static <E extends Enum<E>> TrackOption<E> choice(@NotNull final String name, @NotNull final Class<E> type,
-															  @NotNull final Function<Track, E> getter,
-															  @NotNull final BiConsumer<Track, E> setter) {
+	private static <E extends Enum<E>> TrackOption<E> createChoice(@NotNull final String name, @NotNull final Class<E> type,
+			@NotNull final Function<Track, E> getter,
+			@NotNull final BiConsumer<Track, E> setter) {
 		final List<String> values = Arrays.stream(type.getEnumConstants())
 				.map(value -> value.name().toLowerCase(Locale.ROOT))
 				.toList();
 		return new TrackOption<>(name, text -> parseChoice(text, values, type), getter, setter,
-				value -> value.name().toLowerCase(Locale.ROOT), values, TrackOption::noConflict);
+				value -> value.name().toLowerCase(Locale.ROOT), values, TrackOption::skipConflictCheck);
 	}
 
 	@NotNull
-	private static TrackOption<Double> amount(@NotNull final String name, @NotNull final Function<TrackOptions, Double> getter,
-											  @NotNull final BiConsumer<TrackOptions, Double> setter) {
-		return new TrackOption<>(name, TrackOption::parseAmount, track -> getter.apply(track.getOptions()),
+	private static TrackOption<Double> createAmount(@NotNull final String name, @NotNull final ToDoubleFunction<TrackOptions> getter,
+			@NotNull final ObjDoubleConsumer<TrackOptions> setter) {
+		return new TrackOption<>(name, TrackOption::parseAmount, track -> getter.applyAsDouble(track.getOptions()),
 				(track, value) -> setter.accept(track.getOptions(), value), Amounts::format, List.of("0"),
-				TrackOption::noConflict);
+				TrackOption::skipConflictCheck);
 	}
 
 	/**
 	 * The boats a track can use: every boat and raft without a chest, which would add a container to the game.
 	 */
 	@NotNull
-	public static List<EntityType> boatTypes() {
+	public static List<EntityType> getBoatTypes() {
 		return Arrays.stream(EntityType.values())
 				.filter(type -> type.name().endsWith("_BOAT") || type.name().endsWith("_RAFT"))
 				.filter(type -> !type.name().contains("CHEST"))
@@ -103,20 +106,20 @@ public final class TrackOption<T> {
 
 	@NotNull
 	public static final TrackOption<String> DISPLAY_NAME = new TrackOption<>("displayName", text -> text,
-			Track::getDisplayName, Track::setDisplayName, text -> text, List.of(), TrackOption::noConflict);
+			Track::getDisplayName, Track::setDisplayName, text -> text, List.of(), TrackOption::skipConflictCheck);
 	@NotNull
-	public static final TrackOption<TrackType> TYPE = choice("type", TrackType.class, Track::getType, Track::setType);
+	public static final TrackOption<TrackType> TYPE = createChoice("type", TrackType.class, Track::getType, Track::setType);
 	@NotNull
-	public static final TrackOption<Boolean> SPRINT_FORCED = flag("sprintForced", TrackOptions::isSprintForced,
-			TrackOptions::setSprintForced, track -> conflictWithBoat(track));
+	public static final TrackOption<Boolean> SPRINT_FORCED = createFlag("sprintForced", TrackOptions::isSprintForced,
+			TrackOptions::setSprintForced, TrackOption::findBoatConflict);
 	@NotNull
-	public static final TrackOption<Boolean> HARDCORE = flag("hardcore", TrackOptions::isHardcore,
-			TrackOptions::setHardcore, TrackOption::noConflict);
+	public static final TrackOption<Boolean> HARDCORE = createFlag("hardcore", TrackOptions::isHardcore,
+			TrackOptions::setHardcore, TrackOption::skipConflictCheck);
 	@NotNull
-	public static final TrackOption<Boolean> DAMAGE_ALLOWED = flag("damageAllowed", TrackOptions::isDamageAllowed,
-			TrackOptions::setDamageAllowed, TrackOption::noConflict);
+	public static final TrackOption<Boolean> DAMAGE_ALLOWED = createFlag("damageAllowed", TrackOptions::isDamageAllowed,
+			TrackOptions::setDamageAllowed, TrackOption::skipConflictCheck);
 	@NotNull
-	public static final TrackOption<Boolean> BOAT = flag("boat", TrackOptions::isBoat, TrackOptions::setBoat,
+	public static final TrackOption<Boolean> BOAT = createFlag("boat", TrackOptions::isBoat, TrackOptions::setBoat,
 			track -> {
 				if (track.getOptions().isSprintForced()) {
 					return Optional.of("sprintForced");
@@ -125,41 +128,41 @@ public final class TrackOption<T> {
 			});
 	@NotNull
 	public static final TrackOption<EntityType> BOAT_TYPE = new TrackOption<>("boatType",
-			text -> parseChoice(text, boatTypes().stream().map(type -> type.name().toLowerCase(Locale.ROOT)).toList(),
+			text -> parseChoice(text, getBoatTypes().stream().map(type -> type.name().toLowerCase(Locale.ROOT)).toList(),
 					EntityType.class),
 			track -> track.getOptions().getBoatType(), (track, value) -> track.getOptions().setBoatType(value),
 			value -> value.name().toLowerCase(Locale.ROOT),
-			boatTypes().stream().map(type -> type.name().toLowerCase(Locale.ROOT)).toList(), TrackOption::noConflict);
+			getBoatTypes().stream().map(type -> type.name().toLowerCase(Locale.ROOT)).toList(), TrackOption::skipConflictCheck);
 	@NotNull
-	public static final TrackOption<Boolean> PAUSE_ON_CHECKPOINTS = flag("pauseOnCheckpoints",
-			TrackOptions::isPauseOnCheckpoints, TrackOptions::setPauseOnCheckpoints, TrackOption::noConflict);
+	public static final TrackOption<Boolean> PAUSE_ON_CHECKPOINTS = createFlag("pauseOnCheckpoints",
+			TrackOptions::isPauseOnCheckpoints, TrackOptions::setPauseOnCheckpoints, TrackOption::skipConflictCheck);
 	@NotNull
-	public static final TrackOption<SkipMode> SKIP_MODE = choice("skipMode", SkipMode.class,
+	public static final TrackOption<SkipMode> SKIP_MODE = createChoice("skipMode", SkipMode.class,
 			track -> track.getOptions().getSkipMode(), (track, value) -> track.getOptions().setSkipMode(value));
 	@NotNull
-	public static final TrackOption<Boolean> ENDER_PEARLS = flag("enderPearls", TrackOptions::isEnderPearls,
-			TrackOptions::setEnderPearls, track -> conflictWithBoat(track));
+	public static final TrackOption<Boolean> ENDER_PEARLS = createFlag("enderPearls", TrackOptions::isEnderPearls,
+			TrackOptions::setEnderPearls, TrackOption::findBoatConflict);
 	@NotNull
-	public static final TrackOption<Double> FEE = amount("fee", TrackOptions::getFee, TrackOptions::setFee);
+	public static final TrackOption<Double> FEE = createAmount("fee", TrackOptions::getFee, TrackOptions::setFee);
 	@NotNull
-	public static final TrackOption<Double> REWARD = amount("reward", TrackOptions::getReward, TrackOptions::setReward);
+	public static final TrackOption<Double> REWARD = createAmount("reward", TrackOptions::getReward, TrackOptions::setReward);
 	@NotNull
 	public static final TrackOption<Integer> DIFFICULTY = new TrackOption<>("difficulty", TrackOption::parseDifficulty,
 			track -> track.getOptions().getDifficulty(), (track, value) -> track.getOptions().setDifficulty(value),
-			String::valueOf, List.of("1", "2", "3", "4", "5"), TrackOption::noConflict);
+			String::valueOf, List.of("1", "2", "3", "4", "5"), TrackOption::skipConflictCheck);
 	@NotNull
 	public static final TrackOption<Optional<Material>> ICON = new TrackOption<>("icon", TrackOption::parseIcon,
 			track -> Optional.ofNullable(track.getOptions().getIcon()),
 			(track, value) -> track.getOptions().setIcon(value.orElse(null)),
 			value -> value.map(material -> material.name().toLowerCase(Locale.ROOT)).orElse(NONE), List.of(NONE),
-			TrackOption::noConflict);
+			TrackOption::skipConflictCheck);
 	@NotNull
 	public static final TrackOption<Optional<String>> PERMISSION = new TrackOption<>("permission",
 			TrackOption::parsePermission, track -> Optional.ofNullable(track.getOptions().getPermission()),
 			(track, value) -> track.getOptions().setPermission(value.orElse(null)), value -> value.orElse(NONE),
-			List.of(NONE), TrackOption::noConflict);
+			List.of(NONE), TrackOption::skipConflictCheck);
 	@NotNull
-	public static final TrackOption<AfterFinish> AFTER_FINISH = choice("afterFinish", AfterFinish.class,
+	public static final TrackOption<AfterFinish> AFTER_FINISH = createChoice("afterFinish", AfterFinish.class,
 			track -> track.getOptions().getAfterFinish(), (track, value) -> track.getOptions().setAfterFinish(value));
 
 	/**
@@ -194,7 +197,7 @@ public final class TrackOption<T> {
 	 * The track's current value, as {@code /ptracks set} takes it.
 	 */
 	@NotNull
-	public String display(@NotNull final Track track) {
+	public String formatValue(@NotNull final Track track) {
 		return formatter.apply(getter.apply(track));
 	}
 
@@ -216,7 +219,7 @@ public final class TrackOption<T> {
 	}
 
 	@NotNull
-	private static Optional<String> conflictWithBoat(@NotNull final Track track) {
+	private static Optional<String> findBoatConflict(@NotNull final Track track) {
 		return track.getOptions().isBoat() ? Optional.of("boat") : Optional.empty();
 	}
 
@@ -232,7 +235,7 @@ public final class TrackOption<T> {
 
 	@NotNull
 	private static <E extends Enum<E>> E parseChoice(@NotNull final String text, @NotNull final List<String> values,
-													 @NotNull final Class<E> type) {
+			@NotNull final Class<E> type) {
 		final String normalized = text.toLowerCase(Locale.ROOT);
 		if (!values.contains(normalized)) {
 			throw new OptionException(OptionException.Problem.NOT_A_CHOICE, String.join(", ", values));
@@ -244,7 +247,7 @@ public final class TrackOption<T> {
 		final double amount;
 		try {
 			amount = Double.parseDouble(text);
-		} catch (final NumberFormatException ex) {
+		} catch (final NumberFormatException _) {
 			throw new OptionException(OptionException.Problem.NOT_A_NUMBER, "");
 		}
 		if (!Double.isFinite(amount) || amount < 0) {
@@ -257,7 +260,7 @@ public final class TrackOption<T> {
 		final int difficulty;
 		try {
 			difficulty = Integer.parseInt(text);
-		} catch (final NumberFormatException ex) {
+		} catch (final NumberFormatException _) {
 			throw new OptionException(OptionException.Problem.NOT_A_NUMBER, "");
 		}
 		if (difficulty < TrackOptions.MIN_DIFFICULTY || difficulty > TrackOptions.MAX_DIFFICULTY) {

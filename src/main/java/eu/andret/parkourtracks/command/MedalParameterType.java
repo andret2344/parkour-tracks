@@ -26,9 +26,9 @@ public final class MedalParameterType implements ParameterType<BukkitCommandActo
 	@Override
 	public Medal parse(@NotNull final MutableStringStream input, @NotNull final ExecutionContext<BukkitCommandActor> context) {
 		final String key = input.readString();
-		return support.plugin().getSettings().findMedal(key)
-				.orElseThrow(() -> support.fail(Message.MEDAL_NOT_FOUND, CommandSupport.text("medal", key),
-						CommandSupport.text("medals", support.plugin().getSettings().medals().stream()
+		return support.getPlugin().getSettings().findMedal(key)
+				.orElseThrow(() -> support.fail(Message.MEDAL_NOT_FOUND, CommandSupport.createPlaceholder("medal", key),
+						CommandSupport.createPlaceholder("medals", support.getPlugin().getSettings().medals().stream()
 								.map(Medal::key)
 								.collect(Collectors.joining(", ")))));
 	}
@@ -36,7 +36,7 @@ public final class MedalParameterType implements ParameterType<BukkitCommandActo
 	@NotNull
 	@Override
 	public SuggestionProvider<BukkitCommandActor> defaultSuggestions() {
-		return context -> support.plugin().getSettings().medals()
+		return _ -> support.getPlugin().getSettings().medals()
 				.stream()
 				.map(Medal::key)
 				.toList();

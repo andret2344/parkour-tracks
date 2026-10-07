@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
@@ -60,7 +61,7 @@ public final class Backups {
 	 */
 	@NotNull
 	public CompletableFuture<Path> backUp() {
-		final Path target = folder.resolve(LocalDateTime.now().format(NAME));
+		final Path target = folder.resolve(LocalDateTime.now(ZoneId.systemDefault()).format(NAME));
 		final int keep = plugin.getSettings().backupKeep();
 		try {
 			Files.createDirectories(target);

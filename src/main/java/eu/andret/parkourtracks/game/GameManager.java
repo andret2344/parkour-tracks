@@ -36,7 +36,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,6 +62,8 @@ import java.util.stream.IntStream;
  */
 public final class GameManager {
 	private static final int FULL_FOOD = 20;
+	private static final String AMOUNT = "amount";
+	private static final String MEDAL = "medal";
 
 	@NotNull
 	private final ParkourTracksPlugin plugin;
@@ -119,7 +120,7 @@ public final class GameManager {
 	 */
 	public void toggleHiding(@NotNull final Player player, @NotNull final GameSession session) {
 		session.setHiding(!session.isHiding());
-		otherPlayers(session).forEach(other -> {
+		findOtherPlayers(session).forEach(other -> {
 			if (session.isHiding()) {
 				player.hidePlayer(plugin, other);
 			} else {
@@ -133,7 +134,7 @@ public final class GameManager {
 	 * The online players in the same game as the session's player, without them.
 	 */
 	@NotNull
-	private List<Player> otherPlayers(@NotNull final GameSession session) {
+	private List<Player> findOtherPlayers(@NotNull final GameSession session) {
 		return sessions.values()
 				.stream()
 				.filter(other -> other != session)
@@ -228,7 +229,7 @@ public final class GameManager {
 	 *              region; off for a teleport, which jumps
 	 */
 	public void move(@NotNull final Player player, @NotNull final Location from, @NotNull final Location to,
-					 final boolean sweep) {
+			final boolean sweep) {
 		final GameSession session = sessions.get(player.getUniqueId());
 		if (session == null) {
 			enterIfInside(player, to);
@@ -246,7 +247,7 @@ public final class GameManager {
 		if (session.getPhase() == Phase.WAITING && !contains(spawn.area(), to)) {
 			session.start();
 		}
-		for (final Hit hit : hits(track, from, to, sweep)) {
+		for (final Hit hit : findHits(track, from, to, sweep)) {
 			if (!handle(player, session, hit)) {
 				return;
 			}
@@ -272,10 +273,10 @@ public final class GameManager {
 				return;
 			}
 			if (!throughSpawn) {
-				sendTo(player, session, spawnLocation(track));
-				plugin.getMessages().send(player, Message.SENT_TO_SPAWN, track(track));
+				sendTo(player, session, getSpawnLocation(track));
+				plugin.getMessages().send(player, Message.SENT_TO_SPAWN, createTrackPlaceholder(track));
 			} else if (track.getOptions().isBoat()) {
-				sendTo(player, session, spawnLocation(track));
+				sendTo(player, session, getSpawnLocation(track));
 			}
 		});
 	}
@@ -288,8 +289,8 @@ public final class GameManager {
 	 * @param jump whether the teleport is an allowed ender pearl, which moves the player along the track
 	 */
 	@Nullable
-	public Location teleported(@NotNull final Player player, @NotNull final Location from, @NotNull final Location to,
-							   final boolean jump) {
+	public Location handleTeleport(@NotNull final Player player, @NotNull final Location from, @NotNull final Location to,
+			final boolean jump) {
 		final GameSession session = sessions.get(player.getUniqueId());
 		if (session == null) {
 			if (!isEligible(player)) {
@@ -301,13 +302,13 @@ public final class GameManager {
 			}
 			final boolean intoSpawn = contains(Objects.requireNonNull(track.get().getSpawn()).area(), to);
 			if (join(player, track.get(), intoSpawn ? Entry.SPAWN : Entry.SIDE) == null) {
-				return lobby(track.get()).orElse(from);
+				return findLobby(track.get()).orElse(from);
 			}
 			if (intoSpawn) {
 				return null;
 			}
-			plugin.getMessages().send(player, Message.SENT_TO_SPAWN, track(track.get()));
-			return spawnLocation(track.get());
+			plugin.getMessages().send(player, Message.SENT_TO_SPAWN, createTrackPlaceholder(track.get()));
+			return getSpawnLocation(track.get());
 		}
 		if (!isInRegion(session.getTrack(), to)) {
 			leave(player, LeaveReason.TELEPORT);
@@ -325,7 +326,7 @@ public final class GameManager {
 			});
 			return null;
 		}
-		return backTarget(session);
+		return findBackTarget(session);
 	}
 
 	/**
@@ -341,17 +342,17 @@ public final class GameManager {
 	}
 
 	@NotNull
-	private static List<Hit> hits(@NotNull final Track track, @NotNull final Location from, @NotNull final Location to,
-								  final boolean sweep) {
+	private static List<Hit> findHits(@NotNull final Track track, @NotNull final Location from, @NotNull final Location to,
+			final boolean sweep) {
 		final List<Hit> hits = new ArrayList<>();
-		track.getWalls().forEach(wall -> entered(wall, from, to, sweep)
+		track.getWalls().forEach(wall -> measureEntry(wall, from, to, sweep)
 				.ifPresent(distance -> hits.add(new Hit(distance, Hit.Kind.WALL, -1))));
-		entered(Objects.requireNonNull(track.getSpawn()).area(), from, to, sweep)
+		measureEntry(Objects.requireNonNull(track.getSpawn()).area(), from, to, sweep)
 				.ifPresent(distance -> hits.add(new Hit(distance, Hit.Kind.SPAWN, -1)));
 		IntStream.range(0, track.getCheckpoints().size())
-				.forEach(index -> entered(track.getCheckpoints().get(index).area(), from, to, sweep)
+				.forEach(index -> measureEntry(track.getCheckpoints().get(index).area(), from, to, sweep)
 						.ifPresent(distance -> hits.add(new Hit(distance, Hit.Kind.CHECKPOINT, index))));
-		entered(Objects.requireNonNull(track.getFinish()).area(), from, to, sweep)
+		measureEntry(Objects.requireNonNull(track.getFinish()).area(), from, to, sweep)
 				.ifPresent(distance -> hits.add(new Hit(distance, Hit.Kind.FINISH, -1)));
 		hits.sort(Comparator.comparingDouble(Hit::distance));
 		return hits;
@@ -361,13 +362,13 @@ public final class GameManager {
 	 * How far along the move it got into the area, when it was outside the area at the start.
 	 */
 	@NotNull
-	private static OptionalDouble entered(@NotNull final Cuboid area, @NotNull final Location from,
-										  @NotNull final Location to, final boolean sweep) {
+	private static OptionalDouble measureEntry(@NotNull final Cuboid area, @NotNull final Location from,
+			@NotNull final Location to, final boolean sweep) {
 		if (contains(area, from)) {
 			return OptionalDouble.empty();
 		}
 		if (sweep) {
-			return Segments.entry(area, from, to);
+			return Segments.findEntry(area, from, to);
 		}
 		return contains(area, to) ? OptionalDouble.of(1) : OptionalDouble.empty();
 	}
@@ -432,16 +433,16 @@ public final class GameManager {
 		final Track track = session.getTrack();
 		session.finish();
 		if (track.getType() == TrackType.TRAINING) {
-			plugin.getMessages().send(player, Message.FINISHED_TRAINING, track(track));
+			plugin.getMessages().send(player, Message.FINISHED_TRAINING, createTrackPlaceholder(track));
 		} else {
 			final int ticks = session.getTicks();
-			plugin.getMessages().send(player, Message.FINISHED, track(track),
+			plugin.getMessages().send(player, Message.FINISHED, createTrackPlaceholder(track),
 					Placeholder.unparsed("time", Ticks.format(ticks)));
 			final double reward = track.getOptions().getReward();
 			if (reward > 0 && plugin.getBank().deposit(player, reward)) {
-				plugin.getMessages().send(player, Message.REWARD_PAID, track(track),
-						Placeholder.unparsed("amount", plugin.getBank().format(reward)));
-				paid(player, track, TrackPaymentEvent.Kind.REWARD, null, reward);
+				plugin.getMessages().send(player, Message.REWARD_PAID, createTrackPlaceholder(track),
+						Placeholder.unparsed(AMOUNT, plugin.getBank().format(reward)));
+				reportPayment(player, track, TrackPaymentEvent.Kind.REWARD, null, reward);
 			}
 			plugin.getResults().recordRun(track.getId(), player.getUniqueId(), ticks, Instant.now())
 					.thenAcceptAsync(outcome -> announce(player.getUniqueId(), track, ticks, outcome), plugin::runOnMainThread)
@@ -453,7 +454,7 @@ public final class GameManager {
 		switch (track.getOptions().getAfterFinish()) {
 			case SPAWN -> {
 				session.resetToSpawn();
-				sendTo(player, session, spawnLocation(track));
+				sendTo(player, session, getSpawnLocation(track));
 			}
 			case LOBBY -> {
 				final int delay = plugin.getSettings().finishDelaySeconds();
@@ -473,7 +474,7 @@ public final class GameManager {
 	 * Tells a player who finished what the run achieved: a track record, a personal best, a better medal.
 	 */
 	private void announce(@NotNull final UUID id, @NotNull final Track track, final int ticks,
-						  @NotNull final ResultStore.RunOutcome outcome) {
+			@NotNull final ResultStore.RunOutcome outcome) {
 		plugin.getRecordSigns().refresh(track.getId());
 		// The record, or someone's best, may have changed for everyone on the track
 		sessions.values()
@@ -482,7 +483,7 @@ public final class GameManager {
 				.toList()
 				.forEach(session -> Optional.ofNullable(plugin.getServer().getPlayer(session.getPlayer()))
 						.ifPresent(other -> refreshSidebar(other, session)));
-		final Optional<Medal> best = TrackRules.bestMedal(plugin.getSettings().medals(), track.getMedals(), ticks);
+		final Optional<Medal> best = TrackRules.findBestMedal(plugin.getSettings().medals(), track.getMedals(), ticks);
 		plugin.getServer().getPluginManager().callEvent(new TrackCompleteEvent(plugin.getServer().getOfflinePlayer(id),
 				track.getId(), track.getName(), ticks, best.map(Medal::key).orElse(null), outcome.isPersonalBest(ticks),
 				outcome.isTrackRecord(ticks)));
@@ -491,18 +492,17 @@ public final class GameManager {
 			return;
 		}
 		if (outcome.isTrackRecord(ticks)) {
-			plugin.getMessages().send(player, Message.NEW_TRACK_RECORD, track(track));
+			plugin.getMessages().send(player, Message.NEW_TRACK_RECORD, createTrackPlaceholder(track));
 		} else if (outcome.isPersonalBest(ticks)) {
-			plugin.getMessages().send(player, Message.NEW_PERSONAL_BEST, track(track));
+			plugin.getMessages().send(player, Message.NEW_PERSONAL_BEST, createTrackPlaceholder(track));
 		}
 		final List<Medal> medals = plugin.getSettings().medals();
-		final Optional<Medal> earned = best;
 		final Optional<Medal> before = outcome.previousBest().isPresent()
-				? TrackRules.bestMedal(medals, track.getMedals(), outcome.previousBest().getAsInt())
+				? TrackRules.findBestMedal(medals, track.getMedals(), outcome.previousBest().getAsInt())
 				: Optional.empty();
-		if (earned.isPresent() && (before.isEmpty() || medals.indexOf(earned.get()) < medals.indexOf(before.get()))) {
+		if (best.isPresent() && (before.isEmpty() || medals.indexOf(best.get()) < medals.indexOf(before.get()))) {
 			plugin.getMessages().send(player, Message.MEDAL_EARNED,
-					Placeholder.parsed("medal", earned.get().displayName()));
+					Placeholder.parsed(MEDAL, best.get().displayName()));
 		}
 		payMedals(player, track, ticks, outcome.paidMedals());
 	}
@@ -511,21 +511,21 @@ public final class GameManager {
 	 * Pays the medal rewards the run is owed, each once ever; a failed payment is not noted, so it stays owed.
 	 */
 	private void payMedals(@NotNull final Player player, @NotNull final Track track, final int ticks,
-						   @NotNull final Set<String> paid) {
+			@NotNull final Set<String> paid) {
 		final Bank bank = plugin.getBank();
 		if (!bank.isAvailable()) {
 			return;
 		}
-		for (final MedalPayouts.Due due : MedalPayouts.due(plugin.getSettings().medals(), track.getMedals(), ticks, paid)) {
+		for (final MedalPayouts.Due due : MedalPayouts.findDue(plugin.getSettings().medals(), track.getMedals(), ticks, paid)) {
 			if (!bank.deposit(player, due.amount())) {
 				plugin.getLogger().warning("Could not pay " + player.getName() + " the reward of " + due.medal().key()
 						+ " on " + track.getName());
 				continue;
 			}
 			plugin.getResults().recordPayout(track.getId(), player.getUniqueId(), due.medal().key(), due.amount(), Instant.now());
-			plugin.getMessages().send(player, Message.MEDAL_PAID, Placeholder.parsed("medal", due.medal().displayName()),
-					Placeholder.unparsed("amount", bank.format(due.amount())));
-			paid(player, track, TrackPaymentEvent.Kind.MEDAL, due.medal().key(), due.amount());
+			plugin.getMessages().send(player, Message.MEDAL_PAID, Placeholder.parsed(MEDAL, due.medal().displayName()),
+					Placeholder.unparsed(AMOUNT, bank.format(due.amount())));
+			reportPayment(player, track, TrackPaymentEvent.Kind.MEDAL, due.medal().key(), due.amount());
 		}
 	}
 
@@ -534,24 +534,24 @@ public final class GameManager {
 	 * where the run starts over.
 	 */
 	public void goBack(@NotNull final Player player, @NotNull final GameSession session) {
-		sendTo(player, session, backTarget(session));
+		sendTo(player, session, findBackTarget(session));
 	}
 
 	/**
 	 * Where going back takes the player, and puts the session there.
 	 */
 	@NotNull
-	private Location backTarget(@NotNull final GameSession session) {
+	private Location findBackTarget(@NotNull final GameSession session) {
 		final Track track = session.getTrack();
 		if (session.getPhase() == Phase.FINISHED) {
-			return spawnLocation(track);
+			return getSpawnLocation(track);
 		}
 		if (track.getOptions().isHardcore() || session.getLastCheckpoint() == GameSession.SPAWN) {
 			session.resetToSpawn();
-			return spawnLocation(track);
+			return getSpawnLocation(track);
 		}
 		return Objects.requireNonNull(track.getCheckpoints().get(session.getLastCheckpoint()).spot()
-				.toLocation(world(track)));
+				.toLocation(getWorld(track)));
 	}
 
 	/**
@@ -559,15 +559,15 @@ public final class GameManager {
 	 */
 	public void restart(@NotNull final Player player, @NotNull final GameSession session) {
 		session.resetToSpawn();
-		sendTo(player, session, spawnLocation(session.getTrack()));
+		sendTo(player, session, getSpawnLocation(session.getTrack()));
 	}
 
 	/**
 	 * Where a player who died on a track comes back to life.
 	 */
 	@NotNull
-	public Location respawnLocation(@NotNull final GameSession session) {
-		return backTarget(session);
+	public Location findRespawnLocation(@NotNull final GameSession session) {
+		return findBackTarget(session);
 	}
 
 	// ======= Joining and leaving =======
@@ -581,13 +581,10 @@ public final class GameManager {
 		}
 		final GameSession session = join(player, track, Entry.DIRECT);
 		if (session != null) {
-			sendTo(player, session, spawnLocation(track));
+			sendTo(player, session, getSpawnLocation(track));
 		}
 	}
 
-	/**
-	 * Starts a game for the player: their state goes into a snapshot, they get the track's effects.
-	 */
 	/**
 	 * Starts a game for the player, when they may enter and pay the fee: their state goes into a snapshot, they get
 	 * the track's effects.
@@ -598,7 +595,7 @@ public final class GameManager {
 	private GameSession join(@NotNull final Player player, @NotNull final Track track, @NotNull final Entry entry) {
 		final String permission = track.getOptions().getPermission();
 		if (permission != null && !player.hasPermission(permission)) {
-			plugin.getMessages().send(player, Message.NO_TRACK_PERMISSION, track(track));
+			plugin.getMessages().send(player, Message.NO_TRACK_PERMISSION, createTrackPlaceholder(track));
 			return null;
 		}
 		if (!new TrackJoinEvent(player, track.getId(), track.getName(), entry).callEvent()) {
@@ -617,7 +614,7 @@ public final class GameManager {
 		player.getInventory().clear();
 		player.getActivePotionEffects().forEach(effect -> player.removePotionEffect(effect.getType()));
 		track.getEffects().forEach(effect -> applyEffect(player, effect));
-		player.setHealth(Snapshot.maxHealth(player));
+		player.setHealth(Snapshot.getMaxHealth(player));
 		player.setFoodLevel(FULL_FOOD);
 		player.setSaturation(FULL_FOOD);
 		player.setFlying(false);
@@ -637,7 +634,7 @@ public final class GameManager {
 				.filter(Objects::nonNull)
 				.forEach(hider -> hider.hidePlayer(plugin, player));
 		if (entry != Entry.SIDE) {
-			plugin.getMessages().send(player, Message.JOINED, track(track), displayName(track));
+			plugin.getMessages().send(player, Message.JOINED, createTrackPlaceholder(track), createDisplayNamePlaceholder(track));
 		}
 		refreshSidebar(player, session);
 		return session;
@@ -654,13 +651,13 @@ public final class GameManager {
 		if (fee <= 0 || entry == Entry.RETURN || !bank.isAvailable()) {
 			return 0;
 		}
-		final TagResolver amount = Placeholder.unparsed("amount", bank.format(fee));
+		final TagResolver amount = Placeholder.unparsed(AMOUNT, bank.format(fee));
 		if (!bank.withdraw(player, fee)) {
-			plugin.getMessages().send(player, Message.FEE_TOO_HIGH, track(track), amount);
+			plugin.getMessages().send(player, Message.FEE_TOO_HIGH, createTrackPlaceholder(track), amount);
 			return -1;
 		}
-		plugin.getMessages().send(player, Message.FEE_PAID, track(track), amount);
-		paid(player, track, TrackPaymentEvent.Kind.FEE, null, fee);
+		plugin.getMessages().send(player, Message.FEE_PAID, createTrackPlaceholder(track), amount);
+		reportPayment(player, track, TrackPaymentEvent.Kind.FEE, null, fee);
 		return fee;
 	}
 
@@ -668,15 +665,14 @@ public final class GameManager {
 	 * Sends a player refused at the track's edge to the lobby, so they do not stand in its region.
 	 */
 	private void turnAway(@NotNull final Player player, @NotNull final Track track) {
-		lobby(track).ifPresent(lobby -> teleport(player, lobby));
+		findLobby(track).ifPresent(lobby -> teleport(player, lobby));
 	}
 
 	private static void applyEffect(@NotNull final Player player, @NotNull final TrackEffect effect) {
 		final NamespacedKey key = NamespacedKey.fromString(effect.type());
-		final PotionEffectType type = key == null ? null : Registry.EFFECT.get(key);
-		if (type != null) {
-			player.addPotionEffect(new PotionEffect(type, PotionEffect.INFINITE_DURATION, effect.amplifier()));
-		}
+		Optional.ofNullable(key)
+				.map(Registry.EFFECT::get)
+				.ifPresent(type -> player.addPotionEffect(new PotionEffect(type, PotionEffect.INFINITE_DURATION, effect.amplifier())));
 	}
 
 	/**
@@ -688,7 +684,7 @@ public final class GameManager {
 			return;
 		}
 		// Hiding ends with the game, both ways
-		otherPlayers(session).forEach(other -> {
+		findOtherPlayers(session).forEach(other -> {
 			player.showPlayer(plugin, other);
 			if (sessions.get(other.getUniqueId()).isHiding()) {
 				other.showPlayer(plugin, player);
@@ -703,17 +699,17 @@ public final class GameManager {
 		restore(player);
 		if (reason == LeaveReason.STOPPED && session.getPaidFee() > 0 && plugin.getSettings().refundOnStop()
 				&& plugin.getBank().deposit(player, session.getPaidFee())) {
-			plugin.getMessages().send(player, Message.FEE_REFUNDED, track(session.getTrack()),
-					Placeholder.unparsed("amount", plugin.getBank().format(session.getPaidFee())));
-			paid(player, session.getTrack(), TrackPaymentEvent.Kind.REFUND, null, session.getPaidFee());
+			plugin.getMessages().send(player, Message.FEE_REFUNDED, createTrackPlaceholder(session.getTrack()),
+					Placeholder.unparsed(AMOUNT, plugin.getBank().format(session.getPaidFee())));
+			reportPayment(player, session.getTrack(), TrackPaymentEvent.Kind.REFUND, null, session.getPaidFee());
 		}
 		if (reason != LeaveReason.DISCONNECT) {
 			player.getPersistentDataContainer().remove(sessionKey);
 			plugin.getMessages().send(player, reason == LeaveReason.STOPPED ? Message.TRACK_STOPPED : Message.LEFT,
-					track(session.getTrack()));
+					createTrackPlaceholder(session.getTrack()));
 		}
 		if (reason.isToLobby()) {
-			lobby(session.getTrack()).ifPresent(lobby -> teleport(player, lobby));
+			findLobby(session.getTrack()).ifPresent(lobby -> teleport(player, lobby));
 		}
 		plugin.getServer().getPluginManager().callEvent(
 				new TrackLeaveEvent(player, session.getTrack().getId(), session.getTrack().getName(), reason));
@@ -722,8 +718,8 @@ public final class GameManager {
 	/**
 	 * Tells other plugins that money moved because of the track.
 	 */
-	private void paid(@NotNull final OfflinePlayer player, @NotNull final Track track,
-					  @NotNull final TrackPaymentEvent.Kind kind, @Nullable final String medal, final double amount) {
+	private void reportPayment(@NotNull final OfflinePlayer player, @NotNull final Track track,
+			@NotNull final TrackPaymentEvent.Kind kind, @Nullable final String medal, final double amount) {
 		plugin.getServer().getPluginManager().callEvent(
 				new TrackPaymentEvent(player, track.getId(), track.getName(), kind, medal, amount));
 	}
@@ -778,9 +774,9 @@ public final class GameManager {
 				turnAway(player, track);
 				return;
 			}
-			sendTo(player, session, spawnLocation(track));
+			sendTo(player, session, getSpawnLocation(track));
 			if (!returning) {
-				plugin.getMessages().send(player, Message.SENT_TO_SPAWN, track(track));
+				plugin.getMessages().send(player, Message.SENT_TO_SPAWN, createTrackPlaceholder(track));
 			}
 		});
 	}
@@ -806,8 +802,8 @@ public final class GameManager {
 			if (player == null) {
 				continue;
 			}
-			checkSprint(player, session);
-			checkBoat(player, session);
+			validateSprint(player, session);
+			validateBoat(player, session);
 			if (session.getTrack().getType() == TrackType.TRAINING) {
 				continue;
 			}
@@ -830,7 +826,7 @@ public final class GameManager {
 	 * On a sprint-forced track, a running player who stops sprinting outside the checkpoints for longer than the
 	 * grace period goes back.
 	 */
-	private void checkSprint(@NotNull final Player player, @NotNull final GameSession session) {
+	private void validateSprint(@NotNull final Player player, @NotNull final GameSession session) {
 		final Track track = session.getTrack();
 		if (!track.getOptions().isSprintForced() || session.getPhase() != Phase.RUNNING) {
 			return;
@@ -857,11 +853,11 @@ public final class GameManager {
 		if (!plugin.getSettings().scoreboard() || track.getType() == TrackType.TRAINING) {
 			return;
 		}
-		plugin.getResults().playerResult(track.getId(), player.getUniqueId())
-				.thenCombine(plugin.getResults().ranked(track.getId(), 1), (result, record) -> {
+		plugin.getResults().fetchPlayerResult(track.getId(), player.getUniqueId())
+				.thenCombine(plugin.getResults().fetchRanked(track.getId(), 1), (result, rankedRecord) -> {
 					plugin.runOnMainThread(() -> {
 						if (sessions.get(player.getUniqueId()) == session) {
-							showSidebar(player, track, result, record);
+							showSidebar(player, track, result.orElse(null), rankedRecord.orElse(null));
 						}
 					});
 					return null;
@@ -869,26 +865,27 @@ public final class GameManager {
 	}
 
 	private void showSidebar(@NotNull final Player player, @NotNull final Track track,
-							 @NotNull final Optional<ResultStore.PlayerResult> result,
-							 @NotNull final Optional<ResultStore.Ranked> record) {
+			@Nullable final ResultStore.PlayerResult result,
+			@Nullable final ResultStore.Ranked rankedRecord) {
 		final Component none = plugin.getMessages().get(Message.VALUE_NONE);
 		final Component nobody = plugin.getMessages().get(Message.SIGN_NOBODY);
-		final Component best = result.<Component>map(found -> Component.text(Ticks.format(found.bestTicks()))).orElse(none);
-		final Component recordTime = record.<Component>map(found -> Component.text(Ticks.format(found.ticks()))).orElse(none);
-		final Component holder = record.<Component>map(found -> Component.text(playerName(found.player()))).orElse(nobody);
-		final Component medal = result
-				.flatMap(found -> TrackRules.bestMedal(plugin.getSettings().medals(), track.getMedals(), found.bestTicks()))
-				.<Component>map(found -> MiniMessage.miniMessage().deserialize(found.displayName()))
+		final Component best = result == null ? none : Component.text(Ticks.format(result.bestTicks()));
+		final Component recordTime = rankedRecord == null ? none : Component.text(Ticks.format(rankedRecord.ticks()));
+		final Component holder = rankedRecord == null ? nobody : Component.text(getPlayerName(rankedRecord.player()));
+		final Component medal = Optional.ofNullable(result)
+				.flatMap(found -> TrackRules.findBestMedal(plugin.getSettings().medals(), track.getMedals(), found.bestTicks()))
+				.map(found -> MiniMessage.miniMessage().deserialize(found.displayName()))
 				.orElse(none);
+		final int completions = result == null ? 0 : result.completions();
 		final TagResolver[] resolvers = {
-				track(track), displayName(track),
+				createTrackPlaceholder(track), createDisplayNamePlaceholder(track),
 				Placeholder.component("time", best),
-				Placeholder.component("medal", medal),
-				Placeholder.unparsed("count", String.valueOf(result.map(ResultStore.PlayerResult::completions).orElse(0)))
+				Placeholder.component(MEDAL, medal),
+				Placeholder.unparsed("count", String.valueOf(completions))
 		};
 		final List<Component> lines = new ArrayList<>();
 		lines.add(plugin.getMessages().get(Message.SCOREBOARD_BEST, resolvers));
-		lines.add(plugin.getMessages().get(Message.SCOREBOARD_RECORD, track(track), Placeholder.component("time", recordTime),
+		lines.add(plugin.getMessages().get(Message.SCOREBOARD_RECORD, createTrackPlaceholder(track), Placeholder.component("time", recordTime),
 				Placeholder.component("holder", holder)));
 		lines.add(plugin.getMessages().get(Message.SCOREBOARD_MEDAL, resolvers));
 		lines.add(plugin.getMessages().get(Message.SCOREBOARD_COMPLETIONS, resolvers));
@@ -898,9 +895,13 @@ public final class GameManager {
 	}
 
 	@NotNull
-	private String playerName(@NotNull final UUID id) {
+	private String getPlayerName(@NotNull final UUID id) {
 		final OfflinePlayer player = plugin.getServer().getOfflinePlayer(id);
-		return player.getName() == null ? id.toString() : player.getName();
+		final String name = player.getName();
+		if (name != null) {
+			return name;
+		}
+		return id.toString();
 	}
 
 	// ======= Boats =======
@@ -950,12 +951,12 @@ public final class GameManager {
 	/**
 	 * On a boat track, a player who is not in their boat (it was destroyed, or they got out somehow) goes back.
 	 */
-	private void checkBoat(@NotNull final Player player, @NotNull final GameSession session) {
+	private void validateBoat(@NotNull final Player player, @NotNull final GameSession session) {
 		if (!session.getTrack().getOptions().isBoat() || session.getPhase() == Phase.FINISHED || player.isDead()) {
 			return;
 		}
 		final Entity vehicle = player.getVehicle();
-		// A removed boat can still hold the player when getting out was cancelled
+		// A removed boat can still hold the player when getting out was canceled
 		if (vehicle == null || !vehicle.isValid() || !vehicle.getUniqueId().equals(session.getBoat())) {
 			goBack(player, session);
 		}
@@ -979,7 +980,7 @@ public final class GameManager {
 	 * The track's own lobby or the global one, when its world is loaded.
 	 */
 	@NotNull
-	public Optional<Location> lobby(@Nullable final Track track) {
+	public Optional<Location> findLobby(@Nullable final Track track) {
 		final WorldSpot lobby = track != null && track.getLobby() != null
 				? track.getLobby()
 				: plugin.getTrackRegistry().getLobby();
@@ -991,12 +992,12 @@ public final class GameManager {
 	}
 
 	@NotNull
-	private Location spawnLocation(@NotNull final Track track) {
-		return Objects.requireNonNull(track.getSpawn()).spot().toLocation(world(track));
+	private Location getSpawnLocation(@NotNull final Track track) {
+		return Objects.requireNonNull(track.getSpawn()).spot().toLocation(getWorld(track));
 	}
 
 	@NotNull
-	private World world(@NotNull final Track track) {
+	private World getWorld(@NotNull final Track track) {
 		return Objects.requireNonNull(plugin.getServer().getWorld(track.getWorld()), "World of " + track + " is not loaded");
 	}
 
@@ -1011,12 +1012,12 @@ public final class GameManager {
 	}
 
 	@NotNull
-	private static TagResolver track(@NotNull final Track track) {
+	private static TagResolver createTrackPlaceholder(@NotNull final Track track) {
 		return Placeholder.unparsed("track", track.getName());
 	}
 
 	@NotNull
-	private static TagResolver displayName(@NotNull final Track track) {
+	private static TagResolver createDisplayNamePlaceholder(@NotNull final Track track) {
 		return Placeholder.component("display-name",
 				MiniMessage.miniMessage().deserialize(track.getDisplayName()));
 	}

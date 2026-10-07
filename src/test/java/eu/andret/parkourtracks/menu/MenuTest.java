@@ -173,7 +173,7 @@ class MenuTest extends PluginTest {
 	}
 
 	@Test
-	void cancellingThePaymentPaysNothing() {
+	void cancelingThePaymentPaysNothing() {
 		// given
 		final FakeBank bank = new FakeBank();
 		plugin.setBank(bank);

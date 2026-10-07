@@ -78,7 +78,7 @@ public final class TrackRegistry {
 	 */
 	@NotNull
 	public Optional<Track> findOverlapping(@NotNull final String world, @NotNull final Cuboid region,
-										   @Nullable final Track except) {
+			@Nullable final Track except) {
 		return tracks.stream()
 				.filter(track -> !track.equals(except))
 				.filter(track -> track.getWorld().equals(world))

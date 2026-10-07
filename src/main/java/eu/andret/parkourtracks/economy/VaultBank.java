@@ -22,32 +22,35 @@ public final class VaultBank implements Bank {
 	}
 
 	@Nullable
-	private Economy economy() {
+	private Economy findEconomy() {
 		final RegisteredServiceProvider<Economy> provider = server.getServicesManager().getRegistration(Economy.class);
-		return provider == null ? null : provider.getProvider();
+		if (provider == null) {
+			return null;
+		}
+		return provider.getProvider();
 	}
 
 	@Override
 	public boolean isAvailable() {
-		return economy() != null;
+		return findEconomy() != null;
 	}
 
 	@Override
 	public boolean withdraw(@NotNull final Player player, final double amount) {
-		final Economy economy = economy();
+		final Economy economy = findEconomy();
 		return economy != null && economy.has(player, amount) && economy.withdrawPlayer(player, amount).transactionSuccess();
 	}
 
 	@Override
 	public boolean deposit(@NotNull final OfflinePlayer player, final double amount) {
-		final Economy economy = economy();
+		final Economy economy = findEconomy();
 		return economy != null && economy.depositPlayer(player, amount).transactionSuccess();
 	}
 
 	@NotNull
 	@Override
 	public String format(final double amount) {
-		final Economy economy = economy();
+		final Economy economy = findEconomy();
 		return economy == null ? Amounts.format(amount) : economy.format(amount);
 	}
 }

@@ -50,7 +50,7 @@ public final class TrackCommand {
 
 	@CommandPlaceholder
 	public void help(@NotNull final CommandSender sender,
-					 @NotNull final Help.ChildrenCommands<BukkitCommandActor> commands) {
+			@NotNull final Help.ChildrenCommands<BukkitCommandActor> commands) {
 		for (final ExecutableCommand<BukkitCommandActor> command : commands) {
 			if (command.description() == null) {
 				sender.sendMessage("/" + command.usage());
@@ -64,55 +64,55 @@ public final class TrackCommand {
 	@Description("Lists all tracks")
 	@CommandPermission(Permissions.EDIT)
 	public void list(@NotNull final CommandSender sender) {
-		final List<Track> tracks = support.registry().getTracks();
+		final List<Track> tracks = support.getRegistry().getTracks();
 		if (tracks.isEmpty()) {
 			support.send(sender, Message.LIST_EMPTY);
 			return;
 		}
 		support.send(sender, Message.LIST_HEADER);
-		tracks.forEach(track -> support.send(sender, Message.LIST_ENTRY, CommandSupport.track(track),
-				CommandSupport.displayName(track), state(track)));
+		tracks.forEach(track -> support.send(sender, Message.LIST_ENTRY, CommandSupport.createTrackPlaceholder(track),
+				CommandSupport.createDisplayNamePlaceholder(track), createStatePlaceholder(track)));
 	}
 
 	@Subcommand("info")
 	@Description("Shows everything about a track and what it misses before it can start")
 	@CommandPermission(Permissions.EDIT)
 	public void info(@NotNull final CommandSender sender, @NotNull final Track track) {
-		final TagResolver name = CommandSupport.track(track);
+		final TagResolver name = CommandSupport.createTrackPlaceholder(track);
 		final Cuboid region = track.getRegion();
-		support.send(sender, Message.INFO_HEADER, name, CommandSupport.displayName(track), state(track));
-		support.send(sender, Message.INFO_TYPE, CommandSupport.text("type", track.getType().name().toLowerCase(Locale.ROOT)));
-		support.send(sender, Message.INFO_REGION, CommandSupport.text("world", track.getWorld()),
-				CommandSupport.text("from", region.minX() + ", " + region.minY() + ", " + region.minZ()),
-				CommandSupport.text("to", region.maxX() + ", " + region.maxY() + ", " + region.maxZ()));
-		support.send(sender, Message.INFO_SPAWN, isSet(track.getSpawn()));
-		support.send(sender, Message.INFO_FINISH, isSet(track.getFinish()));
-		support.send(sender, Message.INFO_CHECKPOINTS, CommandSupport.text("count", track.getCheckpoints().size()));
-		support.send(sender, Message.INFO_WALLS, CommandSupport.text("count", track.getWalls().size()));
-		support.send(sender, Message.INFO_LOBBY, isSet(track.getLobby()));
+		support.send(sender, Message.INFO_HEADER, name, CommandSupport.createDisplayNamePlaceholder(track), createStatePlaceholder(track));
+		support.send(sender, Message.INFO_TYPE, CommandSupport.createPlaceholder("type", track.getType().name().toLowerCase(Locale.ROOT)));
+		support.send(sender, Message.INFO_REGION, CommandSupport.createPlaceholder("world", track.getWorld()),
+				CommandSupport.createPlaceholder("from", region.minX() + ", " + region.minY() + ", " + region.minZ()),
+				CommandSupport.createPlaceholder("to", region.maxX() + ", " + region.maxY() + ", " + region.maxZ()));
+		support.send(sender, Message.INFO_SPAWN, describePresence(track.getSpawn()));
+		support.send(sender, Message.INFO_FINISH, describePresence(track.getFinish()));
+		support.send(sender, Message.INFO_CHECKPOINTS, CommandSupport.createPlaceholder("count", track.getCheckpoints().size()));
+		support.send(sender, Message.INFO_WALLS, CommandSupport.createPlaceholder("count", track.getWalls().size()));
+		support.send(sender, Message.INFO_LOBBY, describePresence(track.getLobby()));
 		support.send(sender, Message.INFO_OPTIONS, name);
 		TrackOption.ALL.forEach(option -> support.send(sender, Message.INFO_OPTION,
-				CommandSupport.text("option", option.getName()), CommandSupport.text("value", option.display(track))));
+				CommandSupport.createPlaceholder("option", option.getName()), CommandSupport.createPlaceholder("value", option.formatValue(track))));
 		support.send(sender, Message.INFO_MEDALS, name);
-		for (final Medal medal : support.plugin().getSettings().medals()) {
+		for (final Medal medal : support.getPlugin().getSettings().medals()) {
 			final MedalThreshold threshold = track.getMedals().get(medal.key());
 			final Component time = threshold != null && threshold.hasTime()
 					? Component.text(Ticks.format(threshold.ticks()))
-					: support.plugin().getMessages().get(Message.VALUE_NOT_SET);
+					: support.getPlugin().getMessages().get(Message.VALUE_NOT_SET);
 			support.send(sender, Message.INFO_MEDAL, Placeholder.parsed("medal", medal.displayName()),
 					Placeholder.component("time", time),
-					CommandSupport.text("reward", Amounts.format(threshold == null ? 0 : threshold.reward())));
+					CommandSupport.createPlaceholder("reward", Amounts.format(threshold == null ? 0 : threshold.reward())));
 		}
-		support.send(sender, Message.INFO_EFFECTS, Placeholder.component("effects", effects(track)));
-		support.send(sender, Message.INFO_AUTHORS, Placeholder.component("authors", authors(track)));
-		final List<TrackRules.Missing> missing = TrackRules.missingForStart(support.registry(), track);
+		support.send(sender, Message.INFO_EFFECTS, Placeholder.component("effects", formatEffects(track)));
+		support.send(sender, Message.INFO_AUTHORS, Placeholder.component("authors", formatAuthors(track)));
+		final List<TrackRules.Missing> missing = TrackRules.findMissingForStart(support.getRegistry(), track);
 		if (missing.isEmpty()) {
 			support.send(sender, Message.INFO_READY);
 			return;
 		}
 		support.send(sender, Message.INFO_MISSING);
 		missing.forEach(entry -> support.send(sender, Message.INFO_MISSING_ENTRY,
-				Placeholder.component("missing", missing(entry))));
+				Placeholder.component("missing", describeMissing(entry))));
 	}
 
 	@Subcommand("create")
@@ -120,16 +120,16 @@ public final class TrackCommand {
 	@CommandPermission(Permissions.EDIT)
 	public void create(@NotNull final Player sender, @NotNull final String name) {
 		if (!Track.NAME_PATTERN.matcher(name).matches()) {
-			throw support.fail(Message.NAME_INVALID, CommandSupport.text("name", name));
+			throw support.fail(Message.NAME_INVALID, CommandSupport.createPlaceholder("name", name));
 		}
-		if (support.registry().find(name).isPresent()) {
-			throw support.fail(Message.NAME_TAKEN, CommandSupport.text("name", name));
+		if (support.getRegistry().find(name).isPresent()) {
+			throw support.fail(Message.NAME_TAKEN, CommandSupport.createPlaceholder("name", name));
 		}
-		final Selection selection = support.selection(sender);
-		checkRegion(null, selection);
-		final Track track = support.registry().create(name, selection.world(), selection.cuboid());
+		final Selection selection = support.getSelection(sender);
+		validateRegion(null, selection);
+		final Track track = support.getRegistry().create(name, selection.world(), selection.cuboid());
 		support.save();
-		support.send(sender, Message.CREATED, CommandSupport.track(track));
+		support.send(sender, Message.CREATED, CommandSupport.createTrackPlaceholder(track));
 	}
 
 	@Subcommand("region set")
@@ -137,11 +137,11 @@ public final class TrackCommand {
 	@CommandPermission(Permissions.EDIT)
 	public void setRegion(@NotNull final Player sender, @NotNull final Track track) {
 		support.requireStopped(track);
-		final Selection selection = support.selection(sender);
-		checkRegion(track, selection);
+		final Selection selection = support.getSelection(sender);
+		validateRegion(track, selection);
 		track.setRegion(selection.world(), selection.cuboid());
 		support.save();
-		support.send(sender, Message.REGION_SET, CommandSupport.track(track));
+		support.send(sender, Message.REGION_SET, CommandSupport.createTrackPlaceholder(track));
 	}
 
 	@Subcommand("rename")
@@ -150,17 +150,17 @@ public final class TrackCommand {
 	public void rename(@NotNull final CommandSender sender, @NotNull final Track track, @NotNull final String name) {
 		support.requireStopped(track);
 		if (!Track.NAME_PATTERN.matcher(name).matches()) {
-			throw support.fail(Message.NAME_INVALID, CommandSupport.text("name", name));
+			throw support.fail(Message.NAME_INVALID, CommandSupport.createPlaceholder("name", name));
 		}
-		final Optional<Track> other = support.registry().find(name);
+		final Optional<Track> other = support.getRegistry().find(name);
 		if (other.isPresent() && !other.get().equals(track)) {
-			throw support.fail(Message.NAME_TAKEN, CommandSupport.text("name", name));
+			throw support.fail(Message.NAME_TAKEN, CommandSupport.createPlaceholder("name", name));
 		}
 		final String old = track.getName();
-		support.registry().rename(track, name);
+		support.getRegistry().rename(track, name);
 		support.save();
-		support.plugin().getRecordSigns().refresh(track.getId());
-		support.send(sender, Message.RENAMED, CommandSupport.text("old", old), CommandSupport.track(track));
+		support.getPlugin().getRecordSigns().refresh(track.getId());
+		support.send(sender, Message.RENAMED, CommandSupport.createPlaceholder("old", old), CommandSupport.createTrackPlaceholder(track));
 	}
 
 	@Subcommand("remove")
@@ -168,9 +168,9 @@ public final class TrackCommand {
 	@CommandPermission(Permissions.MANAGE)
 	public void remove(@NotNull final CommandSender sender, @NotNull final Track track) {
 		support.requireStopped(track);
-		support.registry().remove(track);
+		support.getRegistry().remove(track);
 		support.save();
-		support.send(sender, Message.REMOVED, CommandSupport.track(track));
+		support.send(sender, Message.REMOVED, CommandSupport.createTrackPlaceholder(track));
 	}
 
 	@Subcommand("start")
@@ -178,18 +178,18 @@ public final class TrackCommand {
 	@CommandPermission(Permissions.MANAGE)
 	public void start(@NotNull final CommandSender sender, @NotNull final Track track) {
 		if (track.isRunning()) {
-			throw support.fail(Message.ALREADY_RUNNING, CommandSupport.track(track));
+			throw support.fail(Message.ALREADY_RUNNING, CommandSupport.createTrackPlaceholder(track));
 		}
-		final List<TrackRules.Missing> missing = TrackRules.missingForStart(support.registry(), track);
+		final List<TrackRules.Missing> missing = TrackRules.findMissingForStart(support.getRegistry(), track);
 		if (!missing.isEmpty()) {
-			throw support.fail(Message.CANNOT_START, CommandSupport.track(track),
+			throw support.fail(Message.CANNOT_START, CommandSupport.createTrackPlaceholder(track),
 					Placeholder.component("missing", Component.join(
 							JoinConfiguration.commas(true),
-							missing.stream().map(this::missing).toList())));
+							missing.stream().map(this::describeMissing).toList())));
 		}
 		track.setRunning(true);
 		support.save();
-		support.send(sender, Message.STARTED, CommandSupport.track(track));
+		support.send(sender, Message.STARTED, CommandSupport.createTrackPlaceholder(track));
 	}
 
 	@Subcommand("stop")
@@ -197,19 +197,19 @@ public final class TrackCommand {
 	@CommandPermission(Permissions.MANAGE)
 	public void stop(@NotNull final CommandSender sender, @NotNull final Track track) {
 		if (!track.isRunning()) {
-			throw support.fail(Message.NOT_RUNNING, CommandSupport.track(track));
+			throw support.fail(Message.NOT_RUNNING, CommandSupport.createTrackPlaceholder(track));
 		}
 		track.setRunning(false);
 		support.save();
-		support.plugin().getGames().stop(track);
-		support.send(sender, Message.STOPPED, CommandSupport.track(track));
+		support.getPlugin().getGames().stop(track);
+		support.send(sender, Message.STOPPED, CommandSupport.createTrackPlaceholder(track));
 	}
 
 	@Subcommand("setlobby")
 	@Description("Sets the global lobby where you stand")
 	@CommandPermission(Permissions.MANAGE)
 	public void setLobby(@NotNull final Player sender) {
-		support.registry().setLobby(lobbyAt(sender.getLocation()));
+		support.getRegistry().setLobby(createLobby(sender.getLocation()));
 		support.save();
 		support.send(sender, Message.LOBBY_SET);
 	}
@@ -219,9 +219,9 @@ public final class TrackCommand {
 	@CommandPermission(Permissions.EDIT)
 	public void setTrackLobby(@NotNull final Player sender, @NotNull final Track track) {
 		support.requireStopped(track);
-		track.setLobby(lobbyAt(sender.getLocation()));
+		track.setLobby(createLobby(sender.getLocation()));
 		support.save();
-		support.send(sender, Message.TRACK_LOBBY_SET, CommandSupport.track(track));
+		support.send(sender, Message.TRACK_LOBBY_SET, CommandSupport.createTrackPlaceholder(track));
 	}
 
 	@Subcommand("track lobby clear")
@@ -231,7 +231,7 @@ public final class TrackCommand {
 		support.requireStopped(track);
 		track.setLobby(null);
 		support.save();
-		support.send(sender, Message.TRACK_LOBBY_CLEARED, CommandSupport.track(track));
+		support.send(sender, Message.TRACK_LOBBY_CLEARED, CommandSupport.createTrackPlaceholder(track));
 	}
 
 	@Subcommand("reload")
@@ -239,22 +239,23 @@ public final class TrackCommand {
 	@CommandPermission(Permissions.MANAGE)
 	public void reload(@NotNull final CommandSender sender) {
 		try {
-			support.plugin().reload();
+			support.getPlugin().reload();
 		} catch (final IllegalArgumentException ex) {
-			throw support.fail(Message.RELOAD_FAILED, CommandSupport.text("error", String.valueOf(ex.getMessage())));
+			throw support.fail(Message.RELOAD_FAILED, CommandSupport.createPlaceholder("error", String.valueOf(ex.getMessage())));
 		}
 		support.send(sender, Message.RELOADED);
 	}
 
-	private void checkRegion(@Nullable final Track track, @NotNull final Selection selection) {
-		TrackRules.checkRegion(support.registry(), track, selection.world(), selection.cuboid())
+	private void validateRegion(@Nullable final Track track, @NotNull final Selection selection) {
+		TrackRules.validateRegion(support.getRegistry(), track, selection.world(), selection.cuboid())
 				.ifPresent(problem -> {
 					if (problem.kind() == TrackRules.RegionProblem.Kind.OVERLAP && problem.overlapping() != null) {
 						throw support.fail(Message.REGION_OVERLAP,
-								CommandSupport.text("other", problem.overlapping().getName()));
+								CommandSupport.createPlaceholder("other", problem.overlapping().getName()));
 					}
 					// Only an existing track has parts to leave out
-					throw support.fail(Message.REGION_LEAVES_OUT, CommandSupport.text("track", track == null ? "" : track.getName()));
+					final String value = Optional.ofNullable(track).map(Track::getName).orElse("");
+					throw support.fail(Message.REGION_LEAVES_OUT, CommandSupport.createPlaceholder("track", value));
 				});
 	}
 
@@ -262,34 +263,34 @@ public final class TrackCommand {
 	 * A lobby inside a track would send players straight into it.
 	 */
 	@NotNull
-	private WorldSpot lobbyAt(@NotNull final Location location) {
+	private WorldSpot createLobby(@NotNull final Location location) {
 		final WorldSpot lobby = WorldSpot.of(location);
-		support.registry().getTracks()
+		support.getRegistry().getTracks()
 				.stream()
 				.filter(track -> track.getWorld().equals(lobby.world()))
 				.filter(track -> track.getRegion().contains(location.getX(), location.getY(), location.getZ()))
 				.findFirst()
 				.ifPresent(track -> {
-					throw support.fail(Message.LOBBY_INSIDE_TRACK, CommandSupport.track(track));
+					throw support.fail(Message.LOBBY_INSIDE_TRACK, CommandSupport.createTrackPlaceholder(track));
 				});
 		return lobby;
 	}
 
 	@NotNull
-	private TagResolver state(@NotNull final Track track) {
-		return Placeholder.component("state", support.plugin().getMessages()
+	private TagResolver createStatePlaceholder(@NotNull final Track track) {
+		return Placeholder.component("state", support.getPlugin().getMessages()
 				.get(track.isRunning() ? Message.STATE_RUNNING : Message.STATE_STOPPED));
 	}
 
 	@NotNull
-	private TagResolver isSet(@Nullable final Object value) {
-		return Placeholder.component("value", support.plugin().getMessages()
+	private TagResolver describePresence(@Nullable final Object value) {
+		return Placeholder.component("value", support.getPlugin().getMessages()
 				.get(value == null ? Message.VALUE_NOT_SET : Message.VALUE_SET));
 	}
 
 	@NotNull
-	private Component missing(@NotNull final TrackRules.Missing missing) {
-		return support.plugin().getMessages().get(switch (missing) {
+	private Component describeMissing(@NotNull final TrackRules.Missing missing) {
+		return support.getPlugin().getMessages().get(switch (missing) {
 			case SPAWN -> Message.MISSING_SPAWN;
 			case FINISH -> Message.MISSING_FINISH;
 			case LOBBY -> Message.MISSING_LOBBY;
@@ -297,32 +298,36 @@ public final class TrackCommand {
 	}
 
 	@NotNull
-	private Component effects(@NotNull final Track track) {
+	private Component formatEffects(@NotNull final Track track) {
 		if (track.getEffects().isEmpty()) {
-			return support.plugin().getMessages().get(Message.VALUE_NONE);
+			return support.getPlugin().getMessages().get(Message.VALUE_NONE);
 		}
 		return Component.join(JoinConfiguration.commas(true), track.getEffects()
 				.stream()
-				.map(effect -> support.plugin().getMessages().get(Message.INFO_EFFECT,
-						CommandSupport.text("effect", effect.type()),
-						CommandSupport.text("level", effect.amplifier() + 1)))
+				.map(effect -> support.getPlugin().getMessages().get(Message.INFO_EFFECT,
+						CommandSupport.createPlaceholder("effect", effect.type()),
+						CommandSupport.createPlaceholder("level", effect.amplifier() + 1)))
 				.toList());
 	}
 
 	@NotNull
-	private Component authors(@NotNull final Track track) {
+	private Component formatAuthors(@NotNull final Track track) {
 		if (track.getAuthors().isEmpty()) {
-			return support.plugin().getMessages().get(Message.VALUE_NONE);
+			return support.getPlugin().getMessages().get(Message.VALUE_NONE);
 		}
 		return Component.text(track.getAuthors()
 				.stream()
-				.map(this::playerName)
+				.map(this::getPlayerName)
 				.collect(Collectors.joining(", ")));
 	}
 
 	@NotNull
-	private String playerName(@NotNull final UUID id) {
-		final OfflinePlayer player = support.plugin().getServer().getOfflinePlayer(id);
-		return player.getName() == null ? id.toString() : player.getName();
+	private String getPlayerName(@NotNull final UUID id) {
+		final OfflinePlayer player = support.getPlugin().getServer().getOfflinePlayer(id);
+		final String name = player.getName();
+		if (name != null) {
+			return name;
+		}
+		return id.toString();
 	}
 }

@@ -128,10 +128,10 @@ public final class ResultStore implements AutoCloseable {
 	 */
 	@NotNull
 	public CompletableFuture<RunOutcome> recordRun(@NotNull final UUID track, @NotNull final UUID player, final int ticks,
-												   @NotNull final Instant finishedAt) {
+			@NotNull final Instant finishedAt) {
 		return submit(connection -> {
-			final OptionalInt previousBest = best(connection, track, player);
-			final OptionalInt previousRecord = record(connection, track);
+			final OptionalInt previousBest = queryBest(connection, track, player);
+			final OptionalInt previousRecord = queryRecord(connection, track);
 			try (final PreparedStatement insert = connection.prepareStatement(
 					"INSERT INTO runs (track, player, ticks, finished_at) VALUES (?, ?, ?, ?)")) {
 				insert.setString(1, track.toString());
@@ -140,8 +140,8 @@ public final class ResultStore implements AutoCloseable {
 				insert.setLong(4, finishedAt.toEpochMilli());
 				insert.executeUpdate();
 			}
-			return new RunOutcome(previousBest, previousRecord, completions(connection, track, player),
-					paidMedals(connection, track, player));
+			return new RunOutcome(previousBest, previousRecord, queryCompletions(connection, track, player),
+					queryPaidMedals(connection, track, player));
 		});
 	}
 
@@ -150,8 +150,8 @@ public final class ResultStore implements AutoCloseable {
 	 */
 	@NotNull
 	public CompletableFuture<Void> recordPayout(@NotNull final UUID track, @NotNull final UUID player,
-												@NotNull final String medal, final double amount,
-												@NotNull final Instant paidAt) {
+			@NotNull final String medal, final double amount,
+			@NotNull final Instant paidAt) {
 		return submit(connection -> {
 			try (final PreparedStatement insert = connection.prepareStatement(
 					"INSERT OR IGNORE INTO medal_payouts (track, player, medal, amount, paid_at) VALUES (?, ?, ?, ?, ?)")) {
@@ -176,7 +176,7 @@ public final class ResultStore implements AutoCloseable {
 	 * Every player who completed the track, for paying medals retroactively.
 	 */
 	@NotNull
-	public CompletableFuture<List<Standing>> standings(@NotNull final UUID track) {
+	public CompletableFuture<List<Standing>> fetchStandings(@NotNull final UUID track) {
 		return submit(connection -> {
 			final List<Standing> standings = new ArrayList<>();
 			try (final PreparedStatement select = connection.prepareStatement(
@@ -192,7 +192,7 @@ public final class ResultStore implements AutoCloseable {
 			final List<Standing> withPayouts = new ArrayList<>();
 			for (final Standing standing : standings) {
 				withPayouts.add(new Standing(standing.player(), standing.bestTicks(),
-						paidMedals(connection, track, standing.player())));
+						queryPaidMedals(connection, track, standing.player())));
 			}
 			return withPayouts;
 		});
@@ -205,7 +205,7 @@ public final class ResultStore implements AutoCloseable {
 	}
 
 	@NotNull
-	public CompletableFuture<Optional<PlayerResult>> playerResult(@NotNull final UUID track, @NotNull final UUID player) {
+	public CompletableFuture<Optional<PlayerResult>> fetchPlayerResult(@NotNull final UUID track, @NotNull final UUID player) {
 		return submit(connection -> {
 			try (final PreparedStatement select = connection.prepareStatement(
 					"SELECT MIN(ticks), COUNT(*), MAX(finished_at) FROM runs WHERE track = ? AND player = ?")) {
@@ -235,7 +235,7 @@ public final class ResultStore implements AutoCloseable {
 	 * @param place 1 for the record
 	 */
 	@NotNull
-	public CompletableFuture<Optional<Ranked>> ranked(@NotNull final UUID track, final int place) {
+	public CompletableFuture<Optional<Ranked>> fetchRanked(@NotNull final UUID track, final int place) {
 		return submit(connection -> {
 			// SQLite takes the other columns of an aggregate query from the row MIN() picked
 			try (final PreparedStatement select = connection.prepareStatement("""
@@ -259,7 +259,7 @@ public final class ResultStore implements AutoCloseable {
 	}
 
 	@NotNull
-	public CompletableFuture<List<TrackResult>> playerSummary(@NotNull final UUID player) {
+	public CompletableFuture<List<TrackResult>> fetchPlayerSummary(@NotNull final UUID player) {
 		return submit(connection -> {
 			try (final PreparedStatement select = connection.prepareStatement(
 					"SELECT track, MIN(ticks), COUNT(*) FROM runs WHERE player = ? GROUP BY track")) {
@@ -306,39 +306,39 @@ public final class ResultStore implements AutoCloseable {
 			if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
 				executor.shutdownNow();
 			}
-		} catch (final InterruptedException ex) {
+		} catch (final InterruptedException _) {
 			Thread.currentThread().interrupt();
 		}
 		try {
 			connection.close();
-		} catch (final SQLException ignored) {
+		} catch (final SQLException _) {
 			// Closing on shutdown; nothing is left to save
 		}
 	}
 
 	@NotNull
-	private static OptionalInt best(@NotNull final Connection connection, @NotNull final UUID track,
-									@NotNull final UUID player) throws SQLException {
+	private static OptionalInt queryBest(@NotNull final Connection connection, @NotNull final UUID track,
+			@NotNull final UUID player) throws SQLException {
 		try (final PreparedStatement select = connection.prepareStatement(
 				"SELECT MIN(ticks) FROM runs WHERE track = ? AND player = ?")) {
 			select.setString(1, track.toString());
 			select.setString(2, player.toString());
-			return single(select);
+			return querySingle(select);
 		}
 	}
 
 	@NotNull
-	private static OptionalInt record(@NotNull final Connection connection, @NotNull final UUID track)
+	private static OptionalInt queryRecord(@NotNull final Connection connection, @NotNull final UUID track)
 			throws SQLException {
 		try (final PreparedStatement select = connection.prepareStatement("SELECT MIN(ticks) FROM runs WHERE track = ?")) {
 			select.setString(1, track.toString());
-			return single(select);
+			return querySingle(select);
 		}
 	}
 
 	@NotNull
-	private static Set<String> paidMedals(@NotNull final Connection connection, @NotNull final UUID track,
-										  @NotNull final UUID player) throws SQLException {
+	private static Set<String> queryPaidMedals(@NotNull final Connection connection, @NotNull final UUID track,
+			@NotNull final UUID player) throws SQLException {
 		try (final PreparedStatement select = connection.prepareStatement(
 				"SELECT medal FROM medal_payouts WHERE track = ? AND player = ?")) {
 			select.setString(1, track.toString());
@@ -353,18 +353,18 @@ public final class ResultStore implements AutoCloseable {
 		}
 	}
 
-	private static int completions(@NotNull final Connection connection, @NotNull final UUID track,
-								   @NotNull final UUID player) throws SQLException {
+	private static int queryCompletions(@NotNull final Connection connection, @NotNull final UUID track,
+			@NotNull final UUID player) throws SQLException {
 		try (final PreparedStatement select = connection.prepareStatement(
 				"SELECT COUNT(*) FROM runs WHERE track = ? AND player = ?")) {
 			select.setString(1, track.toString());
 			select.setString(2, player.toString());
-			return single(select).orElse(0);
+			return querySingle(select).orElse(0);
 		}
 	}
 
 	@NotNull
-	private static OptionalInt single(@NotNull final PreparedStatement select) throws SQLException {
+	private static OptionalInt querySingle(@NotNull final PreparedStatement select) throws SQLException {
 		try (final ResultSet rows = select.executeQuery()) {
 			if (!rows.next()) {
 				return OptionalInt.empty();

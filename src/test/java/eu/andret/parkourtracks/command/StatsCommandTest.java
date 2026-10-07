@@ -118,6 +118,6 @@ class StatsCommandTest extends PluginTest {
 
 		// then
 		assertThat(messages).containsExactly("Alice has not completed any track yet.");
-		assertThat(plugin.getResults().playerSummary(alice.getUniqueId()).join()).hasSize(1);
+		assertThat(plugin.getResults().fetchPlayerSummary(alice.getUniqueId()).join()).hasSize(1);
 	}
 }

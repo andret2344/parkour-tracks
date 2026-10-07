@@ -40,7 +40,7 @@ public final class GameItems {
 		final ItemStack item = new ItemStack(slot.material());
 		final ItemMeta meta = item.getItemMeta();
 		meta.customName(plugin.getMessages().get(slot.item().getName()).decoration(TextDecoration.ITALIC, false));
-		meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, slot.item().key());
+		meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, slot.item().getKey());
 		item.setItemMeta(meta);
 		return item;
 	}
@@ -55,7 +55,7 @@ public final class GameItems {
 		}
 		final String value = item.getItemMeta().getPersistentDataContainer().get(key, PersistentDataType.STRING);
 		return Arrays.stream(GameItem.values())
-				.filter(gameItem -> gameItem.key().equals(value))
+				.filter(gameItem -> gameItem.getKey().equals(value))
 				.findFirst();
 	}
 }

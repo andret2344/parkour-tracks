@@ -25,11 +25,11 @@ public final class OptionParameterType implements ParameterType<BukkitCommandAct
 	@NotNull
 	@Override
 	public TrackOption<?> parse(@NotNull final MutableStringStream input,
-								@NotNull final ExecutionContext<BukkitCommandActor> context) {
+			@NotNull final ExecutionContext<BukkitCommandActor> context) {
 		final String name = input.readString();
 		return TrackOption.find(name)
-				.orElseThrow(() -> support.fail(Message.OPTION_NOT_FOUND, CommandSupport.text("option", name),
-						CommandSupport.text("options", TrackOption.ALL.stream()
+				.orElseThrow(() -> support.fail(Message.OPTION_NOT_FOUND, CommandSupport.createPlaceholder("option", name),
+						CommandSupport.createPlaceholder("options", TrackOption.ALL.stream()
 								.map(TrackOption::getName)
 								.collect(Collectors.joining(", ")))));
 	}
@@ -37,7 +37,7 @@ public final class OptionParameterType implements ParameterType<BukkitCommandAct
 	@NotNull
 	@Override
 	public SuggestionProvider<BukkitCommandActor> defaultSuggestions() {
-		return context -> TrackOption.ALL.stream()
+		return _ -> TrackOption.ALL.stream()
 				.map(TrackOption::getName)
 				.toList();
 	}

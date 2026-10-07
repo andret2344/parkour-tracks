@@ -67,7 +67,7 @@ public final class RecordSigns implements Listener {
 			try {
 				return Optional.of(new RecordSign(UUID.fromString(parts[0]), Integer.parseInt(parts[1]),
 						Side.valueOf(parts[2])));
-			} catch (final IllegalArgumentException | ArrayIndexOutOfBoundsException ex) {
+			} catch (final IllegalArgumentException | ArrayIndexOutOfBoundsException _) {
 				return Optional.empty();
 			}
 		}
@@ -157,7 +157,7 @@ public final class RecordSigns implements Listener {
 		sign.getPersistentDataContainer().set(key, PersistentDataType.STRING, recordSign.encode());
 		sign.update();
 		index.computeIfAbsent(recordSign.track(), id -> new HashSet<>()).add(sign.getLocation());
-		final List<Component> rendered = render(track.get(), place, Optional.empty(), true);
+		final List<Component> rendered = render(track.get(), place, null, true);
 		for (int i = 0; i < LINES; i++) {
 			event.line(i, rendered.get(i));
 		}
@@ -173,7 +173,7 @@ public final class RecordSigns implements Listener {
 		try {
 			final int place = Integer.parseInt(text);
 			return place >= 1 && place <= MAX_PLACE ? place : 0;
-		} catch (final NumberFormatException ex) {
+		} catch (final NumberFormatException _) {
 			return 0;
 		}
 	}
@@ -184,26 +184,24 @@ public final class RecordSigns implements Listener {
 	public void refresh(@NotNull final UUID track) {
 		final Set<Location> locations = index.getOrDefault(track, Set.of());
 		Set.copyOf(locations).forEach(location -> {
-			final Optional<Sign> sign = signAt(location);
+			final Optional<Sign> sign = findSignAt(location);
 			final Optional<RecordSign> recordSign = sign.flatMap(this::read);
 			if (recordSign.isEmpty() || !recordSign.get().track().equals(track)) {
 				// Broken or rewritten since it was indexed
 				locations.remove(location);
 				return;
 			}
-			plugin.getResults().ranked(track, recordSign.get().place())
-					.thenAcceptAsync(ranked -> signAt(location).ifPresent(current -> show(current, recordSign.get(), ranked)),
+			plugin.getResults().fetchRanked(track, recordSign.get().place())
+					.thenAcceptAsync(ranked -> findSignAt(location).ifPresent(current -> show(current, recordSign.get(), ranked.orElse(null))),
 							plugin::runOnMainThread);
 		});
 	}
 
 	private void show(@NotNull final Sign sign, @NotNull final RecordSign recordSign,
-					  @NotNull final Optional<ResultStore.Ranked> ranked) {
-		final Optional<Track> track = plugin.getTrackRegistry().find(recordSign.track());
-		final List<Component> lines = track.isPresent()
-				? render(track.get(), recordSign.place(), ranked, false)
-				: List.of(plugin.getMessages().get(Message.SIGN_UNKNOWN_TRACK), Component.empty(), Component.empty(),
-				Component.empty());
+			@Nullable final ResultStore.Ranked ranked) {
+		final List<Component> lines = plugin.getTrackRegistry().find(recordSign.track())
+				.map(value -> render(value, recordSign.place(), ranked, false))
+				.orElseGet(() -> List.of(plugin.getMessages().get(Message.SIGN_UNKNOWN_TRACK), Component.empty(), Component.empty(), Component.empty()));
 		for (int i = 0; i < LINES; i++) {
 			sign.getSide(recordSign.side()).line(i, lines.get(i));
 		}
@@ -212,18 +210,18 @@ public final class RecordSigns implements Listener {
 
 	@NotNull
 	private List<Component> render(@NotNull final Track track, final int place,
-								   @NotNull final Optional<ResultStore.Ranked> ranked, final boolean loading) {
+			@Nullable final ResultStore.Ranked ranked, final boolean loading) {
 		final Component player;
 		final Component time;
 		if (loading) {
 			player = Component.text("...");
 			time = Component.empty();
-		} else if (ranked.isEmpty()) {
+		} else if (ranked == null) {
 			player = plugin.getMessages().get(Message.SIGN_NOBODY);
 			time = Component.empty();
 		} else {
-			player = Component.text(playerName(ranked.get().player()));
-			time = Component.text(Ticks.format(ranked.get().ticks()));
+			player = Component.text(getPlayerName(ranked.player()));
+			time = Component.text(Ticks.format(ranked.ticks()));
 		}
 		final TagResolver[] resolvers = {
 				Placeholder.unparsed("track", track.getName()),
@@ -239,9 +237,13 @@ public final class RecordSigns implements Listener {
 	}
 
 	@NotNull
-	private String playerName(@NotNull final UUID id) {
+	private String getPlayerName(@NotNull final UUID id) {
 		final OfflinePlayer player = plugin.getServer().getOfflinePlayer(id);
-		return player.getName() == null ? id.toString().substring(0, 8) : player.getName();
+		final String name = player.getName();
+		if (name != null) {
+			return name;
+		}
+		return id.toString().substring(0, 8);
 	}
 
 	@NotNull
@@ -250,7 +252,7 @@ public final class RecordSigns implements Listener {
 	}
 
 	@NotNull
-	private static Optional<Sign> signAt(@NotNull final Location location) {
+	private static Optional<Sign> findSignAt(@NotNull final Location location) {
 		final World world = location.getWorld();
 		if (world == null || !world.isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4)) {
 			return Optional.empty();

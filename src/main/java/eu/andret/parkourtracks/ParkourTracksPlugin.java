@@ -160,13 +160,13 @@ public class ParkourTracksPlugin extends JavaPlugin {
 				.parameterTypes(types -> types
 						.addParameterType(Track.class, new TrackParameterType(support))
 						.addParameterType(Medal.class, new MedalParameterType(support))
-						.addParameterType(optionClass(), new OptionParameterType(support)))
+						.addParameterType(getOptionClass(), new OptionParameterType(support)))
 				.suggestionProviders(providers -> providers
 						.addProviderForAnnotation(OptionValue.class, _ -> context -> {
 							final TrackOption<?> option = context.getResolvedArgumentOrNull("option");
 							return option == null ? List.of() : option.getSuggestions();
 						})
-						.addProviderForAnnotation(EffectType.class, _ -> _ -> TrackSettingsCommand.effectKeys()))
+						.addProviderForAnnotation(EffectType.class, _ -> _ -> TrackSettingsCommand.getEffectKeys()))
 				.commandCondition(new PlaceholderCondition())
 				.build();
 		lamp.register(new TrackCommand(support), new TrackPartsCommand(support), new TrackSettingsCommand(support),
@@ -178,7 +178,7 @@ public class ParkourTracksPlugin extends JavaPlugin {
 	 */
 	@NotNull
 	@SuppressWarnings("unchecked")
-	private static Class<TrackOption<?>> optionClass() {
+	private static Class<TrackOption<?>> getOptionClass() {
 		return (Class<TrackOption<?>>) (Class<?>) TrackOption.class;
 	}
 

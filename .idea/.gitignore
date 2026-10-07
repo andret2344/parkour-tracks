@@ -1,11 +1,15 @@
 /dataSources/
 /httpRequests/
+/libraries/
 /modules/
 /shelf/
 /sonarlint/
 
+/*.iml
 /compiler.xml
 /dataSources.local.xml
+/dataSources.xml
+/db-forest-config.xml
 /discord.xml
 /git_toolbox_blame.xml
 /git_toolbox_prj.xml
@@ -13,8 +17,9 @@
 /intellij-javadocs-4.0.1.xml
 /jarRepositories.xml
 /jpa-buddy.xml
-/libraries
+/libraries-with-intellij-classes.xml
 /misc.xml
 /modules.xml
+/sqldialects.xml
 /uiDesigner.xml
 /workspace.xml

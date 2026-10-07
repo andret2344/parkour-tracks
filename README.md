@@ -37,7 +37,7 @@ Successor of atsParkour and atsQuickParkour.
   kept with the player's own data; leaving, disconnecting, a restart and even a crash give it back.
 - **Locked while running** - a running track cannot be edited, and nothing changes its blocks: players, explosions,
   pistons, fire, liquids or mobs.
-- **For other plugins** - events for joining (cancellable), leaving, completing and every payment.
+- **For other plugins** - events for joining (cancelable), leaving, completing and every payment.
 
 ## Installation
 
@@ -109,7 +109,7 @@ The plugin keeps its tracks in `tracks.json`, which is not meant to be edited by
 
 ## For developers
 
-Listen to `TrackJoinEvent` (cancellable), `TrackLeaveEvent`, `TrackCompleteEvent` and `TrackPaymentEvent` from
+Listen to `TrackJoinEvent` (cancelable), `TrackLeaveEvent`, `TrackCompleteEvent` and `TrackPaymentEvent` from
 `eu.andret.parkourtracks.api`.
 
 Building needs Java 25: `./gradlew build` makes `build/libs/ParkourTracks-<version>.jar`.

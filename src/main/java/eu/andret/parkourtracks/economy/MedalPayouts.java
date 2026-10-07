@@ -23,8 +23,8 @@ public final class MedalPayouts {
 	}
 
 	@NotNull
-	public static List<Due> due(@NotNull final List<Medal> medals, @NotNull final Map<String, MedalThreshold> thresholds,
-								final int ticks, @NotNull final Set<String> paid) {
+	public static List<Due> findDue(@NotNull final List<Medal> medals, @NotNull final Map<String, MedalThreshold> thresholds,
+			final int ticks, @NotNull final Set<String> paid) {
 		return medals.stream()
 				.filter(medal -> !paid.contains(medal.key()))
 				.filter(medal -> {

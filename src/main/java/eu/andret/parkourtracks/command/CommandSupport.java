@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * What the command classes share: messages, the edit lock, selections and saving.
  */
+@SuppressWarnings("record")
 public final class CommandSupport {
 	@NotNull
 	private final ParkourTracksPlugin plugin;
@@ -25,17 +26,16 @@ public final class CommandSupport {
 	}
 
 	@NotNull
-	public ParkourTracksPlugin plugin() {
+	public ParkourTracksPlugin getPlugin() {
 		return plugin;
 	}
 
 	@NotNull
-	public TrackRegistry registry() {
+	public TrackRegistry getRegistry() {
 		return plugin.getTrackRegistry();
 	}
 
-	public void send(@NotNull final CommandSender sender, @NotNull final Message message,
-					 @NotNull final TagResolver... resolvers) {
+	public void send(@NotNull final CommandSender sender, @NotNull final Message message, @NotNull final TagResolver... resolvers) {
 		plugin.getMessages().send(sender, message, resolvers);
 	}
 
@@ -52,18 +52,19 @@ public final class CommandSupport {
 	 */
 	public void requireStopped(@NotNull final Track track) {
 		if (track.isRunning()) {
-			throw fail(Message.TRACK_RUNNING, track(track));
+			throw fail(Message.TRACK_RUNNING, createTrackPlaceholder(track));
 		}
 	}
 
 	@NotNull
-	public Selection selection(@NotNull final Player player) {
+	public Selection getSelection(@NotNull final Player player) {
 		try {
 			return plugin.getSelections().get(player);
 		} catch (final SelectionException ex) {
-			throw fail(ex.getReason() == SelectionException.Reason.NOT_CUBOID
-					? Message.SELECTION_NOT_CUBOID
-					: Message.SELECTION_INCOMPLETE);
+			if (ex.getReason() == SelectionException.Reason.NOT_CUBOID) {
+				throw fail(Message.SELECTION_NOT_CUBOID);
+			}
+			throw fail(Message.SELECTION_INCOMPLETE);
 		}
 	}
 
@@ -71,7 +72,7 @@ public final class CommandSupport {
 	 * Saves the tracks file and shows the change in the markers; called after every change.
 	 */
 	public void save() {
-		registry().save();
+		getRegistry().save();
 		plugin.getMarkers().refresh();
 	}
 
@@ -79,7 +80,7 @@ public final class CommandSupport {
 	 * {@code <track>}: the track's name, as typed in commands.
 	 */
 	@NotNull
-	public static TagResolver track(@NotNull final Track track) {
+	public static TagResolver createTrackPlaceholder(@NotNull final Track track) {
 		return Placeholder.unparsed("track", track.getName());
 	}
 
@@ -87,12 +88,12 @@ public final class CommandSupport {
 	 * {@code <display-name>}: the track's display name, with its formatting.
 	 */
 	@NotNull
-	public static TagResolver displayName(@NotNull final Track track) {
+	public static TagResolver createDisplayNamePlaceholder(@NotNull final Track track) {
 		return Placeholder.component("display-name", MiniMessage.miniMessage().deserialize(track.getDisplayName()));
 	}
 
 	@NotNull
-	public static TagResolver text(@NotNull final String name, @NotNull final Object value) {
+	public static TagResolver createPlaceholder(@NotNull final String name, @NotNull final Object value) {
 		return Placeholder.unparsed(name, String.valueOf(value));
 	}
 }

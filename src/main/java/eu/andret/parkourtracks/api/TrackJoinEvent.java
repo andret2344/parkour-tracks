@@ -11,7 +11,7 @@ import java.util.UUID;
 
 /**
  * A player is about to join a game on a track, after their permission for it was checked and before any fee is
- * taken. Cancelling it keeps them out: they are sent to the lobby, and the cancelling plugin tells them why.
+ * taken. Canceling it keeps them out: they are sent to the lobby, and the canceling plugin tells them why.
  */
 public final class TrackJoinEvent extends PlayerEvent implements Cancellable {
 	@NotNull
@@ -23,10 +23,10 @@ public final class TrackJoinEvent extends PlayerEvent implements Cancellable {
 	private final String trackName;
 	@NotNull
 	private final Entry entry;
-	private boolean cancelled;
+	private boolean canceled;
 
 	public TrackJoinEvent(@NotNull final Player player, @NotNull final UUID trackId, @NotNull final String trackName,
-						  @NotNull final Entry entry) {
+			@NotNull final Entry entry) {
 		super(player);
 		this.trackId = trackId;
 		this.trackName = trackName;
@@ -56,12 +56,12 @@ public final class TrackJoinEvent extends PlayerEvent implements Cancellable {
 
 	@Override
 	public boolean isCancelled() {
-		return cancelled;
+		return canceled;
 	}
 
 	@Override
-	public void setCancelled(final boolean cancelled) {
-		this.cancelled = cancelled;
+	public void setCancelled(final boolean canceled) {
+		this.canceled = canceled;
 	}
 
 	@NotNull

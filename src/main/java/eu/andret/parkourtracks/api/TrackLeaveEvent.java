@@ -23,7 +23,7 @@ public final class TrackLeaveEvent extends PlayerEvent {
 	private final LeaveReason reason;
 
 	public TrackLeaveEvent(@NotNull final Player player, @NotNull final UUID trackId, @NotNull final String trackName,
-						   @NotNull final LeaveReason reason) {
+			@NotNull final LeaveReason reason) {
 		super(player);
 		this.trackId = trackId;
 		this.trackName = trackName;

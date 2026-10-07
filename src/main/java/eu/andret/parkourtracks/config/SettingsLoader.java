@@ -56,7 +56,7 @@ public final class SettingsLoader {
 	}
 
 	private static int loadNonNegative(@NotNull final ConfigurationSection config, @NotNull final String path,
-									   final int defaultValue, @NotNull final String what) {
+			final int defaultValue, @NotNull final String what) {
 		if (!config.contains(path)) {
 			return defaultValue;
 		}
@@ -75,7 +75,7 @@ public final class SettingsLoader {
 		final List<GameItemSlot> items = new ArrayList<>();
 		final Set<Integer> slots = new HashSet<>();
 		for (final GameItem item : GameItem.values()) {
-			final String path = GAME_ITEMS + "." + item.key();
+			final String path = GAME_ITEMS + "." + item.getKey();
 			final GameItemSlot defaults = DEFAULT_GAME_ITEMS.get(item);
 			if (!config.getBoolean(path + ".enabled", true)) {
 				continue;

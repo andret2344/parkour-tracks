@@ -94,7 +94,7 @@ class TrackSettingsCommandTest extends PluginTest {
 				"difficulty has to be a number.", "fee has to be >= 0.",
 				"type has to be one of: server, training, players.", "icon has to be one of: none, an item.",
 				"permission has to be a permission node such as tracks.vip, or none.",
-				"boatType has to be one of: " + TrackOption.boatTypes().stream().map(type -> type.name().toLowerCase(Locale.ROOT)).collect(Collectors.joining(", ")) + ".",
+				"boatType has to be one of: " + TrackOption.getBoatTypes().stream().map(type -> type.name().toLowerCase(Locale.ROOT)).collect(Collectors.joining(", ")) + ".",
 				"There is no option speed. Options: displayName, type, difficulty, icon, permission, fee, reward, "
 						+ "hardcore, skipMode, pauseOnCheckpoints, sprintForced, damageAllowed, enderPearls, boat, "
 						+ "boatType, afterFinish.");

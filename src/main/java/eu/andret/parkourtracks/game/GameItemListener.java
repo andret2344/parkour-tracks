@@ -29,7 +29,7 @@ public final class GameItemListener implements Listener {
 	}
 
 	/**
-	 * Runs for cancelled events too: Bukkit itself cancels clicking the air with an item.
+	 * Runs for canceled events too: Bukkit itself cancels clicking the air with an item.
 	 */
 	@EventHandler(priority = EventPriority.HIGH)
 	public void use(@NotNull final PlayerInteractEvent event) {

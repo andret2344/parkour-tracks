@@ -33,7 +33,7 @@ public final class Ticks {
 		final double seconds;
 		try {
 			seconds = Double.parseDouble(text);
-		} catch (final NumberFormatException ex) {
+		} catch (final NumberFormatException _) {
 			return OptionalInt.empty();
 		}
 		if (!Double.isFinite(seconds) || seconds <= 0 || seconds > Integer.MAX_VALUE / (double) PER_SECOND) {

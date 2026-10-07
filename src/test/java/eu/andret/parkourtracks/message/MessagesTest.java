@@ -41,13 +41,13 @@ class MessagesTest {
 
 		// when / then
 		assertThat(shipped.getKeys(false))
-				.containsExactlyInAnyOrderElementsOf(Arrays.stream(Message.values()).map(Message::key).toList());
+				.containsExactlyInAnyOrderElementsOf(Arrays.stream(Message.values()).map(Message::getKey).toList());
 	}
 
 	@Test
 	void keyIsTheNameInLowercaseWithDashes() {
 		// when / then
-		assertThat(Message.TRACK_NOT_FOUND.key()).isEqualTo("track-not-found");
+		assertThat(Message.TRACK_NOT_FOUND.getKey()).isEqualTo("track-not-found");
 	}
 
 	@Test

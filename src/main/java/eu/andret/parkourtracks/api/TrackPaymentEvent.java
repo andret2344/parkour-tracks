@@ -54,8 +54,8 @@ public final class TrackPaymentEvent extends Event {
 	private final double amount;
 
 	public TrackPaymentEvent(@NotNull final OfflinePlayer player, @NotNull final UUID trackId,
-							 @NotNull final String trackName, @NotNull final Kind kind, @Nullable final String medal,
-							 final double amount) {
+			@NotNull final String trackName, @NotNull final Kind kind, @Nullable final String medal,
+			final double amount) {
 		this.player = player;
 		this.trackId = trackId;
 		this.trackName = trackName;

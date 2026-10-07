@@ -32,7 +32,7 @@ class BackupsTest extends PluginTest {
 		assertThat(backup.resolve("results.db")).exists();
 		final ResultStore copy = ResultStore.open(backup.resolve("results.db"));
 		try {
-			assertThat(copy.ranked(plugin.getTrackRegistry().find("tower").orElseThrow().getId(), 1).join()).isEmpty();
+			assertThat(copy.fetchRanked(plugin.getTrackRegistry().find("tower").orElseThrow().getId(), 1).join()).isEmpty();
 		} finally {
 			copy.close();
 		}

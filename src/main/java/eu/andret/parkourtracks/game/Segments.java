@@ -20,8 +20,8 @@ public final class Segments {
 	 * @return the fraction of the move, or empty when the move does not touch the cuboid
 	 */
 	@NotNull
-	public static OptionalDouble entry(@NotNull final Cuboid cuboid, @NotNull final Location from,
-									   @NotNull final Location to) {
+	public static OptionalDouble findEntry(@NotNull final Cuboid cuboid, @NotNull final Location from,
+			@NotNull final Location to) {
 		final double[] start = {from.getX(), from.getY(), from.getZ()};
 		final double[] delta = {to.getX() - from.getX(), to.getY() - from.getY(), to.getZ() - from.getZ()};
 		// The blocks of the cuboid span from the minimum corner to one past the maximum corner

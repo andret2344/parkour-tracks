@@ -27,11 +27,11 @@ Design decisions for the migration, agreed on before coding. Deferred features a
 ## Events
 
 - Events are the public API for those who want results in their own database, on Discord and so on.
-- Notifications after the fact (e.g. a completion with its time, medal and record flag) plus cancellable events before
+- Notifications after the fact (e.g. a completion with its time, medal and record flag) plus cancelable events before
   an action (e.g. joining a game).
 - The game logic itself does not run through Bukkit events, so a foreign listener cannot break it halfway.
 - The set of events is kept small; each one is a promise not to break other plugins' code. Four of them:
-  - joining a game, before the fact and cancellable (e.g. a combat tag plugin denies the entry),
+  - joining a game, before the fact and cancelable (e.g. a combat tag plugin denies the entry),
   - leaving a game, after the fact, with the reason: exit item, leaving the region, teleport, disconnect, parkour
     stopped,
   - a completion, after the fact: player, parkour, time in ticks, medal, whether it is a personal or a parkour record,
@@ -162,7 +162,7 @@ Design decisions for the migration, agreed on before coding. Deferred features a
   it to the command with a plugin like ItemJoin.
 - A main menu with a category per `type`; empty categories are hidden.
 - Stopped parkours are hidden; parkours the player has no permission for are shown with a lock.
-- `icon` replaces `color`: any material per parkour, by default wool coloured by difficulty (1 lime, 2 yellow,
+- `icon` replaces `color`: any material per parkour, by default wool colored by difficulty (1 lime, 2 yellow,
   3 orange, 4 red, 5 black), the mapping fixed in code.
 - Difficulty is 1-5; anything else is rejected.
 - The lore is a MiniMessage template with placeholders in the config.
@@ -279,7 +279,7 @@ Details `decisions.md` did not settle, chosen while coding. Review them; anythin
   else the global one).
 - `/ptracks ignore` (permission `parkourtracks.ignore`) switches ignoring tracks; it is not kept over a restart.
 - Entering a game takes the snapshot, then clears the inventory and the effects, fills health and food, turns flight
-  off (toggling flight is cancelled during the game) and gives the track's effects with an infinite duration.
+  off (toggling flight is canceled during the game) and gives the track's effects with an infinite duration.
 - After a death the player comes back to life where going back would take them (the last checkpoint, or the spawn
   before the first one and on hardcore tracks).
 - A player who finished and waits for the lobby is no longer checked against walls, checkpoints or teleports inside
@@ -303,7 +303,7 @@ Details `decisions.md` did not settle, chosen while coding. Review them; anythin
   and item frames or paintings breaking. Using doors, trapdoors, buttons and levers is not blocked.
 - `sprintForced` is checked every tick of a running run: outside the spawn, the checkpoints and the finish, a player
   not sprinting for more than `sprint-grace-ticks` (default 5) is told so and sent back.
-- Chorus fruit teleports, starting to glide and riptide are cancelled during a game.
+- Chorus fruit teleports, starting to glide and riptide are canceled during a game.
 - On a boat track, every way onto the spawn or a checkpoint (entering, going back, restarting, the finish's spawn
   option, coming back after a disconnect) removes the old boat and puts the player into a new one of the track's
   type, standing still, never saved with the world. A player found without their boat (it was removed by something
@@ -355,8 +355,8 @@ Details `decisions.md` did not settle, chosen while coding. Review them; anythin
   player head (players) and leather boots (training).
 - The track lore is one message, `menu-track-lore`, its lines separated by `<br>`; tracks by players get the
   `menu-track-authors` line too.
-- The events are `TrackJoinEvent` (cancellable, after the track permission and before the fee; a cancelled join
-  sends the player to the lobby, the cancelling plugin says why), `TrackLeaveEvent` (with the `LeaveReason`),
+- The events are `TrackJoinEvent` (cancelable, after the track permission and before the fee; a canceled join
+  sends the player to the lobby, the canceling plugin says why), `TrackLeaveEvent` (with the `LeaveReason`),
   `TrackCompleteEvent` (once the run is saved: ticks, best medal key, personal best, track record; none for
   training) and `TrackPaymentEvent` (`FEE`, `REFUND`, `REWARD`, `MEDAL`, `RECONCILIATION`, with the medal key and the
   amount), all in `eu.andret.parkourtracks.api`. They give the track's id and name, not the internal `Track`,

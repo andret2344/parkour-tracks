@@ -29,8 +29,8 @@ public final class TrackCompleteEvent extends Event {
 	private final boolean trackRecord;
 
 	public TrackCompleteEvent(@NotNull final OfflinePlayer player, @NotNull final UUID trackId,
-							  @NotNull final String trackName, final int ticks, @Nullable final String medal,
-							  final boolean personalBest, final boolean trackRecord) {
+			@NotNull final String trackName, final int ticks, @Nullable final String medal,
+			final boolean personalBest, final boolean trackRecord) {
 		this.player = player;
 		this.trackId = trackId;
 		this.trackName = trackName;

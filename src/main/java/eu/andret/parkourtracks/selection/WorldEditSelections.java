@@ -27,7 +27,7 @@ public final class WorldEditSelections implements Selections {
 		final Region region;
 		try {
 			region = session.getSelection(world);
-		} catch (final IncompleteRegionException ex) {
+		} catch (final IncompleteRegionException _) {
 			throw new SelectionException(SelectionException.Reason.INCOMPLETE);
 		}
 		if (!(region instanceof CuboidRegion)) {

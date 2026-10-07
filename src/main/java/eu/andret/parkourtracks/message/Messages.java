@@ -34,11 +34,11 @@ public final class Messages {
 	public static Messages load(@NotNull final ConfigurationSection file, @NotNull final ConfigurationSection defaults) {
 		final Map<Message, String> templates = new EnumMap<>(Message.class);
 		for (final Message message : Message.values()) {
-			final ConfigurationSection source = file.contains(message.key()) ? file : defaults;
-			if (!source.isString(message.key())) {
-				throw new IllegalArgumentException("'" + message.key() + "' in messages.yml has to be a text");
+			final ConfigurationSection source = file.contains(message.getKey()) ? file : defaults;
+			if (!source.isString(message.getKey())) {
+				throw new IllegalArgumentException("'" + message.getKey() + "' in messages.yml has to be a text");
 			}
-			templates.put(message, source.getString(message.key()));
+			templates.put(message, source.getString(message.getKey()));
 		}
 		return new Messages(templates);
 	}
@@ -47,7 +47,7 @@ public final class Messages {
 	 * The message as written in the file, before any placeholder is filled in.
 	 */
 	@NotNull
-	public String template(@NotNull final Message message) {
+	public String getTemplate(@NotNull final Message message) {
 		return templates.get(message);
 	}
 
@@ -57,7 +57,7 @@ public final class Messages {
 	}
 
 	public void send(@NotNull final CommandSender sender, @NotNull final Message message,
-					 @NotNull final TagResolver... resolvers) {
+			@NotNull final TagResolver... resolvers) {
 		sender.sendMessage(get(message, resolvers));
 	}
 }

@@ -33,8 +33,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Reports to the {@link GameManager} what players do; decides nothing itself. Handlers of cancellable events ignore
- * cancelled ones and run at {@code HIGH}, after protection plugins cancelling at {@code NORMAL} or lower.
+ * Reports to the {@link GameManager} what players do; decides nothing itself. Handlers of cancelable events ignore
+ * canceled ones and run at {@code HIGH}, after protection plugins canceling at {@code NORMAL} or lower.
  */
 public final class GameListener implements Listener {
 	@NotNull
@@ -120,7 +120,7 @@ public final class GameListener implements Listener {
 				.map(Track::getOptions)
 				.map(TrackOptions::isEnderPearls)
 				.orElse(false);
-		final Location target = games.teleported(player, event.getFrom(), event.getTo(), pearl);
+		final Location target = games.handleTeleport(player, event.getFrom(), event.getTo(), pearl);
 		if (target != null) {
 			event.setTo(target);
 		}
@@ -214,6 +214,6 @@ public final class GameListener implements Listener {
 	@EventHandler(priority = EventPriority.HIGH)
 	public void respawn(@NotNull final PlayerRespawnEvent event) {
 		games.getSession(event.getPlayer())
-				.ifPresent(session -> event.setRespawnLocation(games.respawnLocation(session)));
+				.ifPresent(session -> event.setRespawnLocation(games.findRespawnLocation(session)));
 	}
 }

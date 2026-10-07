@@ -72,7 +72,7 @@ public final class MenuSigns implements Listener {
 		sign.getPersistentDataContainer().set(key, PersistentDataType.STRING,
 				track.map(found -> found.getId().toString()).orElse(MENU));
 		sign.update();
-		final List<Component> rendered = track.map(this::joinLines).orElseGet(this::menuLines);
+		final List<Component> rendered = track.map(this::renderJoinLines).orElseGet(this::renderMenuLines);
 		for (int i = 0; i < LINES; i++) {
 			event.line(i, rendered.get(i));
 		}
@@ -101,7 +101,7 @@ public final class MenuSigns implements Listener {
 			plugin.getMenus().open(player);
 			return;
 		}
-		final Optional<Track> track = parse(value).flatMap(id -> plugin.getTrackRegistry().find(id));
+		final Optional<Track> track = parseTrackId(value).flatMap(id -> plugin.getTrackRegistry().find(id));
 		if (track.isEmpty()) {
 			plugin.getMessages().send(player, Message.SIGN_UNKNOWN_TRACK);
 			return;
@@ -114,22 +114,22 @@ public final class MenuSigns implements Listener {
 	}
 
 	@NotNull
-	private static Optional<UUID> parse(@NotNull final String value) {
+	private static Optional<UUID> parseTrackId(@NotNull final String value) {
 		try {
 			return Optional.of(UUID.fromString(value));
-		} catch (final IllegalArgumentException ex) {
+		} catch (final IllegalArgumentException _) {
 			return Optional.empty();
 		}
 	}
 
 	@NotNull
-	private List<Component> menuLines() {
+	private List<Component> renderMenuLines() {
 		return List.of(plugin.getMessages().get(Message.MENU_SIGN_LINE_1), plugin.getMessages().get(Message.MENU_SIGN_LINE_2),
 				plugin.getMessages().get(Message.MENU_SIGN_LINE_3), plugin.getMessages().get(Message.MENU_SIGN_LINE_4));
 	}
 
 	@NotNull
-	private List<Component> joinLines(@NotNull final Track track) {
+	private List<Component> renderJoinLines(@NotNull final Track track) {
 		final double fee = track.getOptions().getFee();
 		final TagResolver[] resolvers = {
 				Placeholder.unparsed("track", track.getName()),

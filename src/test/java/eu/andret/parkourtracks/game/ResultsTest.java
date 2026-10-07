@@ -36,7 +36,7 @@ class ResultsTest extends GameTest {
 
 		// then
 		assertThat(messages(player)).contains("You finished track tower in 00:05.00!", "New track record on tower!");
-		assertThat(plugin.getResults().playerResult(track.getId(), player.getUniqueId()).join())
+		assertThat(plugin.getResults().fetchPlayerResult(track.getId(), player.getUniqueId()).join())
 				.hasValueSatisfying(result -> assertThat(result.bestTicks()).isEqualTo(100));
 	}
 
@@ -92,7 +92,7 @@ class ResultsTest extends GameTest {
 		finish(player, 100);
 
 		// then
-		assertThat(plugin.getResults().playerResult(track.getId(), player.getUniqueId()).join()).isEmpty();
+		assertThat(plugin.getResults().fetchPlayerResult(track.getId(), player.getUniqueId()).join()).isEmpty();
 		assertThat(messages(player)).noneMatch(message -> message.startsWith("New"));
 	}
 }

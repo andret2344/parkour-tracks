@@ -24,14 +24,14 @@ public final class TrackParameterType implements ParameterType<BukkitCommandActo
 	@Override
 	public Track parse(@NotNull final MutableStringStream input, @NotNull final ExecutionContext<BukkitCommandActor> context) {
 		final String name = input.readString();
-		return support.registry().find(name)
-				.orElseThrow(() -> support.fail(Message.TRACK_NOT_FOUND, CommandSupport.text("name", name)));
+		return support.getRegistry().find(name)
+				.orElseThrow(() -> support.fail(Message.TRACK_NOT_FOUND, CommandSupport.createPlaceholder("name", name)));
 	}
 
 	@NotNull
 	@Override
 	public SuggestionProvider<BukkitCommandActor> defaultSuggestions() {
-		return context -> support.registry().getTracks()
+		return _ -> support.getRegistry().getTracks()
 				.stream()
 				.map(Track::getName)
 				.toList();

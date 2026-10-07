@@ -46,7 +46,7 @@ public enum GameItem {
 	}
 
 	@NotNull
-	public String key() {
+	public String getKey() {
 		return name().toLowerCase(Locale.ROOT);
 	}
 }

@@ -90,14 +90,14 @@ public final class Snapshot {
 				.filter(PotionEffect.class::isInstance)
 				.map(PotionEffect.class::cast)
 				.forEach(player::addPotionEffect);
-		player.setHealth(Math.min(data.getDouble(HEALTH, maxHealth(player)), maxHealth(player)));
+		player.setHealth(Math.min(data.getDouble(HEALTH, getMaxHealth(player)), getMaxHealth(player)));
 		player.setFoodLevel(data.getInt(FOOD, 20));
 		player.setSaturation((float) data.getDouble(SATURATION, 5));
 		player.setAllowFlight(data.getBoolean(ALLOW_FLIGHT));
 		player.setFlying(data.getBoolean(ALLOW_FLIGHT) && data.getBoolean(FLYING));
 	}
 
-	public static double maxHealth(@NotNull final Player player) {
+	public static double getMaxHealth(@NotNull final Player player) {
 		final AttributeInstance attribute = player.getAttribute(Attribute.MAX_HEALTH);
 		return attribute == null ? 20 : attribute.getValue();
 	}

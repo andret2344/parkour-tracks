@@ -17,9 +17,9 @@ class SegmentsTest {
 		final Cuboid cuboid = new Cuboid(5, 0, 0, 5, 2, 2);
 
 		// when / then
-		assertThat(Segments.entry(cuboid, at(3, 1, 1), at(7, 1, 1))).hasValue(0.5);
-		assertThat(Segments.entry(cuboid, at(7, 1, 1), at(3, 1, 1))).hasValue(0.25);
-		assertThat(Segments.entry(cuboid, at(5.5, 1, 1), at(7, 1, 1))).hasValue(0);
+		assertThat(Segments.findEntry(cuboid, at(3, 1, 1), at(7, 1, 1))).hasValue(0.5);
+		assertThat(Segments.findEntry(cuboid, at(7, 1, 1), at(3, 1, 1))).hasValue(0.25);
+		assertThat(Segments.findEntry(cuboid, at(5.5, 1, 1), at(7, 1, 1))).hasValue(0);
 	}
 
 	@Test
@@ -28,9 +28,9 @@ class SegmentsTest {
 		final Cuboid cuboid = new Cuboid(5, 0, 0, 5, 2, 2);
 
 		// when / then
-		assertThat(Segments.entry(cuboid, at(1, 1, 1), at(4.5, 1, 1))).isEmpty();
-		assertThat(Segments.entry(cuboid, at(3, 1, 5), at(7, 1, 5))).isEmpty();
-		assertThat(Segments.entry(cuboid, at(3, 5, 1), at(7, 5, 1))).isEmpty();
+		assertThat(Segments.findEntry(cuboid, at(1, 1, 1), at(4.5, 1, 1))).isEmpty();
+		assertThat(Segments.findEntry(cuboid, at(3, 1, 5), at(7, 1, 5))).isEmpty();
+		assertThat(Segments.findEntry(cuboid, at(3, 5, 1), at(7, 5, 1))).isEmpty();
 	}
 
 	@Test
@@ -39,8 +39,8 @@ class SegmentsTest {
 		final Cuboid cuboid = new Cuboid(0, 0, 0, 0, 0, 0);
 
 		// when / then
-		assertThat(Segments.entry(cuboid, at(-1, -1, 0.5), at(1, 1, 0.5))).hasValue(0.5);
-		assertThat(Segments.entry(cuboid, at(-1, 1.5, 0.5), at(1.5, -1, 0.5))).isPresent();
-		assertThat(Segments.entry(cuboid, at(-1, 3.5, 0.5), at(3, -0.5, 0.5))).isEmpty();
+		assertThat(Segments.findEntry(cuboid, at(-1, -1, 0.5), at(1, 1, 0.5))).hasValue(0.5);
+		assertThat(Segments.findEntry(cuboid, at(-1, 1.5, 0.5), at(1.5, -1, 0.5))).isPresent();
+		assertThat(Segments.findEntry(cuboid, at(-1, 3.5, 0.5), at(3, -0.5, 0.5))).isEmpty();
 	}
 }

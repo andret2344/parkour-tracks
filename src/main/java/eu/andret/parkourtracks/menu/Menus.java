@@ -21,6 +21,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -69,7 +70,7 @@ public final class Menus {
 	 */
 	public void open(@NotNull final Player player) {
 		final List<TrackType> categories = Arrays.stream(TrackType.values())
-				.filter(type -> !tracks(type).isEmpty())
+				.filter(type -> !findTracks(type).isEmpty())
 				.toList();
 		if (categories.isEmpty()) {
 			plugin.getMessages().send(player, Message.MENU_EMPTY);
@@ -80,13 +81,13 @@ public final class Menus {
 			return;
 		}
 		final Menu menu = new Menu();
-		final Inventory inventory = plugin.getServer().createInventory(menu, CONFIRM_SIZE, text(Message.MENU_TITLE));
+		final Inventory inventory = plugin.getServer().createInventory(menu, CONFIRM_SIZE, createText(Message.MENU_TITLE));
 		menu.setInventory(inventory);
 		final int[] slots = categories.size() == 2 ? new int[]{11, 15} : new int[]{11, 13, 15};
 		for (int i = 0; i < categories.size(); i++) {
 			final TrackType type = categories.get(i);
-			inventory.setItem(slots[i], item(CATEGORY_ICONS.get(type), text(CATEGORY_NAMES.get(type)),
-					List.of(text(Message.MENU_CATEGORY_LORE, Placeholder.unparsed("count", String.valueOf(tracks(type).size()))))));
+			inventory.setItem(slots[i], createItem(CATEGORY_ICONS.get(type), createText(CATEGORY_NAMES.get(type)),
+					List.of(createText(Message.MENU_CATEGORY_LORE, Placeholder.unparsed("count", String.valueOf(findTracks(type).size()))))));
 			menu.onClick(slots[i], clicker -> openCategory(clicker, type, 0));
 		}
 		player.openInventory(inventory);
@@ -96,7 +97,7 @@ public final class Menus {
 	 * The running tracks of a type, the easier first, then by name.
 	 */
 	@NotNull
-	private List<Track> tracks(@NotNull final TrackType type) {
+	private List<Track> findTracks(@NotNull final TrackType type) {
 		return plugin.getTrackRegistry().getTracks()
 				.stream()
 				.filter(Track::isRunning)
@@ -109,14 +110,14 @@ public final class Menus {
 	 * Opens a page of a category, once the player's results on its tracks come from the database.
 	 */
 	public void openCategory(@NotNull final Player player, @NotNull final TrackType type, final int page) {
-		final List<Track> all = tracks(type);
+		final List<Track> all = findTracks(type);
 		final int pages = Math.max(1, (all.size() + PAGE_SIZE - 1) / PAGE_SIZE);
 		final int shown = Math.clamp(page, 0, pages - 1);
 		final List<Track> tracks = all.subList(shown * PAGE_SIZE, Math.min(all.size(), (shown + 1) * PAGE_SIZE));
 		final List<CompletableFuture<Entry>> entries = tracks.stream()
-				.map(track -> plugin.getResults().playerResult(track.getId(), player.getUniqueId())
-						.thenCombine(plugin.getResults().ranked(track.getId(), 1),
-								(result, record) -> new Entry(track, result, record)))
+				.map(track -> plugin.getResults().fetchPlayerResult(track.getId(), player.getUniqueId())
+						.thenCombine(plugin.getResults().fetchRanked(track.getId(), 1),
+								(result, rankedRecord) -> new Entry(track, result.orElse(null), rankedRecord.orElse(null))))
 				.toList();
 		CompletableFuture.allOf(entries.toArray(CompletableFuture[]::new))
 				.thenRun(() -> plugin.runOnMainThread(() -> {
@@ -129,67 +130,74 @@ public final class Menus {
 	/**
 	 * A track with the player's results and its record.
 	 */
-	private record Entry(@NotNull Track track, @NotNull Optional<ResultStore.PlayerResult> result,
-						 @NotNull Optional<ResultStore.Ranked> record) {
+	private record Entry(@NotNull Track track, @Nullable ResultStore.PlayerResult result, @Nullable ResultStore.Ranked rankedRecord) {
 	}
 
 	private void showCategory(@NotNull final Player player, @NotNull final TrackType type, final int page,
-							  final int pages, @NotNull final List<Entry> entries) {
+			final int pages, @NotNull final List<Entry> entries) {
 		final Menu menu = new Menu();
 		final Inventory inventory = plugin.getServer().createInventory(menu, PAGE_ROWS_SIZE,
-				text(Message.MENU_CATEGORY_TITLE, Placeholder.component("category", text(CATEGORY_NAMES.get(type))),
+				createText(Message.MENU_CATEGORY_TITLE, Placeholder.component("category", createText(CATEGORY_NAMES.get(type))),
 						Placeholder.unparsed("page", String.valueOf(page + 1)),
 						Placeholder.unparsed("pages", String.valueOf(pages))));
 		menu.setInventory(inventory);
 		for (int i = 0; i < entries.size(); i++) {
 			final Entry entry = entries.get(i);
-			inventory.setItem(i, trackItem(player, entry));
+			inventory.setItem(i, createTrackItem(player, entry));
 			menu.onClick(i, clicker -> choose(clicker, entry.track()));
 		}
 		if (page > 0) {
-			inventory.setItem(PREVIOUS, item(Material.ARROW, text(Message.MENU_PREVIOUS), List.of()));
+			inventory.setItem(PREVIOUS, createItem(Material.ARROW, createText(Message.MENU_PREVIOUS), List.of()));
 			menu.onClick(PREVIOUS, clicker -> openCategory(clicker, type, page - 1));
 		}
 		if (page < pages - 1) {
-			inventory.setItem(NEXT, item(Material.ARROW, text(Message.MENU_NEXT), List.of()));
+			inventory.setItem(NEXT, createItem(Material.ARROW, createText(Message.MENU_NEXT), List.of()));
 			menu.onClick(NEXT, clicker -> openCategory(clicker, type, page + 1));
 		}
-		inventory.setItem(BACK, item(Material.BARRIER, text(Message.MENU_BACK), List.of()));
+		inventory.setItem(BACK, createItem(Material.BARRIER, createText(Message.MENU_BACK), List.of()));
 		menu.onClick(BACK, this::open);
 		player.openInventory(inventory);
 	}
 
 	@NotNull
-	private ItemStack trackItem(@NotNull final Player player, @NotNull final Entry entry) {
+	private ItemStack createTrackItem(@NotNull final Player player, @NotNull final Entry entry) {
 		final Track track = entry.track();
 		final Material icon = track.getOptions().getIcon() != null
 				? track.getOptions().getIcon()
 				: DIFFICULTY_WOOL.get(track.getOptions().getDifficulty() - 1);
-		final Component none = text(Message.VALUE_NONE);
+		final Component none = createText(Message.VALUE_NONE);
 		final List<Medal> medals = plugin.getSettings().medals();
+		final ResultStore.PlayerResult result = entry.result();
+		final ResultStore.Ranked rankedRecord = entry.rankedRecord();
+		final Component best = result == null ? none : Component.text(Ticks.format(result.bestTicks()));
+		final Component recordTime = rankedRecord == null ? none : Component.text(Ticks.format(rankedRecord.ticks()));
+		final Component holder = rankedRecord == null
+				? createText(Message.SIGN_NOBODY)
+				: Component.text(getPlayerName(rankedRecord.player()));
+		final Component medal = Optional.ofNullable(result)
+				.flatMap(found -> TrackRules.findBestMedal(medals, track.getMedals(), found.bestTicks()))
+				.map(found -> MiniMessage.miniMessage().deserialize(found.displayName()))
+				.orElse(none);
+		final int completions = result == null ? 0 : result.completions();
 		final TagResolver[] resolvers = {
 				Placeholder.unparsed("track", track.getName()),
 				Placeholder.component("display-name", MiniMessage.miniMessage().deserialize(track.getDisplayName())),
 				Placeholder.unparsed("difficulty", String.valueOf(track.getOptions().getDifficulty())),
-				Placeholder.component("fee", fee(track)),
-				Placeholder.component("best", entry.result().<Component>map(result -> Component.text(Ticks.format(result.bestTicks()))).orElse(none)),
-				Placeholder.component("record", entry.record().<Component>map(record -> Component.text(Ticks.format(record.ticks()))).orElse(none)),
-				Placeholder.component("holder", entry.record().<Component>map(record -> Component.text(name(record.player())))
-						.orElse(text(Message.SIGN_NOBODY))),
-				Placeholder.component("medal", entry.result()
-						.flatMap(result -> TrackRules.bestMedal(medals, track.getMedals(), result.bestTicks()))
-						.<Component>map(medal -> MiniMessage.miniMessage().deserialize(medal.displayName()))
-						.orElse(none)),
-				Placeholder.unparsed("completions", String.valueOf(entry.result().map(ResultStore.PlayerResult::completions).orElse(0))),
-				Placeholder.unparsed("authors", authors(track)),
-				Placeholder.component("access", text(canEnter(player, track) ? Message.MENU_ACCESS_OPEN : Message.MENU_ACCESS_LOCKED))
+				Placeholder.component("fee", formatFee(track)),
+				Placeholder.component("best", best),
+				Placeholder.component("record", recordTime),
+				Placeholder.component("holder", holder),
+				Placeholder.component("medal", medal),
+				Placeholder.unparsed("completions", String.valueOf(completions)),
+				Placeholder.unparsed("authors", formatAuthors(track)),
+				Placeholder.component("access", createText(canEnter(player, track) ? Message.MENU_ACCESS_OPEN : Message.MENU_ACCESS_LOCKED))
 		};
-		final List<Component> lore = new ArrayList<>(lines(Message.MENU_TRACK_LORE, resolvers));
+		final List<Component> lore = new ArrayList<>(splitLines(Message.MENU_TRACK_LORE, resolvers));
 		if (track.getType() == TrackType.PLAYERS) {
-			lore.addAll(lines(Message.MENU_TRACK_AUTHORS, resolvers));
+			lore.addAll(splitLines(Message.MENU_TRACK_AUTHORS, resolvers));
 		}
-		final ItemStack item = item(icon, text(Message.MENU_TRACK_NAME, resolvers), lore);
-		if (entry.result().isPresent()) {
+		final ItemStack item = createItem(icon, createText(Message.MENU_TRACK_NAME, resolvers), lore);
+		if (result != null) {
 			// Completed tracks glow
 			final ItemMeta meta = item.getItemMeta();
 			meta.setEnchantmentGlintOverride(true);
@@ -224,14 +232,14 @@ public final class Menus {
 		final TagResolver[] resolvers = {
 				Placeholder.unparsed("track", track.getName()),
 				Placeholder.component("display-name", MiniMessage.miniMessage().deserialize(track.getDisplayName())),
-				Placeholder.component("fee", fee(track))
+				Placeholder.component("fee", formatFee(track))
 		};
 		final Inventory inventory = plugin.getServer().createInventory(menu, CONFIRM_SIZE,
-				text(Message.CONFIRM_TITLE, resolvers));
+				createText(Message.CONFIRM_TITLE, resolvers));
 		menu.setInventory(inventory);
-		inventory.setItem(CONFIRM_YES, item(Material.LIME_WOOL, text(Message.CONFIRM_YES, resolvers), List.of()));
-		inventory.setItem(CONFIRM_INFO, item(Material.PAPER, text(Message.MENU_TRACK_NAME, resolvers), List.of()));
-		inventory.setItem(CONFIRM_NO, item(Material.RED_WOOL, text(Message.CONFIRM_NO, resolvers), List.of()));
+		inventory.setItem(CONFIRM_YES, createItem(Material.LIME_WOOL, createText(Message.CONFIRM_YES, resolvers), List.of()));
+		inventory.setItem(CONFIRM_INFO, createItem(Material.PAPER, createText(Message.MENU_TRACK_NAME, resolvers), List.of()));
+		inventory.setItem(CONFIRM_NO, createItem(Material.RED_WOOL, createText(Message.CONFIRM_NO, resolvers), List.of()));
 		menu.onClick(CONFIRM_YES, clicker -> {
 			clicker.closeInventory();
 			if (track.isRunning()) {
@@ -248,26 +256,30 @@ public final class Menus {
 	}
 
 	@NotNull
-	private Component fee(@NotNull final Track track) {
+	private Component formatFee(@NotNull final Track track) {
 		final double fee = track.getOptions().getFee();
 		return fee > 0 && plugin.getBank().isAvailable()
 				? Component.text(plugin.getBank().format(fee))
-				: text(Message.MENU_FREE);
+				: createText(Message.MENU_FREE);
 	}
 
 	@NotNull
-	private String authors(@NotNull final Track track) {
-		return track.getAuthors().stream().map(this::name).collect(Collectors.joining(", "));
+	private String formatAuthors(@NotNull final Track track) {
+		return track.getAuthors().stream().map(this::getPlayerName).collect(Collectors.joining(", "));
 	}
 
 	@NotNull
-	private String name(@NotNull final UUID id) {
+	private String getPlayerName(@NotNull final UUID id) {
 		final OfflinePlayer player = plugin.getServer().getOfflinePlayer(id);
-		return player.getName() == null ? id.toString() : player.getName();
+		final String name = player.getName();
+		if (name != null) {
+			return name;
+		}
+		return id.toString();
 	}
 
 	@NotNull
-	private Component text(@NotNull final Message message, @NotNull final TagResolver... resolvers) {
+	private Component createText(@NotNull final Message message, @NotNull final TagResolver... resolvers) {
 		return plugin.getMessages().get(message, resolvers).decoration(TextDecoration.ITALIC, false);
 	}
 
@@ -275,15 +287,15 @@ public final class Menus {
 	 * A message of several lines, separated by {@code <br>}.
 	 */
 	@NotNull
-	private List<Component> lines(@NotNull final Message message, @NotNull final TagResolver... resolvers) {
-		return Arrays.stream(plugin.getMessages().template(message).split(LINE_BREAK))
+	private List<Component> splitLines(@NotNull final Message message, @NotNull final TagResolver... resolvers) {
+		return Arrays.stream(plugin.getMessages().getTemplate(message).split(LINE_BREAK))
 				.map(line -> MiniMessage.miniMessage().deserialize(line, resolvers).decoration(TextDecoration.ITALIC, false))
 				.toList();
 	}
 
 	@NotNull
-	private static ItemStack item(@NotNull final Material material, @NotNull final Component name,
-								  @NotNull final List<Component> lore) {
+	private static ItemStack createItem(@NotNull final Material material, @NotNull final Component name,
+			@NotNull final List<Component> lore) {
 		final ItemStack item = new ItemStack(material);
 		final ItemMeta meta = item.getItemMeta();
 		meta.customName(name);

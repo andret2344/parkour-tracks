@@ -39,8 +39,8 @@ public final class TrackRules {
 	 * Checks a wall, which has no spot.
 	 */
 	@NotNull
-	public static Optional<PlacementProblem> checkWall(@NotNull final Track track, @NotNull final String world,
-													   @NotNull final Cuboid area) {
+	public static Optional<PlacementProblem> validateWall(@NotNull final Track track, @NotNull final String world,
+			@NotNull final Cuboid area) {
 		if (!track.getWorld().equals(world)) {
 			return Optional.of(PlacementProblem.OTHER_WORLD);
 		}
@@ -55,14 +55,14 @@ public final class TrackRules {
 	 * stands, in {@code playerWorld}.
 	 */
 	@NotNull
-	public static Optional<PlacementProblem> checkCheckpoint(@NotNull final Track track,
-															 @NotNull final String selectionWorld,
-															 @NotNull final String playerWorld,
-															 @NotNull final Checkpoint checkpoint) {
+	public static Optional<PlacementProblem> validateCheckpoint(@NotNull final Track track,
+			@NotNull final String selectionWorld,
+			@NotNull final String playerWorld,
+			@NotNull final Checkpoint checkpoint) {
 		if (!track.getWorld().equals(playerWorld)) {
 			return Optional.of(PlacementProblem.OTHER_WORLD);
 		}
-		final Optional<PlacementProblem> area = checkWall(track, selectionWorld, checkpoint.area());
+		final Optional<PlacementProblem> area = validateWall(track, selectionWorld, checkpoint.area());
 		if (area.isPresent()) {
 			return area;
 		}
@@ -95,9 +95,9 @@ public final class TrackRules {
 	 * Checks a new main region for a track, or for a new track when {@code track} is {@code null}.
 	 */
 	@NotNull
-	public static Optional<RegionProblem> checkRegion(@NotNull final TrackRegistry registry,
-													  @Nullable final Track track, @NotNull final String world,
-													  @NotNull final Cuboid region) {
+	public static Optional<RegionProblem> validateRegion(@NotNull final TrackRegistry registry,
+			@Nullable final Track track, @NotNull final String world,
+			@NotNull final Cuboid region) {
 		final Optional<Track> overlapping = registry.findOverlapping(world, region, track);
 		if (overlapping.isPresent()) {
 			return Optional.of(new RegionProblem(RegionProblem.Kind.OVERLAP, overlapping.get()));
@@ -106,7 +106,7 @@ public final class TrackRules {
 			return Optional.empty();
 		}
 		// The parts lie in the track's world, so a region in another world leaves out any of them
-		final boolean leavesOut = parts(track).anyMatch(part -> !track.getWorld().equals(world) || !region.contains(part));
+		final boolean leavesOut = collectParts(track).anyMatch(part -> !track.getWorld().equals(world) || !region.contains(part));
 		return leavesOut ? Optional.of(new RegionProblem(RegionProblem.Kind.LEAVES_OUT, null)) : Optional.empty();
 	}
 
@@ -114,7 +114,7 @@ public final class TrackRules {
 	 * The areas of the spawn, the finish, the checkpoints and the walls.
 	 */
 	@NotNull
-	private static Stream<Cuboid> parts(@NotNull final Track track) {
+	private static Stream<Cuboid> collectParts(@NotNull final Track track) {
 		final Stream<Checkpoint> checkpoints = Stream.concat(
 				Stream.concat(Stream.ofNullable(track.getSpawn()), Stream.ofNullable(track.getFinish())),
 				track.getCheckpoints().stream());
@@ -129,8 +129,8 @@ public final class TrackRules {
 	 */
 	@NotNull
 	public static Optional<Medal> findMedalOrderClash(@NotNull final List<Medal> medals,
-													  @NotNull final Map<String, MedalThreshold> thresholds,
-													  @NotNull final Medal medal, final int ticks) {
+			@NotNull final Map<String, MedalThreshold> thresholds,
+			@NotNull final Medal medal, final int ticks) {
 		final int position = medals.indexOf(medal);
 		for (int i = 0; i < medals.size(); i++) {
 			final Medal other = medals.get(i);
@@ -151,8 +151,8 @@ public final class TrackRules {
 	 * threshold has a time the run did not exceed.
 	 */
 	@NotNull
-	public static Optional<Medal> bestMedal(@NotNull final List<Medal> medals,
-											@NotNull final Map<String, MedalThreshold> thresholds, final int ticks) {
+	public static Optional<Medal> findBestMedal(@NotNull final List<Medal> medals,
+			@NotNull final Map<String, MedalThreshold> thresholds, final int ticks) {
 		return medals.stream()
 				.filter(medal -> {
 					final MedalThreshold threshold = thresholds.get(medal.key());
@@ -171,7 +171,7 @@ public final class TrackRules {
 	}
 
 	@NotNull
-	public static List<Missing> missingForStart(@NotNull final TrackRegistry registry, @NotNull final Track track) {
+	public static List<Missing> findMissingForStart(@NotNull final TrackRegistry registry, @NotNull final Track track) {
 		final List<Missing> missing = new ArrayList<>();
 		if (track.getSpawn() == null) {
 			missing.add(Missing.SPAWN);

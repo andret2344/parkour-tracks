@@ -23,7 +23,7 @@ public final class Track {
 	public static final Pattern NAME_PATTERN = Pattern.compile("[A-Za-z0-9_-]{1,32}");
 
 	@NotNull
-	private UUID id;
+	private final UUID id;
 	@NotNull
 	private String name;
 	@NotNull
@@ -39,25 +39,25 @@ public final class Track {
 	@Nullable
 	private Checkpoint finish;
 	@NotNull
-	private List<Checkpoint> checkpoints = new ArrayList<>();
+	private final List<Checkpoint> checkpoints = new ArrayList<>();
 	@NotNull
-	private List<Cuboid> walls = new ArrayList<>();
+	private final List<Cuboid> walls = new ArrayList<>();
 	@NotNull
-	private List<UUID> authors = new ArrayList<>();
+	private final List<UUID> authors = new ArrayList<>();
 	@NotNull
-	private Map<String, MedalThreshold> medals = new LinkedHashMap<>();
+	private final Map<String, MedalThreshold> medals = new LinkedHashMap<>();
 	@NotNull
-	private List<TrackEffect> effects = new ArrayList<>();
+	private final List<TrackEffect> effects = new ArrayList<>();
 	@Nullable
 	private WorldSpot lobby;
 	private boolean running;
 	@NotNull
-	private TrackOptions options = new TrackOptions();
+	private final TrackOptions options = new TrackOptions();
 
 	/**
 	 * For Gson only: it runs the field initializers, then fills in the fields from the tracks file.
 	 */
-	@SuppressWarnings({"unused", "DataFlowIssue"})
+	@SuppressWarnings({"unused", "DataFlowIssue", "java:S2637"})
 	private Track() {
 		id = null;
 		name = null;
@@ -67,7 +67,7 @@ public final class Track {
 	}
 
 	public Track(@NotNull final UUID id, @NotNull final String name, @NotNull final String world,
-				 @NotNull final Cuboid region) {
+			@NotNull final Cuboid region) {
 		if (!NAME_PATTERN.matcher(name).matches()) {
 			throw new IllegalArgumentException("Invalid track name: " + name);
 		}
@@ -263,7 +263,7 @@ public final class Track {
 	 * @throws IllegalStateException when a required field is missing or the name is invalid
 	 */
 	@SuppressWarnings("ConstantValue")
-	void checkLoaded() {
+	void validateLoaded() {
 		if (id == null || name == null || world == null || region == null || options == null) {
 			throw new IllegalStateException("A track misses its id, name, world, region or options");
 		}

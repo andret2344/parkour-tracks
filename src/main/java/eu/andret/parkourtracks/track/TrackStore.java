@@ -66,16 +66,16 @@ public final class TrackStore {
 				throw new IllegalStateException("The file is empty");
 			}
 			final List<Track> tracks = stored.tracks == null ? new ArrayList<>() : new ArrayList<>(stored.tracks);
-			tracks.forEach(Track::checkLoaded);
+			tracks.forEach(Track::validateLoaded);
 			return new Content(stored.lobby, tracks);
 		} catch (final IOException | RuntimeException ex) {
 			// Gson wraps what a record constructor throws, so the cause at the bottom says what is wrong
-			throw new IllegalStateException("Could not read " + file.getFileName() + ": " + rootMessage(ex), ex);
+			throw new IllegalStateException("Could not read " + file.getFileName() + ": " + findRootMessage(ex), ex);
 		}
 	}
 
 	@Nullable
-	private static String rootMessage(@NotNull final Throwable throwable) {
+	private static String findRootMessage(@NotNull final Throwable throwable) {
 		Throwable cause = throwable;
 		while (cause.getCause() != null) {
 			cause = cause.getCause();

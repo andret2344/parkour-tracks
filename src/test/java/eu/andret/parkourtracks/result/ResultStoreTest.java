@@ -79,11 +79,11 @@ class ResultStoreTest {
 		run(CAVE, ALICE, 100, 40);
 
 		// when
-		final ResultStore.PlayerResult result = store.playerResult(TOWER, ALICE).join().orElseThrow();
+		final ResultStore.PlayerResult result = store.fetchPlayerResult(TOWER, ALICE).join().orElseThrow();
 
 		// then
 		assertThat(result).isEqualTo(new ResultStore.PlayerResult(500, 3, Instant.ofEpochSecond(30)));
-		assertThat(store.playerResult(TOWER, BOB).join()).isEmpty();
+		assertThat(store.fetchPlayerResult(TOWER, BOB).join()).isEmpty();
 	}
 
 	@Test
@@ -95,11 +95,11 @@ class ResultStoreTest {
 		run(TOWER, UUID.randomUUID(), 900, 2);
 
 		// when / then
-		assertThat(store.ranked(TOWER, 1).join()).contains(new ResultStore.Ranked(BOB, 400));
-		assertThat(store.ranked(TOWER, 2).join()).contains(new ResultStore.Ranked(ALICE, 400));
-		assertThat(store.ranked(TOWER, 3).join()).map(ResultStore.Ranked::ticks).contains(900);
-		assertThat(store.ranked(TOWER, 4).join()).isEmpty();
-		assertThat(store.ranked(CAVE, 1).join()).isEmpty();
+		assertThat(store.fetchRanked(TOWER, 1).join()).contains(new ResultStore.Ranked(BOB, 400));
+		assertThat(store.fetchRanked(TOWER, 2).join()).contains(new ResultStore.Ranked(ALICE, 400));
+		assertThat(store.fetchRanked(TOWER, 3).join()).map(ResultStore.Ranked::ticks).contains(900);
+		assertThat(store.fetchRanked(TOWER, 4).join()).isEmpty();
+		assertThat(store.fetchRanked(CAVE, 1).join()).isEmpty();
 	}
 
 	@Test
@@ -111,9 +111,9 @@ class ResultStoreTest {
 		run(CAVE, BOB, 50, 4);
 
 		// when / then
-		assertThat(store.playerSummary(ALICE).join()).containsExactlyInAnyOrder(
+		assertThat(store.fetchPlayerSummary(ALICE).join()).containsExactlyInAnyOrder(
 				new ResultStore.TrackResult(TOWER, 500, 2), new ResultStore.TrackResult(CAVE, 100, 1));
-		assertThat(store.playerSummary(UUID.randomUUID()).join()).isEmpty();
+		assertThat(store.fetchPlayerSummary(UUID.randomUUID()).join()).isEmpty();
 	}
 
 	@Test
@@ -126,7 +126,7 @@ class ResultStoreTest {
 		store = ResultStore.open(directory.resolve("results.db"));
 
 		// then
-		assertThat(store.playerResult(TOWER, ALICE).join()).isPresent();
+		assertThat(store.fetchPlayerResult(TOWER, ALICE).join()).isPresent();
 	}
 
 	@Test

@@ -32,7 +32,7 @@ public final class Markers implements Listener {
 	@NotNull
 	private final ParkourTracksPlugin plugin;
 	@NotNull
-	private final List<Entity> markers = new ArrayList<>();
+	private final List<Entity> entities = new ArrayList<>();
 
 	public Markers(@NotNull final ParkourTracksPlugin plugin) {
 		this.plugin = plugin;
@@ -50,8 +50,8 @@ public final class Markers implements Listener {
 	}
 
 	public void removeAll() {
-		markers.forEach(Entity::remove);
-		markers.clear();
+		entities.forEach(Entity::remove);
+		entities.clear();
 	}
 
 	private void show(@NotNull final Track track) {
@@ -60,18 +60,18 @@ public final class Markers implements Listener {
 			return;
 		}
 		if (track.getSpawn() != null) {
-			mark(world, track.getSpawn(), label(Message.MARKER_SPAWN, track, 0));
+			mark(world, track.getSpawn(), createLabel(Message.MARKER_SPAWN, track, 0));
 		}
 		for (int i = 0; i < track.getCheckpoints().size(); i++) {
-			mark(world, track.getCheckpoints().get(i), label(Message.MARKER_CHECKPOINT, track, i + 1));
+			mark(world, track.getCheckpoints().get(i), createLabel(Message.MARKER_CHECKPOINT, track, i + 1));
 		}
 		if (track.getFinish() != null) {
-			mark(world, track.getFinish(), label(Message.MARKER_FINISH, track, 0));
+			mark(world, track.getFinish(), createLabel(Message.MARKER_FINISH, track, 0));
 		}
 	}
 
 	@NotNull
-	private Component label(@NotNull final Message message, @NotNull final Track track, final int number) {
+	private Component createLabel(@NotNull final Message message, @NotNull final Track track, final int number) {
 		return plugin.getMessages().get(message, Placeholder.unparsed("track", track.getName()),
 				Placeholder.unparsed("number", String.valueOf(number)));
 	}
@@ -96,14 +96,14 @@ public final class Markers implements Listener {
 				.stream()
 				.filter(player -> !player.hasPermission(Permissions.EDIT))
 				.forEach(player -> player.hideEntity(plugin, marker));
-		markers.add(marker);
+		entities.add(marker);
 	}
 
 	@EventHandler
 	public void join(@NotNull final PlayerJoinEvent event) {
 		final Player player = event.getPlayer();
 		if (!player.hasPermission(Permissions.EDIT)) {
-			markers.forEach(marker -> player.hideEntity(plugin, marker));
+			entities.forEach(marker -> player.hideEntity(plugin, marker));
 		}
 	}
 

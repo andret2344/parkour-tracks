@@ -202,7 +202,7 @@ public enum Message {
 	 * The key in {@code messages.yml}.
 	 */
 	@NotNull
-	public String key() {
+	public String getKey() {
 		return name().toLowerCase(Locale.ROOT).replace('_', '-');
 	}
 }

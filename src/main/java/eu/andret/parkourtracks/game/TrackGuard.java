@@ -154,7 +154,7 @@ public final class TrackGuard implements Listener {
 	 * Locks a piston that moves its head, or a block, into a locked block, or moves a locked block.
 	 */
 	private void lockPiston(@NotNull final Cancellable event, @NotNull final Block piston,
-							@NotNull final List<Block> blocks, @NotNull final BlockFace movement) {
+			@NotNull final List<Block> blocks, @NotNull final BlockFace movement) {
 		final boolean locked = isLocked(piston.getRelative(movement))
 				|| blocks.stream().anyMatch(block -> isLocked(block) || isLocked(block.getRelative(movement)));
 		if (locked) {

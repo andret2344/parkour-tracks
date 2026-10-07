@@ -44,7 +44,7 @@ public final class PlayerCommand {
 			games.leave(sender, LeaveReason.EXIT);
 			return;
 		}
-		final Location lobby = games.lobby(null).orElseThrow(() -> support.fail(Message.NO_LOBBY));
+		final Location lobby = games.findLobby(null).orElseThrow(() -> support.fail(Message.NO_LOBBY));
 		games.teleport(sender, lobby);
 	}
 
@@ -52,7 +52,7 @@ public final class PlayerCommand {
 	@Description("Opens the track selection menu")
 	@CommandPermission(Permissions.PLAY)
 	public void menu(@NotNull final Player sender) {
-		support.plugin().getMenus().open(sender);
+		support.getPlugin().getMenus().open(sender);
 	}
 
 	@Subcommand("ignore")
