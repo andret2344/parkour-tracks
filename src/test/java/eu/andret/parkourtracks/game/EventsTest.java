@@ -98,7 +98,7 @@ class EventsTest extends GameTest {
 		bank.set(player, 100);
 
 		// when
-		player.simulatePlayerMove(at(10, 1, 20));
+		move(player, at(10, 1, 20));
 
 		// then
 		assertThat(games().getSession(player)).isEmpty();
@@ -136,13 +136,13 @@ class EventsTest extends GameTest {
 		final PlayerMock player = player();
 		bank.set(player, 100);
 		player.teleport(at(-5, 1, 2.5));
-		player.simulatePlayerMove(at(2.5, 1, 2.5));
-		player.simulatePlayerMove(at(4.5, 1, 2.5));
+		move(player, at(2.5, 1, 2.5));
+		move(player, at(4.5, 1, 2.5));
 
 		// when
 		finish(player);
 		games().leave(player, LeaveReason.EXIT);
-		player.simulatePlayerMove(at(2.5, 1, 2.5));
+		move(player, at(2.5, 1, 2.5));
 		admin(60, 64, 60).performCommand("ptracks stop tower");
 
 		// then

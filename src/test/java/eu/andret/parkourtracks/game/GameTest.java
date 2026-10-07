@@ -48,7 +48,7 @@ abstract class GameTest extends PluginTest {
 	protected PlayerMock onSpawn() {
 		final PlayerMock player = player();
 		player.teleport(at(-5, 1, 2.5));
-		player.simulatePlayerMove(at(2.5, 1, 2.5));
+		move(player, at(2.5, 1, 2.5));
 		messages(player);
 		return player;
 	}
@@ -59,7 +59,7 @@ abstract class GameTest extends PluginTest {
 	@NotNull
 	protected PlayerMock running() {
 		final PlayerMock player = onSpawn();
-		player.simulatePlayerMove(at(5.5, 1, 2.5));
+		move(player, at(5.5, 1, 2.5));
 		return player;
 	}
 
@@ -75,7 +75,7 @@ abstract class GameTest extends PluginTest {
 		double current = player.getLocation().getX();
 		while (Math.abs(x - current) > 0.0001) {
 			current += Math.max(-1, Math.min(1, x - current));
-			player.simulatePlayerMove(at(current, 1, 2.5));
+			move(player, at(current, 1, 2.5));
 		}
 	}
 }

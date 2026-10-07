@@ -80,7 +80,7 @@ class BoatTest extends GameTest {
 		final PlayerMock entered = player();
 
 		// when
-		side.simulatePlayerMove(at(10, 1, 20));
+		move(side, at(10, 1, 20));
 		games().enter(entered, track);
 
 		// then

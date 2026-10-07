@@ -7,7 +7,6 @@ import org.bukkit.entity.Arrow;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
@@ -15,6 +14,7 @@ import org.bukkit.event.player.PlayerToggleFlightEvent;
 import org.bukkit.inventory.ItemStack;
 import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
+import org.mockbukkit.mockbukkit.simulate.entity.LivingEntitySimulation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,24 +22,28 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class GameRulesTest extends GameTest {
+	/**
+	 * Damages the player through MockBukkit, which calls the event and applies the damage unless it is canceled.
+	 */
+	EntityDamageEvent damage(final PlayerMock player, final DamageSource source) {
+		return new LivingEntitySimulation(player).simulateDamage(4, source);
+	}
+
 	EntityDamageEvent fall(final PlayerMock player) {
-		return new EntityDamageEvent(player, EntityDamageEvent.DamageCause.FALL,
-				DamageSource.builder(DamageType.FALL).build(), 4);
+		return damage(player, DamageSource.builder(DamageType.FALL).build());
 	}
 
 	@Test
 	void damageFromTheEnvironmentIsBlockedUnlessAllowed() {
 		// given
 		final PlayerMock player = running();
-		final EntityDamageEvent blocked = fall(player);
-		final EntityDamageEvent outside = fall(player());
+		final PlayerMock outsider = player();
 
 		// when
-		server.getPluginManager().callEvent(blocked);
+		final EntityDamageEvent blocked = fall(player);
 		track.getOptions().setDamageAllowed(true);
 		final EntityDamageEvent allowed = fall(player);
-		server.getPluginManager().callEvent(allowed);
-		server.getPluginManager().callEvent(outside);
+		final EntityDamageEvent outside = fall(outsider);
 
 		// then
 		assertThat(blocked.isCancelled()).isTrue();
@@ -55,25 +59,28 @@ class GameRulesTest extends GameTest {
 		final PlayerMock attacker = player();
 		final Arrow arrow = world.spawn(at(5, 1, 2), Arrow.class);
 		arrow.setShooter(attacker);
-		final EntityDamageByEntityEvent hit = new EntityDamageByEntityEvent(attacker, player,
-				EntityDamageEvent.DamageCause.ENTITY_ATTACK, DamageSource.builder(DamageType.PLAYER_ATTACK).build(), 4);
-		final EntityDamageByEntityEvent shot = new EntityDamageByEntityEvent(arrow, player,
-				EntityDamageEvent.DamageCause.PROJECTILE, DamageSource.builder(DamageType.ARROW).build(), 4);
 
 		// when
-		server.getPluginManager().callEvent(hit);
-		server.getPluginManager().callEvent(shot);
+		final EntityDamageEvent hit = damage(player, DamageSource.builder(DamageType.PLAYER_ATTACK)
+				.withDirectEntity(attacker)
+				.withCausingEntity(attacker)
+				.build());
+		final EntityDamageEvent shot = damage(player, DamageSource.builder(DamageType.ARROW)
+				.withDirectEntity(arrow)
+				.withCausingEntity(attacker)
+				.build());
 
 		// then
 		assertThat(hit.isCancelled()).isTrue();
 		assertThat(shot.isCancelled()).isTrue();
+		assertThat(player.getHealth()).isEqualTo(20);
 	}
 
 	@Test
 	void hungerIsOff() {
 		// given
 		final PlayerMock player = running();
-		final FoodLevelChangeEvent event = new FoodLevelChangeEvent(player, 10);
+		final FoodLevelChangeEvent event = new FoodLevelChangeEvent(player, 10, null);
 
 		// when
 		server.getPluginManager().callEvent(event);

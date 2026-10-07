@@ -149,7 +149,8 @@ signs that open it or enter a track; `api` the events other plugins listen to; `
   disk. WorldEdit is replaced by selections set with `select`, the sidebar by `FakeSidebar` (`sidebar.of(player)`),
   and the world is a `TileEntityWorld`, whose chunks implement `getTileEntities` (MockBukkit leaves it
   unimplemented); MockBukkit counts a chunk as loaded only after `Chunk#load`. `admin` adds an operator standing
-  somewhere, `tower` a stopped track, `messages` takes the plain text of the messages a player got.
+  somewhere, `tower` a stopped track, `messages` takes the plain text of the messages a player got, `move` moves a
+  player through MockBukkit's `PlayerSimulation` (never the deprecated `PlayerMock#simulatePlayerMove`).
   `MockBukkit.load` ignores `depend`, so the plugin loads without WorldEdit. Tests of plain logic (`track`, `result`)
   are plain JUnit tests without a server; Bukkit enum constants such as `Material.LADDER` work without one, but
   anything reaching Paper's registries (`Material#isItem`, potion effect types) needs `MockBukkit.mock()`, and a
@@ -157,7 +158,7 @@ signs that open it or enter a track; `api` the events other plugins listen to; `
 - `helper/TestTracks` builds playable tracks: `tower` (the one `GameTest` uses) and `small`.
 - Game tests extend `game/GameTest`: a running track along x (spawn, two one-block checkpoints, finish, a wall at
   y 0), the lobby set and the world spawn moved off the track (new players appear there). `onSpawn`/`running` give
-  players at those stages; `walkTo` moves one block per `simulatePlayerMove`. MockBukkit's `simulatePlayerMove`
+  players at those stages; `walkTo` moves one block per `move`. MockBukkit's `simulatePlayerMove`
   sets the location before calling the event, so `PlayerMoveEvent#setTo` would not show in tests: going back from a
   move teleports. MockBukkit ignores `PlayerDeathEvent#setKeepInventory` (it follows only the game rule), so death
   tests check the event. MockBukkit cannot teleport a vehicle with a passenger, so boat tests (`BoatTest#driveTo`)

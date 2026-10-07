@@ -12,6 +12,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.sign.Side;
+import org.bukkit.event.Event;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -85,7 +86,8 @@ class MenuSignsTest extends PluginTest {
 
 		// then
 		assertThat(plain(written.lines())).containsExactly("Tracks", "", "Click to choose", "");
-		assertThat(event.isCancelled()).isTrue();
+		assertThat(event.useInteractedBlock()).isEqualTo(Event.Result.DENY);
+		assertThat(event.useItemInHand()).isEqualTo(Event.Result.DENY);
 		assertThat(player.getOpenInventory().getTopInventory().getHolder()).isInstanceOf(Menu.class);
 	}
 
@@ -152,6 +154,7 @@ class MenuSignsTest extends PluginTest {
 		assertThat(messages(player)).containsExactly("You cannot make ParkourTracks signs.");
 		assertThat(messages(admin)).containsExactly("There is no track named cave.");
 		assertThat(PlainTextComponentSerializer.plainText().serialize(noPermission.line(0))).isEqualTo("[ptmenu]");
-		assertThat(click.isCancelled()).isFalse();
+		assertThat(click.useInteractedBlock()).isNotEqualTo(Event.Result.DENY);
+		assertThat(click.useItemInHand()).isNotEqualTo(Event.Result.DENY);
 	}
 }

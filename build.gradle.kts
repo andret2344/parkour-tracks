@@ -114,6 +114,8 @@ tasks {
 	shadowJar {
 		archiveFileName.set("${project.name}-${project.version}.jar")
 		relocate("revxrsal.commands", "${project.group}.parkourtracks.lamp")
+		// Kotlin metadata of Lamp, of no use to a plugin running without Kotlin
+		exclude("META-INF/*.kotlin_module")
 	}
 }
 

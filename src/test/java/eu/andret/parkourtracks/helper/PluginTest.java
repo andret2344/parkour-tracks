@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
+import org.mockbukkit.mockbukkit.simulate.entity.PlayerSimulation;
 import org.mockbukkit.mockbukkit.world.WorldMock;
 
 import java.io.IOException;
@@ -98,6 +99,14 @@ public abstract class PluginTest {
 		final Track track = plugin.getTrackRegistry().create("tower", world.getName(), new Cuboid(0, 0, 0, 20, 20, 20));
 		plugin.getTrackRegistry().save();
 		return track;
+	}
+
+	/**
+	 * Moves the player as a {@code PlayerMoveEvent} would: the location is set before the event is called and set
+	 * back when the event is canceled.
+	 */
+	protected static void move(@NotNull final PlayerMock player, @NotNull final Location to) {
+		new PlayerSimulation(player).simulatePlayerMove(to);
 	}
 
 	/**

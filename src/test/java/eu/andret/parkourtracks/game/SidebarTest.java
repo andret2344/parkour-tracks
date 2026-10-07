@@ -27,7 +27,7 @@ class SidebarTest extends GameTest {
 
 		// when
 		player.teleport(at(-5, 1, 2.5));
-		player.simulatePlayerMove(at(2.5, 1, 2.5));
+		move(player, at(2.5, 1, 2.5));
 		waitForResults();
 
 		// then

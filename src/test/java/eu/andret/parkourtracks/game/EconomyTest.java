@@ -37,8 +37,8 @@ class EconomyTest extends GameTest {
 
 	void finish(final PlayerMock player, final int ticks) {
 		player.teleport(at(-5, 1, 2.5));
-		player.simulatePlayerMove(at(2.5, 1, 2.5));
-		player.simulatePlayerMove(at(4.5, 1, 2.5));
+		move(player, at(2.5, 1, 2.5));
+		move(player, at(4.5, 1, 2.5));
 		server.getScheduler().performTicks(ticks);
 		walkTo(player, 8.5);
 		walkTo(player, 12.5);
@@ -69,7 +69,7 @@ class EconomyTest extends GameTest {
 		final PlayerMock entered = player();
 
 		// when
-		side.simulatePlayerMove(at(10, 1, 20));
+		move(side, at(10, 1, 20));
 		teleported.teleport(at(10, 1, 2.5), PlayerTeleportEvent.TeleportCause.COMMAND);
 		games().enter(entered, track);
 
@@ -86,7 +86,7 @@ class EconomyTest extends GameTest {
 		final PlayerMock teleported = player();
 
 		// when
-		walker.simulatePlayerMove(at(10, 1, 20));
+		move(walker, at(10, 1, 20));
 		teleported.teleport(at(10, 1, 2.5), PlayerTeleportEvent.TeleportCause.COMMAND);
 
 		// then
@@ -136,8 +136,8 @@ class EconomyTest extends GameTest {
 		attachment.setPermission("tracks.vip", true);
 
 		// when
-		refused.simulatePlayerMove(at(10, 1, 20));
-		vip.simulatePlayerMove(at(10, 1, 20));
+		move(refused, at(10, 1, 20));
+		move(vip, at(10, 1, 20));
 
 		// then
 		assertThat(games().getSession(refused)).isEmpty();

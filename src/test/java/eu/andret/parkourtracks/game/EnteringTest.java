@@ -21,7 +21,7 @@ class EnteringTest extends GameTest {
 		player.teleport(at(-5, 1, 2.5));
 
 		// when
-		player.simulatePlayerMove(at(2.5, 1, 2.5));
+		move(player, at(2.5, 1, 2.5));
 
 		// then
 		assertThat(session(player).getPhase()).isEqualTo(Phase.WAITING);
@@ -37,7 +37,7 @@ class EnteringTest extends GameTest {
 		player.teleport(at(10, 1, 25));
 
 		// when
-		player.simulatePlayerMove(at(10, 1, 20));
+		move(player, at(10, 1, 20));
 
 		// then
 		assertThat(session(player).getPhase()).isEqualTo(Phase.WAITING);
@@ -56,9 +56,9 @@ class EnteringTest extends GameTest {
 		games().toggleIgnoring(ignoring);
 
 		// when
-		creative.simulatePlayerMove(at(10, 1, 2.5));
-		spectator.simulatePlayerMove(at(10, 1, 2.5));
-		ignoring.simulatePlayerMove(at(10, 1, 2.5));
+		move(creative, at(10, 1, 2.5));
+		move(spectator, at(10, 1, 2.5));
+		move(ignoring, at(10, 1, 2.5));
 
 		// then
 		assertThat(games().getSessions()).isEmpty();
@@ -72,7 +72,7 @@ class EnteringTest extends GameTest {
 		final PlayerMock player = player();
 
 		// when
-		player.simulatePlayerMove(at(10, 1, 2.5));
+		move(player, at(10, 1, 2.5));
 
 		// then
 		assertThat(games().getSessions()).isEmpty();
@@ -85,7 +85,7 @@ class EnteringTest extends GameTest {
 		player.teleport(new Location(server.addSimpleWorld("nether"), 50, 1, 2.5));
 
 		// when
-		player.simulatePlayerMove(new Location(player.getWorld(), 10, 1, 2.5));
+		move(player, new Location(player.getWorld(), 10, 1, 2.5));
 
 		// then
 		assertThat(games().getSessions()).isEmpty();
@@ -103,7 +103,7 @@ class EnteringTest extends GameTest {
 		player.teleport(at(-5, 1, 2.5));
 
 		// when
-		player.simulatePlayerMove(at(2.5, 1, 2.5));
+		move(player, at(2.5, 1, 2.5));
 
 		// then
 		assertThat(player.getInventory().contains(Material.DIAMOND)).isFalse();

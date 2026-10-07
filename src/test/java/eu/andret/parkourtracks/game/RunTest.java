@@ -21,7 +21,7 @@ class RunTest extends GameTest {
 		final int ticksOnSpawn = session(player).getTicks();
 
 		// when
-		player.simulatePlayerMove(at(4.5, 1, 2.5));
+		move(player, at(4.5, 1, 2.5));
 		server.getScheduler().performTicks(30);
 
 		// then
@@ -81,10 +81,10 @@ class RunTest extends GameTest {
 	void aFastMoveThroughAThinCheckpointPassesIt() {
 		// given
 		final PlayerMock player = running();
-		player.simulatePlayerMove(at(7.5, 1, 2.5));
+		move(player, at(7.5, 1, 2.5));
 
 		// when: from x 7.5 to 9.5 in one move, never standing in checkpoint 1 at x 8
-		player.simulatePlayerMove(at(9.5, 1, 2.5));
+		move(player, at(9.5, 1, 2.5));
 
 		// then
 		assertThat(session(player).getLastCheckpoint()).isZero();
@@ -96,9 +96,9 @@ class RunTest extends GameTest {
 		final PlayerMock player = running();
 
 		// when: past checkpoint 1 at the side of the track, straight into checkpoint 2
-		player.simulatePlayerMove(at(5.5, 1, 5.5));
+		move(player, at(5.5, 1, 5.5));
 		walkToZ(player, 10.5, 5.5);
-		player.simulatePlayerMove(at(12.5, 1, 2.5));
+		move(player, at(12.5, 1, 2.5));
 
 		// then
 		assertThat(messages(player)).containsExactly("You missed checkpoint 1.");
@@ -113,9 +113,9 @@ class RunTest extends GameTest {
 		final PlayerMock player = running();
 
 		// when
-		player.simulatePlayerMove(at(5.5, 1, 5.5));
+		move(player, at(5.5, 1, 5.5));
 		walkToZ(player, 10.5, 5.5);
-		player.simulatePlayerMove(at(12.5, 1, 2.5));
+		move(player, at(12.5, 1, 2.5));
 
 		// then
 		assertThat(messages(player)).containsExactly("You missed checkpoint 1.", "Checkpoint 2/2.");
@@ -129,9 +129,9 @@ class RunTest extends GameTest {
 		final PlayerMock player = running();
 
 		// when
-		player.simulatePlayerMove(at(5.5, 1, 5.5));
+		move(player, at(5.5, 1, 5.5));
 		walkToZ(player, 10.5, 5.5);
-		player.simulatePlayerMove(at(12.5, 1, 2.5));
+		move(player, at(12.5, 1, 2.5));
 
 		// then
 		assertThat(messages(player)).containsExactly("Checkpoint 2/2.");
@@ -146,9 +146,9 @@ class RunTest extends GameTest {
 		messages(player);
 
 		// when: around checkpoint 2, into the finish
-		player.simulatePlayerMove(at(9.5, 1, 5.5));
+		move(player, at(9.5, 1, 5.5));
 		walkToZ(player, 16.5, 5.5);
-		player.simulatePlayerMove(at(17.5, 1, 2.5));
+		move(player, at(17.5, 1, 2.5));
 
 		// then: back to checkpoint 1
 		assertThat(messages(player)).containsExactly("You missed checkpoint 2.");
@@ -168,6 +168,7 @@ class RunTest extends GameTest {
 		// when
 		walkTo(player, 17.5);
 		final Phase phase = session(player).getPhase();
+		plugin.getResults().flush();
 		server.getScheduler().performTicks(99);
 		final boolean stillThere = games().getSession(player).isPresent();
 		server.getScheduler().performTicks(1);
@@ -178,7 +179,7 @@ class RunTest extends GameTest {
 		assertThat(games().getSession(player)).isEmpty();
 		assertThat(player.getLocation()).isEqualTo(at(100, 64, 100));
 		assertThat(messages(player)).containsExactly("You finished track tower in 00:02.00!",
-				"Back to the lobby in 5 seconds.", "You left track tower.");
+				"Back to the lobby in 5 seconds.", "New track record on tower!", "You left track tower.");
 	}
 
 	@Test
@@ -256,7 +257,7 @@ class RunTest extends GameTest {
 		walkTo(player, 9.5);
 
 		// when
-		player.simulatePlayerMove(at(10.5, 0.5, 2.5));
+		move(player, at(10.5, 0.5, 2.5));
 
 		// then
 		assertThat(player.getLocation()).isEqualTo(at(8.5, 1, 2.5));
@@ -270,7 +271,7 @@ class RunTest extends GameTest {
 		server.getScheduler().performTicks(20);
 
 		// when
-		player.simulatePlayerMove(at(5.5, 0.5, 2.5));
+		move(player, at(5.5, 0.5, 2.5));
 
 		// then
 		assertThat(player.getLocation()).isEqualTo(at(2.5, 1, 2.5));
@@ -286,7 +287,7 @@ class RunTest extends GameTest {
 		walkTo(player, 9.5);
 
 		// when
-		player.simulatePlayerMove(at(10.5, 0.5, 2.5));
+		move(player, at(10.5, 0.5, 2.5));
 
 		// then
 		assertThat(player.getLocation()).isEqualTo(at(2.5, 1, 2.5));
@@ -360,7 +361,7 @@ class RunTest extends GameTest {
 		double current = player.getLocation().getX();
 		while (Math.abs(x - current) > 0.0001) {
 			current += Math.max(-1, Math.min(1, x - current));
-			player.simulatePlayerMove(at(current, 1, z));
+			move(player, at(current, 1, z));
 		}
 	}
 }

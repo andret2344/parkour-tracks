@@ -16,8 +16,8 @@ class ResultsTest extends GameTest {
 	 */
 	void finish(final PlayerMock player, final int ticks) {
 		player.teleport(at(-5, 1, 2.5));
-		player.simulatePlayerMove(at(2.5, 1, 2.5));
-		player.simulatePlayerMove(at(4.5, 1, 2.5));
+		move(player, at(2.5, 1, 2.5));
+		move(player, at(4.5, 1, 2.5));
 		server.getScheduler().performTicks(ticks);
 		walkTo(player, 8.5);
 		walkTo(player, 12.5);

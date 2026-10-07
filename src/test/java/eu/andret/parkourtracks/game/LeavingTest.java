@@ -25,7 +25,7 @@ class LeavingTest extends GameTest {
 		player.setLevel(30);
 		player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 6000, 2));
 		player.teleport(at(-5, 1, 2.5));
-		player.simulatePlayerMove(at(2.5, 1, 2.5));
+		move(player, at(2.5, 1, 2.5));
 		messages(player);
 		return player;
 	}
@@ -40,10 +40,10 @@ class LeavingTest extends GameTest {
 	void walkingOutOfTheRegionEndsTheGameWhereThePlayerIs() {
 		// given
 		final PlayerMock player = withThings();
-		player.simulatePlayerMove(at(5.5, 1, 2.5));
+		move(player, at(5.5, 1, 2.5));
 
 		// when
-		player.simulatePlayerMove(at(5.5, 1, 21.5));
+		move(player, at(5.5, 1, 21.5));
 
 		// then
 		assertThat(games().getSession(player)).isEmpty();
@@ -58,7 +58,7 @@ class LeavingTest extends GameTest {
 		final PlayerMock player = withThings();
 
 		// when
-		player.simulatePlayerMove(at(-0.5, 1, 2.5));
+		move(player, at(-0.5, 1, 2.5));
 
 		// then
 		assertThat(games().getSession(player)).isEmpty();
@@ -164,7 +164,7 @@ class LeavingTest extends GameTest {
 	void disconnectingGivesTheStateBackAndComingBackReturnsToTheSpawn() {
 		// given
 		final PlayerMock player = withThings();
-		player.simulatePlayerMove(at(5.5, 1, 2.5));
+		move(player, at(5.5, 1, 2.5));
 
 		// when
 		player.disconnect();
@@ -311,7 +311,7 @@ class LeavingTest extends GameTest {
 
 		// when
 		player.performCommand("ptracks ignore");
-		player.simulatePlayerMove(at(10, 1, 2.5));
+		move(player, at(10, 1, 2.5));
 		player.performCommand("ptracks ignore");
 
 		// then
