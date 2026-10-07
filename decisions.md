@@ -88,8 +88,12 @@ Design decisions for the migration, agreed on before coding. Deferred features a
   `FAIL`.
 - Nothing counts until the player has passed the spawn: a run starts only when they leave the spawn region.
 - A player in the region who did not come through the spawn is teleported to the spawn and charged the fee. Not
-  affected: a stopped parkour, players in `ignore` mode, players in creative or spectator.
-- Only survival and adventure players are parkour players; creative and spectator are treated like `ignore`.
+  affected: a stopped parkour, players in `ignore` mode, players in spectator.
+- Survival, adventure and creative players are parkour players; spectator is treated like `ignore`. A creative player
+  plays in creative: flying is blocked like for everyone (turned off on entering, switching it on is canceled), and
+  nothing else is. Accepted on purpose: their runs count in the rankings, give medals and rewards, and they can take
+  any item from the creative inventory during a game.
+- Switching to creative during a game keeps the game going; switching to spectator ends it.
 - Entering a region is checked along the segment from `from` to `to`, so fast movement cannot skip thin regions.
 - Ender pearls are a per-parkour option. Chorus fruit, elytra and riptide tridents are blocked. Gliding into the
   region turns gliding off.
@@ -182,19 +186,31 @@ Design decisions for the migration, agreed on before coding. Deferred features a
 ## Commands
 
 - Lamp, registered in code.
-- Track options: one `/ptracks set <track> <option> <value>`, with value completion by the option's type; all options
-  are shown by `/ptracks info <track>`.
+- Every command has the form `<noun> <action> <track> [arguments]`, the noun in the singular: `checkpoint add`,
+  `wall remove`, `medal time`, `region set`, `lobby set`. A noun with a single action leaves it out (`spawn <track>`,
+  `finish <track>`, `option <track> ...`). An optional argument always comes last. This form is binding: new
+  commands follow it, and no command gets a form of its own (no `setlobby`, no `track lobby set`).
+- Track options: one `/ptracks option <track> [option] [value]`, with value completion by the option's type. Without
+  an option it lists all options of the track with their values; without a value it shows that option's value; with
+  a value it sets it.
 - The spawn and the finish are separate from the checkpoint list: `/ptracks spawn <track>`, `/ptracks finish <track>`,
   and `/ptracks checkpoint add <track> [position]` for checkpoints in between, insertable in the middle. Adding a
   checkpoint never turns the finish into a checkpoint.
-- Grouped by noun: `checkpoint add|set|remove`, `wall add|set|remove`, `region set`.
-- Player commands: `menu`, `lobby`, `leave` (the same as the exit item) and `stats [track]`: without a track a short
-  summary of all tracks the player completed, with one the details (best time, completions, last completion, medal,
-  and the track record to compare with). `stats [track] [player]` shows another player's results, under its own
-  permission `parkourtracks.stats.others`, granted to everyone by default.
+- Grouped by noun: `checkpoint add|set|remove`, `wall add|set|remove`, `region set`, `lobby set|clear`.
+- Lobbies: `/ptracks lobby set [track]` sets the lobby where the admin stands, the global one without a track
+  (`parkourtracks.manage`), the track's own with one (`parkourtracks.edit`). `/ptracks lobby clear <track>` makes the
+  track use the global lobby again; `lobby clear` without a track is refused, since every track needs the global
+  lobby: it can only be moved with `lobby set`.
+- Player commands: `menu`, `enter [track]`, `leave` (the same as the exit item) and `stats [track]`. `enter` with a
+  track enters it like a `[ptjoin]` sign (the track's permission, the fee confirmed first, a game the player is in
+  ended); without a track it ends the player's game, if they are in one, and sends them to the lobby (the track's
+  own, else the global one). There is no `/ptracks lobby` for players. `stats` without a track gives a short summary
+  of all tracks the player completed, with one the details (best time, completions, last completion, medal, and the
+  track record to compare with). `stats [track] [player]` shows another player's results, under its own permission
+  `parkourtracks.stats.others`, granted to everyone by default.
 - Permissions in a few groups: `parkourtracks.play` (player commands, everyone by default), `parkourtracks.edit`
-  (creating and editing tracks), `parkourtracks.manage` (start, stop, remove, lobby), `parkourtracks.ignore`, and
-  `parkourtracks.reconcile` on its own, since it pays out money.
+  (creating and editing tracks), `parkourtracks.manage` (start, stop, remove, the global lobby),
+  `parkourtracks.ignore`, and `parkourtracks.reconcile` on its own, since it pays out money.
 
 ## Messages and config
 
@@ -252,9 +268,9 @@ Details `decisions.md` did not settle, chosen while coding. Review them; anythin
   simpler than ordering asynchronous writes.
 - The old `enabled` option is gone: starting and stopping a track covers it.
 - Commands: `list`, `info`, `create`, `region set`, `rename`, `spawn`, `finish`, `checkpoint add|set|remove`,
-  `wall add|set|remove`, `set`, `medal time|reward|remove`, `effect set|remove`, `author add|remove` and
-  `track lobby set|clear` need `parkourtracks.edit`; `remove`, `start`, `stop`, `setlobby` and `reload` need
-  `parkourtracks.manage`.
+  `wall add|set|remove`, `option`, `medal time|reward|remove`, `effect set|remove`, `author add|remove`,
+  `lobby set <track>` and `lobby clear <track>` need `parkourtracks.edit`; `remove`, `start`, `stop`, `lobby set`
+  without a track and `reload` need `parkourtracks.manage`.
 - Positions of checkpoints and walls in commands count from 1; `checkpoint add` without a position appends.
 - The spot of the spawn, the finish or a checkpoint is where the admin stands; they have to stand inside the selected
   area, in the track's world.
@@ -264,7 +280,7 @@ Details `decisions.md` did not settle, chosen while coding. Review them; anythin
 - Medal times are typed in seconds (`30.5`) and rounded to the nearest tick; a better medal needs a strictly shorter
   time than every worse one that has a time.
 - Authors are added by the name of a player who has played on the server, and only on tracks of type `players`.
-- Track options in `set`: `displayName` (MiniMessage), `type`, `difficulty`, `icon` (an item or `none`),
+- Track options in `option`: `displayName` (MiniMessage), `type`, `difficulty`, `icon` (an item or `none`),
   `permission` (lowercase node of letters, digits, `_`, `.`, `-`, or `none`), `fee`, `reward`, `hardcore`,
   `skipMode`, `pauseOnCheckpoints`, `sprintForced`, `damageAllowed`, `enderPearls`, `boat`, `boatType` (a boat or
   raft without a chest) and `afterFinish`.
@@ -275,9 +291,15 @@ Details `decisions.md` did not settle, chosen while coding. Review them; anythin
   fruit, an ender pearl the track does not allow) is foreign. An allowed ender pearl counts where it lands, as if the
   player had walked there in one step, without checking what it flew over.
 - Leaving the region by walking out or by a foreign teleport leaves the player where they are; the exit item,
-  `/ptracks leave`, `/ptracks lobby`, stopping the track and the finish send them to the lobby (the track's own,
+  `/ptracks leave`, `/ptracks enter` without a track, stopping the track and the finish send them to the lobby (the track's own,
   else the global one).
-- `/ptracks ignore` (permission `parkourtracks.ignore`) switches ignoring tracks; it is not kept over a restart.
+- `/ptracks ignore` (permission `parkourtracks.ignore`) switches ignoring tracks; it is kept in the player's PDC,
+  so it lasts over a restart and a reconnect: creative no longer keeps builders out of a running track, `ignore` does.
+- `/ptracks option <track> <option>` shows the value even while the track runs; only setting it needs the track
+  stopped.
+- A player who switched to creative during a game keeps creative flight after leaving, although the snapshot was
+  taken without it.
+- `/ptracks enter <track>` of a stopped track says the track is not running.
 - Entering a game takes the snapshot, then clears the inventory and the effects, fills health and food, turns flight
   off (toggling flight is canceled during the game) and gives the track's effects with an infinite duration.
 - After a death the player comes back to life where going back would take them (the last checkpoint, or the spawn

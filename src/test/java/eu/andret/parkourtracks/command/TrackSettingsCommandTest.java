@@ -21,20 +21,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TrackSettingsCommandTest extends PluginTest {
 	@Test
-	void setChangesOptionsAndSavesThem() {
+	void optionSetsValuesAndSavesThem() {
 		// given
 		final PlayerMock admin = admin(0, 0, 0);
 		final Track track = tower();
 
 		// when
-		admin.performCommand("ptracks set tower hardcore true");
-		admin.performCommand("ptracks set tower SKIPMODE notify");
-		admin.performCommand("ptracks set tower difficulty 5");
-		admin.performCommand("ptracks set tower fee 12.5");
-		admin.performCommand("ptracks set tower icon ladder");
-		admin.performCommand("ptracks set tower permission Tracks.VIP");
-		admin.performCommand("ptracks set tower displayName <gold>The Big Tower");
-		admin.performCommand("ptracks set tower boatType birch_boat");
+		admin.performCommand("ptracks option tower hardcore true");
+		admin.performCommand("ptracks option tower SKIPMODE notify");
+		admin.performCommand("ptracks option tower difficulty 5");
+		admin.performCommand("ptracks option tower fee 12.5");
+		admin.performCommand("ptracks option tower icon ladder");
+		admin.performCommand("ptracks option tower permission Tracks.VIP");
+		admin.performCommand("ptracks option tower displayName <gold>The Big Tower");
+		admin.performCommand("ptracks option tower boatType birch_boat");
 
 		// then
 		assertThat(messages(admin)).containsExactly("Set hardcore of track tower to true.",
@@ -56,7 +56,7 @@ class TrackSettingsCommandTest extends PluginTest {
 	}
 
 	@Test
-	void setClearsOptionalValuesWithNone() {
+	void optionClearsOptionalValuesWithNone() {
 		// given
 		final PlayerMock admin = admin(0, 0, 0);
 		final Track track = tower();
@@ -64,8 +64,8 @@ class TrackSettingsCommandTest extends PluginTest {
 		track.getOptions().setPermission("tracks.vip");
 
 		// when
-		admin.performCommand("ptracks set tower icon none");
-		admin.performCommand("ptracks set tower permission NONE");
+		admin.performCommand("ptracks option tower icon none");
+		admin.performCommand("ptracks option tower permission NONE");
 
 		// then
 		assertThat(track.getOptions().getIcon()).isNull();
@@ -73,21 +73,21 @@ class TrackSettingsCommandTest extends PluginTest {
 	}
 
 	@Test
-	void setRejectsInvalidValues() {
+	void optionRejectsInvalidValues() {
 		// given
 		final PlayerMock admin = admin(0, 0, 0);
 		final Track track = tower();
 
 		// when
-		admin.performCommand("ptracks set tower hardcore yes");
-		admin.performCommand("ptracks set tower difficulty 6");
-		admin.performCommand("ptracks set tower difficulty hard");
-		admin.performCommand("ptracks set tower fee -1");
-		admin.performCommand("ptracks set tower type arena");
-		admin.performCommand("ptracks set tower icon water");
-		admin.performCommand("ptracks set tower permission no spaces");
-		admin.performCommand("ptracks set tower boatType oak_chest_boat");
-		admin.performCommand("ptracks set tower speed 3");
+		admin.performCommand("ptracks option tower hardcore yes");
+		admin.performCommand("ptracks option tower difficulty 6");
+		admin.performCommand("ptracks option tower difficulty hard");
+		admin.performCommand("ptracks option tower fee -1");
+		admin.performCommand("ptracks option tower type arena");
+		admin.performCommand("ptracks option tower icon water");
+		admin.performCommand("ptracks option tower permission no spaces");
+		admin.performCommand("ptracks option tower boatType oak_chest_boat");
+		admin.performCommand("ptracks option tower speed 3");
 
 		// then
 		assertThat(messages(admin)).containsExactly("hardcore has to be true or false.", "difficulty has to be 1-5.",
@@ -104,21 +104,51 @@ class TrackSettingsCommandTest extends PluginTest {
 	}
 
 	@Test
+	void optionWithoutAnOptionListsThemAll() {
+		// given
+		final PlayerMock admin = admin(0, 0, 0);
+		tower();
+
+		// when
+		admin.performCommand("ptracks option tower");
+
+		// then
+		assertThat(messages(admin)).hasSize(TrackOption.ALL.size() + 1)
+				.startsWith("Options (/ptracks option tower <option> <value>):", "- displayName: tower")
+				.contains("- hardcore: false", "- skipMode: fail");
+	}
+
+	@Test
+	void optionWithoutAValueShowsItEvenWhileRunning() {
+		// given
+		final PlayerMock admin = admin(0, 0, 0);
+		final Track track = tower();
+		track.getOptions().setHardcore(true);
+		track.setRunning(true);
+
+		// when
+		admin.performCommand("ptracks option tower hardcore");
+
+		// then
+		assertThat(messages(admin)).containsExactly("hardcore of track tower: true");
+	}
+
+	@Test
 	void boatCannotGoWithSprintForcedOrEnderPearls() {
 		// given
 		final PlayerMock admin = admin(0, 0, 0);
 		final Track track = tower();
 
 		// when
-		admin.performCommand("ptracks set tower sprintForced true");
-		admin.performCommand("ptracks set tower boat true");
-		admin.performCommand("ptracks set tower sprintForced false");
-		admin.performCommand("ptracks set tower enderPearls true");
-		admin.performCommand("ptracks set tower boat true");
-		admin.performCommand("ptracks set tower enderPearls false");
-		admin.performCommand("ptracks set tower boat true");
-		admin.performCommand("ptracks set tower sprintForced true");
-		admin.performCommand("ptracks set tower enderPearls true");
+		admin.performCommand("ptracks option tower sprintForced true");
+		admin.performCommand("ptracks option tower boat true");
+		admin.performCommand("ptracks option tower sprintForced false");
+		admin.performCommand("ptracks option tower enderPearls true");
+		admin.performCommand("ptracks option tower boat true");
+		admin.performCommand("ptracks option tower enderPearls false");
+		admin.performCommand("ptracks option tower boat true");
+		admin.performCommand("ptracks option tower sprintForced true");
+		admin.performCommand("ptracks option tower enderPearls true");
 
 		// then
 		assertThat(messages(admin)).containsExactly("Set sprintForced of track tower to true.",
@@ -140,7 +170,7 @@ class TrackSettingsCommandTest extends PluginTest {
 		track.setRunning(true);
 
 		// when
-		admin.performCommand("ptracks set tower hardcore true");
+		admin.performCommand("ptracks option tower hardcore true");
 		admin.performCommand("ptracks medal time tower gold 30");
 		admin.performCommand("ptracks effect set tower speed 1");
 
@@ -271,7 +301,7 @@ class TrackSettingsCommandTest extends PluginTest {
 
 		// then
 		assertThat(messages(admin)).containsExactly("Only tracks of type players have authors. "
-				+ "Set the type with /ptracks set tower type players.");
+				+ "Set the type with /ptracks option tower type players.");
 		assertThat(track.getAuthors()).isEmpty();
 		assertThat(builder.getName()).isEqualTo("Builder");
 	}
@@ -308,9 +338,9 @@ class TrackSettingsCommandTest extends PluginTest {
 		tower();
 
 		// when
-		final List<String> tracks = server.getCommandMap().tabComplete(admin, "ptracks set ");
-		final List<String> options = server.getCommandMap().tabComplete(admin, "ptracks set tower ");
-		final List<String> values = server.getCommandMap().tabComplete(admin, "ptracks set tower skipMode ");
+		final List<String> tracks = server.getCommandMap().tabComplete(admin, "ptracks option ");
+		final List<String> options = server.getCommandMap().tabComplete(admin, "ptracks option tower ");
+		final List<String> values = server.getCommandMap().tabComplete(admin, "ptracks option tower skipMode ");
 		final List<String> medals = server.getCommandMap().tabComplete(admin, "ptracks medal time tower ");
 		final List<String> effects = server.getCommandMap().tabComplete(admin, "ptracks effect set tower ");
 

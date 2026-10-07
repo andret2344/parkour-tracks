@@ -29,7 +29,7 @@ public enum LeaveReason {
 	 */
 	FINISHED(true),
 	/**
-	 * Switched to creative or spectator, or to ignoring tracks.
+	 * Switched to spectator, or to ignoring tracks.
 	 */
 	NOT_A_PLAYER(false);
 

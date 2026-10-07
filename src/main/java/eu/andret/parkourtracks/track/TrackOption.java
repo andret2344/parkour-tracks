@@ -17,7 +17,7 @@ import java.util.function.ToDoubleFunction;
 import java.util.regex.Pattern;
 
 /**
- * A setting of a track that {@code /ptracks set <track> <option> <value>} changes: how its value is parsed from the
+ * A setting of a track that {@code /ptracks option <track> <option> <value>} changes: how its value is parsed from the
  * command, checked against the other options, stored and shown.
  *
  * @param <T> the type of the value
@@ -194,7 +194,7 @@ public final class TrackOption<T> {
 	}
 
 	/**
-	 * The track's current value, as {@code /ptracks set} takes it.
+	 * The track's current value, as {@code /ptracks option} takes it.
 	 */
 	@NotNull
 	public String formatValue(@NotNull final Track track) {

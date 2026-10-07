@@ -19,8 +19,10 @@ import org.bukkit.Registry;
 import org.bukkit.command.CommandSender;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import revxrsal.commands.annotation.Command;
 import revxrsal.commands.annotation.Description;
+import revxrsal.commands.annotation.Optional;
 import revxrsal.commands.annotation.Range;
 import revxrsal.commands.annotation.Subcommand;
 import revxrsal.commands.bukkit.annotation.CommandPermission;
@@ -28,7 +30,6 @@ import revxrsal.commands.bukkit.annotation.CommandPermission;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.UUID;
 
@@ -47,11 +48,21 @@ public final class TrackSettingsCommand {
 		this.support = support;
 	}
 
-	@Subcommand("set")
-	@Description("Sets an option of a track; /ptracks info lists them")
+	@Subcommand("option")
+	@Description("Lists the options of a track, shows one or sets it")
 	@CommandPermission(Permissions.EDIT)
-	public void set(@NotNull final CommandSender sender, @NotNull final Track track, @NotNull final TrackOption<?> option,
-			@OptionValue @NotNull final String value) {
+	public void option(@NotNull final CommandSender sender, @NotNull final Track track,
+			@Optional @Nullable final TrackOption<?> option, @Optional @OptionValue @Nullable final String value) {
+		if (option == null) {
+			support.sendOptions(sender, track);
+			return;
+		}
+		final TagResolver name = CommandSupport.createPlaceholder("option", option.getName());
+		if (value == null) {
+			support.send(sender, Message.OPTION_VALUE, CommandSupport.createTrackPlaceholder(track), name,
+					CommandSupport.createPlaceholder("value", option.formatValue(track)));
+			return;
+		}
 		support.requireStopped(track);
 		try {
 			option.set(track, value);
@@ -62,8 +73,8 @@ public final class TrackSettingsCommand {
 		if (option == TrackOption.DISPLAY_NAME) {
 			support.getPlugin().getRecordSigns().refresh(track.getId());
 		}
-		support.send(sender, Message.OPTION_SET, CommandSupport.createTrackPlaceholder(track),
-				CommandSupport.createPlaceholder("option", option.getName()), CommandSupport.createPlaceholder("value", option.formatValue(track)));
+		support.send(sender, Message.OPTION_SET, CommandSupport.createTrackPlaceholder(track), name,
+				CommandSupport.createPlaceholder("value", option.formatValue(track)));
 	}
 
 	@Subcommand("medal time")
@@ -205,7 +216,7 @@ public final class TrackSettingsCommand {
 	@NotNull
 	private static MedalThreshold findThreshold(@NotNull final Track track, @NotNull final Medal medal) {
 		final MedalThreshold threshold = track.getMedals().get(medal.key());
-		return Optional.ofNullable(threshold)
+		return java.util.Optional.ofNullable(threshold)
 				.orElseGet(() -> new MedalThreshold(0, 0));
 	}
 
@@ -242,6 +253,6 @@ public final class TrackSettingsCommand {
 	@NotNull
 	private static TagResolver createPlayerPlaceholder(@NotNull final OfflinePlayer player, @NotNull final String typed) {
 		final String name = player.getName();
-		return CommandSupport.createPlaceholder("player", Optional.ofNullable(name).orElse(typed));
+		return CommandSupport.createPlaceholder("player", java.util.Optional.ofNullable(name).orElse(typed));
 	}
 }

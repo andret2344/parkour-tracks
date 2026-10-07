@@ -133,7 +133,20 @@ class LeavingTest extends GameTest {
 	}
 
 	@Test
-	void switchingToCreativeEndsTheGame() {
+	void switchingToSpectatorEndsTheGame() {
+		// given
+		final PlayerMock player = withThings();
+
+		// when
+		player.setGameMode(GameMode.SPECTATOR);
+
+		// then
+		assertThat(games().getSession(player)).isEmpty();
+		assertHasThingsBack(player);
+	}
+
+	@Test
+	void switchingToCreativeKeepsTheGame() {
 		// given
 		final PlayerMock player = withThings();
 
@@ -141,7 +154,20 @@ class LeavingTest extends GameTest {
 		player.setGameMode(GameMode.CREATIVE);
 
 		// then
-		assertThat(games().getSession(player)).isEmpty();
+		assertThat(games().getSession(player)).isPresent();
+	}
+
+	@Test
+	void leavingInCreativeKeepsCreativeFlight() {
+		// given
+		final PlayerMock player = withThings();
+		player.setGameMode(GameMode.CREATIVE);
+
+		// when
+		player.performCommand("ptracks leave");
+
+		// then
+		assertThat(player.getAllowFlight()).isTrue();
 		assertHasThingsBack(player);
 	}
 
@@ -275,14 +301,14 @@ class LeavingTest extends GameTest {
 	}
 
 	@Test
-	void lobbyCommandLeavesTheGameOrJustTeleports() {
+	void enterCommandWithoutATrackLeavesTheGameOrGoesToTheLobby() {
 		// given
 		final PlayerMock player = withThings();
 		final PlayerMock other = player();
 
 		// when
-		player.performCommand("ptracks lobby");
-		other.performCommand("ptracks lobby");
+		player.performCommand("ptracks enter");
+		other.performCommand("ptracks enter");
 
 		// then
 		assertThat(games().getSession(player)).isEmpty();
@@ -291,13 +317,13 @@ class LeavingTest extends GameTest {
 	}
 
 	@Test
-	void lobbyCommandWithoutALobby() {
+	void enterCommandWithoutALobby() {
 		// given
 		plugin.getTrackRegistry().setLobby(null);
 		final PlayerMock player = player();
 
 		// when
-		player.performCommand("ptracks lobby");
+		player.performCommand("ptracks enter");
 
 		// then
 		assertThat(messages(player)).containsExactly("No lobby is set yet.");

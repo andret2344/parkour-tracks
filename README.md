@@ -49,7 +49,7 @@ Successor of atsParkour and atsQuickParkour.
 
 ## Building a track
 
-1. Stand where players should go after a game and run `/ptracks setlobby`.
+1. Stand where players should go after a game and run `/ptracks lobby set`.
 2. Select the whole track with WorldEdit and run `/ptracks create <name>`.
 3. Select the spawn area, stand inside it facing the track, and run `/ptracks spawn <name>`. Do the same for the
    finish with `/ptracks finish <name>` and for each checkpoint with `/ptracks checkpoint add <name>`.
@@ -61,7 +61,10 @@ Successor of atsParkour and atsQuickParkour.
 While a track is stopped, editors see labels over its spawn, checkpoints and finish.
 
 **Draw the region with care.** Anyone who walks into a running track's region joins it and is sent to its spawn, and
-pays its fee when it has one. Keep the region off paths players use to walk past.
+pays its fee when it has one, players in creative included. Keep the region off paths players use to walk past, and
+build next to running tracks with `/ptracks ignore` on.
+
+Every command is `<what> <action> <track> [arguments]`, e.g. `/ptracks checkpoint add <track>`.
 
 ## Commands and permissions
 
@@ -70,18 +73,19 @@ pays its fee when it has one. Keep the region off paths players use to walk past
 | Command                                                         | Permission                   | Description                                      |
 |-----------------------------------------------------------------|------------------------------|--------------------------------------------------|
 | `menu`                                                          | `parkourtracks.play`         | Opens the track selection menu                   |
-| `leave`, `lobby`                                                | `parkourtracks.play`         | Leaves the track, goes to the lobby              |
+| `enter [track]`                                                 | `parkourtracks.play`         | Enters a track; without one goes to the lobby    |
+| `leave`                                                         | `parkourtracks.play`         | Leaves the track                                 |
 | `stats [track] [player]`                                        | `parkourtracks.play`         | Shows results (another player's needs the next)  |
 |                                                                 | `parkourtracks.stats.others` | Seeing other players' results                    |
 | `ignore`                                                        | `parkourtracks.ignore`       | Walks through tracks without joining them        |
 | `list`, `info <track>`                                          | `parkourtracks.edit`         | Lists the tracks, shows one                      |
 | `create <name>`, `rename <track> <name>`, `region set <track>`  | `parkourtracks.edit`         | Creates a track, renames it, moves its region    |
 | `spawn`, `finish`, `checkpoint add/set/remove`, `wall add/set/remove` | `parkourtracks.edit`   | The parts of a track                             |
-| `set <track> <option> <value>`                                  | `parkourtracks.edit`         | Sets an option (`info` lists them)               |
+| `option <track> [option] [value]`                               | `parkourtracks.edit`         | Lists the options, shows one or sets it          |
 | `medal time/reward/remove`, `effect set/remove`, `author add/remove` | `parkourtracks.edit`    | Medals, effects, authors                         |
-| `track lobby set/clear <track>`                                 | `parkourtracks.edit`         | A lobby of the track's own                       |
+| `lobby set <track>`, `lobby clear <track>`                      | `parkourtracks.edit`         | A lobby of the track's own                       |
 | `start`, `stop`, `remove <track>`                               | `parkourtracks.manage`       | Runs, stops, removes a track                     |
-| `setlobby`, `reload`                                            | `parkourtracks.manage`       | Sets the lobby, loads the config again           |
+| `lobby set`, `reload`                                           | `parkourtracks.manage`       | Sets the global lobby, loads the config again    |
 | `reconcile <track> [code]`                                      | `parkourtracks.reconcile`    | Pays medal rewards owed from before              |
 
 Players have `parkourtracks.play` and `parkourtracks.stats.others` by default; everything else is for operators.

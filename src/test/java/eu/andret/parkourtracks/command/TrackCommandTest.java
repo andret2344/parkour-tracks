@@ -150,7 +150,7 @@ class TrackCommandTest extends PluginTest {
 						"Spawn: not set", "Finish: not set", "Checkpoints between them: 0", "- difficulty: 1",
 						"- skipMode: fail", "- Platinum: not set, reward 0.00", "Effects: none", "Authors: none",
 						"Missing before it can start:", "- the spawn (/ptracks spawn)",
-						"- the finish (/ptracks finish)", "- the lobby (/ptracks setlobby)")
+						"- the finish (/ptracks finish)", "- the lobby (/ptracks lobby set)")
 				.doesNotContain("Ready to start.");
 	}
 
@@ -251,7 +251,7 @@ class TrackCommandTest extends PluginTest {
 		admin.performCommand("ptracks region set tower");
 		admin.performCommand("ptracks rename tower spire");
 		admin.performCommand("ptracks remove tower");
-		admin.performCommand("ptracks track lobby clear tower");
+		admin.performCommand("ptracks lobby clear tower");
 
 		// then
 		assertThat(messages(admin)).hasSize(4)
@@ -320,7 +320,7 @@ class TrackCommandTest extends PluginTest {
 
 		// then
 		assertThat(messages(admin)).containsExactly("Track tower cannot start yet, it misses: the spawn "
-				+ "(/ptracks spawn), the finish (/ptracks finish), the lobby (/ptracks setlobby).");
+				+ "(/ptracks spawn), the finish (/ptracks finish), the lobby (/ptracks lobby set).");
 		assertThat(track.isRunning()).isFalse();
 	}
 
@@ -352,9 +352,9 @@ class TrackCommandTest extends PluginTest {
 		tower();
 
 		// when
-		admin.performCommand("ptracks setlobby");
+		admin.performCommand("ptracks lobby set");
 		admin.teleport(new Location(world, 50, 64, 50, 90, 0));
-		admin.performCommand("ptracks setlobby");
+		admin.performCommand("ptracks lobby set");
 
 		// then
 		assertThat(messages(admin)).containsExactly(
@@ -369,15 +369,49 @@ class TrackCommandTest extends PluginTest {
 		final Track track = tower();
 
 		// when
-		admin.performCommand("ptracks track lobby set tower");
+		admin.performCommand("ptracks lobby set tower");
 		final WorldSpot lobby = track.getLobby();
-		admin.performCommand("ptracks track lobby clear tower");
+		admin.performCommand("ptracks lobby clear tower");
 
 		// then
 		assertThat(lobby).isEqualTo(new WorldSpot("world", new Spot(50, 64, 50, 0, 0)));
 		assertThat(track.getLobby()).isNull();
 		assertThat(messages(admin)).containsExactly("Set the own lobby of track tower.",
 				"Track tower uses the global lobby again.");
+	}
+
+	@Test
+	void theGlobalLobbyCannotBeCleared() {
+		// given
+		final WorldSpot global = new WorldSpot("world", new Spot(100, 64, 100, 0, 0));
+		plugin.getTrackRegistry().setLobby(global);
+		final PlayerMock admin = admin(50, 64, 50);
+
+		// when
+		admin.performCommand("ptracks lobby clear");
+
+		// then
+		assertThat(plugin.getTrackRegistry().getLobby()).isEqualTo(global);
+		assertThat(messages(admin)).containsExactly("The global lobby cannot be cleared, only moved with /ptracks lobby set.");
+	}
+
+	@Test
+	void theGlobalLobbyNeedsManageAndATracksLobbyEdit() {
+		// given
+		final WorldSpot global = new WorldSpot("world", new Spot(100, 64, 100, 0, 0));
+		plugin.getTrackRegistry().setLobby(global);
+		final Track track = tower();
+		final PlayerMock editor = server.addPlayer();
+		editor.teleport(new Location(world, 50, 64, 50));
+		editor.addAttachment(plugin).setPermission(Permissions.EDIT, true);
+
+		// when
+		editor.performCommand("ptracks lobby set");
+		editor.performCommand("ptracks lobby set tower");
+
+		// then
+		assertThat(plugin.getTrackRegistry().getLobby()).isEqualTo(global);
+		assertThat(track.getLobby()).isEqualTo(new WorldSpot("world", new Spot(50, 64, 50, 0, 0)));
 	}
 
 	@Test

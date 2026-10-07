@@ -1,5 +1,6 @@
 package eu.andret.parkourtracks.game;
 
+import org.bukkit.GameMode;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -93,8 +94,10 @@ public final class Snapshot {
 		player.setHealth(Math.min(data.getDouble(HEALTH, getMaxHealth(player)), getMaxHealth(player)));
 		player.setFoodLevel(data.getInt(FOOD, 20));
 		player.setSaturation((float) data.getDouble(SATURATION, 5));
-		player.setAllowFlight(data.getBoolean(ALLOW_FLIGHT));
-		player.setFlying(data.getBoolean(ALLOW_FLIGHT) && data.getBoolean(FLYING));
+		// A player who switched to creative during the game took the snapshot without flight, which creative has
+		final boolean allowFlight = data.getBoolean(ALLOW_FLIGHT) || player.getGameMode() == GameMode.CREATIVE;
+		player.setAllowFlight(allowFlight);
+		player.setFlying(allowFlight && data.getBoolean(FLYING));
 	}
 
 	public static double getMaxHealth(@NotNull final Player player) {

@@ -55,7 +55,10 @@ signs that open it or enter a track; `api` the events other plugins listen to; `
   that replies with a component. `TrackParameterType`, `MedalParameterType` and `OptionParameterType` resolve the
   arguments; `@OptionValue` and `@EffectType` mark arguments completed by providers set up in
   `ParkourTracksPlugin#setUpCommands`. `PlaceholderCondition` stops the help placeholder from swallowing errors of
-  subcommands. Lamp needs `-parameters` and is shaded and relocated under `eu.andret.parkourtracks.lamp`.
+  subcommands. Lamp needs `-parameters` and is shaded and relocated under `eu.andret.parkourtracks.lamp`. Every
+  command has the form `<noun> <action> <track> [arguments]` (`decisions.md`, "Commands"); `lobby set` is two
+  overloads, so Lamp checks `parkourtracks.manage` without a track and `parkourtracks.edit` with one. Lamp's
+  `@Optional` clashes with `java.util.Optional`, which those classes then write fully qualified.
 - `game/GameManager` - the one place deciding who is in which game and what happens to them; `GameListener` only
   reports events to it. A `GameSession` holds the track, the `Phase` (`WAITING` on the spawn, `RUNNING`, `FINISHED`),
   the last checkpoint passed (`SPAWN` = -1), the ticks and the pause flag. `move` handles a move: outside a session a
@@ -73,6 +76,8 @@ signs that open it or enter a track; `api` the events other plugins listen to; `
   running, unpaused, non-training runs and shows them per `timer-display`, and checks `sprintForced` (ticks without
   sprinting outside the spawn, checkpoints and finish, over `sprint-grace-ticks`, send back). `shutdown` (plugin
   disable) ends every game as a disconnect. Hiding is per session and kept consistent on join and leave.
+  Spectators and players ignoring tracks (`/ptracks ignore`, a flag in the player's PDC, so it lasts over a restart)
+  never play; creative players do, without flying.
   Every teleport onto the track goes through `sendTo`, which on a boat track removes the old boat and puts the player
   into a new, non-persistent one (`isBoating` lets the vehicle listener allow it; nested calls keep the flag); the
   tick sends a player found without a valid boat back. `GameListener` follows riders through `VehicleMoveEvent`

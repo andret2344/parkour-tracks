@@ -5,6 +5,7 @@ import eu.andret.parkourtracks.message.Message;
 import eu.andret.parkourtracks.selection.Selection;
 import eu.andret.parkourtracks.selection.SelectionException;
 import eu.andret.parkourtracks.track.Track;
+import eu.andret.parkourtracks.track.TrackOption;
 import eu.andret.parkourtracks.track.TrackRegistry;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
@@ -74,6 +75,15 @@ public final class CommandSupport {
 	public void save() {
 		getRegistry().save();
 		plugin.getMarkers().refresh();
+	}
+
+	/**
+	 * Every option of the track with its value.
+	 */
+	public void sendOptions(@NotNull final CommandSender sender, @NotNull final Track track) {
+		send(sender, Message.INFO_OPTIONS, createTrackPlaceholder(track));
+		TrackOption.ALL.forEach(option -> send(sender, Message.INFO_OPTION,
+				createPlaceholder("option", option.getName()), createPlaceholder("value", option.formatValue(track))));
 	}
 
 	/**

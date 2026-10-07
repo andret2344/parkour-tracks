@@ -138,8 +138,7 @@ public final class GameListener implements Listener {
 
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void gameMode(@NotNull final PlayerGameModeChangeEvent event) {
-		final GameMode mode = event.getNewGameMode();
-		if (mode == GameMode.CREATIVE || mode == GameMode.SPECTATOR) {
+		if (event.getNewGameMode() == GameMode.SPECTATOR) {
 			games.leave(event.getPlayer(), LeaveReason.NOT_A_PLAYER);
 		}
 	}

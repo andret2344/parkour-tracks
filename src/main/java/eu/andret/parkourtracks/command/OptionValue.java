@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks the value argument of {@code /ptracks set}, completed with the values of the option before it.
+ * Marks the value argument of {@code /ptracks option}, completed with the values of the option before it.
  */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)

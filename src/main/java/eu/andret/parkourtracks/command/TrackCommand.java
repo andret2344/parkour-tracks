@@ -6,7 +6,6 @@ import eu.andret.parkourtracks.selection.Selection;
 import eu.andret.parkourtracks.track.Cuboid;
 import eu.andret.parkourtracks.track.MedalThreshold;
 import eu.andret.parkourtracks.track.Track;
-import eu.andret.parkourtracks.track.TrackOption;
 import eu.andret.parkourtracks.track.TrackRules;
 import eu.andret.parkourtracks.track.WorldSpot;
 import eu.andret.parkourtracks.util.Amounts;
@@ -24,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import revxrsal.commands.annotation.Command;
 import revxrsal.commands.annotation.CommandPlaceholder;
 import revxrsal.commands.annotation.Description;
+import revxrsal.commands.annotation.Optional;
 import revxrsal.commands.annotation.Subcommand;
 import revxrsal.commands.bukkit.actor.BukkitCommandActor;
 import revxrsal.commands.bukkit.annotation.CommandPermission;
@@ -32,7 +32,6 @@ import revxrsal.commands.help.Help;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -90,9 +89,7 @@ public final class TrackCommand {
 		support.send(sender, Message.INFO_CHECKPOINTS, CommandSupport.createPlaceholder("count", track.getCheckpoints().size()));
 		support.send(sender, Message.INFO_WALLS, CommandSupport.createPlaceholder("count", track.getWalls().size()));
 		support.send(sender, Message.INFO_LOBBY, describePresence(track.getLobby()));
-		support.send(sender, Message.INFO_OPTIONS, name);
-		TrackOption.ALL.forEach(option -> support.send(sender, Message.INFO_OPTION,
-				CommandSupport.createPlaceholder("option", option.getName()), CommandSupport.createPlaceholder("value", option.formatValue(track))));
+		support.sendOptions(sender, track);
 		support.send(sender, Message.INFO_MEDALS, name);
 		for (final Medal medal : support.getPlugin().getSettings().medals()) {
 			final MedalThreshold threshold = track.getMedals().get(medal.key());
@@ -152,7 +149,7 @@ public final class TrackCommand {
 		if (!Track.NAME_PATTERN.matcher(name).matches()) {
 			throw support.fail(Message.NAME_INVALID, CommandSupport.createPlaceholder("name", name));
 		}
-		final Optional<Track> other = support.getRegistry().find(name);
+		final java.util.Optional<Track> other = support.getRegistry().find(name);
 		if (other.isPresent() && !other.get().equals(track)) {
 			throw support.fail(Message.NAME_TAKEN, CommandSupport.createPlaceholder("name", name));
 		}
@@ -205,7 +202,7 @@ public final class TrackCommand {
 		support.send(sender, Message.STOPPED, CommandSupport.createTrackPlaceholder(track));
 	}
 
-	@Subcommand("setlobby")
+	@Subcommand("lobby set")
 	@Description("Sets the global lobby where you stand")
 	@CommandPermission(Permissions.MANAGE)
 	public void setLobby(@NotNull final Player sender) {
@@ -214,20 +211,24 @@ public final class TrackCommand {
 		support.send(sender, Message.LOBBY_SET);
 	}
 
-	@Subcommand("track lobby set")
+	@Subcommand("lobby set")
 	@Description("Sets the own lobby of a track where you stand, used instead of the global one")
 	@CommandPermission(Permissions.EDIT)
-	public void setTrackLobby(@NotNull final Player sender, @NotNull final Track track) {
+	public void setLobby(@NotNull final Player sender, @NotNull final Track track) {
 		support.requireStopped(track);
 		track.setLobby(createLobby(sender.getLocation()));
 		support.save();
 		support.send(sender, Message.TRACK_LOBBY_SET, CommandSupport.createTrackPlaceholder(track));
 	}
 
-	@Subcommand("track lobby clear")
+	@Subcommand("lobby clear")
 	@Description("Makes a track use the global lobby again")
 	@CommandPermission(Permissions.EDIT)
-	public void clearTrackLobby(@NotNull final CommandSender sender, @NotNull final Track track) {
+	public void clearLobby(@NotNull final CommandSender sender, @Optional @Nullable final Track track) {
+		// Every track needs the global lobby, so it can only be moved
+		if (track == null) {
+			throw support.fail(Message.LOBBY_CANNOT_CLEAR);
+		}
 		support.requireStopped(track);
 		track.setLobby(null);
 		support.save();
@@ -254,7 +255,7 @@ public final class TrackCommand {
 								CommandSupport.createPlaceholder("other", problem.overlapping().getName()));
 					}
 					// Only an existing track has parts to leave out
-					final String value = Optional.ofNullable(track).map(Track::getName).orElse("");
+					final String value = java.util.Optional.ofNullable(track).map(Track::getName).orElse("");
 					throw support.fail(Message.REGION_LEAVES_OUT, CommandSupport.createPlaceholder("track", value));
 				});
 	}

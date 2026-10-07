@@ -46,7 +46,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -70,9 +69,9 @@ public final class GameManager {
 	@NotNull
 	private final Map<UUID, GameSession> sessions = new HashMap<>();
 	@NotNull
-	private final Set<UUID> ignoring = new HashSet<>();
-	@NotNull
 	private final NamespacedKey sessionKey;
+	@NotNull
+	private final NamespacedKey ignoringKey;
 	@NotNull
 	private final NamespacedKey snapshotKey;
 	@NotNull
@@ -89,6 +88,7 @@ public final class GameManager {
 	public GameManager(@NotNull final ParkourTracksPlugin plugin) {
 		this.plugin = plugin;
 		sessionKey = new NamespacedKey(plugin, "session");
+		ignoringKey = new NamespacedKey(plugin, "ignoring");
 		snapshotKey = new NamespacedKey(plugin, "snapshot");
 		items = new GameItems(plugin);
 	}
@@ -175,8 +175,11 @@ public final class GameManager {
 		return sessions.values().stream().anyMatch(session -> entity.getUniqueId().equals(session.getBoat()));
 	}
 
+	/**
+	 * Whether the player ignores tracks; kept in their PDC, so it lasts over a restart and a reconnect.
+	 */
 	public boolean isIgnoring(@NotNull final Player player) {
-		return ignoring.contains(player.getUniqueId());
+		return player.getPersistentDataContainer().has(ignoringKey);
 	}
 
 	/**
@@ -185,10 +188,12 @@ public final class GameManager {
 	 * @return whether the player ignores tracks now
 	 */
 	public boolean toggleIgnoring(@NotNull final Player player) {
-		if (ignoring.remove(player.getUniqueId())) {
+		final PersistentDataContainer data = player.getPersistentDataContainer();
+		if (data.has(ignoringKey)) {
+			data.remove(ignoringKey);
 			return false;
 		}
-		ignoring.add(player.getUniqueId());
+		data.set(ignoringKey, PersistentDataType.BOOLEAN, true);
 		if (sessions.containsKey(player.getUniqueId())) {
 			leave(player, LeaveReason.NOT_A_PLAYER);
 		}
@@ -196,11 +201,10 @@ public final class GameManager {
 	}
 
 	/**
-	 * Whether the player can be a parkour player at all: in survival or adventure, not ignoring tracks.
+	 * Whether the player can be a parkour player at all: not in spectator, not ignoring tracks.
 	 */
 	public boolean isEligible(@NotNull final Player player) {
-		return (player.getGameMode() == GameMode.SURVIVAL || player.getGameMode() == GameMode.ADVENTURE)
-				&& !isIgnoring(player);
+		return player.getGameMode() != GameMode.SPECTATOR && !isIgnoring(player);
 	}
 
 	/**

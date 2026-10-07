@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The settings of a track an admin changes with {@code /ptracks set}. The field initializers are the defaults; they
+ * The settings of a track an admin changes with {@code /ptracks option}. The field initializers are the defaults; they
  * also fill in fields missing from the tracks file.
  */
 public final class TrackOptions {

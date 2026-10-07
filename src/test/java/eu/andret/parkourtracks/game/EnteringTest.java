@@ -1,5 +1,7 @@
 package eu.andret.parkourtracks.game;
 
+import eu.andret.parkourtracks.helper.FakeBank;
+import eu.andret.parkourtracks.menu.Menu;
 import eu.andret.parkourtracks.track.TrackEffect;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -46,23 +48,99 @@ class EnteringTest extends GameTest {
 	}
 
 	@Test
-	void creativeSpectatorAndIgnoringPlayersAreNotParkourPlayers() {
+	void spectatorAndIgnoringPlayersAreNotParkourPlayers() {
 		// given
-		final PlayerMock creative = player();
-		creative.setGameMode(GameMode.CREATIVE);
 		final PlayerMock spectator = player();
 		spectator.setGameMode(GameMode.SPECTATOR);
 		final PlayerMock ignoring = player();
 		games().toggleIgnoring(ignoring);
 
 		// when
-		move(creative, at(10, 1, 2.5));
 		move(spectator, at(10, 1, 2.5));
 		move(ignoring, at(10, 1, 2.5));
 
 		// then
 		assertThat(games().getSessions()).isEmpty();
-		assertThat(creative.getLocation()).isEqualTo(at(10, 1, 2.5));
+		assertThat(spectator.getLocation()).isEqualTo(at(10, 1, 2.5));
+	}
+
+	@Test
+	void creativePlayersPlayWithoutFlying() {
+		// given
+		final PlayerMock player = player();
+		player.setGameMode(GameMode.CREATIVE);
+		player.setAllowFlight(true);
+		player.setFlying(true);
+		player.teleport(at(-5, 1, 2.5));
+
+		// when
+		move(player, at(2.5, 1, 2.5));
+
+		// then
+		assertThat(session(player).getTrack()).isEqualTo(track);
+		assertThat(player.getGameMode()).isEqualTo(GameMode.CREATIVE);
+		assertThat(player.getAllowFlight()).isFalse();
+		assertThat(player.isFlying()).isFalse();
+	}
+
+	@Test
+	void ignoringLastsOverARestart() {
+		// given
+		final PlayerMock player = player();
+		games().toggleIgnoring(player);
+		server.getPluginManager().disablePlugin(plugin);
+		server.getPluginManager().enablePlugin(plugin);
+
+		// when
+		move(player, at(10, 1, 2.5));
+
+		// then
+		assertThat(games().isIgnoring(player)).isTrue();
+		assertThat(games().getSessions()).isEmpty();
+	}
+
+	@Test
+	void enterCommandEntersARunningTrack() {
+		// given
+		final PlayerMock player = player();
+
+		// when
+		player.performCommand("ptracks enter tower");
+
+		// then
+		assertThat(session(player).getTrack()).isEqualTo(track);
+		assertThat(session(player).getPhase()).isEqualTo(Phase.WAITING);
+	}
+
+	@Test
+	void enterCommandRefusesAStoppedTrack() {
+		// given
+		track.setRunning(false);
+		final PlayerMock player = player();
+
+		// when
+		player.performCommand("ptracks enter tower");
+
+		// then
+		assertThat(games().getSessions()).isEmpty();
+		assertThat(messages(player)).containsExactly("Track tower is not running.");
+	}
+
+	@Test
+	void enterCommandAsksBeforeAFee() {
+		// given
+		final FakeBank bank = new FakeBank();
+		plugin.setBank(bank);
+		final PlayerMock player = player();
+		bank.set(player, 100);
+		track.getOptions().setFee(30);
+
+		// when
+		player.performCommand("ptracks enter tower");
+
+		// then
+		assertThat(games().getSessions()).isEmpty();
+		assertThat(player.getOpenInventory().getTopInventory().getHolder()).isInstanceOf(Menu.class);
 	}
 
 	@Test
